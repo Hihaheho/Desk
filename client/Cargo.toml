@@ -1,0 +1,13 @@
+[package]
+name = "desk-client"
+version = "0.1.0"
+authors = ["Ryo Hashiguchi <ryo12redstone@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.4"
+bevy_egui = "0.3"
+
+app = { package = "desk-app", path = "../app" }
