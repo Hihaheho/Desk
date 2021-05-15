@@ -1,0 +1,16 @@
+[package]
+name = "desk-editor"
+version = "0.1.0"
+authors = ["Ryo Hashiguchi <ryo12redstone@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+node = { package = "desk-node", path = "../node" }
+security = { package = "desk-security", path = "../security" }
+runtime = { package = "desk-runtime", path = "../runtime" }
+language = { package = "desk-language", path = "../language" }
+protocol = { package = "desk-protocol", path = "../protocol" }
+
+bevy_math = "0.5"

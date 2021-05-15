@@ -1,8 +1,8 @@
 [workspace]
 
 members = [
-  "app",
-  "core/*",
-  "client",
-  "server",
+  "components/*",
+  "systems",
+  "plugins",
+  "apps/*"
 ]

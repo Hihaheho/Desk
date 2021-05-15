@@ -1,0 +1,19 @@
+[package]
+name = "desk-plugins"
+version = "0.1.0"
+authors = ["Ryo Hashiguchi <ryo12redstone@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+systems = { package = "desk-systems", path = "../systems" }
+editor = { package = "desk-editor", path = "../components/editor" }
+node = { package = "desk-node", path = "../components/node" }
+security = { package = "desk-security", path = "../components/security" }
+runtime = { package = "desk-runtime", path = "../components/runtime" }
+language = { package = "desk-language", path = "../components/language" }
+protocol = { package = "desk-protocol", path = "../components/protocol" }
+
+bevy = "0.5"
+bevy_egui = "0.4"
