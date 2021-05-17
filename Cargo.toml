@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+  "adapters/*",
   "components/*",
   "systems",
   "plugins",

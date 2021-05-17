@@ -1,7 +1,6 @@
 use protocol::id::Id;
 
-use crate::typing::r#type::{EMonadId, EffectId, Type};
-use std::collections::HashMap;
+use crate::typing::type_::Type;
 
 pub struct Identifier(u16);
 pub struct Function {}
@@ -26,12 +25,8 @@ pub enum Node {
         construct: Construct,
     },
     Let {
-        declarations: Vec<AnnotatableNode<Declaration>>,
+        declarations: Vec<AnnotatableNode<Construct>>,
         expression: Box<AnnotatableNode>,
-    },
-    Match {
-        expression: Box<AnnotatableNode>,
-        patterns: Vec<MatchBranch>,
     },
     Variable(Identifier),
     Function {
@@ -43,12 +38,14 @@ pub enum Node {
         argument: Box<AnnotatableNode>,
     },
     Perform {
-        emonad_id: EMonadId,
-        effect: EffectId,
+        effect: AnnotatableNode<Construct>,
         argument: Box<AnnotatableNode>,
     },
     Handle {
-        handlers: HashMap<EffectId, Handler>,
+        expression: Box<AnnotatableNode>,
+        effect: AnnotatableNode<Construct>,
+        continuation: Identifier,
+        handler: Box<AnnotatableNode>,
     },
 }
 
@@ -57,28 +54,4 @@ pub struct ConstructorId(Id);
 pub struct Construct {
     pub constructor_id: ConstructorId,
     pub arguments: Vec<AnnotatableNode>,
-}
-
-pub struct MatchBranch {
-    pattern: Construct,
-    guards: Vec<Guard>,
-    // not annotatable because all patterns in a match expression must be the same type.
-    pub expression: Node,
-}
-
-pub struct Guard {
-    // todo
-}
-
-pub struct Declaration {
-    // Pattern is allowed
-    pub variable: Construct,
-    pub expression: AnnotatableNode,
-}
-
-pub struct Handler {
-    pub effect: EffectId,
-    pub continuation: Identifier,
-    // not annotatable because all handlers in a handle expression must be the same type.
-    pub expression: Node,
 }

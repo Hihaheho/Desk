@@ -1,8 +1,8 @@
 use crate::syntax::ast::Node;
 
-use super::ir::Code;
+use super::ir::IR;
 
-pub fn analyze(node: Node) -> Code {
+pub fn analyze(node: Node) -> IR {
     use Node::*;
     match node {
         Literal { literal_value } => {
@@ -23,25 +23,20 @@ pub fn analyze(node: Node) -> Code {
         Apply { function, argument } => {
             todo!()
         }
-        Perform {
-            effect,
-            argument,
-            emonad_id,
-        } => {
+        Perform { effect, argument } => {
             todo!()
         }
-        Handle { handlers } => {
+        Handle {
+            expression,
+            effect,
+            continuation,
+            handler,
+        } => {
             todo!()
         }
         Let {
             declarations,
             expression,
-        } => {
-            todo!()
-        }
-        Match {
-            expression,
-            patterns,
         } => {
             todo!()
         }

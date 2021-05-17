@@ -8,5 +8,3 @@ edition = "2018"
 
 [dependencies]
 protocol = { package = "desk-protocol", path = "../protocol" }
-
-uuid = "0.8.2"

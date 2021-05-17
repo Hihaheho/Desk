@@ -1,12 +1,15 @@
-use std::collections::HashSet;
-
 use protocol::id::Id;
 
-pub struct BasicTypeId(Id);
-pub struct EMonadId(Id);
-pub struct EffectId(Id);
-pub struct TypeVariable(u8);
+#[derive(Clone)]
+pub struct BasicTypeId(pub Id);
+#[derive(Clone)]
+pub struct EMonadId(pub Id);
+#[derive(Clone)]
+pub struct EffectId(pub Id);
+#[derive(Clone)]
+pub struct TypeVariable(pub u8);
 
+#[derive(Clone)]
 pub enum Type {
     Basic {
         basic_type_id: BasicTypeId,
@@ -21,18 +24,17 @@ pub enum Type {
         emonad_id: EMonadId,
         parameters: Vec<Type>,
         item: Box<Type>,
-        effects: HashSet<Effect>,
+        effects: std::collections::HashSet<EffectId>,
     },
     Variable(TypeVariable),
     Construct {
         constructor: Box<Type>,
         arguments: Vec<Type>,
     },
-}
-
-pub struct Effect {
-    pub emonad_id: EMonadId,
-    pub type_id: EffectId,
-    pub argument: Box<Type>,
-    pub output: Box<Type>,
+    Effect {
+        emonad_id: EMonadId,
+        effect_id: EffectId,
+        argument: Box<Type>,
+        output: Box<Type>,
+    },
 }
