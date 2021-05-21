@@ -2,7 +2,7 @@ use protocol::id::Id;
 
 use crate::{
     syntax::ast::{Identifier, LiteralValue},
-    typing::type_::{EffectId, Type},
+    typing::type_::Type,
 };
 
 #[derive(Hash, Eq, PartialEq)]
@@ -39,7 +39,7 @@ pub enum IRNode {
     },
     Handle {
         expression: Box<IR>,
-        effect: EffectId,
+        effect: Type,
         effect_parameter: Identifier,
         continuation: Identifier,
         handler: Box<IR>,

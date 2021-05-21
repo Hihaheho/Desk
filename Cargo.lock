@@ -1467,6 +1467,8 @@ dependencies = [
 name = "desk-runtime-wasm"
 version = "0.1.0"
 dependencies = [
+ "desk-language",
+ "desk-runtime",
  "parity-wasm",
  "wasmer",
 ]
