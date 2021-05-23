@@ -1,8 +1,8 @@
 use protocol::id::Id;
 
 use crate::{
-    syntax::ast::{Identifier, LiteralValue},
-    typing::type_::Type,
+    abstract_syntax_tree::node::{Identifier, LiteralValue},
+    type_::Type,
 };
 
 #[derive(Hash, Eq, PartialEq)]
@@ -14,6 +14,11 @@ pub struct IR {
     pub return_type: Type,
 }
 
+pub struct Function {
+    pub parameter: Identifier,
+    pub expression: Box<IR>,
+}
+
 pub enum IRNode {
     Literal {
         literal_value: LiteralValue,
@@ -21,10 +26,7 @@ pub enum IRNode {
     Variable {
         identifier: Identifier,
     },
-    Function {
-        parameter: Identifier,
-        expression: Box<IR>,
-    },
+    Function(Function),
     Apply {
         function: Box<IR>,
         argument: Box<IR>,

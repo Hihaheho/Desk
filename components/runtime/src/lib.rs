@@ -2,7 +2,7 @@ pub mod code_generator;
 pub mod definition;
 pub mod vm;
 
-use language::{semantic::ir::IR, typing::type_::Type};
+use language::{intermediate_representation::ir::IR, type_::Type};
 
 /// A struct for a computed value with its type and encoding.
 pub struct ComputedValue {

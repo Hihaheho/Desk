@@ -1,4 +1,4 @@
-use language::semantic::ir::IR;
+use language::intermediate_representation::ir::IR;
 
 pub trait CodeGenerator {
     type Code;

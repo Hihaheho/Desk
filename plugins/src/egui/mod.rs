@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext, EguiPlugin};
 use editor::card::Card;
-use language::semantic::ir::IR;
+use language::intermediate_representation::ir::IR;
 use runtime::{ComputedValue, EncodedValue};
 
 struct CardPlugin;

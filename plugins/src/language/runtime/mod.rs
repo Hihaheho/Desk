@@ -1,73 +1,41 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
-use language::{
-    semantic::ir::{OperatorId, IR},
-    Operator,
-};
+use language::{intermediate_representation::ir::IR, Operator};
 use protocol::id::create_consistent_id;
-use runtime::{definition::OperatorDefinitions, ComputedValue, EncodedValue};
 
 pub struct RuntimePlugin;
 
-struct PlusOperator;
-
-impl Operator for PlusOperator {
-    // fn operate(&self, operands: Vec<ComputedValue>) -> ComputedValue {
-    //     match (&operands[0].encoded_value, &operands[1].encoded_value) {
-    //         (EncodedValue::I32(left), EncodedValue::I32(right)) => ComputedValue {
-    //             type_: operands[0].type_.to_owned(),
-    //             encoded_value: EncodedValue::I32(left + right),
-    //         },
-    //         _ => todo!(),
-    //     }
-    // }
-}
-
 impl Plugin for RuntimePlugin {
     fn build(&self, app: &mut AppBuilder) {
-        let mut operator_definitions = OperatorDefinitions {
-            map: HashMap::new(),
-        };
-        operator_definitions.map.insert(
-            OperatorId(create_consistent_id("desk-plugins", "plus")),
-            Box::new(PlusOperator),
-        );
-        app.add_system(run.system())
-            .insert_resource(operator_definitions);
+        app.add_system(run.system());
     }
 }
 
-fn run(
-    mut commands: Commands,
-    operator_definitions: Res<OperatorDefinitions>,
-    query: Query<(Entity, &IR), Changed<IR>>,
-) {
+fn run(mut commands: Commands, query: Query<(Entity, &IR), Changed<IR>>) {
     for (entity, code) in query.iter() {
         commands
             .entity(entity)
-            .insert(prototype::compute_on_stack(&operator_definitions, code));
+            .insert(prototype::compute_on_stack(code));
     }
 }
 
 mod prototype {
-    use language::syntax::ast::LiteralValue;
-    use runtime::EncodedValue;
+    use language::abstract_syntax_tree::node::LiteralValue;
+    use runtime::{ComputedValue, EncodedValue};
 
     use super::*;
-    pub fn compute_on_stack(
-        operator_definitions: &OperatorDefinitions,
-        code: &IR,
-    ) -> ComputedValue {
+    pub fn compute_on_stack(code: &IR) -> ComputedValue {
         use EncodedValue::*;
         let IR { node, return_type } = code;
         let encoded_value = match node {
-            language::semantic::ir::IRNode::Literal { literal_value } => match literal_value {
-                LiteralValue::String(value) => String(value.to_owned()),
-                LiteralValue::I32(value) => I32(*value),
-                LiteralValue::F32(value) => F32(*value),
-            },
-            language::semantic::ir::IRNode::Operate {
+            language::intermediate_representation::ir::IRNode::Literal { literal_value } => {
+                match literal_value {
+                    LiteralValue::String(value) => String(value.to_owned()),
+                    _ => todo!(),
+                }
+            }
+            language::intermediate_representation::ir::IRNode::Operate {
                 operator_id,
                 operands,
             } => {
@@ -83,22 +51,19 @@ mod prototype {
                 //         .collect(),
                 // )                // .encoded_value
             }
-            language::semantic::ir::IRNode::Variable { identifier } => {
+            language::intermediate_representation::ir::IRNode::Variable { identifier } => {
                 todo!()
             }
-            language::semantic::ir::IRNode::Function {
-                parameter,
-                expression,
-            } => {
+            language::intermediate_representation::ir::IRNode::Function(function) => {
                 todo!()
             }
-            language::semantic::ir::IRNode::Apply { function, argument } => {
+            language::intermediate_representation::ir::IRNode::Apply { function, argument } => {
                 todo!()
             }
-            language::semantic::ir::IRNode::Perform { effect, argument } => {
+            language::intermediate_representation::ir::IRNode::Perform { effect, argument } => {
                 todo!()
             }
-            language::semantic::ir::IRNode::Handle {
+            language::intermediate_representation::ir::IRNode::Handle {
                 expression,
                 effect,
                 effect_parameter,
