@@ -54,7 +54,11 @@ impl Type {
         Self::Sum(Set::new(vec))
     }
 
-    pub fn simplify(&self) -> &Self {
+    /// Returns simplified type if type is verbose.
+    ///
+    /// - Removes product or sum and extracts its item if length is 1.
+    /// - Returns a unit if length is 0.
+    pub fn remove_verbose_composite_type(&self) -> &Self {
         use Type::*;
         let set = match self {
             Product(set) => set,
@@ -63,16 +67,17 @@ impl Type {
                 return self;
             }
         };
-        if set.len() != 1 {
-            return self;
+        match set.len() {
+            0 => &Type::Unit,
+            1 => set.iter().next().unwrap(),
+            _ => self,
         }
-        set.iter().next().unwrap()
     }
 
     pub fn is_subtype_of(&self, other: &Self) -> bool {
         use Type::*;
-        let me = self.simplify();
-        let you = other.simplify();
+        let me = self.remove_verbose_composite_type();
+        let you = other.remove_verbose_composite_type();
         if me == you {
             return true;
         }

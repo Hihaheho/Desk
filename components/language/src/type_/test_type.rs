@@ -18,13 +18,13 @@ fn sum() {
 
 #[test]
 fn does_not_simplifies() {
-    assert_eq!(Type::Number.simplify(), &Type::Number);
+    assert_eq!(Type::Number.remove_verbose_composite_type(), &Type::Number);
 }
 
 #[test]
 fn does_not_simplifies_product() {
     assert_eq!(
-        Type::product(vec![Type::Number, Type::String]).simplify(),
+        Type::product(vec![Type::Number, Type::String]).remove_verbose_composite_type(),
         &Type::product(vec![Type::Number, Type::String])
     )
 }
@@ -32,19 +32,37 @@ fn does_not_simplifies_product() {
 #[test]
 fn does_not_simplifies_sum() {
     assert_eq!(
-        Type::sum(vec![Type::Number, Type::String]).simplify(),
+        Type::sum(vec![Type::Number, Type::String]).remove_verbose_composite_type(),
         &Type::sum(vec![Type::Number, Type::String])
     )
 }
 
 #[test]
 fn simplifies_single_item_product() {
-    assert_eq!(Type::product(vec![Type::Number]).simplify(), &Type::Number)
+    assert_eq!(
+        Type::product(vec![Type::Number]).remove_verbose_composite_type(),
+        &Type::Number
+    )
 }
 
 #[test]
 fn simplifies_single_item_sum() {
-    assert_eq!(Type::sum(vec![Type::Number]).simplify(), &Type::Number)
+    assert_eq!(
+        Type::sum(vec![Type::Number]).remove_verbose_composite_type(),
+        &Type::Number
+    )
+}
+
+#[test]
+fn simplifies_into_unit() {
+    assert_eq!(
+        Type::sum(vec![]).remove_verbose_composite_type(),
+        &Type::Unit
+    );
+    assert_eq!(
+        Type::product(vec![]).remove_verbose_composite_type(),
+        &Type::Unit
+    );
 }
 
 #[test]
