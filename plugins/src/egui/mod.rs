@@ -1,15 +1,13 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext, EguiPlugin};
 use editor::card::Card;
-use language::intermediate_representation::ir::IR;
 use runtime::{ComputedValue, EncodedValue};
 
 struct CardPlugin;
 
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
-        app.add_system(ui_example.system())
-            .add_system(show_card.system());
+        app.add_system(show_card.system());
     }
 }
 
@@ -40,34 +38,6 @@ fn show_card(
         // TODO use systems.
         card.position += Vec2::new(delta.x, delta.y);
     }
-}
-
-fn ui_example(egui_context: ResMut<EguiContext>) {
-    let ctx = egui_context.ctx();
-
-    egui::Window::new("Hello").show(ctx, |ui| {
-        ui.label("world");
-    });
-
-    egui::CentralPanel::default().show(ctx, |ui| {
-        ui.add(egui::Label::new("Side Panel"));
-    });
-
-    egui::TopPanel::top("header").show(ctx, |ui| {
-        ui.add(egui::Label::new("Top Panel"));
-    });
-
-    egui::SidePanel::left("left", 300.0).show(ctx, |ui| {
-        ui.heading("Desk");
-
-        ui.separator();
-
-        ui.visuals();
-    });
-
-    egui::Area::new("first").show(ctx, |ui| {
-        let _ = ui.button("click me");
-    });
 }
 
 pub struct EguiPlugins;

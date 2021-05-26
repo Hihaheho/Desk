@@ -1445,6 +1445,8 @@ dependencies = [
  "desk-node",
  "desk-protocol",
  "desk-runtime",
+ "desk-runtime-simple-traverse",
+ "desk-runtime-wasm",
  "desk-security",
  "desk-systems",
 ]
@@ -1461,6 +1463,14 @@ name = "desk-runtime"
 version = "0.1.0"
 dependencies = [
  "desk-language",
+]
+
+[[package]]
+name = "desk-runtime-simple-traverse"
+version = "0.1.0"
+dependencies = [
+ "desk-language",
+ "desk-runtime",
 ]
 
 [[package]]

@@ -1,8 +1,15 @@
-pub mod code_generator;
-pub mod definition;
-pub mod vm;
+use language::{
+    abstract_syntax_tree::node::{Node, NumberLiteral},
+    type_::{Arrow, Trait, Type},
+};
 
-use language::{intermediate_representation::ir::IR, type_::Type};
+pub trait Runtime {
+    type Code;
+    type Error;
+
+    fn generate_code(ir: Node) -> Self::Code;
+    fn run(code: Self::Code) -> Result<ComputedValue, Self::Error>;
+}
 
 /// A struct for a computed value with its type and encoding.
 pub struct ComputedValue {
@@ -11,8 +18,23 @@ pub struct ComputedValue {
 }
 
 pub enum EncodedValue {
-    Function(IR),
-    I32(i32),
-    F32(f32),
+    Unit,
+    Label(String),
+    Bool(bool),
     String(String),
+    Number(NumberLiteral),
+    Array(Vec<EncodedValue>),
+    Product(Vec<EncodedValue>),
+    Sum(Box<EncodedValue>),
+    Type(Type),
+    Function(Node),
+    Effect {
+        class: Trait,
+        effect: Arrow,
+    },
+    Effectful {
+        item: Box<EncodedValue>,
+        class: Trait,
+        handled: bool,
+    },
 }

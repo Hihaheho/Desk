@@ -1,8 +1,15 @@
+mod number_literal;
+
+use std::any::Any;
+
 use crate::type_::Type;
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct Identifier(u16);
+#[derive(Clone, PartialEq, Debug)]
 pub struct Function {}
 
+#[derive(Clone, PartialEq, Debug)]
 pub enum LiteralValue {
     Unit,
     Label(String),
@@ -15,6 +22,7 @@ pub enum LiteralValue {
     Type(Type),
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub enum NumberLiteral {
     /// integer, rational number, or float
     Integer(i64), // num-bigint?
@@ -22,18 +30,20 @@ pub enum NumberLiteral {
     Float(f64), // bigdecimal?
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct Node {
-    data: NodeData,
-    type_annotation: Option<Type>,
-    metadata: NodeMetadata,
+    pub data: NodeData,
+    pub type_: Option<Type>,
+    pub metadata: u64,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct NodeMetadata {
     pub inferred_type: Option<Type>,
 }
 
 /// An enum for an AST Node without type annotation itself.
+#[derive(Clone, PartialEq, Debug)]
 pub enum NodeData {
     Literal {
         value: LiteralValue,
@@ -48,11 +58,11 @@ pub enum NodeData {
     },
     ApplyUnaryOperator {
         operator: UnaryOperator,
-        operands: (Box<Node>, Box<Node>),
+        operand: Box<Node>,
     },
     ApplyBinaryOperator {
         operator: BinaryOperator,
-        operand: Box<Node>,
+        operands: (Box<Node>, Box<Node>),
     },
     Function {
         parameter: Identifier,
@@ -73,6 +83,7 @@ pub enum NodeData {
     },
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub enum UnaryOperator {
     /// - Negation
     Neg,
@@ -82,6 +93,7 @@ pub enum UnaryOperator {
     Abs,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub enum BinaryOperator {
     Arithmetic(BinaryArithmeticOperator),
     Logical(BinaryLogicalOperator),
@@ -89,6 +101,7 @@ pub enum BinaryOperator {
     IndexString,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Binary arithmetic operators
 pub enum BinaryArithmeticOperator {
     /// + Addition
@@ -103,12 +116,14 @@ pub enum BinaryArithmeticOperator {
     Mod,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Binary logical operators
 pub enum BinaryLogicalOperator {
     And,
     Or,
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Comparison operators
 pub enum ComparisonOperator {
     /// == Equal to
