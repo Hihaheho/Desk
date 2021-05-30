@@ -6,31 +6,20 @@ mod let_;
 mod node;
 mod perform;
 
-use language::abstract_syntax_tree::node::{Node, NodeData};
+use language::abstract_syntax_tree::node::Node;
 use runtime::Runtime;
 
-use runtime::ComputedValue;
-
-struct SimpleTraverseRuntime {}
+pub struct SimpleTraverseRuntime;
 
 impl Runtime for SimpleTraverseRuntime {
     type Code = Node;
     type Error = ();
 
-    fn generate_code(ir: Node) -> Self::Code {
+    fn generate_code(&self, ir: &Node) -> Self::Code {
         ir.clone()
     }
 
-    fn run(code: Self::Code) -> Result<runtime::ComputedValue, Self::Error> {
-        let Node {
-            data,
-            type_,
-            metadata,
-        } = node::reduce(code);
-
-        Ok(ComputedValue {
-            type_: type_.unwrap(),
-            encoded_value: todo!(),
-        })
+    fn run(&self, code: &Node) -> Result<Node, Self::Error> {
+        Ok(node::reduce(code).to_owned())
     }
 }

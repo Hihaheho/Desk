@@ -1,6 +1,6 @@
 use language::abstract_syntax_tree::node::{Node, NodeData};
 
-pub fn reduce(node: Node) -> Node {
+pub fn reduce(node: &Node) -> &Node {
     use NodeData::*;
     match &node.data {
         Literal { value } => node,

@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use bevy::prelude::*;
-use protocol::id::create_consistent_id;
+use language::abstract_syntax_tree::node::Node;
+use runtime::Runtime;
+use simple_traverse_runtime::SimpleTraverseRuntime;
 
 pub struct RuntimePlugin;
 
@@ -11,10 +11,9 @@ impl Plugin for RuntimePlugin {
     }
 }
 
-fn run(mut commands: Commands, query: Query<(Entity, &IR), Changed<IR>>) {
+fn run(mut commands: Commands, query: Query<(Entity, &Node), Changed<Node>>) {
+    let runtime = SimpleTraverseRuntime;
     for (entity, code) in query.iter() {
-        commands
-            .entity(entity)
-            .insert(prototype::compute_on_stack(code));
+        commands.entity(entity).insert(runtime.run(code));
     }
 }

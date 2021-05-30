@@ -1,8 +1,11 @@
-use language::abstract_syntax_tree::node::{
-    BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData,
+use language::{
+    abstract_syntax_tree::node::{
+        BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData,
+    },
+    type_::Type,
 };
 
-pub fn reduce(operator: BinaryOperator, operands: (Node, Node)) -> Node {
+pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
     use BinaryOperator::*;
     match operator {
         Arithmetic(arithmetic_operator) => {
@@ -32,9 +35,9 @@ pub fn reduce(operator: BinaryOperator, operands: (Node, Node)) -> Node {
                             },
                         ) => Node {
                             data: NodeData::Literal {
-                                value: LiteralValue::Number(left + right),
+                                value: LiteralValue::Number(left.to_owned() + right.to_owned()),
                             },
-                            type_: None,
+                            type_: Type::Number,
                             metadata: 0,
                         },
                         _ => todo!(),
@@ -49,8 +52,11 @@ pub fn reduce(operator: BinaryOperator, operands: (Node, Node)) -> Node {
 
 #[cfg(test)]
 mod test {
-    use language::abstract_syntax_tree::node::{
-        BinaryArithmeticOperator, LiteralValue, NodeData, NumberLiteral,
+    use language::{
+        abstract_syntax_tree::node::{
+            BinaryArithmeticOperator, LiteralValue, NodeData, NumberLiteral,
+        },
+        type_::Type,
     };
 
     use super::*;
@@ -61,27 +67,27 @@ mod test {
             data: NodeData::Literal {
                 value: LiteralValue::Number(NumberLiteral::Integer(1)),
             },
-            type_: None,
+            type_: Type::Number,
             metadata: 0,
         };
         let two = Node {
             data: NodeData::Literal {
                 value: LiteralValue::Number(NumberLiteral::Integer(2)),
             },
-            type_: None,
+            type_: Type::Number,
             metadata: 0,
         };
         let three = Node {
             data: NodeData::Literal {
                 value: LiteralValue::Number(NumberLiteral::Integer(3)),
             },
-            type_: None,
+            type_: Type::Number,
             metadata: 0,
         };
         assert_eq!(
             reduce(
                 BinaryOperator::Arithmetic(BinaryArithmeticOperator::Add),
-                (one, two)
+                (&one, &two)
             ),
             three
         );

@@ -33,13 +33,8 @@ pub enum NumberLiteral {
 #[derive(Clone, PartialEq, Debug)]
 pub struct Node {
     pub data: NodeData,
-    pub type_: Option<Type>,
+    pub type_: Type,
     pub metadata: u64,
-}
-
-#[derive(Default, Clone, PartialEq, Debug)]
-pub struct NodeMetadata {
-    pub inferred_type: Option<Type>,
 }
 
 /// An enum for an AST Node without type annotation itself.
