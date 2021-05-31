@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use editor::card::Computed;
 use language::abstract_syntax_tree::node::Node;
 use runtime::Runtime;
 use simple_traverse_runtime::SimpleTraverseRuntime;
@@ -14,6 +15,8 @@ impl Plugin for RuntimePlugin {
 fn run(mut commands: Commands, query: Query<(Entity, &Node), Changed<Node>>) {
     let runtime = SimpleTraverseRuntime;
     for (entity, code) in query.iter() {
-        commands.entity(entity).insert(runtime.run(code));
+        commands
+            .entity(entity)
+            .insert(Computed(runtime.run(code).unwrap()));
     }
 }

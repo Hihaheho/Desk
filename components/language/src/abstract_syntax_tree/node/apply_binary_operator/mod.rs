@@ -1,9 +1,9 @@
-use language::{
-    abstract_syntax_tree::node::{
-        BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData,
-    },
-    type_::Type,
-};
+mod add;
+
+use crate::type_::Type;
+
+use super::{sugar, BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData};
+use add::*;
 
 pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
     use BinaryOperator::*;
@@ -35,10 +35,10 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
                             },
                         ) => Node {
                             data: NodeData::Literal {
-                                value: LiteralValue::Number(left.to_owned() + right.to_owned()),
+                                value: LiteralValue::Number(left.add(&right)),
                             },
                             type_: Type::Number,
-                            metadata: 0,
+                            metadata: None,
                         },
                         _ => todo!(),
                     }
@@ -52,44 +52,16 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
 
 #[cfg(test)]
 mod test {
-    use language::{
-        abstract_syntax_tree::node::{
-            BinaryArithmeticOperator, LiteralValue, NodeData, NumberLiteral,
-        },
-        type_::Type,
-    };
-
     use super::*;
 
     #[test]
     fn add_numbers() {
-        let one = Node {
-            data: NodeData::Literal {
-                value: LiteralValue::Number(NumberLiteral::Integer(1)),
-            },
-            type_: Type::Number,
-            metadata: 0,
-        };
-        let two = Node {
-            data: NodeData::Literal {
-                value: LiteralValue::Number(NumberLiteral::Integer(2)),
-            },
-            type_: Type::Number,
-            metadata: 0,
-        };
-        let three = Node {
-            data: NodeData::Literal {
-                value: LiteralValue::Number(NumberLiteral::Integer(3)),
-            },
-            type_: Type::Number,
-            metadata: 0,
-        };
         assert_eq!(
             reduce(
                 BinaryOperator::Arithmetic(BinaryArithmeticOperator::Add),
-                (&one, &two)
+                (&sugar::integer(1), &sugar::integer(2))
             ),
-            three
+            sugar::integer(3)
         );
     }
 }

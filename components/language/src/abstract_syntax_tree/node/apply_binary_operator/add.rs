@@ -1,10 +1,8 @@
-use std::ops::Add;
+use crate::abstract_syntax_tree::node::NumberLiteral;
+use NumberLiteral::*;
 
-use super::NumberLiteral::*;
-
-impl Add for super::NumberLiteral {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
+impl NumberLiteral {
+    pub fn add(&self, other: &Self) -> Self {
         match (self, other) {
             (Integer(left), Integer(right)) => Integer(left + right),
             _ => todo!(),
@@ -18,6 +16,6 @@ mod test {
 
     #[test]
     pub fn add_integers() {
-        assert_eq!(Integer(1) + Integer(2), Integer(3));
+        assert_eq!(Integer(1).add(&Integer(2)), Integer(3));
     }
 }

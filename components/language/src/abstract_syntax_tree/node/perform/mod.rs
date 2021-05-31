@@ -1,4 +1,4 @@
-use language::abstract_syntax_tree::node::Node;
+use super::Node;
 
 pub fn reduce(effect: &Node, argument: &Node) -> Node {
     todo!()

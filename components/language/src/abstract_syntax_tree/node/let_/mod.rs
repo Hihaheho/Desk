@@ -1,4 +1,4 @@
-use language::abstract_syntax_tree::node::{Identifier, Node};
+use super::{Identifier, Node};
 
 pub fn reduce(variable: &Identifier, value: &Node, expression: &Node) -> Node {
     todo!()

@@ -19,3 +19,4 @@ wasm_runtime = { package = "desk-runtime-wasm", path = "../adapters/runtime-wasm
 
 bevy = "0.5"
 bevy_egui = "0.4"
+heron = { version = "0.7.0", default-features = false, features = ["2d"] }

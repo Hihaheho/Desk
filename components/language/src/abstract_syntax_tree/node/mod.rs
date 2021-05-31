@@ -1,6 +1,11 @@
-mod number_literal;
-
-use std::any::Any;
+mod apply_binary_operator;
+mod apply_function;
+mod apply_unary_operator;
+mod handle;
+mod let_;
+mod node;
+mod perform;
+pub mod sugar;
 
 use crate::type_::Type;
 
@@ -34,7 +39,7 @@ pub enum NumberLiteral {
 pub struct Node {
     pub data: NodeData,
     pub type_: Type,
-    pub metadata: u64,
+    pub metadata: Option<u16>,
 }
 
 /// An enum for an AST Node without type annotation itself.
@@ -88,7 +93,7 @@ pub enum UnaryOperator {
     Abs,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum BinaryOperator {
     Arithmetic(BinaryArithmeticOperator),
     Logical(BinaryLogicalOperator),
@@ -96,7 +101,7 @@ pub enum BinaryOperator {
     IndexString,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 /// Binary arithmetic operators
 pub enum BinaryArithmeticOperator {
     /// + Addition
@@ -111,7 +116,7 @@ pub enum BinaryArithmeticOperator {
     Mod,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 /// Binary logical operators
 pub enum BinaryLogicalOperator {
     And,
@@ -133,4 +138,20 @@ pub enum ComparisonOperator {
     Ge,
     /// <= Less than or equal to
     Le,
+}
+
+impl Node {
+    pub fn reduce(&self) -> Node {
+        node::reduce(self)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::abstract_syntax_tree::node::sugar;
+
+    #[test]
+    fn reduce() {
+        assert_eq!(sugar::integer(2).reduce(), sugar::integer(2))
+    }
 }

@@ -1,4 +1,4 @@
-use language::abstract_syntax_tree::node::{Node, UnaryOperator};
+use super::{Node, UnaryOperator};
 
 pub fn reduce(operator: &UnaryOperator, operand: &Node) -> Node {
     todo!()

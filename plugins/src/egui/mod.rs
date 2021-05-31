@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext, EguiPlugin};
 use editor::card::{Card, Computed};
+use heron::prelude::*;
 use language::abstract_syntax_tree::node::{LiteralValue, Node, NodeData, NumberLiteral};
 
 struct CardPlugin;
@@ -13,11 +14,17 @@ impl Plugin for CardPlugin {
 
 fn show_card(
     egui_context: ResMut<EguiContext>,
-    mut query: Query<(&mut Card, Option<&Computed>, Option<&Node>)>,
+    mut query: Query<(
+        &Card,
+        &Transform,
+        &mut Velocity,
+        Option<&Computed>,
+        Option<&Node>,
+    )>,
 ) {
     let ctx = egui_context.ctx();
-    for (mut card, computed, node) in query.iter_mut() {
-        let pos = card.position;
+    for (card, transform, mut velocity, computed, _node) in query.iter_mut() {
+        let pos = transform.translation;
 
         let card_widget = egui::Area::new(card.card_id.clone())
             .movable(true)
@@ -31,14 +38,18 @@ fn show_card(
                         } => {
                             ui.label(format!("{:?}", value));
                         }
-                        _ => {}
+                        _ => {
+                            todo!()
+                        }
                     };
                 }
             });
 
         let delta = card_widget.drag_delta();
         // TODO use systems.
-        card.position += Vec2::new(delta.x, delta.y);
+
+        velocity.linear.x = delta.x;
+        velocity.linear.y = delta.y;
     }
 }
 
