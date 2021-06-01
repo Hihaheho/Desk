@@ -1,6 +1,14 @@
+use std::ops::RangeInclusive;
+
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContext, EguiPlugin};
-use editor::card::{Card, Computed};
+use bevy_egui::{
+    egui::{self, Slider},
+    EguiContext, EguiPlugin,
+};
+use editor::{
+    card::{Card, Computed},
+    widget::Widget,
+};
 use heron::prelude::*;
 use language::abstract_syntax_tree::node::{LiteralValue, Node, NodeData, NumberLiteral};
 
@@ -14,16 +22,17 @@ impl Plugin for CardPlugin {
 
 fn show_card(
     egui_context: ResMut<EguiContext>,
+    time: Res<Time>,
     mut query: Query<(
         &Card,
         &Transform,
         &mut Velocity,
-        Option<&Computed>,
-        Option<&Node>,
+        &mut CollisionShape,
+        &Widget,
     )>,
 ) {
     let ctx = egui_context.ctx();
-    for (card, transform, mut velocity, computed, _node) in query.iter_mut() {
+    for (card, transform, mut velocity, mut shape, widget) in query.iter_mut() {
         let pos = transform.translation;
 
         let card_widget = egui::Area::new(card.card_id.clone())
@@ -31,25 +40,34 @@ fn show_card(
             .current_pos(egui::pos2(pos.x, pos.y))
             .show(ctx, |ui| {
                 ui.label("card");
-                if let Some(computed) = computed {
-                    match computed.0.data {
-                        NodeData::Literal {
-                            value: LiteralValue::Number(NumberLiteral::Integer(value)),
-                        } => {
-                            ui.label(format!("{:?}", value));
+                match widget {
+                    Widget::InputNumber { value, target } => match value {
+                        NumberLiteral::Float(value) => {
+                            let mut value = value.to_owned();
+                            ui.add(Slider::new(&mut value, 0.0..=10.0));
                         }
-                        _ => {
+                        NumberLiteral::Integer(value) => {
+                            let mut value = value.to_owned();
+                            ui.add(Slider::new(&mut value, 0..=10));
+                        }
+                        NumberLiteral::Rational(_, _) => {
                             todo!()
                         }
-                    };
-                }
+                    },
+                    Widget::Unit => {}
+                    Widget::InputString { value, target } => {}
+                };
             });
 
+        let width = card_widget.rect.width();
+        let height = card_widget.rect.height();
+        *shape = CollisionShape::Cuboid {
+            half_extends: Vec3::new(width, height, 0.0),
+        };
         let delta = card_widget.drag_delta();
         // TODO use systems.
-
-        velocity.linear.x = delta.x;
-        velocity.linear.y = delta.y;
+        velocity.linear.x = delta.x / time.delta_seconds();
+        velocity.linear.y = delta.y / time.delta_seconds();
     }
 }
 

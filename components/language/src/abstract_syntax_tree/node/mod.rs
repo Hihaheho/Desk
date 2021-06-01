@@ -30,8 +30,8 @@ pub enum LiteralValue {
 #[derive(Clone, PartialEq, Debug)]
 pub enum NumberLiteral {
     /// integer, rational number, or float
-    Integer(i64), // num-bigint?
-    Rational(i64, i64),
+    Integer(i32), // num-bigint?
+    Rational(i32, i32),
     Float(f64), // bigdecimal?
 }
 

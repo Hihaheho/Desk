@@ -12,12 +12,21 @@ pub fn node(data: NodeData, type_: Type) -> Node {
     }
 }
 
-pub fn integer(value: i64) -> Node {
+pub fn integer(value: i32) -> Node {
     node(
         NodeData::Literal {
             value: LiteralValue::Number(NumberLiteral::Integer(value)),
         },
         Type::Number,
+    )
+}
+
+pub fn string(value: impl Into<String>) -> Node {
+    node(
+        NodeData::Literal {
+            value: LiteralValue::String(value.into()),
+        },
+        Type::String,
     )
 }
 
