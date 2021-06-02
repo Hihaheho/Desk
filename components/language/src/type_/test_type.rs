@@ -3,16 +3,16 @@ use super::*;
 #[test]
 fn product() {
     assert_eq!(
-        Type::product(vec![Type::Number, Type::String, Type::Bool]),
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool]))
+        Type::product(vec![Type::Number, Type::String]),
+        Type::Product(Set::new(vec![Type::Number, Type::String]))
     );
 }
 
 #[test]
 fn sum() {
     assert_eq!(
-        Type::sum(vec![Type::Number, Type::String, Type::Bool]),
-        Type::Sum(Set::new(vec![Type::Number, Type::String, Type::Bool]))
+        Type::sum(vec![Type::Number, Type::String]),
+        Type::Sum(Set::new(vec![Type::Number, Type::String]))
     );
 }
 
@@ -72,12 +72,7 @@ fn is_subtype_of_returns_true_if_unit() {
 
 #[test]
 fn is_subtype_of_returns_false_if_not_equals() {
-    assert!(!Type::Unit.is_subtype_of(&Type::Bool));
-}
-
-#[test]
-fn is_subtype_of_returns_true_if_bool() {
-    assert!(Type::Bool.is_subtype_of(&Type::Bool));
+    assert!(!Type::Unit.is_subtype_of(&Type::Number));
 }
 
 #[test]
@@ -102,21 +97,30 @@ fn is_subtype_of_returns_false_if_label_is_not_equal() {
 
 #[test]
 fn is_subtype_of_returns_true_if_product_is_superset() {
-    assert!(
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool]))
-            .is_subtype_of(&Type::Product(Set::new(vec![Type::Number, Type::Bool])))
-    );
+    assert!(Type::Product(Set::new(vec![
+        Type::Number,
+        Type::String,
+        Type::Label("a".to_string())
+    ]))
+    .is_subtype_of(&Type::Product(Set::new(vec![
+        Type::Number,
+        Type::Label("a".to_string())
+    ]))));
 }
 
 #[test]
 fn is_subtype_of_returns_false_if_product_is_not_superset() {
     assert!(!Type::Product(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::Bool])),
+        Type::Product(Set::new(vec![Type::Number, Type::Label("a".to_string())])),
     ]))
     .is_subtype_of(&Type::Product(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Product(Set::new(vec![
+            Type::Number,
+            Type::String,
+            Type::Label("a".to_string())
+        ])),
     ]))));
 }
 
@@ -124,20 +128,28 @@ fn is_subtype_of_returns_false_if_product_is_not_superset() {
 fn is_subtype_of_returns_true_if_all_elements_of_product_are_subtype() {
     assert!(Type::Product(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Product(Set::new(vec![
+            Type::Number,
+            Type::String,
+            Type::Label("a".to_string())
+        ])),
     ]))
     .is_subtype_of(&Type::Product(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::Bool])),
+        Type::Product(Set::new(vec![Type::Number, Type::Label("a".to_string())])),
     ]))));
 }
 
 #[test]
 fn is_subtype_of_returns_true_if_sum_is_subset() {
     assert!(
-        Type::Sum(Set::new(vec![Type::Number, Type::Bool])).is_subtype_of(&Type::Sum(Set::new(
-            vec![Type::Number, Type::String, Type::Bool]
-        )))
+        Type::Sum(Set::new(vec![Type::Number, Type::Label("a".to_string())])).is_subtype_of(
+            &Type::Sum(Set::new(vec![
+                Type::Number,
+                Type::String,
+                Type::Label("a".to_string())
+            ]))
+        )
     );
 }
 
@@ -157,44 +169,69 @@ fn is_subtype_of_returns_false_if_sum_is_not_subset() {
 fn is_subtype_of_returns_true_if_all_elements_of_sum_are_subtype() {
     assert!(Type::Sum(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Product(Set::new(vec![
+            Type::Number,
+            Type::String,
+            Type::Label("a".to_string())
+        ])),
     ]))
     .is_subtype_of(&Type::Sum(Set::new(vec![
         Type::Number,
-        Type::Product(Set::new(vec![Type::Number, Type::Bool])),
+        Type::Product(Set::new(vec![Type::Number, Type::Label("a".to_string())])),
     ]))));
 }
 
 #[test]
 fn is_subtype_of_returns_true_if_product_contains_subtype() {
-    assert!(Type::Product(Set::new(vec![Type::Number, Type::Bool])).is_subtype_of(&Type::Number));
+    assert!(
+        Type::Product(Set::new(vec![Type::Number, Type::Label("a".to_string())]))
+            .is_subtype_of(&Type::Number)
+    );
 
     assert!(Type::Product(Set::new(vec![
-        Type::Product(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Product(Set::new(vec![
+            Type::Number,
+            Type::String,
+            Type::Label("a".to_string())
+        ])),
         Type::Number,
     ]))
-    .is_subtype_of(&Type::Product(Set::new(vec![Type::Number, Type::Bool]))));
+    .is_subtype_of(&Type::Product(Set::new(vec![
+        Type::Number,
+        Type::Label("a".to_string())
+    ]))));
 }
 
 #[test]
 fn is_subtype_of_returns_true_if_supertype_is_included_in_sum() {
-    assert!(Type::Number.is_subtype_of(&Type::Sum(Set::new(vec![Type::Number, Type::Bool]))));
+    assert!(Type::Number.is_subtype_of(&Type::Sum(Set::new(vec![
+        Type::Number,
+        Type::Label("a".to_string())
+    ]))));
     assert!(
-        Type::Sum(Set::new(vec![Type::Number, Type::Bool])).is_subtype_of(&Type::Sum(Set::new(
-            vec![
-                Type::Sum(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Sum(Set::new(vec![Type::Number, Type::Label("a".to_string())])).is_subtype_of(
+            &Type::Sum(Set::new(vec![
+                Type::Sum(Set::new(vec![
+                    Type::Number,
+                    Type::String,
+                    Type::Label("a".to_string())
+                ])),
                 Type::Number,
-            ]
-        )))
+            ]))
+        )
     );
 
     assert!(
-        Type::Sum(Set::new(vec![Type::Number, Type::Bool])).is_subtype_of(&Type::Sum(Set::new(
-            vec![
-                Type::Sum(Set::new(vec![Type::Number, Type::String, Type::Bool])),
+        Type::Sum(Set::new(vec![Type::Number, Type::Label("a".to_string())])).is_subtype_of(
+            &Type::Sum(Set::new(vec![
+                Type::Sum(Set::new(vec![
+                    Type::Number,
+                    Type::String,
+                    Type::Label("a".to_string())
+                ])),
                 Type::Number,
-            ]
-        )))
+            ]))
+        )
     );
 }
 
@@ -221,31 +258,46 @@ fn is_subtype_of_returns_true_if_array_item_is_subtype() {
 fn is_subtype_of_returns_true_if_function_is_subtype() {
     assert!(Type::Function(Arrow::new(
         Type::Number,
-        Type::product(vec![Type::Number, Type::Bool]),
+        Type::product(vec![Type::Number, Type::Label("a".to_string())]),
     ))
-    .is_subtype_of(&Type::Function(Arrow::new(Type::Number, Type::Bool))));
+    .is_subtype_of(&Type::Function(Arrow::new(
+        Type::Number,
+        Type::Label("a".to_string())
+    ))));
 }
 
 #[test]
 fn is_subtype_of_returns_false_if_function_is_not_subtype() {
     assert!(!Type::Function(Arrow::new(
-        Type::product(vec![Type::Number, Type::Bool]),
+        Type::product(vec![Type::Number, Type::Label("a".to_string())]),
         Type::Number,
     ))
-    .is_subtype_of(&Type::Function(Arrow::new(Type::Number, Type::Bool))));
+    .is_subtype_of(&Type::Function(Arrow::new(
+        Type::Number,
+        Type::Label("a".to_string())
+    ))));
 }
 
 #[test]
 fn is_subtype_of_returns_true_if_trait_is_subtype() {
     assert!(Trait::new(vec![
-        Arrow::new(Type::sum(vec![Type::String, Type::Number]), Type::Bool),
+        Arrow::new(
+            Type::sum(vec![Type::String, Type::Number]),
+            Type::Label("a".to_string())
+        ),
         Arrow::new(Type::Number, Type::String)
     ])
-    .is_subtype_of(&Trait::new(vec![Arrow::new(Type::Number, Type::Bool)])));
+    .is_subtype_of(&Trait::new(vec![Arrow::new(
+        Type::Number,
+        Type::Label("a".to_string())
+    )])));
 }
 
 #[test]
 fn is_subtype_of_returns_false_if_trait_is_not_subtype() {
-    assert!(!Trait::new(vec![Arrow::new(Type::Number, Type::Bool)])
-        .is_subtype_of(&Trait::new(vec![Arrow::new(Type::Bool, Type::Number)])));
+    assert!(
+        !Trait::new(vec![Arrow::new(Type::Number, Type::Label("a".to_string()))]).is_subtype_of(
+            &Trait::new(vec![Arrow::new(Type::Label("a".to_string()), Type::Number)])
+        )
+    );
 }

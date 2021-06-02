@@ -6,7 +6,6 @@ pub enum Type {
     Unit,
     /// Type label
     Label(String),
-    Bool,
     String,
     /// integer, rational, or float
     Number,
