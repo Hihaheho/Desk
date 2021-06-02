@@ -1,21 +1,34 @@
 mod create;
 
+use bevy_math::Vec2;
 pub use create::*;
 use editor::{
     card::{Card, Computed},
-    widget::{Target, Widget},
+    widget::{Component, Target, Widget},
 };
 use language::abstract_syntax_tree::{
     node::{Node, NodeData},
-    operation::NodeOperation,
     path::NodePath,
 };
 
-pub fn render_card(card: &Card, node: &Node, computed: Option<&Computed>) -> Option<Widget> {
+pub fn render_card(
+    card: &Card,
+    node: &Node,
+    computed: Option<&Computed>,
+    position: Vec2,
+) -> Option<Widget> {
     use NodeData::*;
+    let id = card.card_id.to_string();
     match &node.data {
         Literal { value } => match value {
-            language::abstract_syntax_tree::node::LiteralValue::Unit => return Some(Widget::Unit),
+            language::abstract_syntax_tree::node::LiteralValue::Unit => {
+                return Some(Widget {
+                    id,
+                    position,
+                    shape: None,
+                    component: Component::Unit,
+                })
+            }
             language::abstract_syntax_tree::node::LiteralValue::Label(_) => {
                 todo!()
             }
@@ -23,20 +36,30 @@ pub fn render_card(card: &Card, node: &Node, computed: Option<&Computed>) -> Opt
                 todo!()
             }
             language::abstract_syntax_tree::node::LiteralValue::String(value) => {
-                return Some(Widget::InputString {
-                    value: value.to_owned(),
-                    target: Target {
-                        card_id: card.card_id,
-                        node_path: NodePath::new(vec![]),
+                return Some(Widget {
+                    id,
+                    position,
+                    shape: None,
+                    component: Component::InputString {
+                        value: value.to_owned(),
+                        target: Target {
+                            card_id: card.card_id,
+                            node_path: NodePath::new(vec![]),
+                        },
                     },
                 })
             }
             language::abstract_syntax_tree::node::LiteralValue::Number(value) => {
-                return Some(Widget::InputNumber {
-                    value: value.to_owned(),
-                    target: Target {
-                        card_id: card.card_id,
-                        node_path: NodePath::new(vec![]),
+                return Some(Widget {
+                    id,
+                    position,
+                    shape: None,
+                    component: Component::InputNumber {
+                        value: value.to_owned(),
+                        target: Target {
+                            card_id: card.card_id,
+                            node_path: NodePath::new(vec![]),
+                        },
                     },
                 })
             }

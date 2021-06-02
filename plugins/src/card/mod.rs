@@ -65,9 +65,12 @@ fn create_card_system(mut commands: Commands) {
         .insert(Velocity::default());
 }
 
-fn card_rendering(mut commands: Commands, query: Query<(Entity, &Card, &Node, Option<&Computed>)>) {
-    for (entity, card, node, computed) in query.iter() {
-        if let Some(widget) = render_card(card, node, computed) {
+fn card_rendering(
+    mut commands: Commands,
+    query: Query<(Entity, &Card, &Node, Option<&Computed>, &Transform)>,
+) {
+    for (entity, card, node, computed, transform) in query.iter() {
+        if let Some(widget) = render_card(card, node, computed, transform.translation.into()) {
             commands.entity(entity).insert(widget);
         }
     }

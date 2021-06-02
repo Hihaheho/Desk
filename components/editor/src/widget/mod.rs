@@ -1,5 +1,12 @@
+pub mod backend;
+pub mod operation;
+pub mod shape;
+
+use bevy_math::{Rect, Vec2};
 use language::abstract_syntax_tree::{node::NumberLiteral, path::NodePath};
 use protocol::card_id::CardId;
+
+use self::shape::Shape;
 
 #[derive(Clone, Debug)]
 pub struct Target {
@@ -8,7 +15,15 @@ pub struct Target {
 }
 
 #[derive(Clone, Debug)]
-pub enum Widget {
+pub struct Widget {
+    pub id: String,
+    pub position: Vec2,
+    pub shape: Option<Shape>,
+    pub component: Component,
+}
+
+#[derive(Clone, Debug)]
+pub enum Component {
     Unit,
     InputString {
         value: String,

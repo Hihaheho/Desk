@@ -407,7 +407,7 @@ checksum = "f3de8da8d35ee092c04816725eb9ab9f4dc809f0c1ad2cda4de74042fa8a3454"
 dependencies = [
  "bevy",
  "clipboard",
- "egui",
+ "egui 0.11.0",
  "thread_local",
  "webbrowser",
  "winit",
@@ -1561,6 +1561,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-widget-backend-egui"
+version = "0.1.0"
+dependencies = [
+ "bevy_math",
+ "desk-editor",
+ "desk-language",
+ "egui 0.12.0",
+]
+
+[[package]]
 name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1594,7 +1604,16 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d7d6535c3ecdc8627a72c1c52d052d66cd9f71c238428690cc46bef9d1f2bce"
 dependencies = [
- "epaint",
+ "epaint 0.11.0",
+]
+
+[[package]]
+name = "egui"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "788148861d80b87d28d64440a3d31cae190e50ccc3ea585597466d38428365d7"
+dependencies = [
+ "epaint 0.12.0",
 ]
 
 [[package]]
@@ -1608,6 +1627,12 @@ name = "emath"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4ed72c14666517e5c0198490864adea871081abe4f5523af8c3f4f56595142e"
+
+[[package]]
+name = "emath"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e73d6c8c70eadb71756fbbc3c303ab25e163b46b656886dd250de5636efea12"
 
 [[package]]
 name = "enumset"
@@ -1648,7 +1673,20 @@ checksum = "2a19eff631454edbe5abe4693be00be0c1ea9832d727dc385c16841caa2d0162"
 dependencies = [
  "ahash 0.7.2",
  "atomic_refcell",
- "emath",
+ "emath 0.11.0",
+ "ordered-float",
+ "rusttype",
+]
+
+[[package]]
+name = "epaint"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80e2db640801230bdda80629bc3a063927a462f5eaf38a98da676954e78ccb99"
+dependencies = [
+ "ahash 0.7.2",
+ "atomic_refcell",
+ "emath 0.12.0",
  "ordered-float",
  "rusttype",
 ]
