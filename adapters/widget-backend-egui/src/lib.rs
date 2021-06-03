@@ -2,24 +2,25 @@ use bevy_math::Vec2;
 use editor::widget::{
     backend::{RenderResponse, WidgetBackend},
     operation::WidgetOperation,
+    shape::Shape,
     Component, Widget,
 };
-use language::abstract_syntax_tree::node::NumberLiteral;
+use language::code::node::NumberLiteral;
 
-pub struct EguiBackend {
-    operation_buffer: Vec<WidgetOperation>,
-    ctx: egui::CtxRef,
-    delta_time: f32,
+pub struct EguiBackend<'a> {
+    pub ctx: &'a egui::CtxRef,
+    pub delta_seconds: f32,
 }
 
-impl WidgetBackend for EguiBackend {
+impl<'a> WidgetBackend for EguiBackend<'a> {
     type OperationIterator = std::vec::IntoIter<WidgetOperation>;
 
     fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator> {
+        let mut operation_buffer = vec![];
         let card_widget = egui::Area::new(widget.id.as_str())
             .movable(true)
             .current_pos(egui::pos2(widget.position.x, widget.position.y))
-            .show(&self.ctx, |ui| {
+            .show(self.ctx, |ui| {
                 ui.label("card");
 
                 use Component::*;
@@ -44,12 +45,19 @@ impl WidgetBackend for EguiBackend {
 
         let width = card_widget.rect.width();
         let height = card_widget.rect.height();
+        let shape = Shape::Rect { width, height };
         // *shape = CollisionShape::Cuboid {
         //     half_extends: Vec3::new(width, height, 0.0),
         // };
         let delta = card_widget.drag_delta();
         // TODO use systems.
-        let velocity = Vec2::new(delta.x, delta.y) / self.delta_time;
-        todo!()
+        let velocity = Vec2::new(delta.x, delta.y) / self.delta_seconds;
+
+        RenderResponse {
+            position: widget.position,
+            velocity,
+            shape,
+            operations: operation_buffer.into_iter(),
+        }
     }
 }

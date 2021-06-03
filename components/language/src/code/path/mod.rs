@@ -27,7 +27,7 @@ impl Node {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::abstract_syntax_tree::node::sugar;
+    use crate::code::node::sugar;
 
     #[test]
     fn get_by_path() {

@@ -1,4 +1,4 @@
-use crate::abstract_syntax_tree::node::NumberLiteral;
+use crate::code::node::NumberLiteral;
 use NumberLiteral::*;
 
 impl NumberLiteral {

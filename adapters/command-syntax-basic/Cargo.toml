@@ -1,0 +1,11 @@
+[package]
+name = "desk-command-syntax-basic"
+description = "A BASIC-like syntax for desk commands"
+version = "0.1.0"
+authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+editor = { package = "desk-editor", path = "../../components/editor" }

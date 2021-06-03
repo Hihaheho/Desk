@@ -1,4 +1,4 @@
-use crate::abstract_syntax_tree::node::apply_binary_operator;
+use crate::code::node::apply_binary_operator;
 
 use super::{Node, NodeData};
 
@@ -47,7 +47,7 @@ pub fn reduce(node: &Node) -> Node {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::abstract_syntax_tree::node::sugar;
+    use crate::code::node::sugar;
 
     #[test]
     fn literal() {

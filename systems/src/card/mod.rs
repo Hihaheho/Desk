@@ -6,7 +6,7 @@ use editor::{
     card::{Card, Computed},
     widget::{Component, Target, Widget},
 };
-use language::abstract_syntax_tree::{
+use language::code::{
     node::{Node, NodeData},
     path::NodePath,
 };
@@ -21,7 +21,7 @@ pub fn render_card(
     let id = card.card_id.to_string();
     match &node.data {
         Literal { value } => match value {
-            language::abstract_syntax_tree::node::LiteralValue::Unit => {
+            language::code::node::LiteralValue::Unit => {
                 return Some(Widget {
                     id,
                     position,
@@ -29,13 +29,13 @@ pub fn render_card(
                     component: Component::Unit,
                 })
             }
-            language::abstract_syntax_tree::node::LiteralValue::Label(_) => {
+            language::code::node::LiteralValue::Label(_) => {
                 todo!()
             }
-            language::abstract_syntax_tree::node::LiteralValue::Bool(_) => {
+            language::code::node::LiteralValue::Bool(_) => {
                 todo!()
             }
-            language::abstract_syntax_tree::node::LiteralValue::String(value) => {
+            language::code::node::LiteralValue::String(value) => {
                 return Some(Widget {
                     id,
                     position,
@@ -49,7 +49,7 @@ pub fn render_card(
                     },
                 })
             }
-            language::abstract_syntax_tree::node::LiteralValue::Number(value) => {
+            language::code::node::LiteralValue::Number(value) => {
                 return Some(Widget {
                     id,
                     position,
@@ -63,16 +63,16 @@ pub fn render_card(
                     },
                 })
             }
-            language::abstract_syntax_tree::node::LiteralValue::Array(_) => {
+            language::code::node::LiteralValue::Array(_) => {
                 todo!()
             }
-            language::abstract_syntax_tree::node::LiteralValue::Product(_) => {
+            language::code::node::LiteralValue::Product(_) => {
                 todo!()
             }
-            language::abstract_syntax_tree::node::LiteralValue::Sum(_) => {
+            language::code::node::LiteralValue::Sum(_) => {
                 todo!()
             }
-            language::abstract_syntax_tree::node::LiteralValue::Type(_) => {
+            language::code::node::LiteralValue::Type(_) => {
                 todo!()
             }
         },

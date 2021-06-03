@@ -1,4 +1,4 @@
-use language::abstract_syntax_tree::node::Node;
+use language::code::node::Node;
 
 pub trait Runtime {
     type Code;

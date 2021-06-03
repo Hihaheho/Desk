@@ -16,7 +16,8 @@ language = { package = "desk-language", path = "../components/language" }
 protocol = { package = "desk-protocol", path = "../components/protocol" }
 simple_traverse_runtime = { package = "desk-runtime-simple-traverse", path = "../adapters/runtime-simple-traverse" }
 wasm_runtime = { package = "desk-runtime-wasm", path = "../adapters/runtime-wasm" }
+egui_backend = { package = "desk-widget-backend-egui", path = "../adapters/widget-backend-egui" }
 
 bevy = "0.5"
-bevy_egui = "0.4"
+bevy_egui = "0.5"
 heron = { version = "0.7.0", default-features = false, features = ["2d"] }

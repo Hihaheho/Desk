@@ -1,5 +1,6 @@
 use super::node::{LiteralValue, Node, NodeData, NumberLiteral};
 
+#[non_exhaustive]
 pub enum NodeOperation {
     UpdateString(String),
     UpdateNumber(NumberLiteral),
@@ -41,7 +42,7 @@ impl Node {
 
 #[cfg(test)]
 mod test {
-    use crate::abstract_syntax_tree::node::sugar;
+    use crate::code::node::sugar;
 
     use super::*;
 

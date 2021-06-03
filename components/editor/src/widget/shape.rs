@@ -1,2 +1,5 @@
 #[derive(Clone, Debug)]
-pub enum Shape {}
+#[non_exhaustive]
+pub enum Shape {
+    Rect { width: f32, height: f32 },
+}

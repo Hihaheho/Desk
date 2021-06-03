@@ -1,4 +1,4 @@
-use language::abstract_syntax_tree::node::Node;
+use language::code::node::Node;
 use protocol::card_id::CardId;
 
 pub struct Card {

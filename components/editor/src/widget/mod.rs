@@ -3,7 +3,7 @@ pub mod operation;
 pub mod shape;
 
 use bevy_math::{Rect, Vec2};
-use language::abstract_syntax_tree::{node::NumberLiteral, path::NodePath};
+use language::code::{node::NumberLiteral, path::NodePath};
 use protocol::card_id::CardId;
 
 use self::shape::Shape;

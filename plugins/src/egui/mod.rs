@@ -7,10 +7,11 @@ use bevy_egui::{
 };
 use editor::{
     card::{Card, Computed},
-    widget::Widget,
+    widget::{backend::WidgetBackend, shape::Shape, Widget},
 };
+use egui_backend::EguiBackend;
 use heron::prelude::*;
-use language::abstract_syntax_tree::node::{LiteralValue, Node, NodeData, NumberLiteral};
+use language::code::node::{LiteralValue, Node, NodeData, NumberLiteral};
 
 struct CardPlugin;
 
@@ -32,7 +33,21 @@ fn show_card(
     )>,
 ) {
     let ctx = egui_context.ctx();
-    for (card, transform, mut velocity, mut shape, widget) in query.iter_mut() {}
+    for (card, transform, mut velocity, mut shape, widget) in query.iter_mut() {
+        let mut backend = EguiBackend {
+            ctx: egui_context.ctx(),
+            delta_seconds: time.delta_seconds(),
+        };
+
+        let response = backend.render(widget);
+        *velocity = response.velocity.into();
+        *shape = match response.shape {
+            Shape::Rect { width, height } => CollisionShape::Cuboid {
+                half_extends: Vec3::new(width, height, 0.0),
+            },
+            _ => todo!(),
+        }
+    }
 }
 
 pub struct EguiPlugins;

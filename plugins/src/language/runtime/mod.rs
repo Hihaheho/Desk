@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use editor::card::Computed;
-use language::abstract_syntax_tree::node::Node;
+use language::code::node::Node;
 use runtime::Runtime;
 use simple_traverse_runtime::SimpleTraverseRuntime;
 

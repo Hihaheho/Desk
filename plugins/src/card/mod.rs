@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use editor::card::{Card, Computed};
 use heron::prelude::*;
-use language::abstract_syntax_tree::node::{sugar, Node};
+use language::code::node::{sugar, Node};
 use systems::card::{create_card, render_card};
 
 pub struct CardPlugin;

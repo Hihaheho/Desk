@@ -148,7 +148,7 @@ impl Node {
 
 #[cfg(test)]
 mod test {
-    use crate::abstract_syntax_tree::node::sugar;
+    use crate::code::node::sugar;
 
     #[test]
     fn reduce() {
