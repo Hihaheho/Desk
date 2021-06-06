@@ -1,12 +1,11 @@
 pub mod backend;
 pub mod operation;
-pub mod shape;
 
-use bevy_math::{Rect, Vec2};
+use bevy_math::Vec2;
 use language::code::{node::NumberLiteral, path::NodePath};
 use protocol::card_id::CardId;
 
-use self::shape::Shape;
+use crate::physics::shape::Shape;
 
 #[derive(Clone, Debug)]
 pub struct Target {

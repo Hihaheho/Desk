@@ -1,5 +1,5 @@
 [package]
-name = "desk-server"
+name = "desk-plugin-physics-heron"
 version = "0.1.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-plugin-core = { package = "desk-plugin-core", path = "../../plugins/core" }
-plugin-egui = { package = "desk-plugin-egui", path = "../../plugins/egui" }
+editor = { package = "desk-editor", path = "../../components/editor" }
 
 bevy = "0.5"
+heron = { version = "0.7.0", default-features = false, features = ["2d"] }

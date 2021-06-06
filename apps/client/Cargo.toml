@@ -7,5 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+core = { package = "desk-plugin-core", path = "../../plugins/core" }
+physics-heron = { package = "desk-plugin-physics-heron", path = "../../plugins/physics-heron" }
+egui = { package = "desk-plugin-egui", path = "../../plugins/egui" }
+
 bevy = "0.5"
-plugins = { package = "desk-plugins", path = "../../plugins" }

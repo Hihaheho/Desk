@@ -1457,7 +1457,9 @@ name = "desk-client"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "desk-plugins",
+ "desk-plugin-core",
+ "desk-plugin-egui",
+ "desk-plugin-physics-heron",
 ]
 
 [[package]]
@@ -1501,21 +1503,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-plugins"
+name = "desk-plugin-core"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_egui",
+ "desk-architect",
  "desk-editor",
  "desk-language",
  "desk-node",
  "desk-protocol",
  "desk-runtime",
  "desk-runtime-simple-traverse",
- "desk-runtime-wasm",
  "desk-security",
  "desk-systems",
+]
+
+[[package]]
+name = "desk-plugin-egui"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "desk-editor",
+ "desk-language",
  "desk-widget-backend-egui",
+]
+
+[[package]]
+name = "desk-plugin-physics-heron"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "desk-editor",
  "heron",
 ]
 
@@ -1559,7 +1578,9 @@ version = "0.1.0"
 name = "desk-server"
 version = "0.1.0"
 dependencies = [
- "desk-plugins",
+ "bevy",
+ "desk-plugin-core",
+ "desk-plugin-egui",
 ]
 
 [[package]]
@@ -2543,18 +2564,18 @@ dependencies = [
 
 [[package]]
 name = "lyon_path"
-version = "0.17.2"
+version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eb9f73b9f7cbf1f4470b1d774f5670e0640af649e827ca84c4e556efd5c7af5"
+checksum = "73ee0fb521dc29aadb761c7bb405848673f0115d0d4f99399cc6d6e01aee80a3"
 dependencies = [
  "lyon_geom",
 ]
 
 [[package]]
 name = "lyon_tessellation"
-version = "0.17.6"
+version = "0.17.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8315610899d2d62f9ddd5722a3d41ba29349e8b63c0cfe803ba2e80230e3d5ea"
+checksum = "23ba0dd2ed50c10d5f4c63a310db56c6a7326f6bedfd6200dc3ccb7ae8a061b7"
 dependencies = [
  "arrayvec 0.5.2",
  "lyon_path",

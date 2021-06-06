@@ -1,0 +1,20 @@
+[package]
+name = "desk-plugin-core"
+version = "0.1.0"
+authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+node = { package = "desk-node", path = "../../components/node" }
+security = { package = "desk-security", path = "../../components/security" }
+runtime = { package = "desk-runtime", path = "../../components/runtime" }
+language = { package = "desk-language", path = "../../components/language" }
+protocol = { package = "desk-protocol", path = "../../components/protocol" }
+editor = { package = "desk-editor", path = "../../components/editor" }
+architect = { package = "desk-architect", path = "../../components/architect" }
+systems = { package = "desk-systems", path = "../../systems" }
+simple_traverse_runtime = { package = "desk-runtime-simple-traverse", path = "../../adapters/runtime-simple-traverse" }
+
+bevy = "0.5"

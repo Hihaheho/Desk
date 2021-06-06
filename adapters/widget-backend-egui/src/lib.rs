@@ -1,10 +1,9 @@
 use bevy_math::Vec2;
-use editor::widget::{
-    backend::{RenderResponse, WidgetBackend},
-    operation::WidgetOperation,
-    shape::Shape,
-    Component, Widget,
-};
+use editor::{physics::{Velocity, shape::Shape}, widget::{
+        backend::{RenderResponse, WidgetBackend},
+        operation::WidgetOperation,
+        Component, Widget,
+    }};
 use language::code::node::NumberLiteral;
 
 pub struct EguiBackend<'a> {
@@ -46,16 +45,12 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
         let width = card_widget.rect.width();
         let height = card_widget.rect.height();
         let shape = Shape::Rect { width, height };
-        // *shape = CollisionShape::Cuboid {
-        //     half_extends: Vec3::new(width, height, 0.0),
-        // };
         let delta = card_widget.drag_delta();
-        // TODO use systems.
         let velocity = Vec2::new(delta.x, delta.y) / self.delta_seconds;
 
         RenderResponse {
             position: widget.position,
-            velocity,
+            velocity: velocity.into(),
             shape,
             operations: operation_buffer.into_iter(),
         }

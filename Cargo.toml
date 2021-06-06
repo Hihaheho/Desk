@@ -4,6 +4,6 @@ members = [
   "adapters/*",
   "components/*",
   "systems",
-  "plugins",
+  "plugins/*",
   "apps/*"
 ]

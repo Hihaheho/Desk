@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use editor::card::{Card, Computed};
-use heron::prelude::*;
 use language::code::node::{sugar, Node};
 use systems::card::{create_card, render_card};
 
@@ -19,10 +18,6 @@ struct CardBundle {
     node: Node,
     transform: Transform,
     global_transform: GlobalTransform,
-    rigid_body: RigidBody,
-    collision_shape: CollisionShape,
-    rotation_constraints: RotationConstraints,
-    physic_material: PhysicMaterial,
 }
 
 impl Default for CardBundle {
@@ -32,42 +27,41 @@ impl Default for CardBundle {
             node: sugar::string(""),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
-            rigid_body: RigidBody::Dynamic,
-            collision_shape: CollisionShape::Cuboid {
-                half_extends: Vec3::new(1.0, 1.0, 0.0),
-            },
-            rotation_constraints: RotationConstraints::lock(),
-            physic_material: PhysicMaterial::default(),
         }
     }
 }
 
 fn create_card_system(mut commands: Commands) {
-    commands
-        .spawn_bundle(CardBundle {
-            node: sugar::add(sugar::integer(1), sugar::integer(2)),
-            ..Default::default()
-        })
-        .insert(Velocity::default());
+    commands.spawn_bundle(CardBundle {
+        node: sugar::add(sugar::integer(1), sugar::integer(2)),
+        transform: Transform::from_xyz(100.0, 10.0, 0.0),
+        ..Default::default()
+    });
 
-    commands
-        .spawn_bundle(CardBundle {
-            node: sugar::integer(1),
-            ..Default::default()
-        })
-        .insert(Velocity::default());
+    commands.spawn_bundle(CardBundle {
+        node: sugar::integer(1),
+        transform: Transform::from_xyz(200.0, 100.0, 0.0),
+        ..Default::default()
+    });
 
-    commands
-        .spawn_bundle(CardBundle {
-            node: sugar::string(""),
-            ..Default::default()
-        })
-        .insert(Velocity::default());
+    commands.spawn_bundle(CardBundle {
+        node: sugar::string(""),
+        transform: Transform::from_xyz(100.0, 200.0, 0.0),
+        ..Default::default()
+    });
 }
 
 fn card_rendering(
     mut commands: Commands,
-    query: Query<(Entity, &Card, &Node, Option<&Computed>, &Transform)>,
+    query: Query<
+        (Entity, &Card, &Node, Option<&Computed>, &Transform),
+        Or<(
+            Changed<Card>,
+            Changed<Node>,
+            Changed<Computed>,
+            Changed<Transform>,
+        )>,
+    >,
 ) {
     for (entity, card, node, computed, transform) in query.iter() {
         if let Some(widget) = render_card(card, node, computed, transform.translation.into()) {
