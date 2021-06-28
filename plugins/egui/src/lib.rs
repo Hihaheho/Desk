@@ -5,12 +5,12 @@ use bevy_egui::{
     egui::{self, Shape, Slider},
     EguiContext, EguiPlugin,
 };
-use editor::{
-    card::Card,
-    physics::Velocity,
-    widget::{backend::WidgetBackend, Widget},
-};
 use egui_backend::EguiBackend;
+use physics::{
+    widget::{backend::WidgetBackend, Widget},
+    Velocity,
+};
+use shell::card::Card;
 
 struct CardPlugin;
 

@@ -18,3 +18,7 @@ pub enum Direction {
 pub enum Distance {
     Pixel(f32),
 }
+
+pub struct Terminal {
+    
+}

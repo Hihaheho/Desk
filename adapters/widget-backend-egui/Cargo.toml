@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-editor = { package = "desk-editor", path = "../../components/editor" }
+physics = { package = "desk-physics", path = "../../components/physics" }
 language = { package = "desk-language", path = "../../components/language" }
 
 egui = "0.12.0"

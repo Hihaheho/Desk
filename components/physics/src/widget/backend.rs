@@ -1,4 +1,4 @@
-use crate::physics::{shape::Shape, Velocity};
+use crate::{shape::Shape, Velocity};
 
 use super::{operation::WidgetOperation, Vec2, Widget};
 

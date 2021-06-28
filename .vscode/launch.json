@@ -83,16 +83,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'desk-editor'",
+            "name": "Debug unit tests in library 'desk-shell'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=desk-editor"
+                    "--package=desk-shell"
                 ],
                 "filter": {
-                    "name": "desk-editor",
+                    "name": "desk-shell",
                     "kind": "lib"
                 }
             },

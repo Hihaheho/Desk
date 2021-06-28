@@ -8,7 +8,8 @@ edition = "2018"
 
 [dependencies]
 language = { package = "desk-language", path = "../../components/language" }
-editor = { package = "desk-editor", path = "../../components/editor" }
+physics = { package = "desk-physics", path = "../../components/physics" }
+shell = { package = "desk-shell", path = "../../components/shell" }
 egui-backend = { path = "../../adapters/widget-backend-egui", package = "desk-widget-backend-egui" }
 
 bevy = "0.5"

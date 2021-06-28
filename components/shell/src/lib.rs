@@ -1,15 +1,14 @@
-mod create;
+pub mod card;
+pub mod desk;
+pub mod terminal;
 
 use bevy_math::Vec2;
-pub use create::*;
-use editor::{
-    card::{Card, Computed},
-    widget::{Component, Target, Widget},
-};
-use language::code::{
-    node::{Node, NodeData},
-    path::NodePath,
-};
+use card::{Card, Computed};
+use language::code::node::{Node, NodeData};
+use physics::widget::{Component, Target, Widget};
+
+// Need this??
+pub struct Shell {}
 
 pub fn render_card(
     card: &Card,
@@ -18,7 +17,7 @@ pub fn render_card(
     position: Vec2,
 ) -> Option<Widget> {
     use NodeData::*;
-    let id = card.card_id.to_string();
+    let id = card.id.to_string().into();
     match &node.data {
         Literal { value } => match value {
             language::code::node::LiteralValue::Unit => {
@@ -42,10 +41,6 @@ pub fn render_card(
                     shape: None,
                     component: Component::InputString {
                         value: value.to_owned(),
-                        target: Target {
-                            card_id: card.card_id,
-                            node_path: NodePath::new(vec![]),
-                        },
                     },
                 })
             }
@@ -56,10 +51,6 @@ pub fn render_card(
                     shape: None,
                     component: Component::InputNumber {
                         value: value.to_owned(),
-                        target: Target {
-                            card_id: card.card_id,
-                            node_path: NodePath::new(vec![]),
-                        },
                     },
                 })
             }

@@ -1,10 +1,13 @@
 use bevy_math::Vec2;
-use editor::{physics::{Velocity, shape::Shape}, widget::{
+use language::code::node::NumberLiteral;
+use physics::{
+    shape::Shape, Velocity,
+    widget::{
         backend::{RenderResponse, WidgetBackend},
         operation::WidgetOperation,
         Component, Widget,
-    }};
-use language::code::node::NumberLiteral;
+    },
+};
 
 pub struct EguiBackend<'a> {
     pub ctx: &'a egui::CtxRef,
@@ -16,7 +19,7 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
 
     fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator> {
         let mut operation_buffer = vec![];
-        let card_widget = egui::Area::new(widget.id.as_str())
+        let card_widget = egui::Area::new(&widget.id)
             .movable(true)
             .current_pos(egui::pos2(widget.position.x, widget.position.y))
             .show(self.ctx, |ui| {
@@ -24,7 +27,7 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
 
                 use Component::*;
                 match &widget.component {
-                    InputNumber { value, target } => match value {
+                    InputNumber { value } => match value {
                         NumberLiteral::Float(value) => {
                             let mut value = value.to_owned();
                             ui.add(egui::Slider::new(&mut value, 0.0..=10.0));
@@ -38,7 +41,8 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
                         }
                     },
                     Unit => {}
-                    InputString { value, target } => {}
+                    InputString { value } => {}
+                    _ => todo!(),
                 };
             });
 

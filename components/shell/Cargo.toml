@@ -1,5 +1,5 @@
 [package]
-name = "desk-editor"
+name = "desk-shell"
 version = "0.1.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
@@ -12,5 +12,6 @@ security = { package = "desk-security", path = "../security" }
 runtime = { package = "desk-runtime", path = "../runtime" }
 language = { package = "desk-language", path = "../language" }
 protocol = { package = "desk-protocol", path = "../protocol" }
+physics = { package = "desk-physics", path = "../physics" }
 
-bevy_math = "0.5"
+bevy_math = "*"

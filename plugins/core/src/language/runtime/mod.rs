@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use editor::card::Computed;
+use shell::card::Computed;
 use language::code::node::Node;
 use runtime::Runtime;
 use simple_traverse_runtime::SimpleTraverseRuntime;

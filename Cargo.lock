@@ -1470,25 +1470,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-command-syntax-basic"
-version = "0.1.0"
-dependencies = [
- "desk-editor",
-]
-
-[[package]]
-name = "desk-editor"
-version = "0.1.0"
-dependencies = [
- "bevy_math",
- "desk-language",
- "desk-node",
- "desk-protocol",
- "desk-runtime",
- "desk-security",
-]
-
-[[package]]
 name = "desk-language"
 version = "0.1.0"
 dependencies = [
@@ -1503,19 +1484,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-physics"
+version = "0.1.0"
+dependencies = [
+ "bevy_math",
+ "desk-language",
+ "desk-protocol",
+]
+
+[[package]]
 name = "desk-plugin-core"
 version = "0.1.0"
 dependencies = [
  "bevy",
  "desk-architect",
- "desk-editor",
  "desk-language",
  "desk-node",
+ "desk-physics",
  "desk-protocol",
  "desk-runtime",
  "desk-runtime-simple-traverse",
  "desk-security",
- "desk-systems",
+ "desk-shell",
 ]
 
 [[package]]
@@ -1524,8 +1514,9 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_egui",
- "desk-editor",
  "desk-language",
+ "desk-physics",
+ "desk-shell",
  "desk-widget-backend-egui",
 ]
 
@@ -1534,7 +1525,8 @@ name = "desk-plugin-physics-heron"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "desk-editor",
+ "desk-physics",
+ "desk-shell",
  "heron",
 ]
 
@@ -1584,13 +1576,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-systems"
+name = "desk-shell"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
- "desk-editor",
  "desk-language",
  "desk-node",
+ "desk-physics",
  "desk-protocol",
  "desk-runtime",
  "desk-security",
@@ -1601,8 +1593,8 @@ name = "desk-widget-backend-egui"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
- "desk-editor",
  "desk-language",
+ "desk-physics",
  "egui",
 ]
 

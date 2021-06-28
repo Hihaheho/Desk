@@ -12,9 +12,10 @@ security = { package = "desk-security", path = "../../components/security" }
 runtime = { package = "desk-runtime", path = "../../components/runtime" }
 language = { package = "desk-language", path = "../../components/language" }
 protocol = { package = "desk-protocol", path = "../../components/protocol" }
-editor = { package = "desk-editor", path = "../../components/editor" }
+physics = { package = "desk-physics", path = "../../components/physics" }
+shell = { package = "desk-shell", path = "../../components/shell" }
 architect = { package = "desk-architect", path = "../../components/architect" }
-systems = { package = "desk-systems", path = "../../systems" }
+
 simple_traverse_runtime = { package = "desk-runtime-simple-traverse", path = "../../adapters/runtime-simple-traverse" }
 
 bevy = "0.5"

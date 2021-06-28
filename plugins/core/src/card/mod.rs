@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-use editor::card::{Card, Computed};
+use shell::{card::{Card, Computed}, render_card};
 use language::code::node::{sugar, Node};
-use systems::card::{create_card, render_card};
 
 pub struct CardPlugin;
 
@@ -23,7 +22,7 @@ struct CardBundle {
 impl Default for CardBundle {
     fn default() -> Self {
         CardBundle {
-            card: create_card(),
+            card: Card::new(),
             node: sugar::string(""),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),

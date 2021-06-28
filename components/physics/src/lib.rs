@@ -1,4 +1,5 @@
 pub mod shape;
+pub mod widget;
 use bevy_math::Vec2;
 
 #[derive(Clone, Debug)]
