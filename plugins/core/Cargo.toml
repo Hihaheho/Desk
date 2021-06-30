@@ -18,4 +18,4 @@ architect = { package = "desk-architect", path = "../../components/architect" }
 
 simple_traverse_runtime = { package = "desk-runtime-simple-traverse", path = "../../adapters/runtime-simple-traverse" }
 
-bevy = "0.5"
+bevy = { version = "0.5", default-features = false }

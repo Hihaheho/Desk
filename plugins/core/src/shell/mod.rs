@@ -1,12 +1,18 @@
 use bevy::prelude::*;
-use shell::terminal::Terminal;
+use language::code::node::Node;
+use physics::widget::{component::Component, Widget};
+use shell::{
+    card::{render_card, Card, Computed},
+    terminal::{render_terminal, Terminal},
+};
 
-struct ShellPlugin;
+pub struct ShellPlugin;
 
 impl Plugin for ShellPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
         app.add_startup_system(create_terminal.system())
-            .add_system(render_terminal.system());
+            .add_system(terminal_rendering.system())
+            .add_system(card_rendering.system());
     }
 }
 
@@ -35,13 +41,29 @@ fn create_terminal(mut commands: Commands) {
     commands.spawn_bundle(TerminalBundle::default());
 }
 
-fn render_terminal(mut commands: Commands, query: Query<(Entity, &Terminal)>) {
-    for (entity, shell) in query.iter() {
-        // commands.entity(entity).insert(Widget {
-        //     id: "desk shell".into(),
-        //     position: Vec2::new(10.0, 10.0),
-        //     shape: None,
-        //     component: Component,
-        // });
+fn terminal_rendering(mut commands: Commands, query: Query<(Entity, &Terminal, &Transform)>) {
+    for (entity, terminal, transform) in query.iter() {
+        if let Some(widget) = render_terminal(terminal, transform.translation.into()) {
+            commands.entity(entity).insert(widget);
+        }
+    }
+}
+
+fn card_rendering(
+    mut commands: Commands,
+    query: Query<
+        (Entity, &Card, &Node, Option<&Computed>, &Transform),
+        Or<(
+            Changed<Card>,
+            Changed<Node>,
+            Changed<Computed>,
+            Changed<Transform>,
+        )>,
+    >,
+) {
+    for (entity, card, node, computed, transform) in query.iter() {
+        if let Some(widget) = render_card(card, node, computed, transform.translation.into()) {
+            commands.entity(entity).insert(widget);
+        }
     }
 }

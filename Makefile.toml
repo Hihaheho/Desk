@@ -1,0 +1,15 @@
+[tasks.build-wasm]
+command = "cargo"
+args = ["build", "--bin", "desk-client", "--target", "wasm32-unknown-unknown", "--release", "--no-default-features"]
+
+[tasks.wasm-bindgen]
+command = "wasm-bindgen"
+args = ["--out-dir", "target", "--target", "web", "target/wasm32-unknown-unknown/release/desk-client.wasm"]
+dependencies = ["build-wasm"]
+
+[tasks.wasm-serve]
+command = "basic-http-server"
+dependencies = ["wasm-bindgen"]
+
+[config]
+default_to_workspace = false

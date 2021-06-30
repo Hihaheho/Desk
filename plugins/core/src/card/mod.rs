@@ -1,13 +1,12 @@
 use bevy::prelude::*;
-use shell::{card::{Card, Computed}, render_card};
 use language::code::node::{sugar, Node};
+use shell::card::Card;
 
 pub struct CardPlugin;
 
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(create_card_system.system())
-            .add_system(card_rendering.system());
+        app.add_startup_system(create_card_system.system());
     }
 }
 
@@ -44,27 +43,8 @@ fn create_card_system(mut commands: Commands) {
     });
 
     commands.spawn_bundle(CardBundle {
-        node: sugar::string(""),
+        node: sugar::string("aaaa"),
         transform: Transform::from_xyz(100.0, 200.0, 0.0),
         ..Default::default()
     });
-}
-
-fn card_rendering(
-    mut commands: Commands,
-    query: Query<
-        (Entity, &Card, &Node, Option<&Computed>, &Transform),
-        Or<(
-            Changed<Card>,
-            Changed<Node>,
-            Changed<Computed>,
-            Changed<Transform>,
-        )>,
-    >,
-) {
-    for (entity, card, node, computed, transform) in query.iter() {
-        if let Some(widget) = render_card(card, node, computed, transform.translation.into()) {
-            commands.entity(entity).insert(widget);
-        }
-    }
 }

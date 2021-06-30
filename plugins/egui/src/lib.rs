@@ -1,26 +1,17 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::*;
-use bevy_egui::{
-    egui::{self, Shape, Slider},
-    EguiContext, EguiPlugin,
-};
+use bevy_egui::{EguiContext, EguiPlugin};
 use egui_backend::EguiBackend;
-use physics::{
-    widget::{backend::WidgetBackend, Widget},
-    Velocity,
-};
-use shell::card::Card;
+use physics::widget::{backend::WidgetBackend, Widget};
 
 struct CardPlugin;
 
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
-        app.add_system(show_card.system());
+        app.add_system(widget_rendering.system());
     }
 }
 
-fn show_card(
+fn widget_rendering(
     mut commands: Commands,
     egui_context: ResMut<EguiContext>,
     time: Res<Time>,

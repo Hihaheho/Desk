@@ -1,11 +1,14 @@
 use bevy_math::Vec2;
+use egui::Ui;
 use language::code::node::NumberLiteral;
 use physics::{
-    shape::Shape, Velocity,
+    shape::Shape,
     widget::{
         backend::{RenderResponse, WidgetBackend},
-        operation::WidgetOperation,
-        Component, Widget,
+        component::{Component, Orientation},
+        event,
+        event::WidgetEvent,
+        Widget,
     },
 };
 
@@ -15,35 +18,17 @@ pub struct EguiBackend<'a> {
 }
 
 impl<'a> WidgetBackend for EguiBackend<'a> {
-    type OperationIterator = std::vec::IntoIter<WidgetOperation>;
+    type OperationIterator = std::vec::IntoIter<WidgetEvent>;
 
     fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator> {
-        let mut operation_buffer = vec![];
+        let mut event_buffer = vec![];
         let card_widget = egui::Area::new(&widget.id)
             .movable(true)
             .current_pos(egui::pos2(widget.position.x, widget.position.y))
             .show(self.ctx, |ui| {
                 ui.label("card");
 
-                use Component::*;
-                match &widget.component {
-                    InputNumber { value } => match value {
-                        NumberLiteral::Float(value) => {
-                            let mut value = value.to_owned();
-                            ui.add(egui::Slider::new(&mut value, 0.0..=10.0));
-                        }
-                        NumberLiteral::Integer(value) => {
-                            let mut value = value.to_owned();
-                            ui.add(egui::Slider::new(&mut value, 0..=10));
-                        }
-                        NumberLiteral::Rational(_, _) => {
-                            todo!()
-                        }
-                    },
-                    Unit => {}
-                    InputString { value } => {}
-                    _ => todo!(),
-                };
+                render(ui, &mut event_buffer, &widget.component);
             });
 
         let width = card_widget.rect.width();
@@ -56,7 +41,54 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
             position: widget.position,
             velocity: velocity.into(),
             shape,
-            operations: operation_buffer.into_iter(),
+            events: event_buffer.into_iter(),
         }
     }
+}
+
+fn render(ui: &mut Ui, event_buffer: &mut Vec<WidgetEvent>, component: &Component) {
+    use Component::*;
+    match component {
+        InputNumber { id, value } => match value {
+            NumberLiteral::Float(value) => {
+                let mut value = value.to_owned();
+                ui.add(egui::Slider::new(&mut value, 0.0..=10.0));
+            }
+            NumberLiteral::Integer(value) => {
+                let mut value = value.to_owned();
+                ui.add(egui::Slider::new(&mut value, 0..=10));
+            }
+            NumberLiteral::Rational(_, _) => {
+                todo!()
+            }
+        },
+        Blank => {}
+        InputString { id, value } => {
+            let mut value = value.clone();
+            let response = ui.text_edit_singleline(&mut value);
+
+            if response.changed() {
+                let id = id.to_owned();
+                event_buffer.push(WidgetEvent::UpdateString { id, value });
+            }
+            if response.lost_focus() {
+                let id = id.to_owned();
+                event_buffer.push(WidgetEvent::LostFocus { id });
+            }
+        }
+        Array { orientation, items } => {
+            match orientation {
+                Orientation::Vertical => {
+                    ui.vertical(|ui| items.iter().for_each(|item| render(ui, event_buffer, item)))
+                }
+                Orientation::Horizontal => {
+                    ui.horizontal(|ui| items.iter().for_each(|item| render(ui, event_buffer, item)))
+                }
+            };
+        }
+        Label(value) => {
+            ui.label(value);
+        }
+        _ => todo!(),
+    };
 }

@@ -14,7 +14,7 @@ impl Plugin for PhysicsPlugin {
     }
 }
 
-fn add_physics_components(mut commands: Commands, query: Query<Entity, Added<Card>>) {
+fn add_physics_components(mut commands: Commands, query: Query<Entity, Added<Widget>>) {
     for card in query.iter() {
         commands
             .entity(card)
