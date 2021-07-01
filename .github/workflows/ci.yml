@@ -1,21 +1,6 @@
 name: CI
 on: [push, pull_request]
 jobs:
-  wasm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          target: wasm32-unknown-unknown
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: check
-          args: -p desk-client --target wasm32-unknown-unknown
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +21,7 @@ jobs:
         with:
           toolchain: nightly
           command: check
-          args: -p desk-client --target wasm32-unknown-unknown
+          args: -p desk-client --target wasm32-unknown-unknown --features web
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
