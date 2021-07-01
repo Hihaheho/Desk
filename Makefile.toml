@@ -1,6 +1,6 @@
 [tasks.build-wasm]
 command = "cargo"
-args = ["build", "--bin", "desk-client", "--target", "wasm32-unknown-unknown", "--release", "--no-default-features"]
+args = ["build", "--bin", "desk-client", "--target", "wasm32-unknown-unknown", "--release", "--features", "web"]
 
 [tasks.wasm-bindgen]
 command = "wasm-bindgen"

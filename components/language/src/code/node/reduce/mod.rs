@@ -5,39 +5,48 @@ use super::{Node, NodeData};
 pub fn reduce(node: &Node) -> Node {
     use NodeData::*;
     match &node.data {
-        Literal { value } => node.to_owned(),
-        Variable { identifier } => {
+        Literal { value: _ } => node.to_owned(),
+        Variable { identifier: _ } => {
             todo!()
         }
-        ApplyUnaryOperator { operator, operand } => {
+        ApplyUnaryOperator {
+            operator: _,
+            operand: _,
+        } => {
             todo!()
         }
         ApplyBinaryOperator { operator, operands } => {
             apply_binary_operator::reduce(*operator, (operands.0.as_ref(), operands.1.as_ref()))
         }
-        ApplyFunction { function, argument } => {
-            todo!()
-        }
-        Function {
-            parameter,
-            expression,
+        ApplyFunction {
+            function: _,
+            argument: _,
         } => {
             todo!()
         }
-        Perform { effect, argument } => {
+        Function {
+            parameter: _,
+            expression: _,
+        } => {
+            todo!()
+        }
+        Perform {
+            effect: _,
+            argument: _,
+        } => {
             todo!()
         }
         Handle {
-            expression,
-            acc,
-            handlers,
+            expression: _,
+            acc: _,
+            handlers: _,
         } => {
             todo!()
         }
         Let {
-            variable,
-            value,
-            expression,
+            variable: _,
+            value: _,
+            expression: _,
         } => {
             todo!()
         }

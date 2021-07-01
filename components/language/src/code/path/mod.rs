@@ -15,11 +15,11 @@ impl NodePath {
 pub enum NodePathPredicate {}
 
 impl Node {
-    pub fn get_by_path(&self, path: &NodePath) -> &Node {
+    pub fn get_by_path(&self, _path: &NodePath) -> &Node {
         self
     }
 
-    pub fn patch_by_path(&self, path: &NodePath, patch: Node) -> Node {
+    pub fn patch_by_path(&self, _path: &NodePath, patch: Node) -> Node {
         patch
     }
 }

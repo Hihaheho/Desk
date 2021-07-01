@@ -6,7 +6,6 @@ use physics::{
     widget::{
         backend::{RenderResponse, WidgetBackend},
         component::{Component, Orientation},
-        event,
         event::WidgetEvent,
         Widget,
     },
@@ -49,7 +48,7 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
 fn render(ui: &mut Ui, event_buffer: &mut Vec<WidgetEvent>, component: &Component) {
     use Component::*;
     match component {
-        InputNumber { id, value } => match value {
+        InputNumber { id: _, value } => match value {
             NumberLiteral::Float(value) => {
                 let mut value = value.to_owned();
                 ui.add(egui::Slider::new(&mut value, 0.0..=10.0));

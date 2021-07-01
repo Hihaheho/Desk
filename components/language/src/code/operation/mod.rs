@@ -1,6 +1,7 @@
 use super::node::{LiteralValue, Node, NodeData, NumberLiteral};
 
 #[non_exhaustive]
+#[derive(Clone, Debug, PartialEq)]
 pub enum NodeOperation {
     UpdateString(String),
     UpdateNumber(NumberLiteral),
@@ -8,8 +9,17 @@ pub enum NodeOperation {
 
 use NodeOperation::*;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct NodeOperationError {
+    pub node: Node,
+    pub operation: NodeOperation,
+}
+
 impl Node {
-    pub fn apply_operation(&self, node_operation: &NodeOperation) -> Result<Self, ()> {
+    pub fn apply_operation(
+        &self,
+        node_operation: &NodeOperation,
+    ) -> Result<Self, NodeOperationError> {
         match (&self.data, node_operation) {
             (
                 super::node::NodeData::Literal {
@@ -22,7 +32,10 @@ impl Node {
                 },
                 ..self.to_owned()
             }),
-            (_, UpdateString(_)) => Err(()),
+            (_, UpdateString(_)) => Err(NodeOperationError {
+                node: self.clone(),
+                operation: node_operation.to_owned(),
+            }),
             (
                 super::node::NodeData::Literal {
                     value: LiteralValue::Number(_),
@@ -34,8 +47,10 @@ impl Node {
                 },
                 ..self.to_owned()
             }),
-            (_, UpdateNumber(_)) => Err(()),
-            _ => todo!(),
+            (_, UpdateNumber(_)) => Err(NodeOperationError {
+                node: self.clone(),
+                operation: node_operation.to_owned(),
+            }),
         }
     }
 }

@@ -10,6 +10,7 @@ impl ToString for CardId {
 }
 
 impl CardId {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self(create_new_id())
     }

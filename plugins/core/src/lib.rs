@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 pub mod card;
-pub mod shell;
 pub mod language;
+pub mod shell;

@@ -12,14 +12,11 @@ impl<T: Ord> Set<T> {
     pub fn is_superset_of(&self, other: &Self, eq: impl Fn(&T, &T) -> bool) -> bool {
         let mut self_iter = self.0.iter();
         for other_item in other.0.iter() {
-            if self_iter
-                .find(|self_item| eq(self_item, other_item))
-                .is_none()
-            {
+            if !self_iter.any(|self_item| eq(self_item, other_item)) {
                 return false;
             }
         }
-        return true;
+        true
     }
 
     pub fn contains(&self, one: &T, eq: impl Fn(&T, &T) -> bool) -> bool {
@@ -28,6 +25,10 @@ impl<T: Ord> Set<T> {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 
     pub fn iter(&self) -> std::slice::Iter<T> {
@@ -100,10 +101,16 @@ mod test {
     }
 
     #[test]
-    fn size() {
+    fn len() {
         assert_eq!(Set::new(Vec::<i32>::new()).len(), 0);
         assert_eq!(Set::new(vec![true]).len(), 1);
         assert_eq!(Set::new(vec![0, 1, 2, 2]).len(), 3);
+    }
+
+    #[test]
+    fn is_empty() {
+        assert!(Set::new(Vec::<i32>::new()).is_empty());
+        assert!(!Set::new(vec![0]).is_empty());
     }
 
     #[test]

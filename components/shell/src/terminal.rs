@@ -1,8 +1,5 @@
 use bevy_math::Vec2;
-use physics::widget::{
-    component::{sugar as c, Component},
-    Widget,
-};
+use physics::widget::{component::sugar as c, Widget};
 
 #[non_exhaustive]
 pub enum Command {
@@ -26,10 +23,10 @@ pub enum Distance {
 }
 
 pub struct Terminal {}
-pub fn render_terminal(terminal: &Terminal, position: Vec2) -> Option<Widget> {
+pub fn render_terminal(_terminal: &Terminal, position: Vec2) -> Option<Widget> {
     Some(Widget {
         id: "desk shell".into(),
-        position: position,
+        position,
         shape: None,
         component: c::vertical_array(vec![
             c::label("I'm your friend."),

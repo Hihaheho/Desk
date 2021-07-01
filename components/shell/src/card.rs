@@ -1,6 +1,6 @@
 use bevy_math::Vec2;
 use language::code::node::{Node, NodeData};
-use physics::widget::{component::sugar as c, Target, Widget};
+use physics::widget::{component::sugar as c, Widget};
 use protocol::card_id::CardId;
 
 pub struct Card {
@@ -13,13 +13,19 @@ impl Card {
     }
 }
 
+impl Default for Card {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A struct for a computed value with its type and encoding.
 pub struct Computed(pub Node);
 
 pub fn render_card(
     card: &Card,
     node: &Node,
-    computed: Option<&Computed>,
+    _computed: Option<&Computed>,
     position: Vec2,
 ) -> Option<Widget> {
     use NodeData::*;
@@ -70,37 +76,49 @@ pub fn render_card(
             }
         },
         Let {
-            variable,
-            value,
-            expression,
+            variable: _,
+            value: _,
+            expression: _,
         } => {
             todo!()
         }
-        Variable { identifier } => {
+        Variable { identifier: _ } => {
             todo!()
         }
-        ApplyUnaryOperator { operator, operand } => {
+        ApplyUnaryOperator {
+            operator: _,
+            operand: _,
+        } => {
             todo!()
         }
-        ApplyBinaryOperator { operator, operands } => {
+        ApplyBinaryOperator {
+            operator: _,
+            operands: _,
+        } => {
             // TODO
         }
         Function {
-            parameter,
-            expression,
+            parameter: _,
+            expression: _,
         } => {
             todo!()
         }
-        ApplyFunction { function, argument } => {
+        ApplyFunction {
+            function: _,
+            argument: _,
+        } => {
             todo!()
         }
-        Perform { effect, argument } => {
+        Perform {
+            effect: _,
+            argument: _,
+        } => {
             todo!()
         }
         Handle {
-            expression,
-            acc,
-            handlers,
+            expression: _,
+            acc: _,
+            handlers: _,
         } => {
             todo!()
         }

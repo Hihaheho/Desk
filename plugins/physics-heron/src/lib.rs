@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use heron::{CollisionShape, PhysicMaterial, RigidBody, RotationConstraints};
-use physics::{Velocity, shape::Shape, widget::Widget};
-use shell::card::Card;
+use physics::{shape::Shape, widget::Widget, Velocity};
 
 pub struct PhysicsPlugin;
 

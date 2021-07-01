@@ -1,5 +1,5 @@
 use super::Node;
 
-pub fn reduce(effect: &Node, argument: &Node) -> Node {
+pub fn reduce(_effect: &Node, _argument: &Node) -> Node {
     todo!()
 }

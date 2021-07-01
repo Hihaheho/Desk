@@ -1,6 +1,8 @@
 use super::node::Node;
 
-pub fn typing(node: &mut Node) -> Result<(), ()> {
+pub struct TypingError {}
+
+pub fn typing(_node: &mut Node) -> Result<(), TypingError> {
     todo!()
 }
 

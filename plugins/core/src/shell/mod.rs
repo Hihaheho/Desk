@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use language::code::node::Node;
-use physics::widget::{component::Component, Widget};
+
 use shell::{
     card::{render_card, Card, Computed},
     terminal::{render_terminal, Terminal},

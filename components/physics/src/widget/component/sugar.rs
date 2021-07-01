@@ -13,14 +13,14 @@ pub fn label<T: Into<String>>(label: T) -> Component {
 pub fn vertical_array(items: Vec<Component>) -> Component {
     Component::Array {
         orientation: super::Orientation::Vertical,
-        items: items,
+        items,
     }
 }
 
 pub fn horizontal_array(items: Vec<Component>) -> Component {
     Component::Array {
         orientation: super::Orientation::Horizontal,
-        items: items,
+        items,
     }
 }
 

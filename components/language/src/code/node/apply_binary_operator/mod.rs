@@ -2,8 +2,7 @@ mod add;
 
 use crate::type_::Type;
 
-use super::{sugar, BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData};
-use add::*;
+use super::{BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData};
 
 pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
     use BinaryOperator::*;
@@ -13,8 +12,8 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
             match arithmetic_operator {
                 Add => {
                     match (
-                        super::node::reduce(operands.0),
-                        super::node::reduce(operands.1),
+                        super::reduce::reduce(operands.0),
+                        super::reduce::reduce(operands.1),
                     ) {
                         (
                             Node {
@@ -22,7 +21,7 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
                                     NodeData::Literal {
                                         value: LiteralValue::Number(left),
                                     },
-                                type_: type_,
+                                type_: _,
                                 metadata: _,
                             },
                             Node {
@@ -52,6 +51,8 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
 
 #[cfg(test)]
 mod test {
+    use crate::code::node::sugar;
+
     use super::*;
 
     #[test]

@@ -1,5 +1,5 @@
 use super::{Identifier, Node};
 
-pub fn reduce(variable: &Identifier, value: &Node, expression: &Node) -> Node {
+pub fn reduce(_variable: &Identifier, _value: &Node, _expression: &Node) -> Node {
     todo!()
 }

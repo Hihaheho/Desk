@@ -1,0 +1,79 @@
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+vulnerability = "deny"
+unmaintained = "deny"
+yanked = "deny"
+notice = "deny"
+ignore = [
+    "RUSTSEC-2020-0056", # stdweb unmaintained - https://github.com/koute/stdweb/issues/403
+    "RUSTSEC-2020-0016", # net2 unmaintained
+]
+
+[licenses]
+unlicensed = "deny"
+copyleft = "deny"
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "BSD-2-Clause",
+    "CC0-1.0",
+]
+default = "deny"
+
+[[licenses.clarify]]
+name = "stretch"
+expression = "MIT"
+license-files = []
+
+[bans]
+# allows for now
+multiple-versions = "allow"
+wildcards = "deny"
+highlight = "all"
+# Certain crates/versions that will be skipped when doing duplicate detection.
+skip = [
+    { name = "cfg-if", version = "0.1" },
+    { name = "num-rational", version = "0.4.0" }, # bevy_render and nalgebrax 
+    { name = "nix", version = "0.18.0" }, # winit and kira 
+    { name = "ndk", version = "0.3.0" }, # winit and kira 
+    { name = "ndk-glue", version = "0.3.0" }, # winit and kira 
+    { name = "miow", version = "0.3.7" }, # winit and kira 
+    { name = "mio", version = "0.7.13" }, # winit and kira 
+    { name = "num_enum", version = "0.4" },
+    { name = "num_enum_derive", version = "0.4" },
+    { name = "nom", version = "5.1.2" },
+    { name = "owned_ttf_parser", version = "0.12.1" },
+    { name = "ttf-parser", version = "0.12.3" },
+    { name = "stdweb", version = "0.1" },
+    { name = "winapi", version = "0.2.8" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu-core"
+version = "0.7.1"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu-types"
+version = "0.7.0"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu"
+version = "0.7.1"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "hexasphere"
+version = "3.4"

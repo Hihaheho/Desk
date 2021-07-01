@@ -3,12 +3,13 @@ name = "desk-runtime-wasm"
 version = "0.1.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-language = { package = "desk-language", path = "../../components/language" }
-runtime = { package = "desk-runtime", path = "../../components/runtime" }
+language = { package = "desk-language", path = "../../components/language", version = "0.1.0" }
+runtime = { package = "desk-runtime", path = "../../components/runtime", version = "0.1.0" }
 
 parity-wasm = "0.42"
-wasmer = "1.0"
+# wasmer = "2.0"

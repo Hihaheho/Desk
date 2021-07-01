@@ -1,5 +1,4 @@
 use super::Node;
-
-pub fn reduce(function: &Node, argument: &Node) -> Node {
+pub fn reduce(_function: &Node, _argument: &Node) -> Node {
     todo!()
 }

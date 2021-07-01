@@ -3,10 +3,11 @@ name = "desk-physics"
 version = "0.1.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy_math = "*"
-language = { package = "desk-language", path = "../language" }
-protocol = { package = "desk-protocol", path = "../protocol" }
+bevy_math = "0.5.0"
+language = { package = "desk-language", path = "../language", version = "0.1.0" }
+protocol = { package = "desk-protocol", path = "../protocol", version = "0.1.0" }

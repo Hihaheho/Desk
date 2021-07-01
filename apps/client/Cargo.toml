@@ -3,25 +3,30 @@ name = "desk-client"
 version = "0.1.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
+license = "MIT"
 
 [features]
 default = [
   "bevy/bevy_audio",
-  "bevy/bevy_wgpu",
   "bevy/bevy_winit",
   "bevy/render",
   "bevy/x11",
 ]
 
-[dependencies]
-core = { package = "desk-plugin-core", path = "../../plugins/core" }
-physics-heron = { package = "desk-plugin-physics-heron", path = "../../plugins/physics-heron" }
-egui = { package = "desk-plugin-egui", path = "../../plugins/egui" }
-bevy = { version = "0.5", default-features = false }
+native = [
+  "bevy/bevy_wgpu"
+]
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.5", default-features = false, features = ["bevy_winit", "render"] }
-wasm-target = { package = "desk-plugin-wasm-target", path = "../../plugins/wasm-target" }
+web = [
+  "wasm-target"
+]
+
+[dependencies]
+core = { package = "desk-plugin-core", path = "../../plugins/core", version = "0.1.0" }
+physics-heron = { package = "desk-plugin-physics-heron", path = "../../plugins/physics-heron", version = "0.1.0" }
+egui = { package = "desk-plugin-egui", path = "../../plugins/egui", version = "0.1.0" }
+bevy = { version = "0.5", default-features = false }
+wasm-target = { package = "desk-plugin-wasm-target", path = "../../plugins/wasm-target", optional = true, version = "0.1.0" }
 
 [dev-dependencies]
 wasm-bindgen = "0.2.69"

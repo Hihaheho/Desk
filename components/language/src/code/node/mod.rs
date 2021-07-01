@@ -1,10 +1,15 @@
 mod apply_binary_operator;
+#[allow(dead_code)]
 mod apply_function;
+#[allow(dead_code)]
 mod apply_unary_operator;
+#[allow(dead_code)]
 mod handle;
+#[allow(dead_code)]
 mod let_;
-mod node;
+#[allow(dead_code)]
 mod perform;
+mod reduce;
 pub mod sugar;
 
 use crate::type_::Type;
@@ -142,7 +147,7 @@ pub enum ComparisonOperator {
 
 impl Node {
     pub fn reduce(&self) -> Node {
-        node::reduce(self)
+        reduce::reduce(self)
     }
 }
 

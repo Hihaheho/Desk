@@ -1,0 +1,64 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: check
+          args: -p desk-client --target wasm32-unknown-unknown
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
+      - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: check
+          args: -p desk-client
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: check
+          args: -p desk-client --target wasm32-unknown-unknown
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: test
+          args: --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: fmt
+          args: --all -- --check
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: clippy
+          args: --workspace --all-targets --all-features -- -D warnings -W clippy::all
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          log-level: warn
+          command: check
+          arguments: --all-features
