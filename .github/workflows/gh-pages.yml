@@ -17,7 +17,7 @@ jobs:
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
-      - run: cargo install wasm-bindgen-cli
+      - run: cargo install wasm-bindgen-cli --version 0.2.69
       - run: rustup target add wasm32-unknown-unknown
 
       - uses: actions-rs/cargo@v1
