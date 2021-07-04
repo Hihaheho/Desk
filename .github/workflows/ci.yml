@@ -9,11 +9,12 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
+          default: true
           components: rustfmt, clippy
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
-      - run: rustup target add --toolchain nightly wasm32-unknown-unknown
+      - run: rustup target add wasm32-unknown-unknown
 
       - uses: actions-rs/cargo@v1
         with:
@@ -21,7 +22,12 @@ jobs:
           command: make
           args: ci-check
 
-      - run: cargo make wasm-bindgen
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: make
+          args: wasm-bindgen
+
       - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
