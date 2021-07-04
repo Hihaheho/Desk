@@ -11,6 +11,7 @@ jobs:
           toolchain: nightly
           default: true
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v1
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
