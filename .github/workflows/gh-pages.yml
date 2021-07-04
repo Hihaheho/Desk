@@ -17,19 +17,8 @@ jobs:
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
+      - run: cargo install wasm-bindgen-cli
       - run: rustup target add wasm32-unknown-unknown
-
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: make
-          args: build-wasm
-
-      - run: ls -a
-      - run: ls -a target
-      - run: ls -a target/wasm32-unknown-unknown
-      - run: ls -a target/wasm32-unknown-unknown/release
-      - run: ls -a target/release
 
       - uses: actions-rs/cargo@v1
         with:
