@@ -11,32 +11,21 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
+
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
+      - run: cargo install cargo-make
+
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
-          command: check
-          args: -p desk-client
-      - uses: actions-rs/cargo@v1
+          command: make
+          args: ci-check
+      
+      - run: cargo make wasm-bindgen
+      - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
-          toolchain: nightly
-          command: check
-          args: -p desk-client --target wasm32-unknown-unknown --features web
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: test
-          args: --all-features
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: fmt
-          args: --all -- --check
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: clippy
-          args: --workspace --all-targets --all-features -- -D warnings -W clippy::all
+          branch: gh-pages
+          folder: build
 
   deny:
     runs-on: ubuntu-latest

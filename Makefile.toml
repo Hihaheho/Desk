@@ -4,12 +4,36 @@ args = ["build", "--bin", "desk-client", "--target", "wasm32-unknown-unknown", "
 
 [tasks.wasm-bindgen]
 command = "wasm-bindgen"
-args = ["--out-dir", "target", "--target", "web", "target/wasm32-unknown-unknown/release/desk-client.wasm"]
+args = ["--out-dir", ".public", "--target", "web", "target/wasm32-unknown-unknown/release/desk-client.wasm"]
 dependencies = ["build-wasm"]
 
 [tasks.wasm-serve]
 command = "basic-http-server"
+args = [".public"]
 dependencies = ["wasm-bindgen"]
+
+[tasks.check]
+command = "cargo"
+args = ["check", "-p", "desk-client", "--features", "native"]
+
+[tasks.check-wasm]
+command = "cargo"
+args = ["check", "-p", "desk-client", "--target", "wasm32-unknown-unknown", "--features", "web"]
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--all-features"]
+
+[tasks.fmt-check]
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "clippy::all"]
+
+[tasks.ci-check]
+run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy"] }
 
 [config]
 default_to_workspace = false
