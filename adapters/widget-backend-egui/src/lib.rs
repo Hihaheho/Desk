@@ -1,5 +1,5 @@
 use bevy_math::Vec2;
-use egui::Ui;
+use egui::{epaint::Shadow, Frame, Ui};
 use language::code::node::NumberLiteral;
 use physics::{
     shape::Shape,
@@ -21,14 +21,16 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
 
     fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator> {
         let mut event_buffer = vec![];
-        let card_widget = egui::Area::new(&widget.id)
-            .movable(true)
+        let mut frame = Frame::default();
+        // frame.shadow.extrusion = 16.0;
+        let card_widget = egui::Window::new(widget.id.to_string())
+            .title_bar(false)
+            .frame(frame)
             .current_pos(egui::pos2(widget.position.x, widget.position.y))
             .show(self.ctx, |ui| {
-                ui.label("card");
-
                 render(ui, &mut event_buffer, &widget.component);
-            });
+            })
+            .unwrap();
 
         let width = card_widget.rect.width();
         let height = card_widget.rect.height();
