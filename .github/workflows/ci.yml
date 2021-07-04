@@ -10,17 +10,17 @@ jobs:
           profile: minimal
           toolchain: nightly
           components: rustfmt, clippy
-          target: wasm32-unknown-unknown
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
+      - run: rustup target add wasm32-unknown-unknown
 
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
           command: make
           args: ci-check
-      
+
       - run: cargo make wasm-bindgen
       - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
