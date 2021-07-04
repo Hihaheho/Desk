@@ -23,13 +23,19 @@ jobs:
         with:
           toolchain: nightly
           command: make
-          args: wasm-bindgen
+          args: build-wasm
 
       - run: ls -a
       - run: ls -a target
       - run: ls -a target/wasm32-unknown-unknown
       - run: ls -a target/wasm32-unknown-unknown/release
       - run: ls -a target/release
+
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: make
+          args: wasm-bindgen
 
       - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
