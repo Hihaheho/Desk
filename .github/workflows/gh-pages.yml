@@ -1,5 +1,8 @@
-name: CI
-on: [push, pull_request]
+name: GitHub Pages
+on:
+  push:
+    branches:
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,9 +13,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           default: true
-          components: rustfmt, clippy
 
-      - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
       - run: rustup target add wasm32-unknown-unknown
 
@@ -20,14 +21,15 @@ jobs:
         with:
           toolchain: nightly
           command: make
-          args: ci-check
+          args: wasm-bindgen
 
-  deny:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: EmbarkStudios/cargo-deny-action@v1
+      - run: ls -a
+      - run: ls -a target
+      - run: ls -a target/wasm32-unknown-unknown
+      - run: ls -a target/wasm32-unknown-unknown/release
+      - run: ls -a target/release
+
+      - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
-          log-level: warn
-          command: check
-          arguments: --all-features
+          branch: gh-pages
+          folder: build
