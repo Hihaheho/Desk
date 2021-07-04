@@ -13,7 +13,7 @@ jobs:
 
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
-      - run: rustup target add wasm32-unknown-unknown
+      - run: rustup target add --toolchain nightly wasm32-unknown-unknown
 
       - uses: actions-rs/cargo@v1
         with:
