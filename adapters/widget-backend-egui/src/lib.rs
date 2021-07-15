@@ -1,6 +1,4 @@
 use bevy_math::Vec2;
-use egui::{epaint::Shadow, Frame, Ui};
-use language::code::node::NumberLiteral;
 use physics::{
     shape::Shape,
     widget::{
@@ -11,36 +9,44 @@ use physics::{
     },
 };
 
-pub struct EguiBackend<'a> {
-    pub ctx: &'a egui::CtxRef,
-    pub delta_seconds: f32,
+pub use bevy_egui::egui;
+use bevy_egui::egui::{CtxRef, Ui};
+pub use bevy_egui::{EguiContext, EguiPlugin};
+
+pub struct EguiBackend {
+    pub ctx: CtxRef,
 }
 
-impl<'a> WidgetBackend for EguiBackend<'a> {
-    type OperationIterator = std::vec::IntoIter<WidgetEvent>;
+impl WidgetBackend for EguiBackend {
+    type EventIterator = std::vec::IntoIter<WidgetEvent>;
 
-    fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator> {
+    fn render(&mut self, widget: &Widget) -> RenderResponse<Self::EventIterator> {
         let mut event_buffer = vec![];
-        let mut frame = Frame::default();
-        // frame.shadow.extrusion = 16.0;
-        let card_widget = egui::Window::new(widget.id.to_string())
-            .title_bar(false)
-            .frame(frame)
-            .current_pos(egui::pos2(widget.position.x, widget.position.y))
-            .show(self.ctx, |ui| {
-                render(ui, &mut event_buffer, &widget.component);
-            })
-            .unwrap();
+        if widget.component == Component::Blank {
+            return RenderResponse {
+                drag_delta: Vec2::ZERO.into(),
+                shape: Shape::Blank,
+                events: event_buffer.into_iter(),
+            };
+        }
 
+        let card_widget = egui::Area::new(widget.id.to_owned())
+            .current_pos(egui::pos2(
+                widget.position.x,
+                self.ctx.available_rect().height() - widget.position.y,
+            ))
+            .show(&self.ctx, |ui| {
+                ui.label("====");
+                render(ui, &mut event_buffer, &widget.component);
+            });
         let width = card_widget.rect.width();
         let height = card_widget.rect.height();
         let shape = Shape::Rect { width, height };
         let delta = card_widget.drag_delta();
-        let velocity = Vec2::new(delta.x, delta.y) / self.delta_seconds;
+        let drag_delta = Vec2::new(delta.x, -delta.y);
 
         RenderResponse {
-            position: widget.position,
-            velocity: velocity.into(),
+            drag_delta,
             shape,
             events: event_buffer.into_iter(),
         }
@@ -50,19 +56,10 @@ impl<'a> WidgetBackend for EguiBackend<'a> {
 fn render(ui: &mut Ui, event_buffer: &mut Vec<WidgetEvent>, component: &Component) {
     use Component::*;
     match component {
-        InputNumber { id: _, value } => match value {
-            NumberLiteral::Float(value) => {
-                let mut value = value.to_owned();
-                ui.add(egui::Slider::new(&mut value, 0.0..=10.0));
-            }
-            NumberLiteral::Integer(value) => {
-                let mut value = value.to_owned();
-                ui.add(egui::Slider::new(&mut value, 0..=10));
-            }
-            NumberLiteral::Rational(_, _) => {
-                todo!()
-            }
-        },
+        InputInteger { id: _, value } => {
+            let mut value = value.0;
+            ui.add(egui::Slider::new(&mut value, 0..=10));
+        }
         Blank => {}
         InputString { id, value } => {
             let mut value = value.clone();

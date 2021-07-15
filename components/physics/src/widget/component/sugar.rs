@@ -1,6 +1,4 @@
-use language::code::node::NumberLiteral;
-
-use super::{Component, InputId};
+use super::{Component, InputId, Integer};
 
 pub fn blank() -> Component {
     Component::Blank
@@ -31,9 +29,9 @@ pub fn input_string<I: Into<InputId>, T: Into<String>>(id: I, default: T) -> Com
     }
 }
 
-pub fn input_number<T: Into<InputId>>(id: T, default: NumberLiteral) -> Component {
-    Component::InputNumber {
+pub fn input_integer<T: Into<InputId>, I: Into<Integer>>(id: T, default: I) -> Component {
+    Component::InputInteger {
         id: id.into(),
-        value: default,
+        value: default.into(),
     }
 }

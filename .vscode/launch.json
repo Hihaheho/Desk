@@ -292,16 +292,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'desk-plugin-physics-heron'",
+            "name": "Debug unit tests in library 'desk-plugin-physics-rapier'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=desk-plugin-physics-heron"
+                    "--package=desk-plugin-physics-rapier"
                 ],
                 "filter": {
-                    "name": "desk-plugin-physics-heron",
+                    "name": "desk-plugin-physics-rapier",
                     "kind": "lib"
                 }
             },

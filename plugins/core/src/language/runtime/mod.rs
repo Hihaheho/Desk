@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use language::code::node::Node;
-use runtime::Runtime;
-use shell::card::Computed;
+use runtime::{card::Computed, Runtime};
 use simple_traverse_runtime::SimpleTraverseRuntime;
 
 pub struct RuntimePlugin;

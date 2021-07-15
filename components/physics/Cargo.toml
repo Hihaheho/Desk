@@ -9,5 +9,3 @@ license = "MIT"
 
 [dependencies]
 bevy_math = "0.5.0"
-language = { package = "desk-language", path = "../language", version = "0.1.0" }
-protocol = { package = "desk-protocol", path = "../protocol", version = "0.1.0" }

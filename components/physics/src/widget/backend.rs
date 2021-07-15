@@ -1,17 +1,18 @@
-use crate::{shape::Shape, Velocity};
+use bevy_math::Vec2;
 
-use super::{event::WidgetEvent, Vec2, Widget};
+use crate::shape::Shape;
+
+use super::{event::WidgetEvent, Widget};
 
 #[derive(Debug, Clone)]
 pub struct RenderResponse<T: Iterator<Item = WidgetEvent>> {
-    pub position: Vec2,
-    pub velocity: Velocity,
     pub shape: Shape,
     pub events: T,
+    pub drag_delta: Vec2,
 }
 
 pub trait WidgetBackend {
-    type OperationIterator: Iterator<Item = WidgetEvent>;
+    type EventIterator: Iterator<Item = WidgetEvent>;
 
-    fn render(&mut self, widget: &Widget) -> RenderResponse<Self::OperationIterator>;
+    fn render(&mut self, widget: &Widget) -> RenderResponse<Self::EventIterator>;
 }

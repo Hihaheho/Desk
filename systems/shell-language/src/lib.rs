@@ -1,67 +1,23 @@
-use bevy_math::Vec2;
+mod literal_value;
+
 use language::code::node::{Node, NodeData};
-use physics::widget::{component::sugar as c, Widget};
-use protocol::card_id::CardId;
+use physics::widget::component::{sugar as c, Component};
 
-pub struct Card {
-    pub id: CardId,
-}
+use crate::literal_value::render_literal_number;
 
-impl Card {
-    pub fn new() -> Self {
-        Self { id: CardId::new() }
-    }
-}
-
-impl Default for Card {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// A struct for a computed value with its type and encoding.
-pub struct Computed(pub Node);
-
-pub fn render_card(
-    card: &Card,
-    node: &Node,
-    _computed: Option<&Computed>,
-    position: Vec2,
-) -> Option<Widget> {
+pub fn render_node(node: &Node) -> Component {
     use NodeData::*;
-    let id = card.id.to_string().into();
     match &node.data {
         Literal { value } => match value {
-            language::code::node::LiteralValue::Unit => {
-                return Some(Widget {
-                    id,
-                    position,
-                    shape: None,
-                    component: c::blank(),
-                })
-            }
+            language::code::node::LiteralValue::Unit => c::blank(),
             language::code::node::LiteralValue::Label(_) => {
                 todo!()
             }
             language::code::node::LiteralValue::Bool(_) => {
                 todo!()
             }
-            language::code::node::LiteralValue::String(value) => {
-                return Some(Widget {
-                    id,
-                    position,
-                    shape: None,
-                    component: c::input_string("TODO", value),
-                })
-            }
-            language::code::node::LiteralValue::Number(value) => {
-                return Some(Widget {
-                    id,
-                    position,
-                    shape: None,
-                    component: c::input_number("TODO", value.to_owned()),
-                })
-            }
+            language::code::node::LiteralValue::String(value) => c::input_string("TODO", value),
+            language::code::node::LiteralValue::Number(value) => render_literal_number(value),
             language::code::node::LiteralValue::Array(_) => {
                 todo!()
             }
@@ -96,6 +52,7 @@ pub fn render_card(
             operands: _,
         } => {
             // TODO
+            c::blank()
         }
         Function {
             parameter: _,
@@ -123,5 +80,4 @@ pub fn render_card(
             todo!()
         }
     }
-    None
 }

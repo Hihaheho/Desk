@@ -9,12 +9,11 @@ license = "MIT"
 
 [dependencies]
 node = { package = "desk-node", path = "../../components/node", version = "0.1.0" }
+terminal = { package = "desk-terminal", path = "../../components/terminal", version = "0.1.0" }
 security = { package = "desk-security", path = "../../components/security", version = "0.1.0" }
 runtime = { package = "desk-runtime", path = "../../components/runtime", version = "0.1.0" }
 language = { package = "desk-language", path = "../../components/language", version = "0.1.0" }
-protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
 physics = { package = "desk-physics", path = "../../components/physics", version = "0.1.0" }
-shell = { package = "desk-shell", path = "../../components/shell", version = "0.1.0" }
 architect = { package = "desk-architect", path = "../../components/architect", version = "0.1.0" }
 
 simple_traverse_runtime = { package = "desk-runtime-simple-traverse", path = "../../adapters/runtime-simple-traverse", version = "0.1.0" }

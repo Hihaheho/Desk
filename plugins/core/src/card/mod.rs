@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use language::code::node::{sugar, Node};
-use shell::card::Card;
+use physics::Velocity;
+use runtime::card::Card;
 
 pub struct CardPlugin;
 
@@ -16,6 +17,7 @@ struct CardBundle {
     node: Node,
     transform: Transform,
     global_transform: GlobalTransform,
+    velocity: Velocity,
 }
 
 impl Default for CardBundle {
@@ -25,26 +27,27 @@ impl Default for CardBundle {
             node: sugar::string(""),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
+            velocity: Velocity::default(),
         }
     }
 }
 
 fn create_card_system(mut commands: Commands) {
-    commands.spawn_bundle(CardBundle {
-        node: sugar::add(sugar::integer(1), sugar::integer(2)),
-        transform: Transform::from_xyz(100.0, 10.0, 0.0),
-        ..Default::default()
-    });
+    // commands.spawn_bundle(CardBundle {
+    //     node: sugar::add(sugar::integer(1), sugar::integer(2)),
+    //     transform: Transform::from_xyz(100.0, 300.0, 0.0),
+    //     ..Default::default()
+    // });
 
     commands.spawn_bundle(CardBundle {
         node: sugar::integer(1),
-        transform: Transform::from_xyz(200.0, 100.0, 0.0),
+        transform: Transform::from_xyz(300.0, 200.0, 0.0),
         ..Default::default()
     });
 
     commands.spawn_bundle(CardBundle {
         node: sugar::string("aaaa"),
-        transform: Transform::from_xyz(100.0, 200.0, 0.0),
+        transform: Transform::from_xyz(100.0, 500.0, 0.0),
         ..Default::default()
     });
 }

@@ -126,9 +126,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.41"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15af2628f6890fe2609a3b91bef4c83450512802e59489f9c1cb1fa5df064a61"
+checksum = "595d3cfa7a60d4555cb5067b99f07142a08ea778de5cf993f7b75c7d8fabc486"
 
 [[package]]
 name = "approx"
@@ -498,6 +498,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_debugdump"
+version = "0.2.1"
+source = "git+https://github.com/ryo33/bevy_mod_debugdump.git#8fe0de95d7d0b65c4bf513f22639d61f45da55cb"
+dependencies = [
+ "bevy",
+ "itertools",
+ "pretty-type-name",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -513,6 +523,17 @@ dependencies = [
  "bevy_render",
  "bevy_transform",
  "bevy_window",
+]
+
+[[package]]
+name = "bevy_rapier2d"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba0306c4ac14b6c9b2280559e4138842861d045b4c218e7bac3e2435fa4d3db9"
+dependencies = [
+ "bevy",
+ "nalgebra",
+ "rapier2d",
 ]
 
 [[package]]
@@ -1304,9 +1325,11 @@ name = "desk-client"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_mod_debugdump",
  "desk-plugin-core",
  "desk-plugin-egui",
- "desk-plugin-physics-heron",
+ "desk-plugin-physics-rapier",
+ "desk-plugin-shell",
  "desk-plugin-wasm-target",
  "wasm-bindgen",
 ]
@@ -1321,24 +1344,16 @@ dependencies = [
 [[package]]
 name = "desk-language"
 version = "0.1.0"
-dependencies = [
- "desk-protocol",
-]
 
 [[package]]
 name = "desk-node"
 version = "0.1.0"
-dependencies = [
- "desk-protocol",
-]
 
 [[package]]
 name = "desk-physics"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
- "desk-language",
- "desk-protocol",
 ]
 
 [[package]]
@@ -1350,11 +1365,10 @@ dependencies = [
  "desk-language",
  "desk-node",
  "desk-physics",
- "desk-protocol",
  "desk-runtime",
  "desk-runtime-simple-traverse",
  "desk-security",
- "desk-shell",
+ "desk-terminal",
 ]
 
 [[package]]
@@ -1362,21 +1376,34 @@ name = "desk-plugin-egui"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_egui",
  "desk-language",
  "desk-physics",
- "desk-shell",
+ "desk-plugin-core",
  "desk-widget-backend-egui",
 ]
 
 [[package]]
-name = "desk-plugin-physics-heron"
+name = "desk-plugin-physics-rapier"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_rapier2d",
  "desk-physics",
- "desk-shell",
- "heron",
+ "desk-plugin-core",
+]
+
+[[package]]
+name = "desk-plugin-shell"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "desk-language",
+ "desk-physics",
+ "desk-plugin-core",
+ "desk-runtime",
+ "desk-shell-language",
+ "desk-shell-terminal",
+ "desk-terminal",
 ]
 
 [[package]]
@@ -1390,17 +1417,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-protocol"
-version = "0.1.0"
-dependencies = [
- "uuid",
-]
-
-[[package]]
 name = "desk-runtime"
 version = "0.1.0"
 dependencies = [
  "desk-language",
+ "uuid",
 ]
 
 [[package]]
@@ -1425,26 +1446,37 @@ name = "desk-security"
 version = "0.1.0"
 
 [[package]]
-name = "desk-shell"
+name = "desk-shell-language"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
  "desk-language",
- "desk-node",
  "desk-physics",
- "desk-protocol",
- "desk-runtime",
- "desk-security",
+]
+
+[[package]]
+name = "desk-shell-terminal"
+version = "0.1.0"
+dependencies = [
+ "desk-physics",
+ "desk-terminal",
+]
+
+[[package]]
+name = "desk-terminal"
+version = "0.1.0"
+dependencies = [
+ "bevy_math",
 ]
 
 [[package]]
 name = "desk-widget-backend-egui"
 version = "0.1.0"
 dependencies = [
+ "bevy_egui",
  "bevy_math",
  "desk-language",
  "desk-physics",
- "egui",
 ]
 
 [[package]]
@@ -1482,16 +1514,6 @@ name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
-
-[[package]]
-name = "duplicate"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cdaf23abc9bcc47fda1ae3af68425a22b4dfbd745f9077be0eaad5320f75f52"
-dependencies = [
- "heck",
- "proc-macro-error",
-]
 
 [[package]]
 name = "egui"
@@ -1993,9 +2015,9 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "heck"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87cbf45460356b7deeb5e3415b5563308c0a9b057c85e12b06ad551f98d0a6ac"
+checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
 dependencies = [
  "unicode-segmentation",
 ]
@@ -2007,54 +2029,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "heron"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5af52f98d77da6a4659d0b74efdcfd508b91ab17cb4579825f5c8aba00632d3d"
-dependencies = [
- "bevy",
- "cfg_aliases",
- "heron_core",
- "heron_macros",
- "heron_rapier",
-]
-
-[[package]]
-name = "heron_core"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8cd1f14800ff50174f2ed2d85974c7c6dc03bbfa5dc03e87f16b05f98189e39"
-dependencies = [
- "bevy",
- "duplicate",
-]
-
-[[package]]
-name = "heron_macros"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a69a262a9aa217c848bfd687c6d5edab7d67bb2aab121404a0549aa7e5a2cfc"
-dependencies = [
- "heron_core",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "heron_rapier"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2219e438529b91cb742d17fe0206668c135393504ddb418680db422ee89cfdb0"
-dependencies = [
- "bevy",
- "cfg_aliases",
- "crossbeam",
- "fnv",
- "heron_core",
- "rapier2d",
 ]
 
 [[package]]
@@ -2159,6 +2133,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2254,9 +2237,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.97"
+version = "0.2.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12b8adadd720df158f4d70dfe7ccc6adb0472d7c55ca83445f6a5ab3e36f8fb6"
+checksum = "320cfe77175da3a483efed4bc0adc1968ca050b098ce4f2f1c13a56626128790"
 
 [[package]]
 name = "libloading"
@@ -2485,6 +2468,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "462fffe4002f4f2e1f6a9dcf12cc1a6fc0e15989014efc02a941d3e0f5dc2120"
 dependencies = [
  "approx",
+ "glam 0.13.1",
  "matrixmultiply",
  "nalgebra-macros",
  "num-complex",
@@ -2835,9 +2819,9 @@ checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
 
 [[package]]
 name = "ordered-float"
-version = "2.5.1"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f100fcfb41e5385e0991f74981732049f9b896821542a219420491046baafdc2"
+checksum = "6dea6388d3d5498ec651701f14edbaf463c924b5d8829fb2848ccf0bcc7b3c69"
 dependencies = [
  "num-traits",
 ]
@@ -2976,36 +2960,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
+name = "pretty-type-name"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8815d101cfb4cb491154896bdab292a395a7ac9ab185a9941a2f5be0135900d"
+
+[[package]]
 name = "proc-macro-crate"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
 dependencies = [
  "toml",
-]
-
-[[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "syn",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
 ]
 
 [[package]]
@@ -3157,9 +3123,9 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
 name = "ringbuf"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "908f26a8bb4110da2b151015792f3b8f434e2c76379fca8ab410f12ef534b404"
+checksum = "6c60f3923939c33e6c543ddbff14d0ee6a407fcd186d560be37282559616adf3"
 dependencies = [
  "cache-padded",
 ]
@@ -3343,9 +3309,9 @@ checksum = "f173ac3d1a7e3b28003f40de0b5ce7fe2710f9b9dc3fc38664cebee46b3b6527"
 
 [[package]]
 name = "slotmap"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c46a3482db8f247956e464d783693ece164ca056e6e67563ee5505bdb86452cd"
+checksum = "d61b40583e0c1bd3100652ba8940939decc8808e7b2a07f4f4606c6a8a40035a"
 
 [[package]]
 name = "smallvec"
@@ -3549,18 +3515,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.25"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa6f76457f59514c7eeb4e59d891395fab0b2fd1d40723ae737d64153392e9c6"
+checksum = "93119e4feac1cbe6c798c34d3a53ea0026b0b1de6a120deef895137c0529bfe2"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.25"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a36768c0fbf1bb15eca10defa29526bda730a2376c2ab4393ccfa16fb1a318d"
+checksum = "060d69a0afe7796bf42e9e2ff91f5ee691fb15c53d38b4b62a9a53eb23164745"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3735,9 +3701,9 @@ checksum = "879f6906492a7cd215bfa4cf595b600146ccfac0c79bcbd1f3000162af5e8b06"
 
 [[package]]
 name = "unicode-segmentation"
-version = "1.7.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb0d2e7be6ae3a5fa87eed5fb451aff96f2573d2694942e40543ae0bbe19c796"
+checksum = "8895849a949e7845e06bd6dc1aa51731a103c42707010a5b591c0038fb73385b"
 
 [[package]]
 name = "unicode-xid"
