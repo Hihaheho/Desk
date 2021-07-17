@@ -5,7 +5,7 @@ use egui_backend::{EguiBackend, EguiContext, EguiPlugin};
 use physics::{
     shape::Shape,
     widget::{backend::WidgetBackend, component::Component, Widget, WidgetId},
-    Velocity,
+    DragState, Velocity,
 };
 
 struct CardPlugin;
@@ -31,11 +31,12 @@ fn widget_rendering(
         &Component,
         &mut Shape,
         &mut Velocity,
+        &mut DragState,
         &GlobalTransform,
     )>,
 ) {
     let (camera, camera_transform) = camera.single().unwrap();
-    for (id, component, mut shape, mut velocity, transform) in query.iter_mut() {
+    for (id, component, mut shape, mut velocity, mut drag_state, transform) in query.iter_mut() {
         if let Some(position) =
             camera.world_to_screen(&windows, camera_transform, transform.translation)
         {
@@ -51,12 +52,16 @@ fn widget_rendering(
 
             let new_shape = response.shape;
             if *shape != new_shape {
-                *shape = dbg!(new_shape);
+                *shape = new_shape;
             }
 
             let new_velocity = (response.drag_delta / time.delta_seconds()).into();
             if *velocity != new_velocity {
                 *velocity = new_velocity;
+            }
+            let new_drag_state = response.drag_state;
+            if *drag_state != new_drag_state {
+                *drag_state = new_drag_state;
             }
         }
     }

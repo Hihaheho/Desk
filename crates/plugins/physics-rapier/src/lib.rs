@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use physics::{
     shape::Shape,
-    widget::{Widget, WidgetId},
+    widget::{WidgetId},
     Velocity,
 };
 
@@ -93,16 +93,18 @@ fn add_physics_components(
             .insert_bundle(RigidBodyBundle {
                 position: (transform.translation / rapier.scale).into(),
                 mass_properties: RigidBodyMassPropsFlags::ROTATION_LOCKED.into(),
+                damping: RigidBodyDamping {
+                    linear_damping: 2.0,
+                    ..Default::default()
+                },
                 ..Default::default()
             })
             .insert(RigidBodyPositionSync::Discrete)
             .with_children(|build| {
-                build
-                    .spawn_bundle(ColliderBundle {
-                        shape: ColliderShape::cuboid(0.1, 0.1),
-                        ..Default::default()
-                    })
-                    .insert(ColliderDebugRender::default());
+                build.spawn_bundle(ColliderBundle {
+                    shape: ColliderShape::cuboid(0.1, 0.1),
+                    ..Default::default()
+                });
             });
     }
 }

@@ -5,8 +5,8 @@ use bevy::prelude::*;
 use language::code::node::Node;
 use physics::{
     shape::Shape,
-    widget::{component::Component, Widget, WidgetId},
-    Velocity,
+    widget::{component::Component, WidgetId},
+    DragState, Velocity,
 };
 use runtime::card::{Card, Computed};
 use shell_language::render_node;
@@ -27,15 +27,15 @@ impl Plugin for ShellPlugin {
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
-                    .label(ShellSystem::Add)
+                    .after(ShellSystem::Add)
+                    .label(ShellSystem::Update)
                     .with_system(terminal_rendering.system())
                     .with_system(card_rendering.system()),
             )
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
-                    .after(ShellSystem::Add)
-                    .label(ShellSystem::Update)
+                    .label(ShellSystem::Add)
                     .with_system(widget_adding_for_cards.system())
                     .with_system(widget_adding_for_terminal.system()),
             );
@@ -47,7 +47,6 @@ struct TerminalBundle {
     shell: Terminal,
     transform: Transform,
     global_transform: GlobalTransform,
-    velocity: Velocity,
 }
 
 impl Default for TerminalBundle {
@@ -60,6 +59,24 @@ impl Default for TerminalBundle {
             },
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct WidgetBundle {
+    shape: Shape,
+    component: Component,
+    drag_state: DragState,
+    velocity: Velocity,
+}
+
+impl Default for WidgetBundle {
+    fn default() -> Self {
+        Self {
+            shape: Default::default(),
+            component: Default::default(),
+            drag_state: Default::default(),
             velocity: Default::default(),
         }
     }
@@ -76,18 +93,16 @@ fn widget_adding_for_cards(mut command: Commands, query: Query<(Entity, &Card), 
     for (entity, card) in query.iter() {
         command
             .entity(entity)
-            .insert(Shape::default())
             .insert(WidgetId::from(card.id.to_string()))
-            .insert(Component::default());
+            .insert_bundle(WidgetBundle::default());
     }
 }
 fn widget_adding_for_terminal(mut command: Commands, query: Query<Entity, Added<Terminal>>) {
     for entity in query.iter() {
         command
             .entity(entity)
-            .insert(Shape::default())
             .insert(WidgetId::from("terminal"))
-            .insert(Component::default());
+            .insert_bundle(WidgetBundle::default());
     }
 }
 
@@ -99,14 +114,13 @@ fn card_rendering(
 ) {
     for (node, _computed, mut component) in query.iter_mut() {
         let new_component = render_node(node);
-        // TODO: move this logic to apporopriate crate.
         if *component != new_component {
             *component = new_component;
         }
     }
 }
 
-fn terminal_rendering(mut query: Query<(&Terminal, &mut Component), Changed<Terminal>>) {
+fn terminal_rendering(mut query: Query<(&Terminal, &mut Component)>) {
     for (terminal, mut component) in query.iter_mut() {
         let new_component = render_terminal(terminal);
         if *component != new_component {

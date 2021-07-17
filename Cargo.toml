@@ -1,9 +1,9 @@
 [workspace]
 
 members = [
-  "adapters/*",
-  "components/*",
-  "plugins/*",
-  "apps/*",
-  "systems/*"
+  "crates/adapters/*",
+  "crates/components/*",
+  "crates/plugins/*",
+  "crates/apps/*",
+  "crates/systems/*"
 ]

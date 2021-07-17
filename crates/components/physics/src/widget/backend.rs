@@ -1,6 +1,6 @@
 use bevy_math::Vec2;
 
-use crate::shape::Shape;
+use crate::{shape::Shape, DragState};
 
 use super::{event::WidgetEvent, Widget};
 
@@ -8,6 +8,7 @@ use super::{event::WidgetEvent, Widget};
 pub struct RenderResponse<T: Iterator<Item = WidgetEvent>> {
     pub shape: Shape,
     pub events: T,
+    pub drag_state: DragState,
     pub drag_delta: Vec2,
 }
 

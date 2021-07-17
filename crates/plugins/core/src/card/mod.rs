@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use language::code::node::{sugar, Node};
-use physics::Velocity;
 use runtime::card::Card;
 
 pub struct CardPlugin;
@@ -17,7 +16,6 @@ struct CardBundle {
     node: Node,
     transform: Transform,
     global_transform: GlobalTransform,
-    velocity: Velocity,
 }
 
 impl Default for CardBundle {
@@ -27,7 +25,6 @@ impl Default for CardBundle {
             node: sugar::string(""),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
-            velocity: Velocity::default(),
         }
     }
 }
