@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use core::DeskSystem;
 
 use bevy::prelude::*;

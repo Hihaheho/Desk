@@ -2,13 +2,11 @@ use core::DeskSystem;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use physics::{
-    shape::Shape,
-    widget::{WidgetId},
-    Velocity,
-};
+use physics::{shape::Shape, widget::WidgetId, DragState, Velocity};
 
 pub struct PhysicsPlugin;
+
+const LINEAR_DAMPING: f32 = 8.0;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
@@ -30,7 +28,8 @@ impl Plugin for PhysicsPlugin {
                 SystemSet::new()
                     .label(DeskSystem::PrePhysics)
                     .with_system(update_shape.system())
-                    .with_system(update_velocity.system()),
+                    .with_system(update_velocity.system())
+                    .with_system(update_drag_state.system()),
             );
     }
 }
@@ -94,7 +93,7 @@ fn add_physics_components(
                 position: (transform.translation / rapier.scale).into(),
                 mass_properties: RigidBodyMassPropsFlags::ROTATION_LOCKED.into(),
                 damping: RigidBodyDamping {
-                    linear_damping: 2.0,
+                    linear_damping: LINEAR_DAMPING,
                     ..Default::default()
                 },
                 ..Default::default()
@@ -143,5 +142,19 @@ fn update_velocity(
     for (mut rapier_velocity, velocity) in query.iter_mut() {
         rapier_velocity.linvel.x = velocity.0.x / rapier.scale;
         rapier_velocity.linvel.y = velocity.0.y / rapier.scale;
+    }
+}
+
+fn update_drag_state(mut query: Query<(&mut RigidBodyDamping, &DragState), Changed<DragState>>) {
+    for (mut damping, drag_state) in query.iter_mut() {
+        use DragState::*;
+        match drag_state {
+            Dragging => {
+                damping.linear_damping = 0.0;
+            }
+            NotDragging => {
+                damping.linear_damping = LINEAR_DAMPING;
+            }
+        }
     }
 }
