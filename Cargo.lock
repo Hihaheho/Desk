@@ -500,7 +500,8 @@ dependencies = [
 [[package]]
 name = "bevy_mod_debugdump"
 version = "0.2.1"
-source = "git+https://github.com/ryo33/bevy_mod_debugdump.git#0208e5b3fc5e6a63c75e656abd43673614c3c20d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "195332d1f6cf330112bd2b0aee671e48772e7e65d5edd2f82a94c562c0dd4abd"
 dependencies = [
  "bevy",
  "itertools",
