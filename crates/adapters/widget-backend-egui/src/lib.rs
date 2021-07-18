@@ -19,16 +19,14 @@ pub struct EguiBackend {
 }
 
 impl WidgetBackend for EguiBackend {
-    type EventIterator = std::vec::IntoIter<WidgetEvent>;
-
-    fn render(&mut self, widget: &Widget) -> RenderResponse<Self::EventIterator> {
+    fn render(&mut self, widget: &Widget) -> RenderResponse {
         let mut event_buffer = vec![];
         if widget.component == Component::Blank {
             return RenderResponse {
                 drag_state: physics::DragState::Dragging,
                 drag_delta: Vec2::ZERO,
                 shape: Shape::Blank,
-                events: event_buffer.into_iter(),
+                events: event_buffer,
             };
         }
 
@@ -56,7 +54,7 @@ impl WidgetBackend for EguiBackend {
             drag_state,
             drag_delta,
             shape,
-            events: event_buffer.into_iter(),
+            events: event_buffer,
         }
     }
 }

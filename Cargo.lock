@@ -500,7 +500,7 @@ dependencies = [
 [[package]]
 name = "bevy_mod_debugdump"
 version = "0.2.1"
-source = "git+https://github.com/ryo33/bevy_mod_debugdump.git#8fe0de95d7d0b65c4bf513f22639d61f45da55cb"
+source = "git+https://github.com/ryo33/bevy_mod_debugdump.git#0208e5b3fc5e6a63c75e656abd43673614c3c20d"
 dependencies = [
  "bevy",
  "itertools",

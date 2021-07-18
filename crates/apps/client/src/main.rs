@@ -13,7 +13,7 @@ fn main() {
         .add_plugin(ShellPlugin)
         .add_plugins(LanguagePlugins)
         .add_plugin(PhysicsPlugin)
-        .add_plugins(egui::EguiPlugins);
+        .add_plugin(egui::EguiBackendPlugin);
 
     #[cfg(target_arch = "wasm32")]
     app.add_plugin(wasm_target::WasmTargetPlugin);

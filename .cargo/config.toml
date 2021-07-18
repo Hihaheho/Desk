@@ -20,4 +20,4 @@ rustflags = ["-Zshare-generics=y"]
 debug = 1
 
 [alias]
-client = ["run", "--bin", "desk-client", "--features", "native,bevy/dynamic,bevy_mod_debugdump"]
+client = ["run", "--bin", "desk-client", "--features", "native,bevy/dynamic"]

@@ -37,7 +37,14 @@ run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy"] }
 
 [tasks.clippy-fix]
 command = "cargo"
-args = ["clippy", "--workspace", "--all-targets", "--all-features", "--fix", "--allow-dirty", "-Z", "unstable-options", "--", "-D", "warnings", "-W", "clippy::all"]
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--fix", "--allow-dirty", "--allow-staged", "-Z", "unstable-options", "--", "-D", "warnings", "-W", "clippy::all"]
+
+[tasks.fmt]
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fix]
+run_task = { name = ["fmt", "clippy-fix"] }
 
 [config]
 default_to_workspace = false

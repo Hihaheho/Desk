@@ -4,7 +4,7 @@ pub mod event;
 
 use bevy_math::Vec3;
 
-use self::{component::Component, event::WidgetEvent};
+use self::{backend::WidgetBackendId, component::Component, event::WidgetEvent};
 
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct WidgetId(pub String);
@@ -29,6 +29,7 @@ pub trait WidgetSystem {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Widget {
     pub id: WidgetId,
+    pub backend_id: WidgetBackendId,
     pub position: Vec3,
     pub component: Component,
 }

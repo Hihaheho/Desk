@@ -1,76 +1,46 @@
-use core::DeskSystem;
+use core::ShellSystem;
 
 use bevy::{prelude::*, render::camera::Camera};
 use egui_backend::{EguiBackend, EguiContext, EguiPlugin};
-use physics::{
-    shape::Shape,
-    widget::{backend::WidgetBackend, component::Component, Widget, WidgetId},
-    DragState, Velocity,
-};
+use physics::widget::{backend::Backends, component::Component, Widget, WidgetId};
 
-struct CardPlugin;
+const EGUI_BACKEND: &str = "egui";
 
-impl Plugin for CardPlugin {
+pub struct EguiBackendPlugin;
+
+impl Plugin for EguiBackendPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
-        app.add_system(
-            widget_rendering
-                .system()
-                .label(DeskSystem::RenderingWidgets)
-                .before(DeskSystem::PrePhysics),
-        );
+        app.add_plugin(EguiPlugin)
+            .add_system(add_backend.system().before(ShellSystem::Render))
+            .add_system(update_widget.system().label(ShellSystem::UpdateWidget));
     }
 }
 
-fn widget_rendering(
+fn add_backend(mut backends: ResMut<Backends>, egui_context: ResMut<EguiContext>) {
+    let backend = EguiBackend {
+        ctx: egui_context.ctx().clone(),
+    };
+    backends.insert(EGUI_BACKEND, backend);
+}
+
+fn update_widget(
+    mut commands: Commands,
     windows: Res<Windows>,
-    egui_context: ResMut<EguiContext>,
-    time: Res<Time>,
     camera: Query<(&Camera, &GlobalTransform)>,
-    mut query: Query<(
-        &WidgetId,
-        &Component,
-        &mut Shape,
-        &mut Velocity,
-        &mut DragState,
-        &GlobalTransform,
-    )>,
+    mut query: Query<(Entity, &WidgetId, &Component, &GlobalTransform)>,
 ) {
     let (camera, camera_transform) = camera.single().unwrap();
-    for (id, component, mut shape, mut velocity, mut drag_state, transform) in query.iter_mut() {
+    for (entity, id, component, transform) in query.iter_mut() {
         if let Some(position) =
             camera.world_to_screen(&windows, camera_transform, transform.translation)
         {
-            let mut backend = EguiBackend {
-                ctx: egui_context.ctx().clone(),
-            };
-
-            let response = backend.render(&Widget {
+            let widget = Widget {
                 id: id.to_owned(),
+                backend_id: EGUI_BACKEND.into(),
                 component: component.to_owned(),
                 position: position.to_owned().extend(0.0),
-            });
-
-            let new_shape = response.shape;
-            if *shape != new_shape {
-                *shape = new_shape;
-            }
-
-            let new_velocity = (response.drag_delta / time.delta_seconds()).into();
-            if *velocity != new_velocity {
-                *velocity = new_velocity;
-            }
-            let new_drag_state = response.drag_state;
-            if *drag_state != new_drag_state {
-                *drag_state = new_drag_state;
-            }
+            };
+            commands.entity(entity).insert(widget);
         }
-    }
-}
-
-pub struct EguiPlugins;
-
-impl PluginGroup for EguiPlugins {
-    fn build(&mut self, group: &mut bevy::app::PluginGroupBuilder) {
-        group.add(CardPlugin).add(EguiPlugin);
     }
 }
