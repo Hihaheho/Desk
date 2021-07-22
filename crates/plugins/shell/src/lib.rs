@@ -1,17 +1,22 @@
 #![allow(clippy::type_complexity)]
+mod card;
+mod event_handler;
 
-use core::{DeskSystem, ShellSystem};
+use card::create_card;
+pub use event_handler::*;
+
+use plugin_core::{DeskSystem, ShellSystem};
 
 use bevy::prelude::*;
 
-use language::code::node::Node;
+use language::code::node::Code;
 use physics::{
     shape::Shape,
-    widget::{backend::Backends, component::Component, Widget, WidgetId},
+    widget::{backend::Backends, component::Component, event::WidgetEvents, Widget, WidgetId},
     DragState, Velocity,
 };
 use runtime::card::{Card, Computed};
-use shell_language::render_node;
+use shell_language::{render_node, CodeOperationHandler, CodeWidgetEventHandler};
 use shell_terminal::render_terminal;
 use terminal::terminal::Terminal;
 
@@ -21,6 +26,7 @@ impl Plugin for ShellPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
         app.init_resource::<Backends>()
             .add_startup_system(create_terminal.system())
+            .add_startup_system(create_card.system())
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
@@ -31,8 +37,8 @@ impl Plugin for ShellPlugin {
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
-                    .label(ShellSystem::UpdateComponent)
                     .after(ShellSystem::Add)
+                    .label(ShellSystem::UpdateComponent)
                     .before(ShellSystem::UpdateWidget)
                     .with_system(terminal_rendering.system())
                     .with_system(card_rendering.system()),
@@ -41,9 +47,31 @@ impl Plugin for ShellPlugin {
                 widget_rendering
                     .system()
                     .label(DeskSystem::Shell)
-                    .label(ShellSystem::Render)
                     .after(ShellSystem::UpdateWidget)
-                    .before(DeskSystem::PrePhysics),
+                    .label(ShellSystem::Render)
+                    .before(ShellSystem::HandleEvents),
+            )
+            .add_system_set(
+                SystemSet::new()
+                    .label(DeskSystem::Shell)
+                    .label(ShellSystem::HandleEvents)
+                    .after(ShellSystem::Render)
+                    .with_system(
+                        EventHandlerPlugin::<CodeWidgetEventHandler>::default()
+                            .system()
+                            .label(ShellSystem::HandleEvents),
+                    ),
+            )
+            .add_system_set(
+                SystemSet::new()
+                    .label(DeskSystem::HandleOperations)
+                    .after(DeskSystem::Shell)
+                    .before(DeskSystem::PrePhysics)
+                    .with_system(
+                        EventHandlerPlugin::<CodeOperationHandler>::default()
+                            .system()
+                            .label(ShellSystem::HandleEvents),
+                    ),
             );
     }
 }
@@ -75,6 +103,7 @@ struct WidgetBundle {
     component: Component,
     drag_state: DragState,
     velocity: Velocity,
+    events: WidgetEvents,
 }
 
 impl Default for WidgetBundle {
@@ -84,6 +113,7 @@ impl Default for WidgetBundle {
             component: Default::default(),
             drag_state: Default::default(),
             velocity: Default::default(),
+            events: Default::default(),
         }
     }
 }
@@ -114,8 +144,8 @@ fn widget_adding_for_terminal(mut command: Commands, query: Query<Entity, Added<
 
 fn card_rendering(
     mut query: Query<
-        (&Node, Option<&Computed<Node>>, &mut Component),
-        Or<(Changed<Node>, Changed<Computed<Node>>)>,
+        (&Code, Option<&Computed<Code>>, &mut Component),
+        Or<(Changed<Code>, Changed<Computed<Code>>)>,
     >,
 ) {
     for (node, _computed, mut component) in query.iter_mut() {
@@ -138,10 +168,17 @@ fn terminal_rendering(mut query: Query<(&Terminal, &mut Component)>) {
 fn widget_rendering(
     time: Res<Time>,
     mut backends: ResMut<Backends>,
-    mut query: Query<(&Widget, &mut Shape, &mut Velocity, &mut DragState)>,
+    mut query: Query<(
+        &Widget,
+        &mut Shape,
+        &mut Velocity,
+        &mut DragState,
+        &mut WidgetEvents,
+    )>,
 ) {
-    for (widget, mut shape, mut velocity, mut drag_state) in query.iter_mut() {
+    for (widget, mut shape, mut velocity, mut drag_state, mut widget_events) in query.iter_mut() {
         if let Some(backend) = backends.get_mut(&widget.backend_id) {
+            // TODO: This line uses old widget
             let response = backend.render(widget);
             if *shape != response.shape {
                 *shape = response.shape.clone();
@@ -154,6 +191,7 @@ fn widget_rendering(
             if *drag_state != response.drag_state {
                 *drag_state = response.drag_state.clone();
             }
+            *widget_events = response.events;
         }
     }
 }

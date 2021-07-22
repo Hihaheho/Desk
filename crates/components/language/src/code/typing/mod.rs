@@ -1,8 +1,8 @@
-use super::node::Node;
+use super::node::Code;
 
 pub struct TypingError {}
 
-pub fn typing(_node: &mut Node) -> Result<(), TypingError> {
+pub fn typing(_node: &mut Code) -> Result<(), TypingError> {
     todo!()
 }
 

@@ -26,9 +26,9 @@ pub enum LiteralValue {
     Bool(bool),
     String(String),
     Number(NumberLiteral),
-    Array(Vec<Node>),
-    Product(Vec<Node>),
-    Sum(Box<Node>),
+    Array(Vec<Code>),
+    Product(Vec<Code>),
+    Sum(Box<Code>),
     Type(Type),
 }
 
@@ -41,50 +41,50 @@ pub enum NumberLiteral {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct Node {
-    pub data: NodeData,
+pub struct Code {
+    pub data: CodeData,
     pub type_: Type,
     pub metadata: Option<u16>,
 }
 
 /// An enum for an AST Node without type annotation itself.
 #[derive(Clone, PartialEq, Debug)]
-pub enum NodeData {
+pub enum CodeData {
     Literal {
         value: LiteralValue,
     },
     Let {
         variable: Identifier,
-        value: Box<Node>,
-        expression: Box<Node>,
+        value: Box<Code>,
+        expression: Box<Code>,
     },
     Variable {
         identifier: Identifier,
     },
     ApplyUnaryOperator {
         operator: UnaryOperator,
-        operand: Box<Node>,
+        operand: Box<Code>,
     },
     ApplyBinaryOperator {
         operator: BinaryOperator,
-        operands: (Box<Node>, Box<Node>),
+        operands: (Box<Code>, Box<Code>),
     },
     Function {
         parameter: Identifier,
-        expression: Box<Node>,
+        expression: Box<Code>,
     },
     ApplyFunction {
-        function: Box<Node>,
-        argument: Box<Node>,
+        function: Box<Code>,
+        argument: Box<Code>,
     },
     Perform {
-        effect: Box<Node>,
-        argument: Box<Node>,
+        effect: Box<Code>,
+        argument: Box<Code>,
     },
     Handle {
-        expression: Box<Node>,
-        acc: Box<Node>,
-        handlers: Vec<Node>,
+        expression: Box<Code>,
+        acc: Box<Code>,
+        handlers: Vec<Code>,
     },
 }
 
@@ -145,8 +145,8 @@ pub enum ComparisonOperator {
     Le,
 }
 
-impl Node {
-    pub fn reduce(&self) -> Node {
+impl Code {
+    pub fn reduce(&self) -> Code {
         reduce::reduce(self)
     }
 }

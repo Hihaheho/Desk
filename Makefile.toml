@@ -46,5 +46,11 @@ args = ["fmt", "--all"]
 [tasks.fix]
 run_task = { name = ["fmt", "clippy-fix"] }
 
+[tasks.debugdump]
+script = '''
+cargo run -p desk-client --features debugdump,native
+cat target/schedule_graph.dot | dot -Tsvg > target/schedule_graph.png
+'''
+
 [config]
 default_to_workspace = false

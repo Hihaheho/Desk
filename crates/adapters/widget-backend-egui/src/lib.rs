@@ -4,7 +4,7 @@ use physics::{
     widget::{
         backend::{RenderResponse, WidgetBackend},
         component::{Component, Orientation},
-        event::WidgetEvent,
+        event::{WidgetEvent, WidgetEvents},
         Widget,
     },
     DragState,
@@ -26,7 +26,7 @@ impl WidgetBackend for EguiBackend {
                 drag_state: physics::DragState::Dragging,
                 drag_delta: Vec2::ZERO,
                 shape: Shape::Blank,
-                events: event_buffer,
+                events: WidgetEvents(event_buffer),
             };
         }
 
@@ -54,7 +54,7 @@ impl WidgetBackend for EguiBackend {
             drag_state,
             drag_delta,
             shape,
-            events: event_buffer,
+            events: WidgetEvents(event_buffer),
         }
     }
 }
@@ -68,7 +68,7 @@ fn render(ui: &mut Ui, event_buffer: &mut Vec<WidgetEvent>, component: &Componen
         }
         Blank => {}
         InputString { id, value } => {
-            let mut value = value.clone();
+            let mut value = value.to_owned();
             let response = ui.text_edit_singleline(&mut value);
 
             if response.changed() {

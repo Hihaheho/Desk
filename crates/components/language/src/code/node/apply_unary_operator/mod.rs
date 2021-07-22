@@ -1,5 +1,5 @@
-use super::{Node, UnaryOperator};
+use super::{Code, UnaryOperator};
 
-pub fn reduce(_operator: &UnaryOperator, _operand: &Node) -> Node {
+pub fn reduce(_operator: &UnaryOperator, _operand: &Code) -> Code {
     todo!()
 }

@@ -2,9 +2,9 @@ mod add;
 
 use crate::type_::Type;
 
-use super::{BinaryArithmeticOperator, BinaryOperator, LiteralValue, Node, NodeData};
+use super::{BinaryArithmeticOperator, BinaryOperator, Code, CodeData, LiteralValue};
 
-pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
+pub fn reduce(operator: BinaryOperator, operands: (&Code, &Code)) -> Code {
     use BinaryOperator::*;
     match operator {
         Arithmetic(arithmetic_operator) => {
@@ -16,24 +16,24 @@ pub fn reduce(operator: BinaryOperator, operands: (&Node, &Node)) -> Node {
                         super::reduce::reduce(operands.1),
                     ) {
                         (
-                            Node {
+                            Code {
                                 data:
-                                    NodeData::Literal {
+                                    CodeData::Literal {
                                         value: LiteralValue::Number(left),
                                     },
                                 type_: _,
                                 metadata: _,
                             },
-                            Node {
+                            Code {
                                 data:
-                                    NodeData::Literal {
+                                    CodeData::Literal {
                                         value: LiteralValue::Number(right),
                                     },
                                 type_: _,
                                 metadata: _,
                             },
-                        ) => Node {
-                            data: NodeData::Literal {
+                        ) => Code {
+                            data: CodeData::Literal {
                                 value: LiteralValue::Number(left.add(&right)),
                             },
                             type_: Type::Number,

@@ -18,17 +18,23 @@ native = [
 ]
 
 web = [
-  "wasm-target"
+  "plugin-wasm-target"
+]
+
+debugdump = [
+  "bevy_mod_debugdump"
 ]
 
 [dependencies]
-core = { package = "desk-plugin-core", path = "../../plugins/core", version = "0.1.0" }
-shell = { package = "desk-plugin-shell", path = "../../plugins/shell", version = "0.1.0" }
-physics-rapier = { package = "desk-plugin-physics-rapier", path = "../../plugins/physics-rapier", version = "0.1.0" }
-egui = { package = "desk-plugin-egui", path = "../../plugins/egui", version = "0.1.0" }
+plugin-core = { package = "desk-plugin-core", path = "../../plugins/core", version = "0.1.0" }
+plugin-shell = { package = "desk-plugin-shell", path = "../../plugins/shell", version = "0.1.0" }
+plugin-physics-rapier = { package = "desk-plugin-physics-rapier", path = "../../plugins/physics-rapier", version = "0.1.0" }
+plugin-egui = { package = "desk-plugin-egui", path = "../../plugins/egui", version = "0.1.0" }
+plugin-wasm-target = { package = "desk-plugin-wasm-target", path = "../../plugins/wasm-target", optional = true, version = "0.1.0" }
+
 bevy = { version = "0.5", default-features = false }
-wasm-target = { package = "desk-plugin-wasm-target", path = "../../plugins/wasm-target", optional = true, version = "0.1.0" }
 bevy_mod_debugdump = { version = "0.2", optional = true }
+# bevy_mod_debugdump = { git = "https://github.com/jakobhellermann/bevy_mod_debugdump.git", optional = true }
 
 [dev-dependencies]
 wasm-bindgen = "0.2.69"

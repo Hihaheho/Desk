@@ -1,9 +1,9 @@
 use crate::code::node::apply_binary_operator;
 
-use super::{Node, NodeData};
+use super::{Code, CodeData};
 
-pub fn reduce(node: &Node) -> Node {
-    use NodeData::*;
+pub fn reduce(node: &Code) -> Code {
+    use CodeData::*;
     match &node.data {
         Literal { value: _ } => node.to_owned(),
         Variable { identifier: _ } => {

@@ -1,17 +1,17 @@
-use language::code::node::Node;
+use language::code::node::Code;
 use runtime::Runtime;
 
 pub struct SimpleTraverseRuntime;
 
 impl Runtime for SimpleTraverseRuntime {
-    type Code = Node;
+    type Code = Code;
     type Error = ();
 
-    fn generate_code(&self, ir: &Node) -> Self::Code {
+    fn generate_code(&self, ir: &Code) -> Self::Code {
         ir.clone()
     }
 
-    fn run(&self, code: &Node) -> Result<Node, Self::Error> {
+    fn run(&self, code: &Code) -> Result<Code, Self::Error> {
         // TODO reduce while reducible.
         Ok(code.reduce())
     }

@@ -1,22 +1,22 @@
-use core::{card::CardPlugin, language::LanguagePlugins};
-use physics_rapier::PhysicsPlugin;
+use plugin_core::language::LanguagePlugins;
+use plugin_physics_rapier::PhysicsPlugin;
 
 use bevy::prelude::*;
-use shell::ShellPlugin;
+use plugin_egui::EguiBackendPlugin;
+use plugin_shell::ShellPlugin;
 
 #[bevy_main]
 fn main() {
     let mut app = App::build();
 
     app.add_plugins(DefaultPlugins)
-        .add_plugin(CardPlugin)
         .add_plugin(ShellPlugin)
         .add_plugins(LanguagePlugins)
         .add_plugin(PhysicsPlugin)
-        .add_plugin(egui::EguiBackendPlugin);
+        .add_plugin(EguiBackendPlugin);
 
     #[cfg(target_arch = "wasm32")]
-    app.add_plugin(wasm_target::WasmTargetPlugin);
+    app.add_plugin(plugin_wasm_target::WasmTargetPlugin);
 
     #[cfg(feature = "bevy_mod_debugdump")]
     std::fs::write(

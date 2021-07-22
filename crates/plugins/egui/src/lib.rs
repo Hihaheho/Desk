@@ -27,20 +27,30 @@ fn update_widget(
     mut commands: Commands,
     windows: Res<Windows>,
     camera: Query<(&Camera, &GlobalTransform)>,
-    mut query: Query<(Entity, &WidgetId, &Component, &GlobalTransform)>,
+    mut query: Query<(
+        Entity,
+        Option<&mut Widget>,
+        &WidgetId,
+        &Component,
+        &GlobalTransform,
+    )>,
 ) {
     let (camera, camera_transform) = camera.single().unwrap();
-    for (entity, id, component, transform) in query.iter_mut() {
+    for (entity, widget, id, component, transform) in query.iter_mut() {
         if let Some(position) =
             camera.world_to_screen(&windows, camera_transform, transform.translation)
         {
-            let widget = Widget {
+            let new_widget = Widget {
                 id: id.to_owned(),
                 backend_id: EGUI_BACKEND.into(),
                 component: component.to_owned(),
                 position: position.to_owned().extend(0.0),
             };
-            commands.entity(entity).insert(widget);
+            if let Some(mut widget) = widget {
+                *widget = new_widget;
+            } else {
+                commands.entity(entity).insert(new_widget);
+            }
         }
     }
 }

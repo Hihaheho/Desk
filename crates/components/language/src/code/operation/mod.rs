@@ -1,53 +1,68 @@
-use super::node::{LiteralValue, Node, NodeData, NumberLiteral};
+use super::node::{Code, CodeData, LiteralValue, NumberLiteral};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct CodeOperations(pub Vec<CodeOperation>);
+
+impl CodeOperations {
+    pub fn iter(&self) -> impl Iterator<Item = &CodeOperation> {
+        self.0.iter()
+    }
+}
+
+impl From<Vec<CodeOperation>> for CodeOperations {
+    fn from(from: Vec<CodeOperation>) -> Self {
+        Self(from)
+    }
+}
 
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
-pub enum NodeOperation {
+pub enum CodeOperation {
     UpdateString(String),
     UpdateNumber(NumberLiteral),
 }
 
-use NodeOperation::*;
+use CodeOperation::*;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodeOperationError {
-    pub node: Node,
-    pub operation: NodeOperation,
+pub struct CodeOperationError {
+    pub node: Code,
+    pub operation: CodeOperation,
 }
 
-impl Node {
+impl Code {
     pub fn apply_operation(
         &self,
-        node_operation: &NodeOperation,
-    ) -> Result<Self, NodeOperationError> {
+        node_operation: &CodeOperation,
+    ) -> Result<Self, CodeOperationError> {
         match (&self.data, node_operation) {
             (
-                super::node::NodeData::Literal {
+                super::node::CodeData::Literal {
                     value: LiteralValue::String(_),
                 },
                 UpdateString(new_value),
             ) => Ok(Self {
-                data: NodeData::Literal {
+                data: CodeData::Literal {
                     value: LiteralValue::String(new_value.to_owned()),
                 },
                 ..self.to_owned()
             }),
-            (_, UpdateString(_)) => Err(NodeOperationError {
+            (_, UpdateString(_)) => Err(CodeOperationError {
                 node: self.clone(),
                 operation: node_operation.to_owned(),
             }),
             (
-                super::node::NodeData::Literal {
+                super::node::CodeData::Literal {
                     value: LiteralValue::Number(_),
                 },
                 UpdateNumber(new_value),
             ) => Ok(Self {
-                data: NodeData::Literal {
+                data: CodeData::Literal {
                     value: LiteralValue::Number(new_value.to_owned()),
                 },
                 ..self.to_owned()
             }),
-            (_, UpdateNumber(_)) => Err(NodeOperationError {
+            (_, UpdateNumber(_)) => Err(CodeOperationError {
                 node: self.clone(),
                 operation: node_operation.to_owned(),
             }),

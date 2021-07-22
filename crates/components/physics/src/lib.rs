@@ -1,4 +1,5 @@
 mod drag_state;
+pub mod event_handler;
 pub mod shape;
 pub mod widget;
 use bevy_math::Vec2;

@@ -1,5 +1,5 @@
-use super::{Identifier, Node};
+use super::{Code, Identifier};
 
-pub fn reduce(_variable: &Identifier, _value: &Node, _expression: &Node) -> Node {
+pub fn reduce(_variable: &Identifier, _value: &Code, _expression: &Code) -> Code {
     todo!()
 }

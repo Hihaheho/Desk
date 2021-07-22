@@ -1,4 +1,4 @@
-use super::node::Node;
+use super::node::Code;
 
 #[derive(Clone, Debug)]
 pub struct NodePath {
@@ -14,12 +14,12 @@ impl NodePath {
 #[derive(Clone, Debug)]
 pub enum NodePathPredicate {}
 
-impl Node {
-    pub fn get_by_path(&self, _path: &NodePath) -> &Node {
+impl Code {
+    pub fn get_by_path(&self, _path: &NodePath) -> &Code {
         self
     }
 
-    pub fn patch_by_path(&self, _path: &NodePath, patch: Node) -> Node {
+    pub fn patch_by_path(&self, _path: &NodePath, patch: Code) -> Code {
         patch
     }
 }

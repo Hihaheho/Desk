@@ -1362,6 +1362,7 @@ name = "desk-plugin-core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "derivative",
  "desk-architect",
  "desk-language",
  "desk-node",
@@ -1398,6 +1399,7 @@ name = "desk-plugin-shell"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "derivative",
  "desk-language",
  "desk-physics",
  "desk-plugin-core",

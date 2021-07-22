@@ -1,4 +1,4 @@
-use super::Node;
-pub fn reduce(_function: &Node, _argument: &Node) -> Node {
+use super::Code;
+pub fn reduce(_function: &Code, _argument: &Code) -> Code {
     todo!()
 }

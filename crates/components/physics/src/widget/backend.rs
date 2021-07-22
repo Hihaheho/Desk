@@ -4,12 +4,12 @@ use bevy_math::Vec2;
 
 use crate::{shape::Shape, DragState};
 
-use super::{event::WidgetEvent, Widget};
+use super::{event::WidgetEvents, Widget};
 
 #[derive(Debug, Clone)]
 pub struct RenderResponse {
     pub shape: Shape,
-    pub events: Vec<WidgetEvent>,
+    pub events: WidgetEvents,
     pub drag_state: DragState,
     pub drag_delta: Vec2,
 }

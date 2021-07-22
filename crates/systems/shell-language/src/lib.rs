@@ -1,12 +1,15 @@
+mod event_handler;
 mod literal_value;
 
-use language::code::node::{Node, NodeData};
+use language::code::node::{Code, CodeData};
 use physics::widget::component::{sugar as c, Component};
+
+pub use event_handler::*;
 
 use crate::literal_value::render_literal_number;
 
-pub fn render_node(node: &Node) -> Component {
-    use NodeData::*;
+pub fn render_node(node: &Code) -> Component {
+    use CodeData::*;
     match &node.data {
         Literal { value } => match value {
             language::code::node::LiteralValue::Unit => c::blank(),
