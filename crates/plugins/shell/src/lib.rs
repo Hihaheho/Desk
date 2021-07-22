@@ -178,7 +178,6 @@ fn widget_rendering(
 ) {
     for (widget, mut shape, mut velocity, mut drag_state, mut widget_events) in query.iter_mut() {
         if let Some(backend) = backends.get_mut(&widget.backend_id) {
-            // TODO: This line uses old widget
             let response = backend.render(widget);
             if *shape != response.shape {
                 *shape = response.shape.clone();
