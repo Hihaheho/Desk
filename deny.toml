@@ -62,3 +62,18 @@ allow-git = []
 allow = ["MPL-2.0"]
 name = "hexasphere"
 version = "3.4"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu-core"
+version = "0.7.1"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu-types"
+version = "0.7.0"
+
+[[licenses.exceptions]]
+allow = ["MPL-2.0"]
+name = "wgpu"
+version = "0.7.1"

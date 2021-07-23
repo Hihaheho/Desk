@@ -32,8 +32,12 @@ args = ["fmt", "--all", "--", "--check"]
 command = "cargo"
 args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "clippy::all"]
 
+[tasks.deny]
+command = "cargo"
+args = ["deny", "--all-features", "check"]
+
 [tasks.ci-check]
-run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy"] }
+run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy", "deny"] }
 
 [tasks.clippy-fix]
 command = "cargo"
