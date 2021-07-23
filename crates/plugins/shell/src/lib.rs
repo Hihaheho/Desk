@@ -1,24 +1,22 @@
 #![allow(clippy::type_complexity)]
-mod card;
+mod card_systems;
 mod event_handler;
+mod terminal_systems;
 
-use card::create_card;
+use card_systems::{card_rendering, create_card, widget_adding_for_cards};
 pub use event_handler::*;
 
 use plugin_core::{DeskSystem, ShellSystem};
 
 use bevy::prelude::*;
 
-use language::code::node::Code;
 use physics::{
     shape::Shape,
-    widget::{backend::Backends, component::Component, event::WidgetEvents, Widget, WidgetId},
+    widget::{backend::Backends, event::WidgetEvents, Widget},
     DragState, Velocity,
 };
-use runtime::card::{Card, Computed};
-use shell_language::{render_node, CodeOperationHandler, CodeWidgetEventHandler};
-use shell_terminal::render_terminal;
-use terminal::terminal::Terminal;
+use shell_language::{CodeOperationHandler, CodeWidgetEventHandler};
+use terminal_systems::{create_terminal, terminal_rendering, widget_adding_for_terminal};
 
 pub struct ShellPlugin;
 
@@ -73,95 +71,6 @@ impl Plugin for ShellPlugin {
                             .label(ShellSystem::HandleEvents),
                     ),
             );
-    }
-}
-
-#[derive(Bundle)]
-struct TerminalBundle {
-    shell: Terminal,
-    transform: Transform,
-    global_transform: GlobalTransform,
-}
-
-impl Default for TerminalBundle {
-    fn default() -> Self {
-        TerminalBundle {
-            shell: Terminal {
-                // logs: vec![
-                // prompt: Prompt::Default,
-                // command_input: "".into(),
-            },
-            transform: Transform::default(),
-            global_transform: GlobalTransform::default(),
-        }
-    }
-}
-
-#[derive(Bundle)]
-struct WidgetBundle {
-    shape: Shape,
-    component: Component,
-    drag_state: DragState,
-    velocity: Velocity,
-    events: WidgetEvents,
-}
-
-impl Default for WidgetBundle {
-    fn default() -> Self {
-        Self {
-            shape: Default::default(),
-            component: Default::default(),
-            drag_state: Default::default(),
-            velocity: Default::default(),
-            events: Default::default(),
-        }
-    }
-}
-
-fn create_terminal(mut commands: Commands) {
-    commands.spawn_bundle(TerminalBundle {
-        transform: Transform::from_translation([100.0, 100.0, 0.].into()),
-        ..Default::default()
-    });
-}
-
-fn widget_adding_for_cards(mut command: Commands, query: Query<(Entity, &Card), Added<Card>>) {
-    for (entity, card) in query.iter() {
-        command
-            .entity(entity)
-            .insert(WidgetId::from(card.id.to_string()))
-            .insert_bundle(WidgetBundle::default());
-    }
-}
-fn widget_adding_for_terminal(mut command: Commands, query: Query<Entity, Added<Terminal>>) {
-    for entity in query.iter() {
-        command
-            .entity(entity)
-            .insert(WidgetId::from("terminal"))
-            .insert_bundle(WidgetBundle::default());
-    }
-}
-
-fn card_rendering(
-    mut query: Query<
-        (&Code, Option<&Computed<Code>>, &mut Component),
-        Or<(Changed<Code>, Changed<Computed<Code>>)>,
-    >,
-) {
-    for (node, _computed, mut component) in query.iter_mut() {
-        let new_component = render_node(node);
-        if *component != new_component {
-            *component = new_component;
-        }
-    }
-}
-
-fn terminal_rendering(mut query: Query<(&Terminal, &mut Component)>) {
-    for (terminal, mut component) in query.iter_mut() {
-        let new_component = render_terminal(terminal);
-        if *component != new_component {
-            *component = new_component;
-        }
     }
 }
 
