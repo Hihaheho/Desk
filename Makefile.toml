@@ -53,7 +53,7 @@ run_task = { name = ["fmt", "clippy-fix"] }
 [tasks.debugdump]
 script = '''
 cargo run -p desk-client --features debugdump,native
-cat target/schedule_graph.dot | dot -Tsvg > target/schedule_graph.png
+cat target/schedule_graph.dot | dot -Tsvg > target/schedule_graph.svg
 '''
 
 [config]

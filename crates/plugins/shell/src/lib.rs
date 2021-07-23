@@ -52,8 +52,9 @@ impl Plugin for ShellPlugin {
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
-                    .label(ShellSystem::HandleEvents)
                     .after(ShellSystem::Render)
+                    .label(ShellSystem::HandleEvents)
+                    .before(DeskSystem::HandleOperations)
                     .with_system(
                         EventHandlerPlugin::<CodeWidgetEventHandler>::default()
                             .system()
