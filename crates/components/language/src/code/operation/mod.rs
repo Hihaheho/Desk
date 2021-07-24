@@ -1,6 +1,6 @@
 use super::node::{Code, CodeData, LiteralValue, NumberLiteral};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct CodeOperations(pub Vec<CodeOperation>);
 
 impl CodeOperations {
@@ -26,16 +26,16 @@ use CodeOperation::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CodeOperationError {
-    pub node: Code,
+    pub code: Code,
     pub operation: CodeOperation,
 }
 
 impl Code {
     pub fn apply_operation(
         &self,
-        node_operation: &CodeOperation,
+        code_operation: &CodeOperation,
     ) -> Result<Self, CodeOperationError> {
-        match (&self.data, node_operation) {
+        match (&self.data, code_operation) {
             (
                 super::node::CodeData::Literal {
                     value: LiteralValue::String(_),
@@ -48,8 +48,8 @@ impl Code {
                 ..self.to_owned()
             }),
             (_, UpdateString(_)) => Err(CodeOperationError {
-                node: self.clone(),
-                operation: node_operation.to_owned(),
+                code: self.clone(),
+                operation: code_operation.to_owned(),
             }),
             (
                 super::node::CodeData::Literal {
@@ -63,8 +63,8 @@ impl Code {
                 ..self.to_owned()
             }),
             (_, UpdateNumber(_)) => Err(CodeOperationError {
-                node: self.clone(),
-                operation: node_operation.to_owned(),
+                code: self.clone(),
+                operation: code_operation.to_owned(),
             }),
         }
     }

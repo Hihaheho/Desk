@@ -2,6 +2,7 @@
 mod card_systems;
 mod event_handler;
 mod terminal_systems;
+mod widget_bundle;
 
 use card_systems::{card_rendering, create_card, widget_adding_for_cards};
 pub use event_handler::*;
@@ -15,7 +16,8 @@ use physics::{
     widget::{backend::Backends, event::WidgetEvents, Widget},
     DragState, Velocity,
 };
-use shell_language::{CodeOperationHandler, CodeWidgetEventHandler};
+use shell_language::CodeWidgetEventHandler;
+use shell_terminal::TerminalWidgetEventHandler;
 use terminal_systems::{create_terminal, terminal_rendering, widget_adding_for_terminal};
 
 pub struct ShellPlugin;
@@ -41,13 +43,13 @@ impl Plugin for ShellPlugin {
                     .with_system(terminal_rendering.system())
                     .with_system(card_rendering.system()),
             )
-            .add_system(
-                widget_rendering
-                    .system()
+            .add_system_set(
+                SystemSet::new()
                     .label(DeskSystem::Shell)
                     .after(ShellSystem::UpdateWidget)
                     .label(ShellSystem::Render)
-                    .before(ShellSystem::HandleEvents),
+                    .before(ShellSystem::HandleEvents)
+                    .with_system(widget_rendering.system()),
             )
             .add_system_set(
                 SystemSet::new()
@@ -56,20 +58,12 @@ impl Plugin for ShellPlugin {
                     .label(ShellSystem::HandleEvents)
                     .before(DeskSystem::HandleOperations)
                     .with_system(
-                        EventHandlerPlugin::<CodeWidgetEventHandler>::default()
-                            .system()
-                            .label(ShellSystem::HandleEvents),
-                    ),
-            )
-            .add_system_set(
-                SystemSet::new()
-                    .label(DeskSystem::HandleOperations)
-                    .after(DeskSystem::Shell)
-                    .before(DeskSystem::PrePhysics)
+                        EventHandlerWrapper::<CodeWidgetEventHandler>::default()
+                            .event_handler_system(),
+                    )
                     .with_system(
-                        EventHandlerPlugin::<CodeOperationHandler>::default()
-                            .system()
-                            .label(ShellSystem::HandleEvents),
+                        EventHandlerWrapper::<TerminalWidgetEventHandler>::default()
+                            .event_handler_system(),
                     ),
             );
     }

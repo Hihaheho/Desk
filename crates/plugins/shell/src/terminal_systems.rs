@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
 use physics::widget::{component::Component, WidgetId};
-use shell_terminal::render_terminal;
-use terminal::terminal::Terminal;
+use shell_terminal::{render_terminal, TerminalWidgetEventHandler};
+use terminal::{terminal::Terminal, TerminalOperations};
 
-use crate::card_systems::WidgetBundle;
+use crate::widget_bundle::WidgetBundle;
 
 pub(crate) fn create_terminal(mut commands: Commands) {
     commands.spawn_bundle(TerminalBundle {
@@ -13,25 +13,13 @@ pub(crate) fn create_terminal(mut commands: Commands) {
     });
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct TerminalBundle {
     shell: Terminal,
+    terminal_operations: TerminalOperations,
     transform: Transform,
     global_transform: GlobalTransform,
-}
-
-impl Default for TerminalBundle {
-    fn default() -> Self {
-        TerminalBundle {
-            shell: Terminal {
-                // logs: vec![
-                // prompt: Prompt::Default,
-                // command_input: "".into(),
-            },
-            transform: Transform::default(),
-            global_transform: GlobalTransform::default(),
-        }
-    }
+    widget_event_handler: TerminalWidgetEventHandler,
 }
 pub(crate) fn widget_adding_for_terminal(
     mut command: Commands,

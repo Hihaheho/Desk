@@ -1,4 +1,5 @@
 #[non_exhaustive]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Command {
     Move {
         direction: Direction,
@@ -8,6 +9,7 @@ pub enum Command {
     Place {},
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum Direction {
     Left,
     Right,
@@ -15,8 +17,34 @@ pub enum Direction {
     Down,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum Distance {
     Pixel(f32),
 }
 
-pub struct Terminal {}
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct TerminalLogs(Vec<Command>);
+
+impl From<Vec<Command>> for TerminalLogs {
+    fn from(from: Vec<Command>) -> Self {
+        Self(from)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum TerminalPrompt {
+    Default,
+}
+
+impl Default for TerminalPrompt {
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Terminal {
+    pub logs: TerminalLogs,
+    pub prompt: TerminalPrompt,
+    pub command_input: String,
+}

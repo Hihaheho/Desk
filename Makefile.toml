@@ -48,12 +48,12 @@ command = "cargo"
 args = ["fmt", "--all"]
 
 [tasks.fix]
-run_task = { name = ["fmt", "clippy-fix"] }
+run_task = { name = ["clippy-fix", "fmt"] }
 
 [tasks.debugdump]
 script = '''
 cargo run -p desk-client --features debugdump,native
-cat target/schedule_graph.dot | dot -Tsvg > target/schedule_graph.svg
+cat target/schedule_graph.dot | dot -LC10 -Tsvg > target/schedule_graph.svg
 '''
 
 [config]

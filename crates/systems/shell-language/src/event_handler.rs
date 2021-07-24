@@ -1,7 +1,4 @@
-use language::code::{
-    node::Code,
-    operation::{CodeOperation, CodeOperations},
-};
+use language::code::operation::{CodeOperation, CodeOperations};
 use physics::{
     event_handler::EventHandler,
     widget::{
@@ -9,19 +6,6 @@ use physics::{
         Widget,
     },
 };
-
-pub struct CodeOperationHandler;
-impl EventHandler for CodeOperationHandler {
-    type Context = Code;
-    type Events = CodeOperations;
-    type Output = Code;
-
-    fn handle(&self, code: &Self::Context, events: &Self::Events) -> Self::Output {
-        events.iter().fold(code.clone(), |code, operation| {
-            code.apply_operation(operation).unwrap()
-        })
-    }
-}
 
 pub struct CodeWidgetEventHandler;
 

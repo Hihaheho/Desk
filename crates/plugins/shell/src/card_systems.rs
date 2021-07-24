@@ -1,32 +1,36 @@
 use bevy::prelude::*;
-use language::code::node::{sugar as n, Code};
-use physics::{
-    shape::Shape,
-    widget::{component::Component, event::WidgetEvents, WidgetId},
-    DragState, Velocity,
+use language::{
+    code::{
+        node::{sugar as n, Code},
+        operation::CodeOperations,
+        CodeId,
+    },
+    Computed,
 };
-use runtime::card::{Card, Computed};
-use shell_language::{render_node, CodeOperationHandler, CodeWidgetEventHandler};
+use physics::widget::{component::Component, WidgetId};
+use shell_language::{render_node, CodeWidgetEventHandler};
+
+use crate::widget_bundle::WidgetBundle;
 
 #[derive(Bundle)]
 struct CardBundle {
-    card: Card,
+    code_id: CodeId,
     code: Code,
     transform: Transform,
     global_transform: GlobalTransform,
+    code_operations: CodeOperations,
     widget_event_handler: CodeWidgetEventHandler,
-    code_operation_handler: CodeOperationHandler,
 }
 
 impl Default for CardBundle {
     fn default() -> Self {
         CardBundle {
-            card: Card::new(),
+            code_id: CodeId::new(),
             code: n::string(""),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
+            code_operations: Default::default(),
             widget_event_handler: CodeWidgetEventHandler,
-            code_operation_handler: CodeOperationHandler,
         }
     }
 }
@@ -51,45 +55,19 @@ pub(crate) fn create_card(mut commands: Commands) {
     });
 }
 
-#[derive(Bundle)]
-pub(crate) struct WidgetBundle {
-    shape: Shape,
-    component: Component,
-    drag_state: DragState,
-    velocity: Velocity,
-    events: WidgetEvents,
-}
-
-impl Default for WidgetBundle {
-    fn default() -> Self {
-        Self {
-            shape: Default::default(),
-            component: Default::default(),
-            drag_state: Default::default(),
-            velocity: Default::default(),
-            events: Default::default(),
-        }
-    }
-}
-
 pub(crate) fn widget_adding_for_cards(
     mut command: Commands,
-    query: Query<(Entity, &Card), Added<Card>>,
+    query: Query<(Entity, &CodeId), Added<CodeId>>,
 ) {
-    for (entity, card) in query.iter() {
+    for (entity, id) in query.iter() {
         command
             .entity(entity)
-            .insert(WidgetId::from(card.id.to_string()))
+            .insert(WidgetId::from(id.to_string()))
             .insert_bundle(WidgetBundle::default());
     }
 }
 
-pub(crate) fn card_rendering(
-    mut query: Query<
-        (&Code, Option<&Computed<Code>>, &mut Component),
-        Or<(Changed<Code>, Changed<Computed<Code>>)>,
-    >,
-) {
+pub(crate) fn card_rendering(mut query: Query<(&Code, Option<&Computed>, &mut Component)>) {
     for (node, _computed, mut component) in query.iter_mut() {
         let new_component = render_node(node);
         if *component != new_component {

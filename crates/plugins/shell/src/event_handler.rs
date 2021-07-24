@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::schedule::ParallelSystemDescriptor, prelude::*};
 use derivative::*;
 
 use physics::event_handler::EventHandler;
@@ -6,10 +6,14 @@ use plugin_core::EventHandlerSystem;
 
 #[derive(Derivative)]
 #[derivative(Default(bound = ""))]
-pub struct EventHandlerPlugin<T>(std::marker::PhantomData<fn() -> T>);
+pub struct EventHandlerWrapper<T>(std::marker::PhantomData<fn() -> T>);
 
-impl<T: EventHandler> EventHandlerPlugin<T> {
-    pub fn system(self) -> impl ParallelSystemDescriptorCoercion {
+pub trait IntoEventHandlerSystem {
+    fn event_handler_system(self) -> ParallelSystemDescriptor;
+}
+
+impl<T: EventHandler> IntoEventHandlerSystem for EventHandlerWrapper<T> {
+    fn event_handler_system(self) -> ParallelSystemDescriptor {
         handle_widget_event::<T>
             .system()
             .label(EventHandlerSystem::<T>::Handle)
@@ -17,11 +21,14 @@ impl<T: EventHandler> EventHandlerPlugin<T> {
 }
 
 fn handle_widget_event<Handler: EventHandler>(
-    mut commands: Commands,
-    mut query: Query<(Entity, &Handler::Context, &Handler, &Handler::Events)>,
+    mut query: Query<(
+        &Handler::Context,
+        &Handler,
+        &Handler::Events,
+        &mut Handler::Output,
+    )>,
 ) {
-    for (entity, context, handler, events) in query.iter_mut() {
-        let output = handler.handle(context, events);
-        commands.entity(entity).insert(output);
+    for (context, handler, events, mut output) in query.iter_mut() {
+        *output = handler.handle(context, events)
     }
 }

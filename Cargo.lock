@@ -1329,6 +1329,7 @@ dependencies = [
  "bevy_mod_debugdump",
  "desk-plugin-core",
  "desk-plugin-egui",
+ "desk-plugin-language",
  "desk-plugin-physics-rapier",
  "desk-plugin-shell",
  "desk-plugin-wasm-target",
@@ -1345,6 +1346,9 @@ dependencies = [
 [[package]]
 name = "desk-language"
 version = "0.1.0"
+dependencies = [
+ "uuid",
+]
 
 [[package]]
 name = "desk-node"
@@ -1355,6 +1359,7 @@ name = "desk-physics"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
+ "derivative",
 ]
 
 [[package]]
@@ -1363,14 +1368,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "derivative",
- "desk-architect",
- "desk-language",
- "desk-node",
- "desk-physics",
- "desk-runtime",
- "desk-runtime-simple-traverse",
- "desk-security",
- "desk-terminal",
 ]
 
 [[package]]
@@ -1382,6 +1379,15 @@ dependencies = [
  "desk-physics",
  "desk-plugin-core",
  "desk-widget-backend-egui",
+]
+
+[[package]]
+name = "desk-plugin-language"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "desk-language",
+ "desk-plugin-core",
 ]
 
 [[package]]
@@ -1403,7 +1409,6 @@ dependencies = [
  "desk-language",
  "desk-physics",
  "desk-plugin-core",
- "desk-runtime",
  "desk-shell-language",
  "desk-shell-terminal",
  "desk-terminal",
@@ -1420,19 +1425,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-runtime"
-version = "0.1.0"
-dependencies = [
- "desk-language",
- "uuid",
-]
-
-[[package]]
 name = "desk-runtime-simple-traverse"
 version = "0.1.0"
 dependencies = [
  "desk-language",
- "desk-runtime",
 ]
 
 [[package]]
@@ -1440,7 +1436,6 @@ name = "desk-runtime-wasm"
 version = "0.1.0"
 dependencies = [
  "desk-language",
- "desk-runtime",
  "parity-wasm",
 ]
 
@@ -3722,7 +3717,6 @@ checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
 dependencies = [
  "getrandom",
  "serde",
- "sha1",
 ]
 
 [[package]]

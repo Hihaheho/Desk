@@ -1,4 +1,4 @@
-use plugin_core::language::LanguagePlugins;
+use plugin_language::LanguagePlugin;
 use plugin_physics_rapier::PhysicsPlugin;
 
 use bevy::prelude::*;
@@ -11,7 +11,7 @@ fn main() {
 
     app.add_plugins(DefaultPlugins)
         .add_plugin(ShellPlugin)
-        .add_plugins(LanguagePlugins)
+        .add_plugin(LanguagePlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(EguiBackendPlugin);
 

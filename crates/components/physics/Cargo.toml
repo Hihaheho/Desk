@@ -9,3 +9,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 bevy_math = "0.5.0"
+derivative = "2.2"

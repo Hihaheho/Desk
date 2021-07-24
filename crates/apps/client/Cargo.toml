@@ -27,6 +27,7 @@ debugdump = [
 
 [dependencies]
 plugin-core = { package = "desk-plugin-core", path = "../../plugins/core", version = "0.1.0" }
+plugin-language = { package = "desk-plugin-language", path = "../../plugins/language", version = "0.1.0" }
 plugin-shell = { package = "desk-plugin-shell", path = "../../plugins/shell", version = "0.1.0" }
 plugin-physics-rapier = { package = "desk-plugin-physics-rapier", path = "../../plugins/physics-rapier", version = "0.1.0" }
 plugin-egui = { package = "desk-plugin-egui", path = "../../plugins/egui", version = "0.1.0" }

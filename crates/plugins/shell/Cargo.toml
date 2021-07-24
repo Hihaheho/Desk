@@ -12,7 +12,6 @@ shell-terminal = { package = "desk-shell-terminal", path = "../../systems/shell-
 
 plugin-core = { package = "desk-plugin-core", path = "../core", version = "0.1.0" }
 terminal = { package = "desk-terminal", path = "../../components/terminal", version = "0.1.0" }
-runtime = { package = "desk-runtime", path = "../../components/runtime", version = "0.1.0" }
 language = { package = "desk-language", path = "../../components/language", version = "0.1.0" }
 physics = { package = "desk-physics", path = "../../components/physics", version = "0.1.0" }
 

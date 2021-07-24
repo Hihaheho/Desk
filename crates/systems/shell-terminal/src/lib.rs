@@ -1,6 +1,7 @@
+mod event_handler;
+pub use event_handler::*;
 use physics::widget::component::{sugar as c, Component};
 use terminal::terminal::Terminal;
-
 pub fn render_terminal(_terminal: &Terminal) -> Component {
     c::vertical_array(vec![
         c::label("I'm your friend."),
