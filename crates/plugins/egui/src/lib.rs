@@ -1,7 +1,10 @@
 use core::ShellSystem;
 
 use bevy::{prelude::*, render::camera::Camera};
-use egui_backend::{EguiBackend, EguiContext, EguiPlugin};
+use egui_backend::{
+    egui::{FontDefinitions, FontFamily},
+    EguiBackend, EguiContext, EguiPlugin,
+};
 use physics::widget::{backend::Backends, component::Component, Widget, WidgetId};
 
 const EGUI_BACKEND: &str = "egui";
@@ -11,9 +14,35 @@ pub struct EguiBackendPlugin;
 impl Plugin for EguiBackendPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
         app.add_plugin(EguiPlugin)
+            .add_system(
+                add_font
+                    .system()
+                    .with_run_criteria(bevy::ecs::schedule::RunOnce::default()),
+            )
             .add_system(add_backend.system().before(ShellSystem::Render))
             .add_system(update_widget.system().label(ShellSystem::UpdateWidget));
     }
+}
+
+fn add_font(egui_context: ResMut<EguiContext>) {
+    let ctx = egui_context.ctx();
+    let mut fonts = FontDefinitions::default();
+
+    fonts.font_data.insert(
+        "mplus".to_owned(),
+        std::borrow::Cow::Borrowed(include_bytes!(
+            "../../../../assets/fonts/MPLUSRounded1c-Regular.ttf"
+        )),
+    );
+
+    // Put my font first (highest priority):
+    fonts
+        .fonts_for_family
+        .get_mut(&FontFamily::Proportional)
+        .unwrap()
+        .insert(0, "mplus".to_owned());
+
+    ctx.set_fonts(fonts);
 }
 
 fn add_backend(mut backends: ResMut<Backends>, egui_context: ResMut<EguiContext>) {
