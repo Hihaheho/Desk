@@ -85,7 +85,7 @@ mod test {
             params
                 .follow_vector(&Vec2::new(0.3, 2.), &Vec2::new(1.0, 0.5))
                 .0,
-            Vec2::new(0.7, -1.5).into(),
+            Vec2::new(0.7, -1.5),
         );
     }
 
@@ -99,7 +99,7 @@ mod test {
             params
                 .follow_vector(&Vec2::new(0.4, 2.), &Vec2::new(2.0, 3.5))
                 .0,
-            Vec2::new(0.6, -0.5).into(),
+            Vec2::new(0.6, -0.5),
         );
     }
 
@@ -113,7 +113,7 @@ mod test {
             params
                 .follow_vector(&Vec2::new(0.0, 0.0), &Vec2::new(3.0, 4.0))
                 .0,
-            Vec2::new(3.0, 4.0).into(),
+            Vec2::new(3.0, 4.0),
         );
 
         let params = FollowParams {
@@ -124,7 +124,7 @@ mod test {
             params
                 .follow_vector(&Vec2::new(0.0, 0.0), &Vec2::new(3.0, 4.0))
                 .0,
-            Vec2::new(15.0, 20.0).into(),
+            Vec2::new(15.0, 20.0),
         );
     }
 
@@ -138,7 +138,7 @@ mod test {
             params
                 .follow_vector(&Vec2::new(0.0, 0.0), &Vec2::new(3.0, 4.0))
                 .0,
-            Vec2::new(0.0, 0.0).into(),
+            Vec2::new(0.0, 0.0),
         );
         assert_nearly_eq(
             params

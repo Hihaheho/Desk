@@ -20,9 +20,7 @@ use physics::{
 };
 use shell_language::CodeWidgetEventHandler;
 use shell_terminal::TerminalWidgetEventHandler;
-use terminal_systems::{
-    create_terminal, follow, terminal_rendering, widget_adding_for_terminal,
-};
+use terminal_systems::{create_terminal, follow, terminal_rendering, widget_adding_for_terminal};
 
 pub struct ShellPlugin;
 

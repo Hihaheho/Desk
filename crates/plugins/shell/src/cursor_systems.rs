@@ -24,7 +24,7 @@ pub(crate) fn move_cursor(
     {
         let camera = {
             if let Ok(camera) = query_set.q0().single() {
-                camera.clone()
+                *camera
             } else {
                 return;
             }
@@ -46,7 +46,7 @@ fn translate_position(pos: Vec2, wnd: &Window, camera: &Transform) -> Vec2 {
     let p = pos - size / 2.0;
 
     // apply the camera transform
-    return (camera.compute_matrix() * p.extend(0.0).extend(1.0))
+    (camera.compute_matrix() * p.extend(0.0).extend(1.0))
         .truncate()
-        .truncate();
+        .truncate()
 }
