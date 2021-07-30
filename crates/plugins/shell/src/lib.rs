@@ -1,10 +1,12 @@
 #![allow(clippy::type_complexity)]
 mod card_systems;
+mod cursor_systems;
 mod event_handler;
 mod terminal_systems;
 mod widget_bundle;
 
 use card_systems::{card_rendering, create_card, widget_adding_for_cards};
+use cursor_systems::{add_cursor, move_cursor};
 pub use event_handler::*;
 
 use plugin_core::{DeskSystem, ShellSystem};
@@ -18,7 +20,9 @@ use physics::{
 };
 use shell_language::CodeWidgetEventHandler;
 use shell_terminal::TerminalWidgetEventHandler;
-use terminal_systems::{create_terminal, terminal_rendering, widget_adding_for_terminal};
+use terminal_systems::{
+    create_terminal, follow, terminal_rendering, widget_adding_for_terminal,
+};
 
 pub struct ShellPlugin;
 
@@ -27,6 +31,20 @@ impl Plugin for ShellPlugin {
         app.init_resource::<Backends>()
             .add_startup_system(create_terminal.system())
             .add_startup_system(create_card.system())
+            .add_startup_system(add_cursor.system())
+            .add_system(
+                move_cursor
+                    .system()
+                    .label(DeskSystem::UpdateStatesToLatest)
+                    .before(DeskSystem::Shell),
+            )
+            .add_system(
+                follow
+                    .system()
+                    .after(DeskSystem::Shell)
+                    .before(DeskSystem::PrePhysics),
+            )
+            .add_system(reset_velocity.system().after(DeskSystem::PrePhysics))
             .add_system_set(
                 SystemSet::new()
                     .label(DeskSystem::Shell)
@@ -69,6 +87,12 @@ impl Plugin for ShellPlugin {
     }
 }
 
+fn reset_velocity(mut query: Query<&mut Velocity>) {
+    for mut velocity in query.iter_mut() {
+        velocity.0 = Vec2::ZERO;
+    }
+}
+
 fn widget_rendering(
     time: Res<Time>,
     mut backends: ResMut<Backends>,
@@ -89,7 +113,7 @@ fn widget_rendering(
 
             let new_velocity = (response.drag_delta / time.delta_seconds()).into();
             if *velocity != new_velocity {
-                *velocity = new_velocity;
+                *velocity = &*velocity + new_velocity;
             }
             if *drag_state != response.drag_state {
                 *drag_state = response.drag_state.clone();

@@ -3,6 +3,7 @@ use derivative::*;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 pub enum DeskSystem {
+    UpdateStatesToLatest,
     Shell,
     HandleOperations,
     PrePhysics,
