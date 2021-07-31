@@ -1,7 +1,9 @@
 #![allow(clippy::type_complexity)]
 mod card_systems;
 mod cursor_systems;
+mod drag_system;
 mod event_handler;
+mod follow_system;
 mod terminal_systems;
 mod widget_bundle;
 
@@ -20,7 +22,7 @@ use physics::{
 };
 use shell_language::CodeWidgetEventHandler;
 use shell_terminal::TerminalWidgetEventHandler;
-use terminal_systems::{create_terminal, follow, terminal_rendering, widget_adding_for_terminal};
+use terminal_systems::{create_terminal, terminal_rendering, widget_adding_for_terminal};
 
 pub struct ShellPlugin;
 
@@ -37,7 +39,13 @@ impl Plugin for ShellPlugin {
                     .before(DeskSystem::Shell),
             )
             .add_system(
-                follow
+                drag_system::toggle_follow_for_drag_state
+                    .system()
+                    .after(ShellSystem::Render)
+                    .before(ShellSystem::HandleEvents),
+            )
+            .add_system(
+                follow_system::follow
                     .system()
                     .after(DeskSystem::Shell)
                     .before(DeskSystem::PrePhysics),
@@ -92,29 +100,26 @@ fn reset_velocity(mut query: Query<&mut Velocity>) {
 }
 
 fn widget_rendering(
-    time: Res<Time>,
+    _time: Res<Time>,
     mut backends: ResMut<Backends>,
     mut query: Query<(
         &Widget,
         &mut Shape,
-        &mut Velocity,
-        &mut DragState,
+        Option<&mut DragState>,
         &mut WidgetEvents,
     )>,
 ) {
-    for (widget, mut shape, mut velocity, mut drag_state, mut widget_events) in query.iter_mut() {
+    for (widget, mut shape, drag_state, mut widget_events) in query.iter_mut() {
         if let Some(backend) = backends.get_mut(&widget.backend_id) {
             let response = backend.render(widget);
             if *shape != response.shape {
                 *shape = response.shape.clone();
             }
 
-            let new_velocity = (response.drag_delta / time.delta_seconds()).into();
-            if *velocity != new_velocity {
-                *velocity = &*velocity + new_velocity;
-            }
-            if *drag_state != response.drag_state {
-                *drag_state = response.drag_state.clone();
+            if let Some(mut drag_state) = drag_state {
+                if *drag_state != response.drag_state {
+                    *drag_state = response.drag_state.clone();
+                }
             }
             *widget_events = response.events;
         }

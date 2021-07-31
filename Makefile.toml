@@ -30,7 +30,7 @@ args = ["fmt", "--all", "--", "--check"]
 
 [tasks.clippy]
 command = "cargo"
-args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "clippy::all"]
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "clippy::all", "-W", "clippy::dbg_macro"]
 
 [tasks.deny]
 command = "cargo"

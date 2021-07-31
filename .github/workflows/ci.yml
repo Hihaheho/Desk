@@ -24,15 +24,3 @@ jobs:
           toolchain: nightly
           command: make
           args: ci-check
-
-  deny:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-      - uses: EmbarkStudios/cargo-deny-action@v1
-        with:
-          log-level: warn
-          command: check
-          arguments: --all-features

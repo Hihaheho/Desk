@@ -1,4 +1,3 @@
-use bevy_math::Vec2;
 use physics::{
     shape::Shape,
     widget::{
@@ -24,7 +23,6 @@ impl WidgetBackend for EguiBackend {
         if widget.component == Component::Blank {
             return RenderResponse {
                 drag_state: physics::DragState::Dragging,
-                drag_delta: Vec2::ZERO,
                 shape: Shape::Blank,
                 events: WidgetEvents(event_buffer),
             };
@@ -47,12 +45,9 @@ impl WidgetBackend for EguiBackend {
         } else {
             DragState::NotDragging
         };
-        let delta = card_widget.drag_delta();
-        let drag_delta = Vec2::new(delta.x, -delta.y);
 
         RenderResponse {
             drag_state,
-            drag_delta,
             shape,
             events: WidgetEvents(event_buffer),
         }

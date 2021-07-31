@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use bevy_math::Vec2;
-
 use crate::{shape::Shape, DragState};
 
 use super::{event::WidgetEvents, Widget};
@@ -11,7 +9,6 @@ pub struct RenderResponse {
     pub shape: Shape,
     pub events: WidgetEvents,
     pub drag_state: DragState,
-    pub drag_delta: Vec2,
 }
 
 pub trait WidgetBackend {
