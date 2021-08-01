@@ -4,20 +4,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
+
       - uses: actions/checkout@v2
         with:
           lfs: true
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
+          target: wasm32-unknown-unknown
           toolchain: nightly
           default: true
           components: rustfmt, clippy
+
       - uses: Swatinem/rust-cache@v1
 
-      - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
       - run: cargo install cargo-make
-      - run: rustup target add wasm32-unknown-unknown
 
       - uses: actions-rs/cargo@v1
         with:
