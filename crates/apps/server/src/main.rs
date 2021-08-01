@@ -1,19 +1,23 @@
 use axum::prelude::*;
-use clap::Clap;
+use serde::Deserialize;
 use std::net::SocketAddr;
 
-#[derive(Clap)]
-struct Opts {
-    #[clap(short, long, default_value = "4000")]
+fn default_port() -> u16 {
+    4000
+}
+
+#[derive(Deserialize, Debug)]
+struct Config {
+    #[serde(default = "default_port")]
     port: u16,
 }
 
 #[tokio::main]
 pub async fn main() {
-    let opts = Opts::parse();
+    let config = envy::from_env::<Config>().unwrap();
     let app = route("/", get(|| async { "Hello, World!" }));
 
-    hyper::Server::bind(&SocketAddr::from(([0, 0, 0, 0], opts.port)))
+    hyper::Server::bind(&SocketAddr::from(([0, 0, 0, 0], config.port)))
         .serve(app.into_make_service())
         .await
         .unwrap();

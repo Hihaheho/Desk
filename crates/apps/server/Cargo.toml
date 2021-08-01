@@ -8,8 +8,9 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 axum = "0.1.1"
-clap = "3.0.0-beta.2"
+envy = "0.4.2"
 hyper = { version = "0.14.11", default-features = false, features = ["client"] }
+serde = "1.0.127"
 tokio = "1.9.0"
 
 [dev-dependencies]

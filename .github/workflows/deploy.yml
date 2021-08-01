@@ -11,8 +11,6 @@ jobs:
         with:
           lfs: true
 
-      - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-system:latest
-
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ secrets.PROJECT_ID }}
@@ -21,10 +19,9 @@ jobs:
 
       - run: gcloud auth configure-docker
 
-      - run:
-          docker pull ${{ env.IMAGE }}:latest
-          docker tag ${{ env.IMAGE }}:latest ${{ env.IMAGE }}:${{ github.sha }}
-          docker push ${{ env.IMAGE }}:${{ github.sha }}
+      - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t ${{ env.IMAGE }}:${{ github.sha }}
+
+      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
 
       - name: Deploy to production
         uses: google-github-actions/deploy-cloudrun@v0.4.0
