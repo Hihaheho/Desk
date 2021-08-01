@@ -1,10 +1,5 @@
 name: Deploy
-on:
-  workflow_run:
-    workflows: ["CI"]
-    branches: [main]
-    types:
-      - completed
+on: workflow_dispatch
 env:
   IMAGE: gcr.io/hihaheho/desk-system
 jobs:
