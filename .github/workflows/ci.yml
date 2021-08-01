@@ -13,10 +13,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          target: wasm32-unknown-unknown
           toolchain: nightly
           default: true
           components: rustfmt, clippy
+      - run: rustup target add wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v1
 
