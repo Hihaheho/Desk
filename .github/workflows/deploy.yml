@@ -17,6 +17,8 @@ jobs:
         with:
           lfs: true
 
+      - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-system:latest
+
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ secrets.PROJECT_ID }}
