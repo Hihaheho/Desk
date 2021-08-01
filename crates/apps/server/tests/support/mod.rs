@@ -85,7 +85,7 @@ pub fn start_mock_server(ctx: &mut Context) {
 }
 
 pub fn start_desk_server(ctx: &mut Context) {
-    let server = spawn!(
+    spawn!(
         ../../../target/debug/desk-server -p 4000;
     )
     .unwrap();

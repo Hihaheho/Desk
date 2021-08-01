@@ -66,7 +66,7 @@ cat target/schedule_graph.dot | dot -LC10 -Tsvg > target/schedule_graph.svg
 
 [tasks.build-server]
 script = '''
-DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-system:latest
+DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-server:latest
 '''
 
 [config]

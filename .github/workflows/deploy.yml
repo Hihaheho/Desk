@@ -1,7 +1,7 @@
 name: Deploy
 on: workflow_dispatch
 env:
-  IMAGE: gcr.io/hihaheho/desk-system
+  IMAGE: gcr.io/hihaheho/desk-server
 jobs:
   build:
     name: Build
