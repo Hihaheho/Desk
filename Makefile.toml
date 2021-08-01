@@ -1,3 +1,11 @@
+[tasks.client]
+command = "cargo"
+args = ["run", "--bin", "desk-client", "--features", "native,bevy/dynamic"]
+
+[tasks.server]
+command = "cargo"
+args = ["run", "--bin", "desk-server"]
+
 [tasks.build-wasm]
 command = "cargo"
 args = ["build", "--bin", "desk-client", "--target", "wasm32-unknown-unknown", "--release", "--features", "web"]
@@ -54,6 +62,11 @@ run_task = { name = ["clippy-fix", "fmt"] }
 script = '''
 cargo run -p desk-client --features debugdump,native
 cat target/schedule_graph.dot | dot -LC10 -Tsvg > target/schedule_graph.svg
+'''
+
+[tasks.build-server]
+script = '''
+DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-system:latest
 '''
 
 [config]

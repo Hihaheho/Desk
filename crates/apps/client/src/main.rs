@@ -6,7 +6,7 @@ use plugin_egui::EguiBackendPlugin;
 use plugin_shell::ShellPlugin;
 
 #[bevy_main]
-fn main() {
+pub fn main() {
     let mut app = App::build();
 
     app.add_plugins(DefaultPlugins)

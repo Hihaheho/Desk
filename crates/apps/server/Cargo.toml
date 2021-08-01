@@ -1,0 +1,17 @@
+[package]
+name = "desk-server"
+version = "0.1.0"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.1.1"
+clap = "3.0.0-beta.2"
+hyper = { version = "0.14.11", default-features = false, features = ["client"] }
+tokio = "1.9.0"
+
+[dev-dependencies]
+cmd_lib = "1.1.0"
+httpmock = "0.5.8"

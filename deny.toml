@@ -8,6 +8,7 @@ notice = "deny"
 ignore = [
     "RUSTSEC-2020-0056", # stdweb unmaintained - https://github.com/koute/stdweb/issues/403
     "RUSTSEC-2020-0016", # net2 unmaintained
+    "RUSTSEC-2020-0095", # difference unmaintained
 ]
 
 [licenses]
@@ -37,12 +38,12 @@ highlight = "all"
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
     { name = "cfg-if", version = "0.1" },
-    { name = "num-rational", version = "0.4.0" }, # bevy_render and nalgebrax 
-    { name = "nix", version = "0.18.0" }, # winit and kira 
-    { name = "ndk", version = "0.3.0" }, # winit and kira 
-    { name = "ndk-glue", version = "0.3.0" }, # winit and kira 
-    { name = "miow", version = "0.3.7" }, # winit and kira 
-    { name = "mio", version = "0.7.13" }, # winit and kira 
+    { name = "num-rational", version = "0.4.0" }, # bevy_render and nalgebrax
+    { name = "nix", version = "0.18.0" }, # winit and kira
+    { name = "ndk", version = "0.3.0" }, # winit and kira
+    { name = "ndk-glue", version = "0.3.0" }, # winit and kira
+    { name = "miow", version = "0.3.7" }, # winit and kira
+    { name = "mio", version = "0.7.13" }, # winit and kira
     { name = "num_enum", version = "0.4" },
     { name = "num_enum_derive", version = "0.4" },
     { name = "nom", version = "5.1.2" },

@@ -20,4 +20,5 @@ rustflags = ["-Zshare-generics=y"]
 debug = 1
 
 [alias]
-client = ["run", "--bin", "desk-client", "--features", "native,bevy/dynamic"]
+client = ["make", "client"]
+server = ["make", "server"]

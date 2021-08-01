@@ -1,0 +1,38 @@
+name: Deploy
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types:
+      - completed
+env:
+  IMAGE: gcr.io/hihaheho/desk-system
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - run: gcloud auth configure-docker
+
+      - run:
+          docker pull ${{ env.IMAGE }}:latest
+          docker tag ${{ env.IMAGE }}:latest ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Deploy to production
+        uses: google-github-actions/deploy-cloudrun@v0.4.0
+        with:
+          service: desk-server
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          region: us-west1
