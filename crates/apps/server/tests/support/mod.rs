@@ -7,25 +7,36 @@ use std::{
     time::Duration,
 };
 
-use cmd_lib::{run_cmd, spawn};
+use cmd_lib::{run_cmd, run_fun, spawn};
 use httpmock::MockServer;
 use hyper::{Client, Uri};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 mod http_request;
 
 #[derive(Default)]
 pub struct ContextBuilder {
     before: Vec<fn(&mut Context) -> ()>,
+    after: Vec<fn(&mut Context) -> ()>,
 }
 
 impl ContextBuilder {
-    pub fn before(&mut self, function: fn(&mut Context) -> ()) -> &mut Self {
+    pub fn before(mut self, function: fn(&mut Context) -> ()) -> Self {
         self.before.push(function);
         self
     }
 
-    pub fn build(&self) -> Context {
-        let mut context = Context::default();
+    pub fn after(mut self, function: fn(&mut Context) -> ()) -> Self {
+        self.after.push(function);
+        self
+    }
+
+    pub fn build(self) -> Context {
+        let mut context = Context {
+            map: Default::default(),
+            after: self.after,
+        };
 
         for before in self.before.iter() {
             before(&mut context);
@@ -35,9 +46,9 @@ impl ContextBuilder {
     }
 }
 
-#[derive(Default)]
 pub struct Context {
     map: HashMap<TypeId, Box<dyn Any>>,
+    after: Vec<fn(&mut Context) -> ()>,
 }
 
 impl Context {
@@ -57,6 +68,11 @@ impl Context {
             .and_then(|any| any.downcast_mut())
     }
 
+    pub fn after(&mut self, function: fn(&mut Context) -> ()) -> &mut Self {
+        self.after.push(function);
+        self
+    }
+
     pub fn _run(&mut self, function: impl FnOnce(&mut Self) -> &mut Self) -> &mut Self {
         function(self)
     }
@@ -66,6 +82,14 @@ impl Context {
         function: T,
     ) -> &'a mut Self {
         function(self).await
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        for after in self.after.clone() {
+            after(self);
+        }
     }
 }
 
@@ -84,16 +108,28 @@ pub fn start_mock_server(ctx: &mut Context) {
     ctx.insert(server);
 }
 
+pub struct ContainerId(pub String);
+
 pub fn start_desk_server(ctx: &mut Context) {
-    spawn!(
-        ../../../target/debug/desk-server -p 4000;
-    )
+    let container_id = run_fun! {
+        docker run --rm -d -p 4000:8080 -e PORT=8080 gcr.io/hihaheho/desk-server:latest;
+    }
     .unwrap();
     let url = "http://localhost:4000";
-    while run_cmd!(curl $url).is_err() {
+    while run_cmd!(curl $url > /dev/null).is_err() {
         sleep(Duration::from_secs(1));
     }
     ctx.insert::<Uri>(url.try_into().unwrap());
+    ctx.insert(ContainerId(container_id));
+    ctx.after(stop_desk_server);
+}
+
+fn stop_desk_server(ctx: &mut Context) {
+    let container_id = ctx.get::<ContainerId>().unwrap().0.clone();
+    let _ = spawn!(
+        docker stop $container_id;
+    )
+    .unwrap();
 }
 
 #[test]
@@ -104,4 +140,30 @@ fn before() {
 
     let context = builder().before(add).build();
     assert_eq!(context.get::<u8>(), Some(&42_u8));
+}
+
+fn call(context: &mut Context) {
+    let called = context.get::<Rc<RefCell<bool>>>().unwrap().clone();
+    *called.borrow_mut() = true;
+}
+
+#[test]
+fn builder_after() {
+    let called = Rc::new(RefCell::new(false));
+    let mut context = builder().after(call).build();
+    context.insert(called.clone());
+    assert!(!*called.borrow());
+    std::mem::drop(context);
+    assert!(*called.borrow());
+}
+
+#[test]
+fn context_after() {
+    let called = Rc::new(RefCell::new(false));
+    let mut context = builder().build();
+    context.insert(called.clone());
+    context.after(call);
+    assert!(!*called.borrow());
+    std::mem::drop(context);
+    assert!(*called.borrow());
 }
