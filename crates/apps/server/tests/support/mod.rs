@@ -10,6 +10,7 @@ use std::{
 use cmd_lib::{run_cmd, run_fun, spawn};
 use httpmock::MockServer;
 use hyper::{Client, Uri};
+use portpicker::pick_unused_port;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -111,11 +112,12 @@ pub fn start_mock_server(ctx: &mut Context) {
 pub struct ContainerId(pub String);
 
 pub fn start_desk_server(ctx: &mut Context) {
+    let port = pick_unused_port().unwrap();
     let container_id = run_fun! {
-        docker run --rm -d -p 4000:8080 -e PORT=8080 gcr.io/hihaheho/desk-server:latest;
+        docker run --rm -d -p $port:8080 -e PORT=8080 gcr.io/hihaheho/desk-server:latest;
     }
     .unwrap();
-    let url = "http://localhost:4000";
+    let url = format!("http://localhost:{}", port);
     while run_cmd!(curl $url > /dev/null).is_err() {
         sleep(Duration::from_secs(1));
     }
@@ -127,7 +129,7 @@ pub fn start_desk_server(ctx: &mut Context) {
 fn stop_desk_server(ctx: &mut Context) {
     let container_id = ctx.get::<ContainerId>().unwrap().0.clone();
     let _ = spawn!(
-        docker stop $container_id;
+        docker stop $container_id > /dev/null;
     )
     .unwrap();
 }

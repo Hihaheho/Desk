@@ -17,3 +17,4 @@ tokio = "1.9.0"
 cmd_lib = "1.1.0"
 httpmock = "0.5.8"
 hyper = { version = "0.14.11", features = ["client", "http2"] }
+portpicker = "0.1.1"
