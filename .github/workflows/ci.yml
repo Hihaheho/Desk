@@ -44,6 +44,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t ${{ env.IMAGE }}:${{ github.sha }}
+      - run: docker tag ${{ env.IMAGE }}:${{ github.sha }} ${{ env.IMAGE }}:latest
       - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
 
       - uses: actions-rs/cargo@v1
