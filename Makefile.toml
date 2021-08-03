@@ -47,16 +47,14 @@ args = ["deny", "--all-features", "check"]
 [tasks.ci-check]
 run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy", "deny"] }
 
-[tasks.clippy-fix]
+[tasks.fix]
 command = "cargo"
 args = ["clippy", "--workspace", "--all-targets", "--all-features", "--fix", "--allow-dirty", "--allow-staged", "-Z", "unstable-options", "--", "-D", "warnings", "-W", "clippy::all"]
+dependencies = ["fmt"]
 
 [tasks.fmt]
 command = "cargo"
 args = ["fmt", "--all"]
-
-[tasks.fix]
-run_task = { name = ["clippy-fix", "fmt"] }
 
 [tasks.debugdump]
 script = '''
@@ -64,10 +62,14 @@ cargo run -p desk-client --features debugdump,native
 cat target/schedule_graph.dot | dot -LC10 -Tsvg > target/schedule_graph.svg
 '''
 
-[tasks.build-server]
+[tasks.docker-build-server]
 script = '''
 DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hihaheho/desk-server:latest
 '''
+
+[tasks.e2e]
+command = "cargo"
+args = ["test", "-p", "desk-test-server"]
 
 [config]
 default_to_workspace = false

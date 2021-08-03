@@ -1,11 +1,15 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+env:
+  IMAGE: gcr.io/hihaheho/desk-server
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev -y
-
       - uses: actions/checkout@v2
         with:
           lfs: true
@@ -17,9 +21,7 @@ jobs:
           default: true
           components: rustfmt, clippy
       - run: rustup target add wasm32-unknown-unknown
-
       - uses: Swatinem/rust-cache@v1
-
       - run: cargo install cargo-make
 
       - uses: actions-rs/cargo@v1
@@ -27,3 +29,32 @@ jobs:
           toolchain: nightly
           command: make
           args: ci-check
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - run: gcloud auth configure-docker
+      - uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t ${{ env.IMAGE }}:${{ github.sha }}
+      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: make
+          args: e2e
+
+      - name: Deploy to production
+        uses: google-github-actions/deploy-cloudrun@v0.4.0
+        with:
+          service: desk-server
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          region: us-west1
