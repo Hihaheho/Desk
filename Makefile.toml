@@ -22,7 +22,11 @@ dependencies = ["wasm-bindgen"]
 
 [tasks.check]
 command = "cargo"
-args = ["check", "--workspace", "--features", "native"]
+args = ["check", "--workspace"]
+
+[tasks.check-native]
+command = "cargo"
+args = ["check", "-p", "desk-client", "--features", "native"]
 
 [tasks.check-wasm]
 command = "cargo"
@@ -45,7 +49,7 @@ command = "cargo"
 args = ["deny", "--all-features", "check"]
 
 [tasks.ci-check]
-run_task = { name = ["check", "check-wasm", "test", "fmt-check", "clippy", "deny"] }
+run_task = { name = ["check", "check-native", "check-wasm", "test", "fmt-check", "clippy", "deny"] }
 
 [tasks.fix]
 command = "cargo"
