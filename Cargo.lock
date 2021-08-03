@@ -1722,11 +1722,8 @@ name = "desk-server"
 version = "0.1.0"
 dependencies = [
  "axum",
- "cmd_lib",
  "envy",
- "httpmock",
  "hyper",
- "portpicker",
  "serde",
  "tokio",
 ]
@@ -1753,6 +1750,17 @@ name = "desk-terminal"
 version = "0.1.0"
 dependencies = [
  "bevy_math",
+]
+
+[[package]]
+name = "desk-test-server"
+version = "0.1.0"
+dependencies = [
+ "cmd_lib",
+ "httpmock",
+ "hyper",
+ "portpicker",
+ "tokio",
 ]
 
 [[package]]
@@ -4537,6 +4545,7 @@ dependencies = [
  "mio 0.7.13",
  "num_cpus",
  "once_cell",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "tokio-macros",

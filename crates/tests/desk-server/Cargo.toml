@@ -1,5 +1,5 @@
 [package]
-name = "desk-server"
+name = "desk-test-server"
 version = "0.1.0"
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -7,9 +7,8 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.1.1"
-envy = "0.4.2"
-hyper = { version = "0.14.11", features = ["server", "http2", "http1"] }
-serde = "1.0.127"
+cmd_lib = "1.1.0"
+httpmock = "0.5.8"
+hyper = { version = "0.14.11", features = ["client", "http2"] }
+portpicker = "0.1.1"
 tokio = { version = "1.9.0", features = ["full"] }
-

@@ -1,6 +1,4 @@
-mod support;
-
-use support::{builder, http_client, start_desk_server};
+use crate::support::{builder, http_client, start_desk_server};
 
 #[tokio::test]
 async fn returns_not_found() {

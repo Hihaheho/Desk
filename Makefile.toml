@@ -22,7 +22,7 @@ dependencies = ["wasm-bindgen"]
 
 [tasks.check]
 command = "cargo"
-args = ["check", "-p", "desk-client", "--features", "native"]
+args = ["check", "--workspace", "--features", "native"]
 
 [tasks.check-wasm]
 command = "cargo"

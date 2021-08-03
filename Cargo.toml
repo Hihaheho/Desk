@@ -5,5 +5,14 @@ members = [
   "crates/components/*",
   "crates/plugins/*",
   "crates/apps/*",
-  "crates/systems/*"
+  "crates/systems/*",
+  "crates/tests/*"
+]
+
+default-members = [
+  "crates/adapters/*",
+  "crates/components/*",
+  "crates/plugins/*",
+  "crates/apps/*",
+  "crates/systems/*",
 ]
