@@ -53,6 +53,18 @@ jobs:
           command: make
           args: e2e
 
+      - run: cargo install wasm-bindgen-cli --version 0.2.69
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: make
+          args: wasm-bindgen
+
+      - uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: .public
+
       - name: Deploy to production
         uses: google-github-actions/deploy-cloudrun@v0.4.0
         with:
