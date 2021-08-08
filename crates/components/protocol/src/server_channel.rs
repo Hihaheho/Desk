@@ -1,4 +1,3 @@
-use futures::channel::mpsc::channel;
 use futures::prelude::*;
 
 use crate::before_login::BeforeLogin;
@@ -21,15 +20,9 @@ impl Channel {
         };
         let state: ServerStateDispatcher = BeforeLogin {}.into();
 
-        let (input_sender, mut input_stream) = channel(100);
+        let mut stream = command_stream.map(|command| ServerInput::Command { command });
 
-        tokio::spawn(
-            command_stream
-                .map(|command| Ok(ServerInput::Command { command }))
-                .forward(input_sender.clone()),
-        );
-
-        while let Some(input) = input_stream.next().await {
+        while let Some(input) = stream.next().await {
             state.handle(&mut context, &input).await;
         }
     }

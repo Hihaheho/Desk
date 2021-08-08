@@ -3,6 +3,7 @@ use plugin_physics_rapier::PhysicsPlugin;
 
 use bevy::prelude::*;
 use plugin_egui::EguiBackendPlugin;
+use plugin_protocol::ProtocolPlugin;
 use plugin_shell::ShellPlugin;
 
 #[bevy_main]
@@ -13,6 +14,7 @@ pub fn main() {
         .add_plugin(ShellPlugin)
         .add_plugin(LanguagePlugin)
         .add_plugin(PhysicsPlugin)
+        .add_plugin(ProtocolPlugin)
         .add_plugin(EguiBackendPlugin);
 
     #[cfg(target_arch = "wasm32")]

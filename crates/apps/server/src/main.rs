@@ -2,13 +2,14 @@ use axum::prelude::*;
 use axum::ws::{ws, Message, WebSocket};
 use eyre::Result;
 use futures::channel::mpsc::channel;
-
+use futures::future::{join_all, select_all};
 use futures::stream::StreamExt;
 use futures::{Sink, Stream};
 use opentelemetry::sdk::export::trace::stdout;
-use protocol::{abort_all_for_one, unwrap_and_log, Channel, Command, Event};
+use protocol::{unwrap_and_log, Channel, Command, Event};
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tokio::task::{JoinError, JoinHandle};
 
 use tracing::error;
 use user_authentication_firebase::FirebaseAuthentication;
@@ -87,4 +88,14 @@ async fn send_task(events: impl Stream<Item = Event> + Unpin, sink: impl Sink<Me
         .map(Ok)
         .forward(sink)
         .await;
+}
+
+pub async fn abort_all_for_one<T, I>(tasks: I) -> Result<T, JoinError>
+where
+    I: IntoIterator<Item = JoinHandle<T>>,
+{
+    let (result, _, tasks) = select_all(tasks.into_iter()).await;
+    tasks.iter().for_each(|task| task.abort());
+    let _ = join_all(tasks).await;
+    result
 }

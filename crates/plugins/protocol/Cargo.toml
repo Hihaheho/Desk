@@ -1,0 +1,9 @@
+[package]
+name = "desk-plugin-protocol"
+version = "0.1.0"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+bevy = { version = "0.5", default-features = false }
+client-websocket = { package = "desk-client-websocket", path = "../../adapters/client-websocket", version = "0.1.0" }
