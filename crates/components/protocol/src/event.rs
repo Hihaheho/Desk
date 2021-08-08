@@ -1,8 +1,10 @@
+use crate::AuthenticationErrorCode;
+
 use super::primitives::*;
 use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(tag = "c")] // stands for code
 pub enum Event {
     LoggedIn {
@@ -57,13 +59,10 @@ pub enum Event {
 }
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ErrorCode {
-    UserNotFound,
-    TokenExpired,
-    TokenRevoked,
-    InsufficientPermission,
-    InvalidToken,
+    Authentication(AuthenticationErrorCode),
+    UnexpectedOperation,
     InternalError,
     RoomNotFound,
     UnknownOperation,

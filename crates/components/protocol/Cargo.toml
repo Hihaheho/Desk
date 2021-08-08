@@ -16,3 +16,8 @@ tracing = "0.1.26"
 uuid = { version = "0.8.2", features = ["v4", "serde", "wasm-bindgen"] }
 derive_more = "0.99.16"
 enum_dispatch = "0.3.7"
+async-trait = "0.1.51"
+
+[dev-dependencies]
+tokio = { version = "1.9.0", features = ["full"] }
+mock-it = "0.3.0"

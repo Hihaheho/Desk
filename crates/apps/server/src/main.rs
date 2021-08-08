@@ -6,7 +6,7 @@ use futures::future::{join_all, select_all};
 use futures::stream::StreamExt;
 use futures::{Sink, Stream};
 use opentelemetry::sdk::export::trace::stdout;
-use protocol::{unwrap_and_log, Channel, Event, Operation};
+use protocol::{unwrap_and_log, Channel, Command, Event};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use tokio::task::{JoinError, JoinHandle};
@@ -45,7 +45,7 @@ pub async fn main() {
 async fn handle_socket(socket: WebSocket) {
     let (sender, receiver) = socket.split();
 
-    let (operation_sender, operation_receiver) = channel::<Operation>(32);
+    let (operation_sender, operation_receiver) = channel::<Command>(32);
     let (event_sender, event_receiver) = channel::<Event>(32);
 
     let receiver = receiver.filter_map(unwrap_and_log);
@@ -66,9 +66,9 @@ async fn handle_socket(socket: WebSocket) {
     };
 }
 
-async fn recv_task(stream: impl Stream<Item = Message>, operations: impl Sink<Operation>) {
+async fn recv_task(stream: impl Stream<Item = Message>, operations: impl Sink<Command>) {
     let _ = stream
-        .map(|message| -> Result<Operation> { Ok(serde_cbor::from_slice(message.as_bytes())?) })
+        .map(|message| -> Result<Command> { Ok(serde_cbor::from_slice(message.as_bytes())?) })
         .filter_map(unwrap_and_log)
         .map(Ok)
         .forward(operations)

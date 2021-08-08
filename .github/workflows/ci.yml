@@ -17,7 +17,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           default: true
           components: rustfmt, clippy
       - run: rustup target add wasm32-unknown-unknown
@@ -26,7 +26,7 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           command: make
           args: ci-check
 
@@ -49,14 +49,14 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           command: make
           args: e2e
 
       - run: cargo install wasm-bindgen-cli --version 0.2.69
       - uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           command: make
           args: wasm-bindgen
 

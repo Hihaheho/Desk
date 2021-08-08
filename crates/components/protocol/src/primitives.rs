@@ -3,25 +3,31 @@ use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, From)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct RoomName(pub String);
 
-#[derive(Serialize, Deserialize, Debug, From)]
+impl<T: Into<String>> From<T> for RoomName {
+    fn from(from: T) -> Self {
+        Self(from.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, From, PartialEq, Clone)]
 pub struct RoomId(pub Uuid);
-#[derive(Serialize, Deserialize, Debug, From)]
+#[derive(Serialize, Deserialize, Debug, From, PartialEq, Clone)]
 pub struct RoomLocalUserId(pub Uuid);
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 
 pub struct UserId(pub Uuid);
 
-#[derive(Serialize, Deserialize, Debug, Into)]
+#[derive(Serialize, Deserialize, Debug, Into, PartialEq, Clone)]
 
 pub struct Topic {
     pub crate_name: String,
     pub topic_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Bytes(#[serde(with = "serde_bytes")] pub Vec<u8>);
 
 impl<T: Into<Vec<u8>>> From<T> for Bytes {
@@ -30,7 +36,18 @@ impl<T: Into<Vec<u8>>> From<T> for Bytes {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct Token {
+    bytes: Bytes,
+}
+
+impl<T: Into<Bytes>> From<T> for Token {
+    fn from(from: T) -> Self {
+        Self { bytes: from.into() }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct OneTimeCode(String);
 
 impl<T: Into<String>> From<T> for OneTimeCode {

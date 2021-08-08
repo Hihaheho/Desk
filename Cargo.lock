@@ -1795,12 +1795,15 @@ dependencies = [
 name = "desk-protocol"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "derive_more",
  "enum_dispatch",
  "futures",
+ "mock-it",
  "serde",
  "serde_bytes",
  "serde_cbor",
+ "tokio",
  "tracing",
  "uuid",
 ]
@@ -3332,6 +3335,12 @@ checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi 0.3.9",
 ]
+
+[[package]]
+name = "mock-it"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "144d3ace3cdaceb5f23891de7aae00af4660f22aed70c25825d549816ee9ef77"
 
 [[package]]
 name = "naga"

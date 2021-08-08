@@ -2,9 +2,9 @@ use super::primitives::*;
 use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(tag = "c")] // stands for code
-pub enum Operation {
+pub enum Command {
     Login(Login),
     CreateRoom {
         room_name: RoomName,
@@ -56,10 +56,9 @@ pub enum Operation {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize)] // No Debug to avoid expose a credential in debug log!
+#[derive(Serialize, Deserialize, PartialEq, Clone)] // No Debug to avoid expose a credential in debug log!
 pub struct Login {
-    #[serde(with = "serde_bytes")]
-    token: Vec<u8>,
+    pub token: Token,
 }
 
 impl std::fmt::Debug for Login {
@@ -74,8 +73,8 @@ mod test {
 
     #[test]
     fn debug_of_login_does_not_contain_credential() {
-        let target = Operation::Login(Login {
-            token: vec![1, 2, 3],
+        let target = Command::Login(Login {
+            token: vec![1, 2, 3].into(),
         });
         assert_eq!(format!("{:?}", target), r#"Login(Login { token: "****" })"#)
     }
