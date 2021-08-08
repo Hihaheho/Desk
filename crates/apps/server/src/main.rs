@@ -2,15 +2,16 @@ use axum::prelude::*;
 use axum::ws::{ws, Message, WebSocket};
 use eyre::Result;
 use futures::channel::mpsc::channel;
-use futures::future::{join_all, select_all};
+
 use futures::stream::StreamExt;
 use futures::{Sink, Stream};
 use opentelemetry::sdk::export::trace::stdout;
-use protocol::{unwrap_and_log, Channel, Command, Event};
+use protocol::{abort_all_for_one, unwrap_and_log, Channel, Command, Event};
 use serde::Deserialize;
 use std::net::SocketAddr;
-use tokio::task::{JoinError, JoinHandle};
+
 use tracing::error;
+use user_authentication_firebase::FirebaseAuthentication;
 
 use tracing_subscriber::layer::SubscriberExt;
 
@@ -52,9 +53,11 @@ async fn handle_socket(socket: WebSocket) {
 
     let channel = Channel {};
 
+    let auth = Box::new(FirebaseAuthentication {});
+
     let tasks = vec![
         tokio::spawn(recv_task(receiver, operation_sender)),
-        tokio::spawn(channel.connect(operation_receiver, event_sender)),
+        tokio::spawn(channel.connect(auth, operation_receiver, event_sender)),
         tokio::spawn(send_task(event_receiver, sender)),
     ];
 
@@ -84,51 +87,4 @@ async fn send_task(events: impl Stream<Item = Event> + Unpin, sink: impl Sink<Me
         .map(Ok)
         .forward(sink)
         .await;
-}
-
-async fn abort_all_for_one<T, I>(tasks: I) -> Result<T, JoinError>
-where
-    I: IntoIterator<Item = JoinHandle<T>>,
-{
-    let (result, _, tasks) = select_all(tasks.into_iter()).await;
-    tasks.iter().for_each(|task| task.abort());
-    let _ = join_all(tasks).await;
-    result
-}
-
-#[cfg(test)]
-mod test {
-    use std::sync::Arc;
-
-    use futures::future::{pending, ready};
-
-    use super::*;
-
-    #[tokio::test]
-    async fn returns_first_one() {
-        let tasks = vec![tokio::spawn(ready(1u8)), tokio::spawn(ready(2u8))];
-        assert!(matches!(abort_all_for_one(tasks).await, Ok(1u8)));
-    }
-
-    #[tokio::test]
-    async fn skips_pending() {
-        let tasks = vec![tokio::spawn(pending()), tokio::spawn(ready(2u8))];
-        assert!(matches!(abort_all_for_one(tasks).await, Ok(2u8)));
-    }
-
-    #[tokio::test]
-    async fn aborts_all() {
-        let arc = Arc::new(1u8);
-        let moved = arc.clone();
-        let tasks = vec![
-            tokio::spawn(ready(())),
-            tokio::spawn(async move {
-                let () = pending().await;
-                println!("{}", moved);
-            }),
-        ];
-        assert_eq!(Arc::<u8>::strong_count(&arc), 2);
-        assert!(abort_all_for_one(tasks).await.is_ok());
-        assert_eq!(Arc::<u8>::strong_count(&arc), 1);
-    }
 }

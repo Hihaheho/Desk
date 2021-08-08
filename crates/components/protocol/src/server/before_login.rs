@@ -2,7 +2,7 @@ use crate::server::normal::Normal;
 use crate::ErrorCode;
 use crate::{handle_unexpected_input, Login};
 use crate::{Command, Event};
-use crate::{ServerContext, ServerInput, ServerStateSet};
+use crate::{ServerContext, ServerInput, ServerStateDispatcher};
 
 use super::ServerState;
 use async_trait::async_trait;
@@ -17,7 +17,7 @@ impl ServerState for BeforeLogin {
         &self,
         context: &mut ServerContext<T>,
         input: &ServerInput,
-    ) -> ServerStateSet {
+    ) -> ServerStateDispatcher {
         match &input {
             ServerInput::Command {
                 command: Command::Login(Login { token }),
@@ -27,7 +27,14 @@ impl ServerState for BeforeLogin {
                     .authenticate(token)
                     .await;
                 match auth {
-                    Ok(user_id) => return Normal { user_id }.into(),
+                    Ok(user_id) => {
+                        context
+                            .send(Event::LoggedIn {
+                                user_id: user_id.clone(),
+                            })
+                            .await;
+                        return Normal { user_id }.into();
+                    }
                     Err(error) => {
                         let event = Event::Error {
                             code: ErrorCode::Authentication(error.error_code),
@@ -46,7 +53,7 @@ impl ServerState for BeforeLogin {
 #[cfg(test)]
 mod test {
     use futures::channel::mpsc::channel;
-    use futures::sink::drain;
+
     use futures::StreamExt;
     use uuid::Uuid;
 
@@ -58,7 +65,7 @@ mod test {
 
     #[tokio::test]
     async fn handle_login_operation() {
-        let state: ServerStateSet = BeforeLogin {}.into();
+        let state: ServerStateDispatcher = BeforeLogin {}.into();
         let auth = MockUserAuthenticationHandler::default();
 
         let token: Token = vec![1, 2, 3].into();
@@ -68,22 +75,28 @@ mod test {
             .given(token.clone())
             .will_return(Ok(user_id.clone()));
 
+        let (tx, mut rx) = channel::<Event>(1);
+
         let mut context = ServerContext {
             user_authentication_handler: Box::new(auth.clone()),
-            event_sender: Box::new(drain()),
+            event_sender: Box::new(tx),
         };
         let input = ServerInput::Command {
             command: Command::Login(Login { token }),
         };
         assert_eq!(
             state.handle(&mut context, &input).await,
-            Normal { user_id }.into()
+            Normal {
+                user_id: user_id.clone()
+            }
+            .into()
         );
+        assert_eq!(rx.next().await, Some(Event::LoggedIn { user_id }));
     }
 
     #[tokio::test]
     async fn failed_to_login() {
-        let state: ServerStateSet = BeforeLogin {}.into();
+        let state: ServerStateDispatcher = BeforeLogin {}.into();
         let auth = MockUserAuthenticationHandler::default();
 
         let token: Token = vec![1, 2, 3].into();

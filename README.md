@@ -9,9 +9,11 @@ A programmable desk of the future which blurs the line between living and coding
 
 ## Getting Started
 
+I recommend you copy [this](https://github.com/bevyengine/bevy/blob/main/.cargo/config_fast_builds) into your `config.toml` for enabling fast compiling.
+
 ```bash
 # Runs Desk
-cargo client
+cargo make client
 # Fixes the formatting and lint suggestions
 cargo make fix
 # Run the same checks as in CI

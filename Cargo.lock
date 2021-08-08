@@ -1834,6 +1834,7 @@ dependencies = [
  "axum",
  "color-eyre",
  "desk-protocol",
+ "desk-user-authentication-firebase",
  "envy",
  "eyre",
  "futures",
@@ -1881,6 +1882,15 @@ dependencies = [
  "hyper",
  "portpicker",
  "tokio",
+]
+
+[[package]]
+name = "desk-user-authentication-firebase"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "desk-protocol",
+ "uuid",
 ]
 
 [[package]]

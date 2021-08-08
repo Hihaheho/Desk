@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
+user_authentication_firebase = { package = "desk-user-authentication-firebase", path = "../../adapters/user-authentication-firebase", version = "0.1.0" }
 
 axum = { version="0.1.2", features=["ws"] }
 envy = "0.4.2"

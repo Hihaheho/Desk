@@ -1,5 +1,5 @@
-mod before_login;
-mod normal;
+pub mod before_login;
+pub mod normal;
 
 use crate::{primitives::*, Command, UserAuthenticationHandler};
 use crate::{ErrorCode, Event};
@@ -12,8 +12,8 @@ use enum_dispatch::enum_dispatch;
 use tracing::error;
 
 pub struct ServerContext<EventSender> {
-    user_authentication_handler: Box<dyn UserAuthenticationHandler + Send + Sync>,
-    event_sender: EventSender,
+    pub user_authentication_handler: Box<dyn UserAuthenticationHandler + Send + Sync>,
+    pub event_sender: EventSender,
 }
 
 impl<T: Sink<Event> + Unpin + Send + Sync> ServerContext<T> {
@@ -38,19 +38,19 @@ pub enum ServerInput {
 
 #[enum_dispatch(ServerState)]
 #[derive(Debug, PartialEq, Clone)]
-pub enum ServerStateSet {
+pub enum ServerStateDispatcher {
     Normal,
     BeforeLogin,
 }
 
 #[async_trait]
 #[enum_dispatch]
-trait ServerState {
+pub trait ServerState {
     async fn handle<T: Sink<Event> + Unpin + Send + Sync>(
         &self,
         context: &mut ServerContext<T>,
         input: &ServerInput,
-    ) -> ServerStateSet;
+    ) -> ServerStateDispatcher;
 }
 
 pub async fn handle_unexpected_input<T: Sink<Event> + Unpin + Send + Sync>(

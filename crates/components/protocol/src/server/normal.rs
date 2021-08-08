@@ -1,5 +1,5 @@
 use crate::primitives::*;
-use crate::{ServerContext, ServerInput, ServerStateSet};
+use crate::{ServerContext, ServerInput, ServerStateDispatcher};
 
 use super::ServerState;
 use async_trait::async_trait;
@@ -15,7 +15,7 @@ impl ServerState for Normal {
         &self,
         _context: &mut ServerContext<T>,
         _input: &ServerInput,
-    ) -> ServerStateSet {
+    ) -> ServerStateDispatcher {
         todo!()
     }
 }
