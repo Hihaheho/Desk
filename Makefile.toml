@@ -56,6 +56,9 @@ command = "cargo"
 args = ["clippy", "--workspace", "--all-targets", "--all-features", "--fix", "--allow-dirty", "--allow-staged", "-Z", "unstable-options", "--", "-D", "warnings", "-W", "clippy::all"]
 dependencies = ["fmt"]
 
+[tasks.fixfmt]
+run_task = { name = ["fix", "fmt"] }
+
 [tasks.fmt]
 command = "cargo"
 args = ["fmt", "--all"]
