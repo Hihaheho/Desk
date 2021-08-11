@@ -3,6 +3,12 @@ name = "cross-websocket"
 version = "0.1.0"
 edition = "2018"
 license = "MIT OR Apache-2.0"
+description = "A cross platform websocket client"
+homepage = "https://github.com/Hihaheho-Studios/Desk/tree/main/crates/libs/cross-websocket"
+repository = "https://github.com/Hihaheho-Studios/Desk"
+readme = "README.md"
+keywords = ["websocket", "wasm", "native", "cross-platform"]
+categories = ["network-programming", "web-programming::websocket"]
 
 [dependencies]
 eyre = "0.6.5"
