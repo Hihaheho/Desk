@@ -36,6 +36,7 @@ plugin-wasm-target = { package = "desk-plugin-wasm-target", path = "../../plugin
 
 bevy = { version = "0.5", default-features = false }
 bevy_mod_debugdump = { version = "0.2", optional = true }
+tracing-subscriber = "0.2.19"
 
 [dev-dependencies]
 wasm-bindgen = "0.2.69"

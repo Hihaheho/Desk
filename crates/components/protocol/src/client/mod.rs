@@ -1,24 +1,31 @@
-use futures::prelude::*;
+use std::borrow::Cow;
+use std::collections::HashMap;
+
+use futures::Sink;
 
 use crate::{Command, Event};
 
-pub struct Client<
-    Tx: Sink<Command> + Send + Sync + 'static,
-    Rx: Stream<Item = Event> + Send + Sync + 'static,
-> {
-    pub command_sender: Tx,
-    pub event_receiver: Rx,
+pub trait Client {
+    fn sender(&self) -> Box<dyn Sink<Command, Error = String> + Send + Sync + Unpin + 'static>;
+    fn poll_once(&mut self) -> Option<Vec<Event>>;
 }
 
-impl<Tx, Rx> From<(Tx, Rx)> for Client<Tx, Rx>
-where
-    Tx: Sink<Command> + Send + Sync + 'static,
-    Rx: Stream<Item = Event> + Send + Sync + 'static,
-{
-    fn from((command_sender, event_receiver): (Tx, Rx)) -> Self {
-        Self {
-            command_sender,
-            event_receiver,
-        }
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub struct ClientName(pub Cow<'static, str>);
+
+pub type BoxClient = Box<dyn Client + Send + Sync + 'static>;
+
+#[derive(Default)]
+pub struct Clients {
+    pub map: HashMap<ClientName, BoxClient>,
+}
+
+impl Clients {
+    pub fn insert(&mut self, name: ClientName, client: BoxClient) {
+        self.map.insert(name, client);
+    }
+
+    pub fn get_mut(&mut self, name: &ClientName) -> Option<&mut BoxClient> {
+        self.map.get_mut(name)
     }
 }

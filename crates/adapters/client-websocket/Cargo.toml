@@ -5,13 +5,17 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+async-trait = "0.1.51"
 eyre = "0.6.5"
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
 serde_cbor = "0.11.1"
 tracing = "0.1.26"
+cross-websocket = { package = "cross-websocket", path = "../../libs/cross-websocket", version = "0.1.0" }
+futures-lite = "1.12.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio-tungstenite = { version = "0.15.0", features = ["native-tls"] }
+tokio = { version = "1.9.0", features = ["full"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-ws_stream_wasm = { version = "0.7.3" }
+wasm-bindgen-futures = "0.4.19"
+lazy_static = "1.4.0"

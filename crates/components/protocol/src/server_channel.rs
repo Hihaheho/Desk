@@ -1,4 +1,5 @@
 use futures::prelude::*;
+use tracing::debug;
 
 use crate::before_login::BeforeLogin;
 use crate::server::ServerState;
@@ -23,6 +24,7 @@ impl Channel {
         let mut stream = command_stream.map(|command| ServerInput::Command { command });
 
         while let Some(input) = stream.next().await {
+            debug!("{:?}", input);
             state.handle(&mut context, &input).await;
         }
     }

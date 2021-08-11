@@ -18,6 +18,13 @@ pub enum ShellSystem {
     HandleEvents,
 }
 
+#[derive(SystemLabel, PartialEq, Eq, Debug, Hash, Clone)]
+pub enum ProtocolSystem {
+    ReceiveEvents,
+    HandleEvents,
+    SendCommands,
+}
+
 #[derive(Derivative)]
 #[derivative(
     PartialEq(bound = ""),

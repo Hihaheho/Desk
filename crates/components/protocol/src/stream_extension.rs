@@ -1,14 +1,16 @@
-use std::fmt::Display;
-
-use futures::future::{ready, Ready};
-use tracing::error;
-
-pub fn unwrap_and_log<T, E: Display>(item: Result<T, E>) -> Ready<Option<T>> {
-    match item {
-        Ok(ok) => ready(Some(ok)),
-        Err(err) => {
-            error!("{}", err);
-            ready(None)
+#[macro_export]
+macro_rules! unwrap_and_log {
+    ( $( $x:expr ),* ) => {{
+        use protocol::futures::future::ready;
+        use tracing::error;
+        |item| {
+            ready(match item {
+                Ok(ok) => Some(ok),
+                Err(err) => {
+                    error!("{}", err);
+                    None
+                }
+            })
         }
-    }
+    }};
 }

@@ -1,59 +1,40 @@
-use std::borrow::Cow;
+#[cfg(not(target_arch = "wasm32"))]
+mod native;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use native::*;
+
+#[cfg(target_arch = "wasm32")]
+mod wasm;
+#[cfg(target_arch = "wasm32")]
+pub use wasm::*;
+
+mod next_vec;
+pub use next_vec::*;
 
 use eyre::Result;
 use protocol::futures::future::{ready, Ready};
-use protocol::futures::{prelude::*, Sink, Stream};
-use protocol::{unwrap_and_log, Client, Command, Event};
+use protocol::futures::{prelude::*, Stream};
+use protocol::{unwrap_and_log, Command, Event};
 use tracing::error;
 
-#[cfg(not(target_arch = "wasm32"))]
-pub async fn connect<'a, T: Into<Cow<'a, str>>>(
-    addr: T,
-) -> Result<Client<impl Sink<Command>, impl Stream<Item = Event>>> {
-    use tokio_tungstenite::connect_async;
-    use tokio_tungstenite::tungstenite::Message;
-
-    let str: Cow<'a, str> = addr.into();
-    let stream = connect_async(str.as_ref()).await?;
-    let (tx, rx) = stream.0.split();
-    let rx = rx
-        .map(|message| -> Result<Event> { Ok(serde_cbor::from_slice(&message?.into_data())?) })
-        .filter_map(unwrap_and_log);
-    let tx = tx.with(|command: Command| -> Ready<Result<Message>> {
-        match serde_cbor::to_vec(&command) {
-            Ok(vec) => ready(Ok(Message::binary(vec))),
-            Err(err) => {
-                error!("{}", err);
-                ready(Err(err.into()))
-            }
-        }
-    });
-
-    Ok((tx, rx).into())
+fn event_receiver(
+    rx: impl Stream<Item = Result<Vec<u8>>> + Send + Sync + 'static + Unpin,
+) -> impl Stream<Item = Event> + Send + Sync + 'static + Unpin {
+    rx.map(|bytes| -> Result<Event> { Ok(serde_cbor::from_slice(&bytes?)?) })
+        .filter_map(unwrap_and_log!())
 }
 
-#[cfg(target_arch = "wasm32")]
-pub async fn connect<'a, T: Into<Cow<'a, str>>>(
-    addr: T,
-) -> Result<Client<impl Sink<Command>, impl Stream<Item = Event>>> {
-    use ws_stream_wasm::WsMessage;
-    use ws_stream_wasm::WsMeta;
-
-    let str: Cow<'a, str> = addr.into();
-    let (_, wsio) = WsMeta::connect(str.as_ref(), None).await?;
-    let (tx, rx) = wsio.split();
-    let rx = rx
-        .map(|message| -> Result<Event> { Ok(serde_cbor::from_slice(message.as_ref())?) })
-        .filter_map(unwrap_and_log);
-    let tx = tx.with(|command: Command| -> Ready<Result<WsMessage>> {
+fn command_sender(
+    tx: impl Sink<Vec<u8>, Error = String> + Clone + Send + Sync + 'static + Unpin,
+) -> impl Sink<Command, Error = String> + Clone + Send + Sync + 'static + Unpin {
+    tx.with(|command: Command| -> Ready<Result<Vec<u8>, String>> {
         match serde_cbor::to_vec(&command) {
-            Ok(vec) => ready(Ok(WsMessage::Binary(vec))),
+            Ok(vec) => ready(Ok(vec)),
             Err(err) => {
                 error!("{}", err);
-                ready(Err(err.into()))
+                ready(Err(err.to_string()))
             }
         }
-    });
-
-    Ok((tx, rx).into())
+    })
 }

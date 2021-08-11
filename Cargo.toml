@@ -6,7 +6,8 @@ members = [
   "crates/plugins/*",
   "crates/apps/*",
   "crates/systems/*",
-  "crates/tests/*"
+  "crates/libs/*",
+  "crates/tests/*",
 ]
 
 default-members = [

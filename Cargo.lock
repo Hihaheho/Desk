@@ -1505,6 +1505,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cross-websocket"
+version = "0.1.0"
+dependencies = [
+ "eyre",
+ "futures",
+ "thiserror",
+ "tokio-tungstenite 0.15.0",
+ "ws_stream_wasm",
+]
+
+[[package]]
 name = "crossbeam"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1716,6 +1727,7 @@ dependencies = [
  "desk-plugin-protocol",
  "desk-plugin-shell",
  "desk-plugin-wasm-target",
+ "tracing-subscriber",
  "wasm-bindgen",
 ]
 
@@ -1723,12 +1735,16 @@ dependencies = [
 name = "desk-client-websocket"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "cross-websocket",
  "desk-protocol",
  "eyre",
+ "futures-lite",
+ "lazy_static",
  "serde_cbor",
- "tokio-tungstenite 0.15.0",
+ "tokio",
  "tracing",
- "ws_stream_wasm",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
@@ -1797,6 +1813,15 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "desk-client-websocket",
+ "desk-plugin-core",
+ "desk-protocol",
+ "eyre",
+ "futures",
+ "futures-lite",
+ "lazy_static",
+ "tokio",
+ "tracing",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]

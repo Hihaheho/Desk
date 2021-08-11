@@ -1,4 +1,4 @@
-use crate::server::normal::Normal;
+use crate::normal::Normal;
 use crate::ErrorCode;
 use crate::{handle_unexpected_input, Login};
 use crate::{Command, Event};
