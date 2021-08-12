@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
 
 use futures::Sink;
 
@@ -14,18 +13,3 @@ pub trait Client {
 pub struct ClientName(pub Cow<'static, str>);
 
 pub type BoxClient = Box<dyn Client + Send + Sync + 'static>;
-
-#[derive(Default)]
-pub struct Clients {
-    pub map: HashMap<ClientName, BoxClient>,
-}
-
-impl Clients {
-    pub fn insert(&mut self, name: ClientName, client: BoxClient) {
-        self.map.insert(name, client);
-    }
-
-    pub fn get_mut(&mut self, name: &ClientName) -> Option<&mut BoxClient> {
-        self.map.get_mut(name)
-    }
-}

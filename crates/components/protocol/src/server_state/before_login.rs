@@ -1,9 +1,9 @@
-use crate::normal::Normal;
 use crate::ErrorCode;
 use crate::{handle_unexpected_input, Login};
 use crate::{Command, Event};
 use crate::{ServerContext, ServerInput, ServerStateDispatcher};
 
+use super::normal::Normal;
 use super::ServerState;
 use async_trait::async_trait;
 use futures::Sink;
@@ -14,7 +14,7 @@ pub struct BeforeLogin {}
 #[async_trait]
 impl ServerState for BeforeLogin {
     async fn handle<T: Sink<Event> + Unpin + Send + Sync>(
-        &self,
+        self,
         context: &mut ServerContext<T>,
         input: &ServerInput,
     ) -> ServerStateDispatcher {
@@ -33,7 +33,7 @@ impl ServerState for BeforeLogin {
                                 user_id: user_id.clone(),
                             })
                             .await;
-                        return Normal { user_id }.into();
+                        return Normal::new(user_id).into();
                     }
                     Err(error) => {
                         let event = Event::Error {
@@ -46,7 +46,7 @@ impl ServerState for BeforeLogin {
             }
             unexpected => handle_unexpected_input(context, unexpected).await,
         }
-        self.clone().into()
+        self.into()
     }
 }
 
@@ -86,10 +86,7 @@ mod test {
         };
         assert_eq!(
             state.handle(&mut context, &input).await,
-            Normal {
-                user_id: user_id.clone()
-            }
-            .into()
+            Normal::new(user_id.clone()).into()
         );
         assert_eq!(rx.next().await, Some(Event::LoggedIn { user_id }));
     }

@@ -3,13 +3,16 @@ use client_websocket::connect;
 use futures::future::ready;
 use futures::prelude::*;
 use lazy_static::lazy_static;
-use protocol::{BoxClient, ClientName, Clients};
+use protocol::{BoxClient, ClientName};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use tracing::error;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::DEFAULT_CLIENT;
+const DEFAULT_CLIENT: ClientName =
+    ClientName(Cow::Borrowed("desk-plugin-protocol: default client"));
+
 lazy_static! {
     static ref CLIENTS: Mutex<HashMap<ClientName, BoxClient>> = Mutex::new(HashMap::new());
 }
@@ -29,10 +32,10 @@ pub fn connect_websocket() {
     );
 }
 
-pub fn set_client(mut clients: ResMut<Clients>) {
+pub fn set_client(mut client_res: ResMut<Option<BoxClient>>) {
     let mut map = CLIENTS.lock().unwrap();
     if let Some(client) = map.remove(&DEFAULT_CLIENT) {
-        clients.insert(DEFAULT_CLIENT, client);
+        *client_res = Some(client);
     }
 }
 

@@ -2,11 +2,9 @@ use bevy::prelude::*;
 use client_websocket::connect;
 use futures::Future;
 use futures_lite::future;
-use protocol::Clients;
+use protocol::BoxClient;
 
-use crate::DEFAULT_CLIENT;
-
-pub fn connect_websocket(mut clients: ResMut<Clients>) {
+pub fn connect_websocket(mut client_res: ResMut<Option<BoxClient>>) {
     use std::mem::forget;
     use tokio::runtime::Runtime;
 
@@ -15,7 +13,7 @@ pub fn connect_websocket(mut clients: ResMut<Clients>) {
     // Spawn the root task
     rt.block_on(connect("ws://127.0.0.1:5000/ws".into()))
         .map(|client| {
-            clients.insert(DEFAULT_CLIENT, Box::new(client));
+            *client_res = Some(Box::new(client));
         })
         .unwrap_or_else(|err| error!("{}", err));
 

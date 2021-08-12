@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub struct RoomName(pub String);
 
 impl<T: Into<String>> From<T> for RoomName {
@@ -12,16 +12,21 @@ impl<T: Into<String>> From<T> for RoomName {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, From, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, From, PartialEq, Eq, Hash, Clone)]
 pub struct RoomId(pub Uuid);
-#[derive(Serialize, Deserialize, Debug, From, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, From, PartialEq, Eq, Hash, Clone)]
 pub struct RoomLocalUserId(pub Uuid);
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 
 pub struct UserId(pub Uuid);
 
-#[derive(Serialize, Deserialize, Debug, Into, PartialEq, Clone)]
+impl UserId {
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
 
+#[derive(Serialize, Deserialize, Debug, Into, PartialEq, Eq, Hash, Clone)]
 pub struct Topic {
     pub crate_name: String,
     pub topic_name: String,

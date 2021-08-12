@@ -1,18 +1,20 @@
 mod authentication_handler;
 mod client;
+mod client_state;
 mod command;
 mod event;
 mod primitives;
-mod server;
 mod server_channel;
+mod server_state;
 mod stream_extension;
 
 pub use authentication_handler::*;
 pub use client::*;
+pub use client_state::*;
 pub use command::*;
 pub use event::*;
 pub use futures;
 pub use primitives::*;
-pub use server::*;
 pub use server_channel::*;
+pub use server_state::*;
 pub use stream_extension::*;

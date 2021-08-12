@@ -10,21 +10,19 @@ use native::*;
 use bevy::prelude::*;
 use core::ProtocolSystem;
 use futures::prelude::*;
-use protocol::{ClientName, Clients, Command, Event, Login};
-use std::borrow::Cow;
+use protocol::{BoxClient, ClientContext, ClientInput, ClientState, ClientStateDispatcher};
 use tracing::error;
-
-const DEFAULT_CLIENT: ClientName =
-    ClientName(Cow::Borrowed("desk-plugin-protocol: default client"));
 
 pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut bevy::app::AppBuilder) {
         let app = app
-            .init_resource::<Clients>()
-            .add_event::<Command>()
-            .add_event::<Event>()
+            .init_resource::<protocol::Commands>()
+            .init_resource::<protocol::Events>()
+            .init_resource::<Option<BoxClient>>()
+            .init_resource::<Option<ClientStateDispatcher>>()
+            .add_system(add_client_state.system())
             .add_system(receive_events.system().label(ProtocolSystem::ReceiveEvents))
             .add_system(
                 handle_events
@@ -40,29 +38,50 @@ impl Plugin for ProtocolPlugin {
     }
 }
 
-fn handle_events() {}
-
-fn send_commands(_commands: EventReader<Command>, mut clients: ResMut<Clients>) {
-    if let Some(client) = clients.get_mut(&DEFAULT_CLIENT) {
-        // for command in commands.iter() {
-        //     let command = command.clone();
-        let command = Command::Login(Login {
-            token: vec![1, 2, 3].into(),
-        });
-        let mut sender = client.sender();
-        block_on(async move {
-            sender.send(command).await.unwrap_or_else(|err| {
-                error!("{}", err);
-            })
-        });
-        // }
+fn add_client_state(
+    client: ResMut<Option<BoxClient>>,
+    mut state: ResMut<Option<ClientStateDispatcher>>,
+) {
+    if client.is_some() && state.is_none() {
+        *state = Some(Default::default())
     }
 }
-fn receive_events(mut events: EventWriter<Event>, mut clients: ResMut<Clients>) {
-    if let Some(client) = clients.get_mut(&DEFAULT_CLIENT) {
+
+fn handle_events(
+    mut state: ResMut<Option<ClientStateDispatcher>>,
+    mut commands: ResMut<protocol::Commands>,
+    events: ResMut<protocol::Events>,
+) {
+    if let Some(ref mut state) = *state {
+        let mut context = ClientContext {
+            commands: Default::default(),
+        };
+        for event in events.iter() {
+            *state = state.handle(&mut context, &ClientInput::Event(event.clone()));
+        }
+        *commands = context.commands;
+    }
+}
+
+fn send_commands(client: ResMut<Option<BoxClient>>, mut commands: ResMut<protocol::Commands>) {
+    if let Some(ref client) = *client {
+        for command in commands.iter() {
+            let command = command.clone();
+            let mut sender = client.sender();
+            block_on(async move {
+                sender.send(command).await.unwrap_or_else(|err| {
+                    error!("{}", err);
+                })
+            });
+        }
+        commands.clear();
+    }
+}
+fn receive_events(mut client: ResMut<Option<BoxClient>>, mut events: ResMut<protocol::Events>) {
+    if let Some(ref mut client) = *client {
         if let Some(vec) = client.poll_once() {
             for event in vec {
-                events.send(event);
+                events.push(event);
             }
         }
     }

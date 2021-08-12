@@ -1,8 +1,6 @@
 use futures::prelude::*;
-use tracing::debug;
 
-use crate::before_login::BeforeLogin;
-use crate::server::ServerState;
+use crate::server_state::ServerState;
 use crate::ServerInput;
 use crate::{Command, Event, ServerContext, ServerStateDispatcher, UserAuthenticationHandler};
 
@@ -15,18 +13,20 @@ impl Channel {
         command_stream: impl Stream<Item = Command> + Send + Unpin + 'static,
         event_sender: impl Sink<Event> + Send + Sync + Unpin,
     ) {
-        let mut context = ServerContext {
+        let context = ServerContext {
             user_authentication_handler: auth,
             event_sender,
         };
-        let state: ServerStateDispatcher = BeforeLogin {}.into();
+        let state: ServerStateDispatcher = Default::default();
 
-        let mut stream = command_stream.map(|command| ServerInput::Command { command });
+        let stream = command_stream.map(|command| ServerInput::Command { command });
 
-        while let Some(input) = stream.next().await {
-            debug!("{:?}", input);
-            state.handle(&mut context, &input).await;
-        }
+        stream
+            .fold((context, state), |(mut context, state), input| async move {
+                let state = state.handle(&mut context, &input).await;
+                (context, state)
+            })
+            .await;
     }
 }
 

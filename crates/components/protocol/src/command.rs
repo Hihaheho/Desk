@@ -79,3 +79,20 @@ mod test {
         assert_eq!(format!("{:?}", target), r#"Login(Login { token: "****" })"#)
     }
 }
+
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct Commands(Vec<Command>);
+impl Commands {
+    pub fn iter(&self) -> impl Iterator<Item = &Command> {
+        self.0.iter()
+    }
+
+    pub fn push(&mut self, event: Command) {
+        self.0.push(event);
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear();
+        self.0.truncate(32);
+    }
+}

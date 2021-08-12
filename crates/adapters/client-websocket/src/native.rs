@@ -38,7 +38,7 @@ pub async fn connect(
 > {
     let (tx, rx) = cross_websocket::connect(url).await?.split();
     let (tx_clone, rx_clone) = channel::<Vec<u8>>(32);
-    std::mem::forget(tokio::spawn(rx_clone.map(Ok).forward(tx)));
+    tokio::spawn(rx_clone.map(Ok).forward(tx));
 
     Ok(WebSocketClient {
         command_sender: command_sender(tx_clone.sink_map_err(|err| err.to_string())),

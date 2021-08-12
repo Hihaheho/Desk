@@ -1,14 +1,16 @@
-pub mod before_login;
-pub mod normal;
+mod before_login;
+mod normal;
+mod room;
 
 use crate::{primitives::*, Command, UserAuthenticationHandler};
 use crate::{ErrorCode, Event};
-use before_login::*;
-use futures::{Sink, SinkExt};
-use normal::*;
+pub(in crate::server_state) use before_login::*;
+pub(in crate::server_state) use normal::*;
+pub(in crate::server_state) use room::*;
 
 use async_trait::async_trait;
 use enum_dispatch::enum_dispatch;
+use futures::{Sink, SinkExt};
 use tracing::error;
 
 pub struct ServerContext<EventSender> {
@@ -43,11 +45,17 @@ pub enum ServerStateDispatcher {
     BeforeLogin,
 }
 
+impl Default for ServerStateDispatcher {
+    fn default() -> Self {
+        Self::BeforeLogin(BeforeLogin {})
+    }
+}
+
 #[async_trait]
 #[enum_dispatch]
 pub trait ServerState {
     async fn handle<T: Sink<Event> + Unpin + Send + Sync>(
-        &self,
+        self,
         context: &mut ServerContext<T>,
         input: &ServerInput,
     ) -> ServerStateDispatcher;
