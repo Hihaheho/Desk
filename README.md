@@ -2,7 +2,7 @@
 
 
 [![Demo](https://img.shields.io/badge/Demo-Wasm+WebGL2-pink)](https://hihaheho.com/Desk/)
-[![CI](https://github.com/Hihaheho-Studios/Desk/actions/workflows/ci.yml/badge.svg)](https://github.com/Hihaheho-Studios/Desk/actions/workflows/ci.yml)
+[![CI](https://github.com/Hihaheho/Desk/actions/workflows/ci.yml/badge.svg)](https://github.com/Hihaheho/Desk/actions/workflows/ci.yml)
 ![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)
 
 A programmable desk of the future which blurs the line between living and coding.
