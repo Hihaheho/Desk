@@ -15,14 +15,13 @@ pub use next_vec::*;
 use eyre::Result;
 use protocol::futures::future::{ready, Ready};
 use protocol::futures::{prelude::*, Stream};
-use protocol::{unwrap_and_log, Command, Event};
+use protocol::{Command, Event};
 use tracing::error;
 
 fn event_receiver(
     rx: impl Stream<Item = Result<Vec<u8>>> + Send + Sync + 'static + Unpin,
 ) -> impl Stream<Item = Event> + Send + Sync + 'static + Unpin {
-    rx.map(|bytes| -> Result<Event> { Ok(serde_cbor::from_slice(&bytes?)?) })
-        .filter_map(unwrap_and_log!())
+    rx.map(|bytes| serde_cbor::from_slice(&bytes.unwrap()).unwrap())
 }
 
 fn command_sender(

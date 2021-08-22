@@ -17,9 +17,9 @@ pub struct Normal {
 
 #[async_trait]
 impl ServerState for Normal {
-    async fn handle<T: Send + Sync>(
+    async fn handle(
         self,
-        _context: &mut ServerContext<T>,
+        _context: &mut (impl ServerContext + Send + Sync),
         _input: &ServerInput,
     ) -> ServerStateDispatcher {
         todo!()

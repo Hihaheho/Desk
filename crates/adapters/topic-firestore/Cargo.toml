@@ -1,0 +1,8 @@
+[package]
+name = "desk-topic-firestore"
+version = "0.1.0"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+firestore-client = { package = "desk-firestore-client", path = "../../libs/firestore-client", version = "0.1.0" }

@@ -16,8 +16,13 @@ impl<T: Into<String>> From<T> for RoomName {
 pub struct RoomId(pub Uuid);
 #[derive(Serialize, Deserialize, Debug, From, PartialEq, Eq, Hash, Clone)]
 pub struct RoomLocalUserId(pub Uuid);
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+impl RoomLocalUserId {
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
 
+#[derive(Serialize, Deserialize, Debug, From, PartialEq, Eq, Hash, Clone)]
 pub struct UserId(pub Uuid);
 
 impl UserId {

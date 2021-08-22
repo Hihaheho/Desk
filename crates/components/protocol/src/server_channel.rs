@@ -1,8 +1,10 @@
+use futures::channel::mpsc::channel;
 use futures::prelude::*;
+use futures::stream::select;
 
 use crate::server_state::ServerState;
-use crate::ServerInput;
-use crate::{Command, Event, ServerContext, ServerStateDispatcher, UserAuthenticationHandler};
+use crate::{Command, Event, ServerStateDispatcher, UserAuthenticationHandler};
+use crate::{InboundEntranceCommand, ServerInput, SinkAndStreamServerContext};
 
 pub struct Channel {}
 
@@ -13,15 +15,17 @@ impl Channel {
         command_stream: impl Stream<Item = Command> + Send + Unpin + 'static,
         event_sender: impl Sink<Event> + Send + Sync + Unpin,
     ) {
-        let context = ServerContext {
+        let (entrance_event_sender, inbound_rx) = channel::<InboundEntranceCommand>(32);
+        let context = SinkAndStreamServerContext {
             user_authentication_handler: auth,
             event_sender,
+            entrance_command_sender: entrance_event_sender,
         };
         let state: ServerStateDispatcher = Default::default();
 
-        let stream = command_stream.map(|command| ServerInput::Command { command });
-
-        stream
+        let command_stream = command_stream.map(ServerInput::Command);
+        let inbound_stream = inbound_rx.map(ServerInput::InboundEntranceCommand);
+        select(command_stream, inbound_stream)
             .fold((context, state), |(mut context, state), input| async move {
                 let state = state.handle(&mut context, &input).await;
                 (context, state)

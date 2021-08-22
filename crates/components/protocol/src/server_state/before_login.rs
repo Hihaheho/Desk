@@ -6,30 +6,24 @@ use crate::{ServerContext, ServerInput, ServerStateDispatcher};
 use super::normal::Normal;
 use super::ServerState;
 use async_trait::async_trait;
-use futures::Sink;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BeforeLogin {}
 
 #[async_trait]
 impl ServerState for BeforeLogin {
-    async fn handle<T: Sink<Event> + Unpin + Send + Sync>(
+    async fn handle(
         self,
-        context: &mut ServerContext<T>,
+        context: &mut (impl ServerContext + Send + Sync),
         input: &ServerInput,
     ) -> ServerStateDispatcher {
         match &input {
-            ServerInput::Command {
-                command: Command::Login(Login { token }),
-            } => {
-                let auth = context
-                    .user_authentication_handler
-                    .authenticate(token)
-                    .await;
+            ServerInput::Command(Command::Login(Login { token })) => {
+                let auth = context.authenticate(token).await;
                 match auth {
                     Ok(user_id) => {
                         context
-                            .send(Event::LoggedIn {
+                            .send_event(Event::LoggedIn {
                                 user_id: user_id.clone(),
                             })
                             .await;
@@ -40,7 +34,7 @@ impl ServerState for BeforeLogin {
                             code: ErrorCode::Authentication(error.error_code),
                             message: error.message,
                         };
-                        context.send(event).await;
+                        context.send_event(event).await;
                     }
                 }
             }
@@ -59,8 +53,8 @@ mod test {
 
     use super::*;
     use crate::mock::MockUserAuthenticationHandler;
-    use crate::primitives::*;
     use crate::AuthenticationErrorCode;
+    use crate::{primitives::*, SinkAndStreamServerContext};
     use crate::{AuthenticationError, ErrorCode};
 
     #[tokio::test]
@@ -75,20 +69,20 @@ mod test {
             .given(token.clone())
             .will_return(Ok(user_id.clone()));
 
-        let (tx, mut rx) = channel::<Event>(1);
+        let (event_sender, mut event_rx) = channel(1);
+        let (entrance_command_sender, mut _entrance_rx) = channel(1);
 
-        let mut context = ServerContext {
+        let mut context = SinkAndStreamServerContext {
             user_authentication_handler: Box::new(auth.clone()),
-            event_sender: Box::new(tx),
+            event_sender,
+            entrance_command_sender,
         };
-        let input = ServerInput::Command {
-            command: Command::Login(Login { token }),
-        };
+        let input = ServerInput::Command(Command::Login(Login { token }));
         assert_eq!(
             state.handle(&mut context, &input).await,
             Normal::new(user_id.clone()).into()
         );
-        assert_eq!(rx.next().await, Some(Event::LoggedIn { user_id }));
+        assert_eq!(event_rx.next().await, Some(Event::LoggedIn { user_id }));
     }
 
     #[tokio::test]
@@ -105,22 +99,22 @@ mod test {
                 message: "error".into(),
             }));
 
-        let (tx, mut rx) = channel::<Event>(1);
+        let (event_sender, mut event_rx) = channel(1);
+        let (entrance_command_sender, mut _entrance_rx) = channel(1);
 
-        let mut context = ServerContext {
+        let mut context = SinkAndStreamServerContext {
             user_authentication_handler: Box::new(auth.clone()),
-            event_sender: Box::new(tx),
+            event_sender,
+            entrance_command_sender,
         };
-        let input = ServerInput::Command {
-            command: Command::Login(Login { token }),
-        };
+        let input = ServerInput::Command(Command::Login(Login { token }));
 
         assert_eq!(
             state.handle(&mut context, &input).await,
             BeforeLogin {}.into()
         );
         assert_eq!(
-            rx.next().await,
+            event_rx.next().await,
             Some(Event::Error {
                 code: ErrorCode::Authentication(AuthenticationErrorCode::InsufficientPermission),
                 message: "error".into()

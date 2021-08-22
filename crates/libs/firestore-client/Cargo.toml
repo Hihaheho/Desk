@@ -1,0 +1,20 @@
+[package]
+name = "desk-firestore-client"
+version = "0.1.0"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
+
+eyre = "0.6.5"
+firestore_grpc = "0.31.0"
+futures = "0.3.16"
+lazy_static = "1.4.0"
+parking_lot = "0.11.1"
+reqwest = { version = "0.11.4", features = ["native-tls", "json"] }
+serde = { version = "1.0.127", features = ["derive"] }
+tokio = { version = "1.10.0", features = ["full"] }
+tracing = "0.1.26"

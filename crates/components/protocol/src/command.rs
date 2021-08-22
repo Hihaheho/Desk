@@ -1,3 +1,5 @@
+use crate::EntranceCommand;
+
 use super::primitives::*;
 use serde::{Deserialize, Serialize};
 
@@ -12,28 +14,7 @@ pub enum Command {
     CreatePublicRoom {
         room_name: RoomName,
     },
-    /// Ask to join
-    AskJoinAnonymous {
-        room_id: RoomId,
-    },
-    /// Ask to join with user_id
-    AskJoin {
-        room_id: RoomId,
-    },
-    /// Cannot accept an anonymous user except in a public room
-    Accept {
-        room_id: RoomId,
-        local_user_id: RoomLocalUserId,
-    },
-    AcceptAnonymous {
-        room_id: RoomId,
-        local_user_id: RoomLocalUserId,
-        one_time_code: OneTimeCode,
-    },
-    Reject {
-        room_id: RoomId,
-        local_user_id: RoomLocalUserId,
-    },
+    EntranceCommand(EntranceCommand),
     /// Update the topic with the contents
     Update {
         room_id: RoomId,
