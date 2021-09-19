@@ -2,7 +2,7 @@ use crate::code::node::apply_binary_operator;
 
 use super::{Code, CodeData};
 
-pub fn reduce(node: &Code) -> Code {
+pub(crate) fn reduce(node: &Code) -> Code {
     use CodeData::*;
     match &node.data {
         Literal { value: _ } => node.to_owned(),

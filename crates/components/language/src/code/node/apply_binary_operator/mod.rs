@@ -4,7 +4,7 @@ use crate::type_::Type;
 
 use super::{BinaryArithmeticOperator, BinaryOperator, Code, CodeData, LiteralValue};
 
-pub fn reduce(operator: BinaryOperator, operands: (&Code, &Code)) -> Code {
+pub(crate) fn reduce(operator: BinaryOperator, operands: (&Code, &Code)) -> Code {
     use BinaryOperator::*;
     match operator {
         Arithmetic(arithmetic_operator) => {

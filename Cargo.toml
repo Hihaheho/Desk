@@ -17,3 +17,7 @@ default-members = [
   "crates/apps/*",
   "crates/systems/*",
 ]
+
+[profile.dev]
+# Disable for build speed
+debug = 0

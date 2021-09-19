@@ -5,6 +5,9 @@ on:
       - main
 env:
   IMAGE: gcr.io/hihaheho/desk-server
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings -W rust-2021-compatibility"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,13 +25,30 @@ jobs:
           components: rustfmt, clippy
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
-      - run: cargo install cargo-make
 
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: stable
-          command: make
-          args: ci-check
+      - name: Check
+        run: cargo check --workspace
+
+      - name: Check native
+        run: cargo check -p desk-client --features native
+
+      - name: Check wasm
+        run: cargo check -p desk-client --target wasm32-unknown-unknown --features web
+
+      - name: Compile test
+        run: cargo test --no-run --locked --all-features
+
+      - name: Run test
+        run: cargo test --all-features
+
+      - name: Check fmt
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
+
+      - name: Deny
+        run: cargo deny --all-features check
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
@@ -47,18 +67,16 @@ jobs:
       - run: docker tag ${{ env.IMAGE }}:${{ github.sha }} ${{ env.IMAGE }}:latest
       - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
 
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: stable
-          command: make
-          args: e2e
+      - name: Compile E2E
+        run: cargo test -p desk-test-server --no-run --locked
+
+      - name: Run E2E
+        run: cargo test -p desk-test-server
 
       - run: cargo install wasm-bindgen-cli --version 0.2.69
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: stable
-          command: make
-          args: wasm-bindgen
+
+      - name: Build wasm
+        run: cargo build --bin desk-client --target wasm32-unknown-unknown --release --features web
 
       - uses: JamesIves/github-pages-deploy-action@4.1.4
         with:

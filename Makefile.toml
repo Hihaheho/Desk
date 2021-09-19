@@ -42,7 +42,7 @@ args = ["fmt", "--all", "--", "--check"]
 
 [tasks.clippy]
 command = "cargo"
-args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "clippy::all", "-W", "clippy::dbg_macro"]
+args = ["clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings", "-W", "rust-2021-compatibility", "-W", "clippy::all", "-W", "clippy::dbg_macro"]
 
 [tasks.deny]
 command = "cargo"
@@ -77,6 +77,10 @@ DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t gcr.io/hih
 [tasks.e2e]
 command = "cargo"
 args = ["test", "-p", "desk-test-server"]
+
+[tasks.compile-timings]
+command = "cargo"
+args = ["build", "-p", "desk-client", "-Z", "timings", "--release"]
 
 [config]
 default_to_workspace = false
