@@ -9,5 +9,5 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
 
-async-trait = "0.1.51"
-uuid = "0.8.2"
+async-trait = "0.1"
+uuid = "0.8"

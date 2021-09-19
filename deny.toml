@@ -9,6 +9,10 @@ ignore = [
     "RUSTSEC-2020-0056", # stdweb unmaintained - https://github.com/koute/stdweb/issues/403
     "RUSTSEC-2020-0016", # net2 unmaintained
     "RUSTSEC-2020-0095", # difference unmaintained
+    # wait for bevy 0.6
+    "RUSTSEC-2021-0096", # spirv_headers
+    "RUSTSEC-2021-0091", # gfx-autil
+    "RUSTSEC-2021-0090", # ash
 ]
 
 [licenses]

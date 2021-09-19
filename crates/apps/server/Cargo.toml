@@ -10,17 +10,17 @@ license = "MIT OR Apache-2.0"
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
 user_authentication_firebase = { package = "desk-user-authentication-firebase", path = "../../adapters/user-authentication-firebase", version = "0.1.0" }
 
-axum = { version="0.1.2", features=["ws"] }
-envy = "0.4.2"
-futures = "0.3.16"
-hyper = { version = "0.14.11", features = ["server", "http2", "http1"] }
-serde = { version = "1.0.127", features = ["derive"] }
-serde_cbor = "0.11.1"
-tokio = { version = "1.9.0", features = ["full"] }
-tower = "0.4.8"
-eyre = "0.6.5"
-color-eyre = "0.5.11"
-tracing = "0.1.26"
-tracing-subscriber = { version = "0.2.19", features = ["json"] }
-tracing-opentelemetry = "0.14.0"
-opentelemetry = "0.15.0"
+axum = { version="0.1", features=["ws"] }
+envy = "0.4"
+futures = "0.3"
+hyper = { version = "0.14", features = ["server", "http2", "http1"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_cbor = "0.11"
+tokio = { version = "1.9", features = ["full"] }
+tower = "0.4"
+eyre = "0.6"
+color-eyre = "0.5"
+tracing = "0.1"
+tracing-subscriber = { version = "0.2", features = ["json"] }
+tracing-opentelemetry = "0.14"
+opentelemetry = "0.15"

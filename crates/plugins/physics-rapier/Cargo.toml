@@ -12,4 +12,4 @@ core = { package = "desk-plugin-core", path = "../core", version = "0.1.0" }
 physics = { package = "desk-physics", path = "../../components/physics", version = "0.1.0" }
 
 bevy = { version = "0.5", default-features = false }
-bevy_rapier2d = { version = "0.10.2", features = ["wasm-bindgen", "render"] }
+bevy_rapier2d = { version = "0.10", features = ["wasm-bindgen", "render"] }

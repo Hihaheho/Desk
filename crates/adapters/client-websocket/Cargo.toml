@@ -5,13 +5,13 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-async-trait = "0.1.51"
-eyre = "0.6.5"
+async-trait = "0.1"
+eyre = "0.6"
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
-serde_cbor = "0.11.1"
-tracing = "0.1.26"
+serde_cbor = "0.11"
+tracing = "0.1"
 cross-websocket = { package = "cross-websocket", path = "../../libs/cross-websocket", version = "0.1.0" }
-futures-lite = "1.12.0"
+futures-lite = "1.12"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.9.0", features = ["full"] }

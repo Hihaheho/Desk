@@ -11,12 +11,12 @@ keywords = ["websocket", "wasm", "native", "cross-platform"]
 categories = ["network-programming", "web-programming::websocket"]
 
 [dependencies]
-eyre = "0.6.5"
-futures = "0.3.16"
-thiserror = "1.0.26"
+eyre = "0.6"
+futures = "0.3"
+thiserror = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio-tungstenite = { version = "0.15.0", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.15", features = ["native-tls"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-ws_stream_wasm = { version = "0.7.3" }
+ws_stream_wasm = { version = "0.7" }
