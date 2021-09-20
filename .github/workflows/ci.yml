@@ -65,7 +65,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha
           tags: ${{ env.IMAGE }}:${{ github.sha }}
-          tags: ${{ env.IMAGE }}:${{ github.sha }}
       - run: docker pull ${{ env.IMAGE }}:${{ github.sha }}
       - run: docker tag ${{ env.IMAGE }}:${{ github.sha }} ${{ env.IMAGE }}:latest
 
