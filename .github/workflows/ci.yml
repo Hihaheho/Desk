@@ -61,6 +61,7 @@ jobs:
         with:
           context: .
           file: .deploy/desk-server/Dockerfile
+          load: true
           push: true
           cache-from: type=gha
           cache-to: type=gha
