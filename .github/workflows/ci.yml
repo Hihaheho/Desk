@@ -32,9 +32,6 @@ jobs:
       - name: Check native
         run: cargo check -p desk-client --features native
 
-      - name: Check wasm
-        run: cargo check -p desk-client --target wasm32-unknown-unknown --features web
-
       - name: Compile test
         run: cargo test --no-run --locked --all-features
 
