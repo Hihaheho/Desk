@@ -53,16 +53,17 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - run: gcloud auth configure-docker
-      - uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
-      - run: DOCKER_BUILDKIT=1 docker build . -f .deploy/desk-server/Dockerfile -t ${{ env.IMAGE }}:${{ github.sha }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: .deploy/desk-server/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
       - run: docker tag ${{ env.IMAGE }}:${{ github.sha }} ${{ env.IMAGE }}:latest
-      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
 
       - name: Compile E2E
         run: cargo test -p desk-test-server --no-run --locked
