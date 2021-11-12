@@ -10,12 +10,12 @@ pub(crate) fn parse_effectful<I, T>(
     just(Token::Effectful)
         .ignore_then(ty.clone())
         .then(item.clone())
+        .then_ignore(just(Token::WithHandler))
         .then(
-            just(Token::WithHandler)
-                .ignore_then(ty.clone())
+            ty.clone()
                 .then_ignore(just(Token::EArrow))
                 .then(item.clone())
-                .repeated(),
+                .separated_by(just(Token::Comma)),
         )
         .map(|((class, item), handlers)| (class, item, handlers))
 }

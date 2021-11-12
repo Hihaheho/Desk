@@ -150,7 +150,7 @@ mod tests {
     #[test]
     fn parse_effectful() {
         assert_eq!(
-            parse("# 'a class 'number ; 'a num_to_num => ?; 'a str_to_str => _")
+            parse("# 'a class 'number ; 'a num_to_num => ?, 'a str_to_str => _")
                 .unwrap()
                 .0,
             Type::Effectful {

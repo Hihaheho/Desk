@@ -8,9 +8,6 @@ use super::{
     r#type::{self, Type},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct Identifier(String);
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
     String(String),
@@ -54,7 +51,7 @@ pub enum Expr {
     },
     Hole,
     Function {
-        parameters: Vec<Identifier>,
+        parameters: Vec<Spanned<Type>>,
         expression: Box<Spanned<Self>>,
     },
     Array(Vec<Spanned<Self>>),
@@ -75,7 +72,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let hole = just(Token::Hole).to(Expr::Hole);
         let int64 = filter_map(|span, token| match token {
             Token::Int(int) => Ok(int),
-            _ => Err(Simple::custom(span, "")),
+            _ => Err(Simple::custom(span, "expected int literal")),
         });
         let rational = int64
             .then_ignore(just(Token::Divide))
@@ -85,7 +82,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
             .or(filter_map(|span, token| match token {
                 Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
-                _ => Err(Simple::custom(span, "")),
+                _ => Err(Simple::custom(span, "expected string literal")),
             }));
         let type_ = r#type::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_ = just(Token::Let)
@@ -217,7 +214,7 @@ mod tests {
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"# <'a class> ?; <'a num_to_num> => ?; <'a str_to_str> => ?"#)
+        let trait_ = parse(r#"# <'a class> ?; <'a num_to_num> => ?, <'a str_to_str> => ?"#)
             .unwrap()
             .0;
         assert_eq!(

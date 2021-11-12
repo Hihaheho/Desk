@@ -59,7 +59,11 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
             .map(|s| format!("({})", s))
     })
     .map(Token::Comment);
-    let ident = text::ident().map(|ident: String| Token::Ident(ident.into()));
+    // let ident = text::ident().map(|ident: String| Token::Ident(ident.into()));
+    let ident = text::ident()
+        .separated_by(text::whitespace())
+        .at_least(1)
+        .map(|ident: Vec<String>| dbg!(Token::Ident(ident.join(" "))));
     let int = just('-')
         .or_not()
         .chain::<char, _, _>(text::int(10))
@@ -98,21 +102,23 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .or(just('\\').to(Token::Lambda))
         .or(just('-').chain(just('>')).to(Token::Arrow))
         .or(just('=').chain(just('>')).to(Token::EArrow));
-    let special =
-        just('\'').ignore_then(text::ident()).try_map(|ident: String, span| {
-            match ident.as_str() {
-                "module" => Ok(Token::Module),
-                "import" => Ok(Token::Import),
-                "export" => Ok(Token::Export),
-                "number" => Ok(Token::NumberType),
-                "string" => Ok(Token::StringType),
-                "alias" => Ok(Token::Alias),
-                "type" => Ok(Token::Type),
-                "private" => Ok(Token::Private),
-                "continue" => Ok(Token::Continue),
-                "a" => Ok(Token::A),
-                _ => Err(Simple::custom(span, format!(r#"expected "module", "import", "export", "number", or "string" but "{}" given"#, ident))),
-            }
+    let special = just('\'')
+        .ignore_then(text::ident())
+        .try_map(|ident: String, span| match ident.as_str() {
+            "module" => Ok(Token::Module),
+            "import" => Ok(Token::Import),
+            "export" => Ok(Token::Export),
+            "number" => Ok(Token::NumberType),
+            "string" => Ok(Token::StringType),
+            "alias" => Ok(Token::Alias),
+            "type" => Ok(Token::Type),
+            "private" => Ok(Token::Private),
+            "continue" => Ok(Token::Continue),
+            "a" => Ok(Token::A),
+            _ => Err(Simple::custom(
+                span,
+                format!(r#"undefined special keyword: {}"#, ident),
+            )),
         });
     let brand = just('@')
         .ignore_then(text::ident())
@@ -192,5 +198,14 @@ mod tests {
                 Dot,
             ]
         )
+    }
+
+    #[test]
+    fn ident_with_spaces() {
+        dbg!(lexer().parse_recovery_verbose(" the\t\nnumber  of apples "));
+        assert_eq!(
+            lexer().parse(" the\t\nnumber  of apples ").unwrap(),
+            vec![(Token::Ident("the number of apples".into()), 1..23)]
+        );
     }
 }
