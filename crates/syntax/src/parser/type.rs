@@ -93,7 +93,7 @@ mod tests {
     fn parse(input: &str) -> Result<Spanned<Type>, Vec<Simple<Token>>> {
         parser().parse(Stream::from_iter(
             input.len()..input.len() + 1,
-            dbg!(lexer().parse(input).unwrap().into_iter()),
+            dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
         ))
     }
 

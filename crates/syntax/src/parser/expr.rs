@@ -127,10 +127,35 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                         .collect(),
                 }
             });
+        let call = type_
+            .clone()
+            .then(
+                just(Token::Uuid)
+                    .ignore_then(filter_map(|span, token| {
+                        if let Token::Ident(uuid) = token {
+                            Ok(uuid.parse().map_err(|e| {
+                                dbg!(Simple::custom(
+																	span,
+																	format!("failed to parse uuid: {}, {}", uuid, e),
+																))
+                            })?)
+                        } else {
+                            Err(Simple::custom(span, "expected uuid"))
+                        }
+                    }))
+                    .or_not(),
+            )
+            .then(expr.clone().separated_by(just(Token::Comma)))
+            .map(|((function, uuid), arguments)| Expr::Call {
+                function,
+                uuid,
+                arguments,
+            });
         hole.or(literal)
             .or(let_)
             .or(perform)
             .or(effectful)
+            .or(call)
             .then_ignore(just(Token::Dot).or_not())
             .map_with_span(|token, span| (token, span))
     })
@@ -149,7 +174,7 @@ mod tests {
     fn parse(input: &str) -> Result<Spanned<Expr>, Vec<Simple<Token>>> {
         parser().parse(Stream::from_iter(
             input.len()..input.len() + 1,
-            dbg!(lexer().parse(input).unwrap().into_iter()),
+            dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
         ))
     }
 
@@ -232,6 +257,38 @@ mod tests {
                         expr: (Expr::Hole, 57..58),
                     }
                 ]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_call() {
+        assert_eq!(
+            parse("<'a add> 1, 2").unwrap().0,
+            Expr::Call {
+                function: (Type::Alias("add".into()), 1..7),
+                uuid: None,
+                arguments: vec![
+                    (Expr::Literal(Literal::Int(1)), 9..10),
+                    (Expr::Literal(Literal::Int(2)), 12..13)
+                ],
+            }
+        );
+    }
+
+    #[test]
+    fn parse_call_with_uuid() {
+        assert_eq!(
+            parse("<'a add> 'uuid ee525632-9506-4926-aec0-36cbfe65ac0f 1, 2")
+                .unwrap()
+                .0,
+            Expr::Call {
+                function: (Type::Alias("add".into()), 1..7),
+                uuid: Some("ee525632-9506-4926-aec0-36cbfe65ac0f".parse().unwrap()),
+                arguments: vec![
+                    (Expr::Literal(Literal::Int(1)), 52..53),
+                    (Expr::Literal(Literal::Int(2)), 55..56)
+                ],
             }
         );
     }

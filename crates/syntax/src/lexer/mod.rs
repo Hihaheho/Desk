@@ -9,6 +9,7 @@ pub enum Token {
     Int(i64),
     Str(String),
     // TODO: Float(i64, i64),
+    Uuid,
     Divide,
     Let,
     In,
@@ -59,8 +60,7 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
             .map(|s| format!("({})", s))
     })
     .map(Token::Comment);
-    // let ident = text::ident().map(|ident: String| Token::Ident(ident.into()));
-    let ident = text::ident()
+    let identifier = ident()
         .separated_by(text::whitespace())
         .at_least(1)
         .map(|ident: Vec<String>| dbg!(Token::Ident(ident.join(" "))));
@@ -105,6 +105,7 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     let special = just('\'')
         .ignore_then(text::ident())
         .try_map(|ident: String, span| match ident.as_str() {
+            "uuid" => Ok(Token::Uuid),
             "module" => Ok(Token::Module),
             "import" => Ok(Token::Import),
             "export" => Ok(Token::Export),
@@ -121,7 +122,7 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
             )),
         });
     let brand = just('@')
-        .ignore_then(text::ident())
+        .ignore_then(ident())
         .map(|ident: String| Token::Brand(ident.into()));
     let token = comment
         .or(int)
@@ -129,11 +130,37 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .or(symbol)
         .or(special)
         .or(brand)
-        .or(ident);
+        .or(identifier);
     token
         .map_with_span(|token, span| (token, span))
         .padded()
         .repeated()
+}
+
+pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
+    "a".contains("a");
+    none_of(r#"/$<>!#*^?\[]{}-=;:~,.()'"#.chars())
+        .try_map(|c, span| {
+            if c.is_whitespace() || c.is_numeric() {
+                Err(Simple::custom(span, "invalid character"))
+            } else {
+                Ok(c)
+            }
+        })
+        .map(Some)
+        .chain::<char, _, _>(
+            // Does not have hyphen.
+            none_of(r#"/$<>!#*^?\[]{}=;:~,.()'"#.chars())
+                .try_map(|c, span| {
+                    if c.is_whitespace() {
+                        Err(Simple::custom(span, "invalid character"))
+                    } else {
+                        Ok(c)
+                    }
+                })
+                .repeated(),
+        )
+        .collect()
 }
 
 #[cfg(test)]
@@ -202,10 +229,17 @@ mod tests {
 
     #[test]
     fn ident_with_spaces() {
-        dbg!(lexer().parse_recovery_verbose(" the\t\nnumber  of apples "));
         assert_eq!(
             lexer().parse(" the\t\nnumber  of apples ").unwrap(),
             vec![(Token::Ident("the number of apples".into()), 1..23)]
+        );
+    }
+
+    #[test]
+    fn ident_utf8() {
+        assert_eq!(
+            lexer().parse("あ-　a0").unwrap(),
+            vec![(Token::Ident("あ- a0".into()), 0..3)]
         );
     }
 }
