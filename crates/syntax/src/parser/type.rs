@@ -5,18 +5,22 @@ use crate::{lexer::Token, span::Spanned};
 use super::common::parse_effectful;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Handler {
+    input: Spanned<Type>,
+    output: Spanned<Type>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Number,
     String,
     Trait(Vec<Spanned<Self>>),
-    Handler {
-        input: Box<Spanned<Self>>,
-        output: Box<Spanned<Self>>,
-    },
+    // Handlers do not need to be spanned because it has not leading token.
+    Class(Vec<Handler>),
     Effectful {
         class: Box<Spanned<Self>>,
         ty: Box<Spanned<Self>>,
-        handlers: Vec<Self>,
+        handlers: Vec<Handler>,
     },
     Hole,
     Infer,
@@ -25,29 +29,29 @@ pub enum Type {
 
 pub fn effect_parser(
     parser: impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
+) -> impl Parser<Token, Handler, Error = Simple<Token>> + Clone {
     parser
         .clone()
         .then_ignore(just(Token::EArrow))
         .then(parser)
-        .map(|(input, output)| Type::Handler {
-            input: Box::new(input),
-            output: Box::new(output),
-        })
-        .map_with_span(|t, span| (t, span))
+        .map(|(input, output)| Handler { input, output })
 }
 
 pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
     recursive(|type_| {
         let hole = just(Token::Hole).to(Type::Hole);
         let number = just(Token::NumberType).to(Type::Number);
-        let trait_ = just(Token::Trait)
-            .ignore_then(
-                effect_parser(type_.clone())
-                    .or(type_.clone())
-                    .separated_by(just(Token::Comma)),
-            )
-            .map(|types| Type::Trait(types));
+        let trait_ = just(Token::Trait).ignore_then(
+            effect_parser(type_.clone())
+                .separated_by(just(Token::Comma))
+                .at_least(1)
+                .map(|types| Type::Class(types))
+                .or(type_
+                    .clone()
+                    .separated_by(just(Token::Comma))
+                    .at_least(1)
+                    .map(|types| Type::Trait(types))),
+        );
         let alias = just(Token::A).ignore_then(filter_map(|span, token| match token {
             Token::Ident(ident) => Ok(Type::Alias(ident)),
             _ => Err(Simple::custom(span, "Expected identifier")),
@@ -60,9 +64,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                     ty: Box::new(ty),
                     handlers: handlers
                         .into_iter()
-                        .map(|handler| Type::Handler {
-                            input: Box::new(handler.0),
-                            output: Box::new(handler.1),
+                        .map(|handler| Handler {
+                            input: handler.0,
+                            output: handler.1,
                         })
                         .collect(),
                 }
@@ -105,7 +109,7 @@ mod tests {
 
     #[test]
     fn parse_trait() {
-        let trait_ = parse("% 'number, ?").unwrap().0;
+        let trait_ = dbg!(parse("% 'number, ?").unwrap().0);
 
         if let Type::Trait(trait_) = trait_ {
             assert_eq!(trait_.len(), 2);
@@ -117,16 +121,16 @@ mod tests {
     }
 
     #[test]
-    fn parse_handler_in_trait() {
+    fn parse_handler_in_class() {
         let trait_ = parse("% 'number => ?").unwrap().0;
 
-        if let Type::Trait(trait_) = trait_ {
-            assert_eq!(trait_.len(), 1);
+        if let Type::Class(class) = trait_ {
+            assert_eq!(class.len(), 1);
             assert_matches!(
-                trait_[0].0,
-                Type::Handler {
-                    input: box (Type::Number, _),
-                    output: box (Type::Hole, _),
+                class[0],
+                Handler {
+                    input: (Type::Number, _),
+                    output: (Type::Hole, _),
                 }
             );
         } else {
@@ -157,13 +161,13 @@ mod tests {
                 class: Box::new((Type::Alias("class".into()), 2..10)),
                 ty: Box::new((Type::Number, 11..18)),
                 handlers: vec![
-                    Type::Handler {
-                        input: Box::new((Type::Alias("num_to_num".into()), 21..34)),
-                        output: Box::new((Type::Hole, 38..39)),
+                    Handler {
+                        input: (Type::Alias("num_to_num".into()), 21..34),
+                        output: (Type::Hole, 38..39),
                     },
-                    Type::Handler {
-                        input: Box::new((Type::Alias("str_to_str".into()), 41..54)),
-                        output: Box::new((Type::Infer, 58..59)),
+                    Handler {
+                        input: (Type::Alias("str_to_str".into()), 41..54),
+                        output: (Type::Infer, 58..59),
                     },
                 ],
             }
