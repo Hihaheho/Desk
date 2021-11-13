@@ -239,7 +239,7 @@ mod tests {
     fn ident_utf8() {
         assert_eq!(
             lexer().parse("あ-　a0").unwrap(),
-            vec![(Token::Ident("あ- a0".into()), 0..3)]
+            vec![(Token::Ident("あ- a0".into()), 0..5)]
         );
     }
 }

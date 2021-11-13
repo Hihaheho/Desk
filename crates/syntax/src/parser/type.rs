@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 
 use crate::{lexer::Token, span::Spanned};
 
-use super::common::parse_effectful;
+use super::common::{parse_effectful, parse_op, ParserExt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
@@ -25,6 +25,8 @@ pub enum Type {
     Hole,
     Infer,
     Alias(String),
+    Product(Vec<Spanned<Self>>),
+    Sum(Vec<Spanned<Self>>),
 }
 
 pub fn effect_parser(
@@ -41,17 +43,20 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
     recursive(|type_| {
         let hole = just(Token::Hole).to(Type::Hole);
         let number = just(Token::NumberType).to(Type::Number);
-        let trait_ = just(Token::Trait).ignore_then(
-            effect_parser(type_.clone())
-                .separated_by(just(Token::Comma))
-                .at_least(1)
-                .map(|types| Type::Class(types))
-                .or(type_
-                    .clone()
+        let string = just(Token::StringType).to(Type::String);
+        let trait_ = just(Token::Trait)
+            .ignore_then(
+                effect_parser(type_.clone())
                     .separated_by(just(Token::Comma))
                     .at_least(1)
-                    .map(|types| Type::Trait(types))),
-        );
+                    .map(|types| Type::Class(types))
+                    .or(type_
+                        .clone()
+                        .separated_by(just(Token::Comma))
+                        .at_least(1)
+                        .map(|types| Type::Trait(types))),
+            )
+            .dot();
         let alias = just(Token::A).ignore_then(filter_map(|span, token| match token {
             Token::Ident(ident) => Ok(Type::Alias(ident)),
             _ => Err(Simple::custom(span, "Expected identifier")),
@@ -71,12 +76,18 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                         .collect(),
                 }
             });
+        let product =
+            parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
+        let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
+
         hole.or(number)
+		.or(string)
             .or(trait_)
             .or(alias)
             .or(infer)
             .or(effectful)
-            .then_ignore(just(Token::Dot).or_not())
+            .or(product)
+            .or(sum)
             .map_with_span(|t, span| (t, span))
     })
 }
@@ -91,7 +102,13 @@ mod tests {
     use super::*;
 
     fn parse(input: &str) -> Result<Spanned<Type>, Vec<Simple<Token>>> {
-        parser().parse(Stream::from_iter(
+        dbg!(parser()
+            .then_ignore(end())
+            .parse_recovery_verbose(Stream::from_iter(
+                input.len()..input.len() + 1,
+                dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
+            )));
+        parser().then_ignore(end()).parse(Stream::from_iter(
             input.len()..input.len() + 1,
             dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
         ))
@@ -103,13 +120,8 @@ mod tests {
     }
 
     #[test]
-    fn ignore_dot() {
-        assert_eq!(parse("'number.").unwrap().0, Type::Number);
-    }
-
-    #[test]
     fn parse_trait() {
-        let trait_ = dbg!(parse("% 'number, ?").unwrap().0);
+        let trait_ = dbg!(parse("% 'number, ?.").unwrap().0);
 
         if let Type::Trait(trait_) = trait_ {
             assert_eq!(trait_.len(), 2);
@@ -122,7 +134,7 @@ mod tests {
 
     #[test]
     fn parse_handler_in_class() {
-        let trait_ = parse("% 'number => ?").unwrap().0;
+        let trait_ = parse("% 'number => ?.").unwrap().0;
 
         if let Type::Class(class) = trait_ {
             assert_eq!(class.len(), 1);
@@ -171,6 +183,20 @@ mod tests {
                     },
                 ],
             }
+        );
+    }
+
+    #[test]
+    fn parse_product_and_sum() {
+        assert_eq!(
+            parse("* + 'number, ?., *.").unwrap().0,
+            Type::Product(vec![
+                (
+                    Type::Sum(vec![(Type::Number, 4..11), (Type::Hole, 13..14)]),
+                    2..15
+                ),
+                (Type::Product(vec![]), 17..19)
+            ])
         );
     }
 }

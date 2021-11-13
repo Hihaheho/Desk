@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{lexer::Token, span::Spanned};
 
 use super::{
-    common::parse_effectful,
+    common::{parse_effectful, parse_op, ParserExt},
     r#type::{self, Type},
 };
 
@@ -42,9 +42,7 @@ pub enum Expr {
         uuid: Option<Uuid>,
         arguments: Vec<Spanned<Self>>,
     },
-    Product {
-        values: Vec<Spanned<Self>>,
-    },
+    Product(Vec<Spanned<Self>>),
     Typed {
         ty: Spanned<Type>,
         expr: Box<Spanned<Self>>,
@@ -135,9 +133,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                         if let Token::Ident(uuid) = token {
                             Ok(uuid.parse().map_err(|e| {
                                 dbg!(Simple::custom(
-																	span,
-																	format!("failed to parse uuid: {}, {}", uuid, e),
-																))
+                                    span,
+                                    format!("failed to parse uuid: {}, {}", uuid, e),
+                                ))
                             })?)
                         } else {
                             Err(Simple::custom(span, "expected uuid"))
@@ -150,13 +148,15 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 function,
                 uuid,
                 arguments,
-            });
+            })
+            .dot();
+        let product = parse_op(just(Token::Product), expr).map(|values| Expr::Product(values));
         hole.or(literal)
             .or(let_)
             .or(perform)
             .or(effectful)
             .or(call)
-            .then_ignore(just(Token::Dot).or_not())
+            .or(product)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn parse_call() {
         assert_eq!(
-            parse("<'a add> 1, 2").unwrap().0,
+            parse("<'a add> 1, 2.").unwrap().0,
             Expr::Call {
                 function: (Type::Alias("add".into()), 1..7),
                 uuid: None,
@@ -290,6 +290,17 @@ mod tests {
                     (Expr::Literal(Literal::Int(2)), 55..56)
                 ],
             }
+        );
+    }
+
+    #[test]
+    fn parse_product() {
+        assert_eq!(
+            parse("* 1, ?").unwrap().0,
+            Expr::Product(vec![
+                (Expr::Literal(Literal::Int(1)), 2..3),
+                (Expr::Hole, 5..6),
+            ])
         );
     }
 }
