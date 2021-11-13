@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use chumsky::prelude::*;
 
 use crate::{lexer::Token, span::Spanned};
@@ -26,6 +24,10 @@ pub enum Type {
         class: Box<Spanned<Self>>,
         ty: Box<Spanned<Self>>,
         handlers: Vec<Handler>,
+    },
+    Effect {
+        class: Box<Spanned<Self>>,
+        handler: Box<Handler>,
     },
     Hole,
     Infer,
@@ -145,6 +147,14 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                 }
             }
         });
+        let effect = just(Token::Perform)
+            .ignore_then(type_.clone())
+			.in_()
+            .then(effect_parser(type_.clone()))
+            .map(|(class, handler)| Type::Effect {
+				class: Box::new(class),
+				handler: Box::new(handler),
+			});
 
         hole.or(infer)
             .or(this)
@@ -153,6 +163,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(trait_)
             .or(alias)
             .or(effectful)
+			.or(effect)
             .or(product)
             .or(sum)
             .or(array)
@@ -345,6 +356,20 @@ mod tests {
                     2..13
                 )),
                 body: Box::new((Type::Hole, 16..17)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_effect() {
+        assert_eq!(
+            parse("! 'a trait ~ 'number => ?").unwrap().0,
+            Type::Effect {
+                class: Box::new((Type::Alias("trait".into()), 2..10)),
+                handler: Box::new(Handler {
+                    input: (Type::Number, 13..20),
+                    output: (Type::Hole, 24..25),
+                })
             }
         );
     }

@@ -139,7 +139,7 @@ pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
 
 pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
     "a".contains("a");
-    none_of(r#"/$<>!#*^?\[]{}-=;:~,.()'"#.chars())
+    none_of(r#"@/$<>!#*^?\[]{}_-=;:~,.()'"#.chars())
         .try_map(|c, span| {
             if c.is_whitespace() || c.is_numeric() {
                 Err(Simple::custom(span, "invalid character"))
@@ -149,8 +149,8 @@ pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
         })
         .map(Some)
         .chain::<char, _, _>(
-            // Does not have hyphen.
-            none_of(r#"/$<>!#*^?\[]{}=;:~,.()'"#.chars())
+            // Does not have @, underscore, hyphen, and single quote.
+            none_of(r#"/$<>!#*^?\[]{}=;:~,.()"#.chars())
                 .try_map(|c, span| {
                     if c.is_whitespace() {
                         Err(Simple::custom(span, "invalid character"))
