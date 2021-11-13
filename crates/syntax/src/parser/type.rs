@@ -1,8 +1,13 @@
+use std::ops::Range;
+
 use chumsky::prelude::*;
 
 use crate::{lexer::Token, span::Spanned};
 
-use super::common::{parse_collection, parse_effectful, parse_function, parse_op, ParserExt};
+use super::common::{
+    concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
+    parse_typed, ParserExt,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
@@ -34,6 +39,15 @@ pub enum Type {
     },
     Array(Vec<Spanned<Self>>),
     Set(Vec<Spanned<Self>>),
+    Bound {
+        bound: Box<Spanned<Self>>,
+        item: Box<Spanned<Self>>,
+    },
+    Let {
+        definition: Box<Spanned<Self>>,
+        body: Box<Spanned<Self>>,
+    },
+    Identifier(String),
 }
 
 pub fn effect_parser(
@@ -100,6 +114,37 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
+        let bound = parse_typed(type_.clone(), type_.clone()).map(|(item, bound)| Type::Bound {
+            item: Box::new(item),
+            bound: Box::new(bound),
+        });
+        let identifier = filter_map(|span, token| {
+            if let Token::Ident(ident) = token {
+                Ok(Type::Identifier(ident))
+            } else {
+                Err(Simple::custom(span, "Expected identifier"))
+            }
+        });
+        let let_in = parse_let_in(type_.clone(), type_.clone()).map(|(definition, ty, body)| {
+            if let Some(ty) = ty {
+                let span = concat_range(&definition.1, &ty.1);
+                Type::Let {
+                    definition: Box::new((
+                        Type::Bound {
+                            item: Box::new(definition),
+                            bound: Box::new(ty),
+                        },
+                        span,
+                    )),
+                    body: Box::new(body),
+                }
+            } else {
+                Type::Let {
+                    definition: Box::new(definition),
+                    body: Box::new(body),
+                }
+            }
+        });
 
         hole.or(infer)
             .or(this)
@@ -113,6 +158,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(array)
             .or(set)
             .or(function)
+            .or(bound)
+            .or(let_in)
+            .or(identifier)
             .map_with_span(|t, span| (t, span))
     })
 }
@@ -193,20 +241,20 @@ mod tests {
     #[test]
     fn parse_effectful() {
         assert_eq!(
-            parse("# 'a class 'number ; 'a num_to_num => ?, 'a str_to_str => _")
+            parse("# 'a class ~ 'number ; 'a num_to_num => ?, 'a str_to_str => _")
                 .unwrap()
                 .0,
             Type::Effectful {
                 class: Box::new((Type::Alias("class".into()), 2..10)),
-                ty: Box::new((Type::Number, 11..18)),
+                ty: Box::new((Type::Number, 13..20)),
                 handlers: vec![
                     Handler {
-                        input: (Type::Alias("num_to_num".into()), 21..34),
-                        output: (Type::Hole, 38..39),
+                        input: (Type::Alias("num_to_num".into()), 23..36),
+                        output: (Type::Hole, 40..41),
                     },
                     Handler {
-                        input: (Type::Alias("str_to_str".into()), 41..54),
-                        output: (Type::Infer, 58..59),
+                        input: (Type::Alias("str_to_str".into()), 43..56),
+                        output: (Type::Infer, 60..61),
                     },
                 ],
             }
@@ -238,27 +286,66 @@ mod tests {
         );
     }
 
-	#[test]
-	fn parse_array() {
-		assert_eq!(
-			parse("[?, ?, 'number]").unwrap().0,
-			Type::Array(vec![
-				(Type::Hole, 1..2),
-				(Type::Hole, 4..5),
-				(Type::Number, 7..14),
-			])
-		);
-	}
+    #[test]
+    fn parse_array() {
+        assert_eq!(
+            parse("[?, ?, 'number]").unwrap().0,
+            Type::Array(vec![
+                (Type::Hole, 1..2),
+                (Type::Hole, 4..5),
+                (Type::Number, 7..14),
+            ])
+        );
+    }
 
-	#[test]
-	fn parse_set() {
-		assert_eq!(
-			parse("{?, ?, 'number}").unwrap().0,
-			Type::Set(vec![
-				(Type::Hole, 1..2),
-				(Type::Hole, 4..5),
-				(Type::Number, 7..14),
-			])
-		);
-	}
+    #[test]
+    fn parse_set() {
+        assert_eq!(
+            parse("{?, ?, 'number}").unwrap().0,
+            Type::Set(vec![
+                (Type::Hole, 1..2),
+                (Type::Hole, 4..5),
+                (Type::Number, 7..14),
+            ])
+        );
+    }
+
+    #[test]
+    fn parse_trait_bound() {
+        assert_eq!(
+            parse("^?: 'a bound").unwrap().0,
+            Type::Bound {
+                item: Box::new((Type::Hole, 1..2)),
+                bound: Box::new((Type::Alias("bound".into()), 4..12)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_let_in() {
+        assert_eq!(
+            parse("$ x ~ ?").unwrap().0,
+            Type::Let {
+                definition: Box::new((Type::Identifier("x".into()), 2..3)),
+                body: Box::new((Type::Hole, 6..7)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_let_in_with_bound() {
+        assert_eq!(
+            parse("$ x: 'a trait ~ ?").unwrap().0,
+            Type::Let {
+                definition: Box::new((
+                    Type::Bound {
+                        item: Box::new((Type::Identifier("x".into()), 2..3)),
+                        bound: Box::new((Type::Alias("trait".into()), 5..13)),
+                    },
+                    2..13
+                )),
+                body: Box::new((Type::Hole, 16..17)),
+            }
+        );
+    }
 }

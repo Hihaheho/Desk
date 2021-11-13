@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use chumsky::{
     combinator::{Map, OrNot, Then},
     prelude::*,
@@ -7,6 +9,18 @@ use chumsky::{
 
 use crate::{lexer::Token, span::Spanned};
 
+pub(crate) fn parse_let_in<I, T>(
+    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
+    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Spanned<I>, Option<Spanned<T>>, Spanned<I>), Error = Simple<Token>> {
+    just(Token::Let)
+        .ignore_then(item.clone())
+        .then(just(Token::TypeAnnotation).ignore_then(ty.clone()).or_not())
+        .in_()
+        .then(item.clone())
+        .map(|((definition, type_), body)| (definition, type_, body))
+}
+
 pub(crate) fn parse_effectful<I, T>(
     item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
     ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
@@ -14,6 +28,7 @@ pub(crate) fn parse_effectful<I, T>(
        + Clone {
     just(Token::Effectful)
         .ignore_then(ty.clone())
+        .in_()
         .then(item.clone())
         .then_ignore(just(Token::WithHandler))
         .then(
@@ -53,11 +68,51 @@ pub(crate) fn parse_collection<T>(
         .delimited_by(begin, end)
 }
 
+pub(crate) fn parse_uuid() -> impl Parser<Token, uuid::Uuid, Error = Simple<Token>> + Clone {
+    just(Token::Uuid).ignore_then(filter_map(|span, token| {
+        if let Token::Ident(uuid) = token {
+            Ok(uuid.parse().map_err(|e| {
+                dbg!(Simple::custom(
+                    span,
+                    format!("failed to parse uuid: {}, {}", uuid, e),
+                ))
+            })?)
+        } else {
+            Err(Simple::custom(span, "expected uuid"))
+        }
+    }))
+}
+
+pub(crate) fn parse_typed<I, T>(
+    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
+    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
+    just(Token::FromHere)
+        .ignore_then(item)
+        .then_ignore(just(Token::TypeAnnotation))
+        .then(ty)
+}
+
+pub(crate) fn concat_range<T: Clone + Ord>(a: &Range<T>, b: &Range<T>) -> Range<T> {
+    Range {
+        start: a.start(),
+        end: b.end(),
+    }
+}
+
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,
 {
     fn dot(
+        self,
+    ) -> Map<
+        Then<Self, OrNot<Just<Token, Self::Error>>>,
+        fn((O, Option<Token>)) -> O,
+        (O, Option<Token>),
+    >;
+
+    fn in_(
         self,
     ) -> Map<
         Then<Self, OrNot<Just<Token, Self::Error>>>,
@@ -78,5 +133,18 @@ impl<T: Parser<Token, O, Error = E>, O, E: Error<Token>> ParserExt<O> for T {
         Self: Sized,
     {
         self.then_ignore(just(Token::Dot).or_not())
+    }
+
+    fn in_(
+        self,
+    ) -> Map<
+        Then<Self, OrNot<Just<Token, Self::Error>>>,
+        fn((O, Option<Token>)) -> O,
+        (O, Option<Token>),
+    >
+    where
+        Self: Sized,
+    {
+        self.then_ignore(just(Token::In).or_not())
     }
 }
