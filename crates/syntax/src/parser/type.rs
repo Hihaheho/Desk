@@ -24,6 +24,7 @@ pub enum Type {
     },
     Hole,
     Infer,
+    This,
     Alias(String),
     Product(Vec<Spanned<Self>>),
     Sum(Vec<Spanned<Self>>),
@@ -42,6 +43,8 @@ pub fn effect_parser(
 pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
     recursive(|type_| {
         let hole = just(Token::Hole).to(Type::Hole);
+        let infer = just(Token::Infer).to(Type::Infer);
+        let this = just(Token::This).to(Type::This);
         let number = just(Token::NumberType).to(Type::Number);
         let string = just(Token::StringType).to(Type::String);
         let trait_ = just(Token::Trait)
@@ -61,7 +64,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             Token::Ident(ident) => Ok(Type::Alias(ident)),
             _ => Err(Simple::custom(span, "Expected identifier")),
         }));
-        let infer = just(Token::Infer).to(Type::Infer);
         let effectful =
             parse_effectful(type_.clone(), type_.clone()).map(|(class, ty, handlers)| {
                 Type::Effectful {
@@ -80,11 +82,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
         let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
 
-        hole.or(number)
-		.or(string)
+        hole.or(infer)
+            .or(this)
+            .or(number)
+            .or(string)
             .or(trait_)
             .or(alias)
-            .or(infer)
             .or(effectful)
             .or(product)
             .or(sum)
@@ -159,8 +162,10 @@ mod tests {
     }
 
     #[test]
-    fn parse_infer_token() {
+    fn parse_single_token() {
         assert_eq!(parse("_").unwrap().0, Type::Infer);
+        assert_eq!(parse("?").unwrap().0, Type::Hole);
+        assert_eq!(parse("&").unwrap().0, Type::This);
     }
 
     #[test]
