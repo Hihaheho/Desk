@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 
 use crate::{lexer::Token, span::Spanned};
 
-use super::common::{parse_effectful, parse_op, ParserExt};
+use super::common::{parse_effectful, parse_function, parse_op, ParserExt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
@@ -28,6 +28,10 @@ pub enum Type {
     Alias(String),
     Product(Vec<Spanned<Self>>),
     Sum(Vec<Spanned<Self>>),
+    Function {
+        parameters: Vec<Spanned<Self>>,
+        body: Box<Spanned<Self>>,
+    },
 }
 
 pub fn effect_parser(
@@ -81,6 +85,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
         let product =
             parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
         let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
+        let function = parse_function(just(Token::Lambda), type_.clone(), just(Token::Arrow), type_.clone()).map(
+            |(parameters, body)| Type::Function {
+                parameters,
+                body: Box::new(body),
+            },
+        );
 
         hole.or(infer)
             .or(this)
@@ -91,6 +101,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(effectful)
             .or(product)
             .or(sum)
+			.or(function)
             .map_with_span(|t, span| (t, span))
     })
 }
@@ -202,6 +213,17 @@ mod tests {
                 ),
                 (Type::Product(vec![]), 17..19)
             ])
+        );
+    }
+
+    #[test]
+    fn parse_function() {
+        assert_eq!(
+            parse(r#"\ 'number, 'number -> ?"#).unwrap().0,
+            Type::Function {
+                parameters: vec![(Type::Number, 2..9), (Type::Number, 11..18)],
+                body: Box::new((Type::Hole, 22..23)),
+            }
         );
     }
 }

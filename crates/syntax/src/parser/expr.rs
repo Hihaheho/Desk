@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{lexer::Token, span::Spanned};
 
 use super::{
-    common::{parse_effectful, parse_op, ParserExt},
+    common::{parse_effectful, parse_function, parse_op, ParserExt},
     r#type::{self, Type},
 };
 
@@ -50,7 +50,7 @@ pub enum Expr {
     Hole,
     Function {
         parameters: Vec<Spanned<Type>>,
-        expression: Box<Spanned<Self>>,
+        body: Box<Spanned<Self>>,
     },
     Array(Vec<Spanned<Self>>),
     Set(Vec<Spanned<Self>>),
@@ -150,13 +150,20 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 arguments,
             })
             .dot();
-        let product = parse_op(just(Token::Product), expr).map(|values| Expr::Product(values));
+        let product =
+            parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
+        let function = parse_function(just(Token::Lambda), type_, just(Token::Arrow), expr.clone())
+            .map(|(parameters, body)| Expr::Function {
+                parameters,
+                body: Box::new(body),
+            });
         hole.or(literal)
             .or(let_)
             .or(perform)
             .or(effectful)
             .or(call)
             .or(product)
+            .or(function)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -301,6 +308,17 @@ mod tests {
                 (Expr::Literal(Literal::Int(1)), 2..3),
                 (Expr::Hole, 5..6),
             ])
+        );
+    }
+
+    #[test]
+    fn parse_function() {
+        assert_eq!(
+            parse(r#"\ <'number>, <'number> -> ?"#).unwrap().0,
+            Expr::Function {
+                parameters: vec![(Type::Number, 3..10), (Type::Number, 14..21)],
+                body: Box::new((Expr::Hole, 26..27)),
+            }
         );
     }
 }

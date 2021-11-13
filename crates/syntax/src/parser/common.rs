@@ -33,6 +33,17 @@ pub(crate) fn parse_op<U, O>(
     op.ignore_then(item.separated_by(just(Token::Comma))).dot()
 }
 
+pub(crate) fn parse_function<A, O, U>(
+    op: impl Parser<Token, U, Error = Simple<Token>> + Clone,
+    args: impl Parser<Token, Spanned<A>, Error = Simple<Token>> + Clone,
+    arrow: impl Parser<Token, U, Error = Simple<Token>> + Clone,
+    output: impl Parser<Token, Spanned<O>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Vec<Spanned<A>>, Spanned<O>), Error = Simple<Token>> + Clone {
+    op.ignore_then(args.separated_by(just(Token::Comma)))
+        .then_ignore(arrow)
+        .then(output.clone())
+}
+
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,
