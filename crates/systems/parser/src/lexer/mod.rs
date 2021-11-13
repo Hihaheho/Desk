@@ -1,6 +1,6 @@
-use chumsky::prelude::*;
+use std::ops::Range;
 
-use crate::span::Spanned;
+use chumsky::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Token {
@@ -50,7 +50,7 @@ pub enum Token {
     A,
 }
 
-pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
+pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<char>> {
     let comment = recursive(|comment| {
         none_of("()".chars())
             .repeated()

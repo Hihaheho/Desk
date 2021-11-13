@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use ast::span::Spanned;
 use chumsky::{
     combinator::{Map, OrNot, Then},
     prelude::*,
@@ -7,7 +8,7 @@ use chumsky::{
     Error,
 };
 
-use crate::{lexer::Token, span::Spanned};
+use crate::lexer::Token;
 
 pub(crate) fn parse_let_in<I, T>(
     item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,

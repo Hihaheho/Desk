@@ -1,71 +1,15 @@
-use chumsky::prelude::*;
-use uuid::Uuid;
-
-use crate::{lexer::Token, span::Spanned};
-
-use super::{
-    common::{
-        concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
-        parse_typed, ParserExt,
-    },
-    r#type::{self, Type},
+use ast::{
+    expr::{Expr, Handler, Literal},
+    span::Spanned,
 };
+use chumsky::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Literal {
-    String(String),
-    Int(i64),
-    Rational(i64, i64),
-    Float(f64),
-}
+use crate::lexer::Token;
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Handler {
-    pub ty: Spanned<Type>,
-    pub expr: Spanned<Expr>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Expr {
-    Literal(Literal),
-    Let {
-        definition: Box<Spanned<Self>>,
-        expression: Box<Spanned<Self>>,
-    },
-    Perform {
-        effect: Box<Spanned<Self>>,
-    },
-    Effectful {
-        class: Spanned<Type>,
-        expr: Box<Spanned<Self>>,
-        handlers: Vec<Handler>,
-    },
-    Call {
-        function: Spanned<Type>,
-        arguments: Vec<Spanned<Self>>,
-    },
-    Product(Vec<Spanned<Self>>),
-    Typed {
-        ty: Spanned<Type>,
-        expr: Box<Spanned<Self>>,
-    },
-    Hole,
-    Function {
-        parameters: Vec<Spanned<Type>>,
-        body: Box<Spanned<Self>>,
-    },
-    Array(Vec<Spanned<Self>>),
-    Set(Vec<Spanned<Self>>),
-    Module(Box<Spanned<Self>>),
-    Import {
-        ty: Spanned<Type>,
-        uuid: Option<Uuid>,
-    },
-    Export {
-        ty: Spanned<Type>,
-        uuid: Option<Uuid>,
-    },
-}
+use super::common::{
+    concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
+    parse_typed, ParserExt,
+};
 
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
     recursive(|expr| {
@@ -84,7 +28,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
                 _ => Err(Simple::custom(span, "expected string literal")),
             }));
-        let type_ = r#type::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
+        let type_ = super::r#type::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in =
             parse_let_in(expr.clone(), type_.clone()).map(|(definition, type_, expression)| {
                 Expr::Let {
@@ -165,6 +109,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 
 #[cfg(test)]
 mod tests {
+    use ast::r#type::Type;
     use matches::assert_matches;
 
     use chumsky::Stream;

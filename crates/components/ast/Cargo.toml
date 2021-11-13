@@ -1,14 +1,9 @@
 [package]
-name = "deskc-syntax"
+name = "deskc-ast"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ariadne = "0.1.3"
-chumsky = { git = "https://github.com/ryo33/chumsky" }
 uuid = "0.8.2"
-
-[dev-dependencies]
-matches = "0.1.9"

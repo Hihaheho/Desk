@@ -1,56 +1,15 @@
+use ast::{
+    r#type::{Handler, Type},
+    span::Spanned,
+};
 use chumsky::prelude::*;
 
-use crate::{lexer::Token, span::Spanned};
+use crate::lexer::Token;
 
 use super::common::{
     concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
     parse_typed, ParserExt,
 };
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Handler {
-    input: Spanned<Type>,
-    output: Spanned<Type>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Type {
-    Number,
-    String,
-    Trait(Vec<Spanned<Self>>),
-    // Handlers do not need to be spanned because it has not leading token.
-    Class(Vec<Handler>),
-    Effectful {
-        class: Box<Spanned<Self>>,
-        ty: Box<Spanned<Self>>,
-        handlers: Vec<Handler>,
-    },
-    Effect {
-        class: Box<Spanned<Self>>,
-        handler: Box<Handler>,
-    },
-    Hole,
-    Infer,
-    This,
-    Alias(String),
-    Product(Vec<Spanned<Self>>),
-    Sum(Vec<Spanned<Self>>),
-    Function {
-        parameters: Vec<Spanned<Self>>,
-        body: Box<Spanned<Self>>,
-    },
-    Array(Vec<Spanned<Self>>),
-    Set(Vec<Spanned<Self>>),
-    Bound {
-        bound: Box<Spanned<Self>>,
-        item: Box<Spanned<Self>>,
-    },
-    Let {
-        definition: Box<Spanned<Self>>,
-        body: Box<Spanned<Self>>,
-    },
-    Identifier(String),
-}
 
 pub fn effect_parser(
     parser: impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone,
@@ -149,12 +108,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
         });
         let effect = just(Token::Perform)
             .ignore_then(type_.clone())
-			.in_()
+            .in_()
             .then(effect_parser(type_.clone()))
             .map(|(class, handler)| Type::Effect {
-				class: Box::new(class),
-				handler: Box::new(handler),
-			});
+                class: Box::new(class),
+                handler: Box::new(handler),
+            });
 
         hole.or(infer)
             .or(this)
@@ -163,7 +122,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(trait_)
             .or(alias)
             .or(effectful)
-			.or(effect)
+            .or(effect)
             .or(product)
             .or(sum)
             .or(array)

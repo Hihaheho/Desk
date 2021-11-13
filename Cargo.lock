@@ -29,7 +29,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "chumsky"
 version = "0.5.0"
-source = "git+https://github.com/ryo33/chumsky#412c041530efa011d02f3aa190460deaf115122d"
+source = "git+https://github.com/ryo33/chumsky#67e2db03308b0df4260561c121e09032fa9fe255"
 dependencies = [
  "ahash",
 ]
@@ -67,7 +67,18 @@ name = "deskc"
 version = "0.1.0"
 
 [[package]]
+name = "deskc-ast"
+version = "0.1.0"
+dependencies = [
+ "uuid",
+]
+
+[[package]]
 name = "deskc-fmt"
+version = "0.1.0"
+
+[[package]]
+name = "deskc-hir"
 version = "0.1.0"
 
 [[package]]
@@ -75,11 +86,16 @@ name = "deskc-language-server"
 version = "0.1.0"
 
 [[package]]
-name = "deskc-syntax"
+name = "deskc-mir"
+version = "0.1.0"
+
+[[package]]
+name = "deskc-parser"
 version = "0.1.0"
 dependencies = [
  "ariadne",
  "chumsky",
+ "deskc-ast",
  "matches",
  "uuid",
 ]
