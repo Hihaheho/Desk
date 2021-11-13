@@ -3,10 +3,7 @@ use uuid::Uuid;
 
 use crate::{lexer::Token, span::Spanned};
 
-use super::{
-    common::{parse_effectful, parse_function, parse_op, ParserExt},
-    r#type::{self, Type},
-};
+use super::{common::{ParserExt, parse_collection, parse_effectful, parse_function, parse_op}, r#type::{self, Type}};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -157,6 +154,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 parameters,
                 body: Box::new(body),
             });
+		let array = parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Array);
+		let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
         hole.or(literal)
             .or(let_)
             .or(perform)
@@ -164,6 +163,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(call)
             .or(product)
             .or(function)
+            .or(array)
+            .or(set)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -321,4 +322,28 @@ mod tests {
             }
         );
     }
+
+	#[test]
+	fn parse_array() {
+		assert_eq!(
+			parse("[1, ?, ?]").unwrap().0,
+			Expr::Array(vec![
+				(Expr::Literal(Literal::Int(1)), 1..2),
+				(Expr::Hole, 4..5),
+				(Expr::Hole, 7..8),
+			])
+		);
+	}
+
+	#[test]
+	fn parse_set() {
+		assert_eq!(
+			parse("{1, ?, ?}").unwrap().0,
+			Expr::Set(vec![
+				(Expr::Literal(Literal::Int(1)), 1..2),
+				(Expr::Hole, 4..5),
+				(Expr::Hole, 7..8),
+			])
+		);
+	}
 }

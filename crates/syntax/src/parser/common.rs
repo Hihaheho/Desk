@@ -44,6 +44,15 @@ pub(crate) fn parse_function<A, O, U>(
         .then(output.clone())
 }
 
+pub(crate) fn parse_collection<T>(
+    begin: Token,
+    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+    end: Token,
+) -> impl Parser<Token, Vec<Spanned<T>>, Error = Simple<Token>> + Clone {
+    item.separated_by(just(Token::Comma))
+        .delimited_by(begin, end)
+}
+
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,
