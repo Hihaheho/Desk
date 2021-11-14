@@ -1,3 +1,3 @@
 pub mod expr;
-pub mod r#type;
+pub mod ty;
 pub mod common;

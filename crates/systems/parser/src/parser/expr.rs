@@ -28,7 +28,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
                 _ => Err(Simple::custom(span, "expected string literal")),
             }));
-        let type_ = super::r#type::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
+        let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in =
             parse_let_in(expr.clone(), type_.clone()).map(|(definition, type_, expression)| {
                 Expr::Let {
@@ -76,16 +76,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .dot();
         let product =
             parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
-        let function = parse_function(
-            just(Token::Lambda),
-            type_.clone(),
-            just(Token::Arrow),
-            expr.clone(),
-        )
-        .map(|(parameters, body)| Expr::Function {
-            parameters,
-            body: Box::new(body),
-        });
+        let function = just(Token::Lambda)
+            .ignore_then(expr.clone())
+            .map(|expr| Expr::Function(Box::new(expr)));
         let array =
             parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Array);
         let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
@@ -109,7 +102,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 
 #[cfg(test)]
 mod tests {
-    use ast::r#type::Type;
+    use ast::ty::Type;
     use matches::assert_matches;
 
     use chumsky::Stream;
@@ -236,11 +229,8 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ <'number>, <'number> -> ?"#).unwrap().0,
-            Expr::Function {
-                parameters: vec![(Type::Number, 3..10), (Type::Number, 14..21)],
-                body: Box::new((Expr::Hole, 26..27)),
-            }
+            parse(r#"\ ?"#).unwrap().0,
+            Expr::Function(Box::new((Expr::Hole, 2..3))),
         );
     }
 

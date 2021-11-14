@@ -32,8 +32,8 @@ pub enum Type {
         parameters: Vec<Spanned<Self>>,
         body: Box<Spanned<Self>>,
     },
-    Array(Vec<Spanned<Self>>),
-    Set(Vec<Spanned<Self>>),
+    Array(Box<Spanned<Self>>),
+    Set(Box<Spanned<Self>>),
     Bound {
         bound: Box<Spanned<Self>>,
         item: Box<Spanned<Self>>,

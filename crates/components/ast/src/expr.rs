@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{r#type::Type, span::Spanned};
+use crate::{span::Spanned, ty::Type};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -41,10 +41,7 @@ pub enum Expr {
         expr: Box<Spanned<Self>>,
     },
     Hole,
-    Function {
-        parameters: Vec<Spanned<Type>>,
-        body: Box<Spanned<Self>>,
-    },
+    Function(Box<Spanned<Self>>),
     Array(Vec<Spanned<Self>>),
     Set(Vec<Spanned<Self>>),
     Module(Box<Spanned<Self>>),

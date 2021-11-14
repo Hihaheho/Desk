@@ -1,6 +1,6 @@
 use ast::{
-    r#type::{Handler, Type},
     span::Spanned,
+    ty::{Handler, Type},
 };
 use chumsky::prelude::*;
 
@@ -62,9 +62,16 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
         let product =
             parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
         let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
-        let array =
-            parse_collection(Token::ArrayBegin, type_.clone(), Token::ArrayEnd).map(Type::Array);
-        let set = parse_collection(Token::SetBegin, type_.clone(), Token::SetEnd).map(Type::Set);
+        let array = type_
+            .clone()
+            .delimited_by(Token::ArrayBegin, Token::ArrayEnd)
+            .map(Box::new)
+            .map(Type::Array);
+        let set = type_
+            .clone()
+            .delimited_by(Token::SetBegin, Token::SetEnd)
+            .map(Box::new)
+            .map(Type::Set);
         let function = parse_function(
             just(Token::Lambda),
             type_.clone(),
@@ -259,24 +266,16 @@ mod tests {
     #[test]
     fn parse_array() {
         assert_eq!(
-            parse("[?, ?, 'number]").unwrap().0,
-            Type::Array(vec![
-                (Type::Hole, 1..2),
-                (Type::Hole, 4..5),
-                (Type::Number, 7..14),
-            ])
+            parse("['number]").unwrap().0,
+            Type::Array(Box::new((Type::Number, 1..8)))
         );
     }
 
     #[test]
     fn parse_set() {
         assert_eq!(
-            parse("{?, ?, 'number}").unwrap().0,
-            Type::Set(vec![
-                (Type::Hole, 1..2),
-                (Type::Hole, 4..5),
-                (Type::Number, 7..14),
-            ])
+            parse("{'number}").unwrap().0,
+            Type::Set(Box::new((Type::Number, 1..8),))
         );
     }
 

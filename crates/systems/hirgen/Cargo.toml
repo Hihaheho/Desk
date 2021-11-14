@@ -1,0 +1,11 @@
+[package]
+name = "deskc-hirgen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ast = { path = "../../components/ast", version = "0.1.0", package = "deskc-ast" }
+hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
+thiserror = "1.0.30"
