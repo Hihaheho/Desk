@@ -3,12 +3,11 @@ use ast::{
     ty::{Handler, Type},
 };
 use chumsky::prelude::*;
-
-use crate::lexer::Token;
+use tokens::Token;
 
 use super::common::{
-    concat_range, parse_effectful, parse_function, parse_op, parse_typed,
-    parse_typed_without_from_here, ParserExt,
+    parse_effectful, parse_function, parse_op, parse_typed, parse_typed_without_from_here,
+    ParserExt,
 };
 
 pub fn effect_parser(
@@ -137,7 +136,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
 #[cfg(test)]
 mod tests {
     use chumsky::Stream;
-    use matches::assert_matches;
 
     use crate::lexer::lexer;
 
@@ -180,11 +178,11 @@ mod tests {
 
         if let Type::Class(class) = trait_ {
             assert_eq!(class.len(), 1);
-            assert_matches!(
+            assert_eq!(
                 class[0],
                 Handler {
-                    input: (Type::Number, _),
-                    output: (Type::Infer, _),
+                    input: (Type::Number, 2..9),
+                    output: (Type::Infer, 13..14),
                 }
             );
         } else {

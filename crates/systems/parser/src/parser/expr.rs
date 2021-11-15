@@ -3,11 +3,10 @@ use ast::{
     span::Spanned,
 };
 use chumsky::prelude::*;
-
-use crate::lexer::Token;
+use tokens::Token;
 
 use super::common::{
-    concat_range, parse_collection, parse_effectful, parse_function, parse_op, parse_typed,
+    parse_collection, parse_effectful, parse_function, parse_op, parse_typed,
     ParserExt,
 };
 
@@ -110,7 +109,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 #[cfg(test)]
 mod tests {
     use ast::ty::Type;
-    use matches::assert_matches;
 
     use chumsky::Stream;
 

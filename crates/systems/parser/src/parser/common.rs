@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use ast::span::Spanned;
 use chumsky::{
     combinator::{Map, OrNot, Then},
@@ -7,8 +5,7 @@ use chumsky::{
     primitive::Just,
     Error,
 };
-
-use crate::lexer::Token;
+use tokens::Token;
 
 pub(crate) fn parse_effectful<I, T>(
     item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
@@ -72,13 +69,6 @@ pub(crate) fn parse_typed_without_from_here<I, T>(
     ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
 ) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
     item.then_ignore(just(Token::TypeAnnotation)).then(ty)
-}
-
-pub(crate) fn concat_range<T: Clone + Ord>(a: &Range<T>, b: &Range<T>) -> Range<T> {
-    Range {
-        start: a.start(),
-        end: b.end(),
-    }
 }
 
 pub(crate) trait ParserExt<O>

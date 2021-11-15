@@ -1,55 +1,8 @@
 use std::ops::Range;
 
 use chumsky::prelude::*;
+use tokens::Token;
 use uuid::Uuid;
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Token {
-    Comment(String),
-    Ident(String),
-    Int(i64),
-    Str(String),
-    // TODO: Float(i64, i64),
-    Uuid(Uuid),
-    Divide,
-    Let,
-    In,
-    Perform,
-    WithHandler,
-    This,
-    FromHere,
-    TypeAnnotation,
-    Trait,
-    Effectful,
-    Sum,
-    Product,
-    Comma,
-    Dot,
-    CommentBegin,
-    CommentEnd,
-    TypeBegin,
-    TypeEnd,
-    ArrayBegin,
-    ArrayEnd,
-    SetBegin,
-    SetEnd,
-    Hole,
-    Infer,
-    Lambda,
-    Arrow,
-    EArrow,
-    Module,
-    Import,
-    Export,
-    Continue,
-    Private,
-    Type,
-    NumberType,
-    StringType,
-    Brand(String),
-    Alias,
-    A,
-}
 
 pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<char>> {
     let comment = recursive(|comment| {

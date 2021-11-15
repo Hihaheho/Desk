@@ -108,7 +108,14 @@ dependencies = [
  "ariadne",
  "chumsky",
  "deskc-ast",
- "matches",
+ "deskc-tokens",
+ "uuid",
+]
+
+[[package]]
+name = "deskc-tokens"
+version = "0.1.0"
+dependencies = [
  "uuid",
 ]
 
@@ -134,12 +141,6 @@ name = "libc"
 version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
-
-[[package]]
-name = "matches"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "proc-macro-hack"
