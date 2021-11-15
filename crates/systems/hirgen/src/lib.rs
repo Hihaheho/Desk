@@ -129,9 +129,11 @@ impl HirGen {
                 ast::expr::Literal::Uuid(value) => Literal::Uuid(value),
             })),
             ast::expr::Expr::Let {
+                ty: variable,
                 definition,
                 expression,
             } => self.with_meta(Expr::Let {
+                ty: self.gen_type(variable)?,
                 definition: Box::new(self.gen(*definition)?),
                 expression: Box::new(self.gen(*expression)?),
             }),

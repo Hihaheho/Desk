@@ -7,7 +7,7 @@ use chumsky::prelude::*;
 use crate::lexer::Token;
 
 use super::common::{
-    concat_range, parse_effectful, parse_function, parse_let_in, parse_op, parse_typed,
+    concat_range, parse_effectful, parse_function, parse_op, parse_typed,
     parse_typed_without_from_here, ParserExt,
 };
 
@@ -92,26 +92,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                 Err(Simple::custom(span, "Expected identifier"))
             }
         });
-        let let_in = parse_let_in(type_.clone(), type_.clone()).map(|(definition, ty, body)| {
-            if let Some(ty) = ty {
-                let span = concat_range(&definition.1, &ty.1);
-                Type::Let {
-                    definition: Box::new((
-                        Type::Bound {
-                            item: Box::new(definition),
-                            bound: Box::new(ty),
-                        },
-                        span,
-                    )),
-                    body: Box::new(body),
-                }
-            } else {
-                Type::Let {
-                    definition: Box::new(definition),
-                    body: Box::new(body),
-                }
-            }
-        });
         let effect = just(Token::Perform)
             .ignore_then(type_.clone())
             .in_()
@@ -135,7 +115,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(set)
             .or(function)
             .or(bound)
-            .or(let_in)
             .or(identifier)
             .map_with_span(|t, span| (t, span))
     });
@@ -310,34 +289,6 @@ mod tests {
             Type::Bound {
                 item: Box::new((Type::Infer, 0..1)),
                 bound: Box::new((Type::Alias("bound".into()), 3..11)),
-            }
-        );
-    }
-
-    #[test]
-    fn parse_let_in() {
-        assert_eq!(
-            parse("$ x ~ _").unwrap().0,
-            Type::Let {
-                definition: Box::new((Type::Identifier("x".into()), 2..3)),
-                body: Box::new((Type::Infer, 6..7)),
-            }
-        );
-    }
-
-    #[test]
-    fn parse_let_in_with_bound() {
-        assert_eq!(
-            parse("$ x: 'a trait ~ _").unwrap().0,
-            Type::Let {
-                definition: Box::new((
-                    Type::Bound {
-                        item: Box::new((Type::Identifier("x".into()), 2..3)),
-                        bound: Box::new((Type::Alias("trait".into()), 5..13)),
-                    },
-                    2..13
-                )),
-                body: Box::new((Type::Infer, 16..17)),
             }
         );
     }

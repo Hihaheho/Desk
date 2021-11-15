@@ -10,18 +10,6 @@ use chumsky::{
 
 use crate::lexer::Token;
 
-pub(crate) fn parse_let_in<I, T>(
-    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
-    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Spanned<I>, Option<Spanned<T>>, Spanned<I>), Error = Simple<Token>> {
-    just(Token::Let)
-        .ignore_then(item.clone())
-        .then(just(Token::TypeAnnotation).ignore_then(ty.clone()).or_not())
-        .in_()
-        .then(item.clone())
-        .map(|((definition, type_), body)| (definition, type_, body))
-}
-
 pub(crate) fn parse_effectful<I, T>(
     item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
     ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,

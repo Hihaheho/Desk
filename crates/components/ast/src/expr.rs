@@ -21,6 +21,7 @@ pub struct Handler {
 pub enum Expr {
     Literal(Literal),
     Let {
+        ty: Spanned<Type>,
         definition: Box<Spanned<Self>>,
         expression: Box<Spanned<Self>>,
     },

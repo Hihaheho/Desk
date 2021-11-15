@@ -7,8 +7,8 @@ use chumsky::prelude::*;
 use crate::lexer::Token;
 
 use super::common::{
-    concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
-    parse_typed, ParserExt,
+    concat_range, parse_collection, parse_effectful, parse_function, parse_op, parse_typed,
+    ParserExt,
 };
 
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
@@ -35,23 +35,15 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(string)
             .or(uuid);
         let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
-        let let_in =
-            parse_let_in(expr.clone(), type_.clone()).map(|(definition, type_, expression)| {
-                Expr::Let {
-                    definition: Box::new(if let Some(type_) = type_ {
-                        let span = concat_range(&definition.1, &type_.1);
-                        (
-                            Expr::Typed {
-                                ty: type_,
-                                expr: Box::new(definition),
-                            },
-                            span,
-                        )
-                    } else {
-                        definition
-                    }),
-                    expression: Box::new(expression),
-                }
+        let let_in = just(Token::Let)
+            .ignore_then(expr.clone())
+            .then(just(Token::TypeAnnotation).ignore_then(type_.clone()))
+            .in_()
+            .then(expr.clone())
+            .map(|((definition, ty), expression)| Expr::Let {
+                ty,
+                definition: Box::new(definition),
+                expression: Box::new(expression),
             });
         let perform = just(Token::Perform)
             .ignore_then(expr.clone())
@@ -171,35 +163,9 @@ mod tests {
         assert_eq!(
             parse("$ 3: <'number> ~ ?.").unwrap().0,
             Expr::Let {
-                definition: Box::new((
-                    Expr::Typed {
-                        expr: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                        ty: (Type::Number, 6..13)
-                    },
-                    2..13
-                )),
+                ty: (Type::Number, 6..13),
+                definition: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
                 expression: Box::new((Expr::Hole, 17..18)),
-            }
-        );
-    }
-
-    #[test]
-    fn parse_let_without_type_in_and_dot() {
-        assert_matches!(
-            parse("$ 3 ?").unwrap().0,
-            Expr::Let {
-                definition: box (Expr::Literal(Literal::Int(3)), _),
-                expression: box (Expr::Hole, _),
-            }
-        );
-    }
-
-    #[test]
-    fn parse_perform() {
-        assert_matches!(
-            parse("! ?").unwrap().0,
-            Expr::Perform {
-                effect: box (Expr::Hole, _),
             }
         );
     }

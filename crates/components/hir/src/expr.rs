@@ -21,6 +21,7 @@ pub struct Handler {
 pub enum Expr {
     Literal(Literal),
     Let {
+        ty: WithMeta<Type>,
         definition: Box<WithMeta<Self>>,
         expression: Box<WithMeta<Self>>,
     },
