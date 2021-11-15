@@ -22,7 +22,6 @@ pub enum Type {
         class: Box<Spanned<Self>>,
         handler: Box<Handler>,
     },
-    Hole,
     Infer,
     This,
     Alias(String),

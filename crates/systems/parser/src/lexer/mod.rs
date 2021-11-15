@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use chumsky::prelude::*;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Token {
@@ -9,7 +10,7 @@ pub enum Token {
     Int(i64),
     Str(String),
     // TODO: Float(i64, i64),
-    Uuid,
+    Uuid(Uuid),
     Divide,
     Let,
     In,
@@ -63,7 +64,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
     let identifier = ident()
         .separated_by(text::whitespace())
         .at_least(1)
-        .map(|ident: Vec<String>| dbg!(Token::Ident(ident.join(" "))));
+        .map(|ident: Vec<String>| Token::Ident(ident.join(" ")));
     let int = just('-')
         .or_not()
         .chain::<char, _, _>(text::int(10))
@@ -105,7 +106,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
     let special = just('\'')
         .ignore_then(text::ident())
         .try_map(|ident: String, span| match ident.as_str() {
-            "uuid" => Ok(Token::Uuid),
             "module" => Ok(Token::Module),
             "import" => Ok(Token::Import),
             "export" => Ok(Token::Export),
@@ -124,7 +124,24 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
     let brand = just('@')
         .ignore_then(ident())
         .map(|ident: String| Token::Brand(ident.into()));
+    let uuid = seq("'uuid".chars())
+        .chain(text::whitespace())
+        .ignore_then(
+            one_of("0123456789abcdefABCDEF".chars())
+                .repeated()
+                .at_least(4)
+                .separated_by(just('-'))
+                .at_least(1),
+        )
+        .flatten()
+        .collect::<String>()
+        .map(|uuid| uuid.parse::<Uuid>())
+        .try_map(|uuid, span| match uuid {
+            Ok(uuid) => Ok(Token::Uuid(uuid)),
+            Err(_) => Err(Simple::custom(span, "invalid uuid")),
+        });
     let token = comment
+        .or(uuid)
         .or(int)
         .or(string)
         .or(symbol)
@@ -139,9 +156,9 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
 
 pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
     "a".contains("a");
-    none_of(r#"@/$<>!#*^?\[]{}_-=;:~,.()'"#.chars())
+    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()'"#.chars())
         .try_map(|c, span| {
-            if c.is_whitespace() || c.is_numeric() {
+            if c.is_whitespace() {
                 Err(Simple::custom(span, "invalid character"))
             } else {
                 Ok(c)
@@ -150,7 +167,7 @@ pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
         .map(Some)
         .chain::<char, _, _>(
             // Does not have @, underscore, hyphen, and single quote.
-            none_of(r#"/$<>!#*^?\[]{}=;:~,.()"#.chars())
+            none_of(r#"%/&$<>!#*^?\[]{}=;:~,.()"#.chars())
                 .try_map(|c, span| {
                     if c.is_whitespace() {
                         Err(Simple::custom(span, "invalid character"))

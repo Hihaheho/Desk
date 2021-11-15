@@ -69,21 +69,6 @@ pub(crate) fn parse_collection<T>(
         .delimited_by(begin, end)
 }
 
-pub(crate) fn parse_uuid() -> impl Parser<Token, uuid::Uuid, Error = Simple<Token>> + Clone {
-    just(Token::Uuid).ignore_then(filter_map(|span, token| {
-        if let Token::Ident(uuid) = token {
-            Ok(uuid.parse().map_err(|e| {
-                dbg!(Simple::custom(
-                    span,
-                    format!("failed to parse uuid: {}, {}", uuid, e),
-                ))
-            })?)
-        } else {
-            Err(Simple::custom(span, "expected uuid"))
-        }
-    }))
-}
-
 pub(crate) fn parse_typed<I, T>(
     item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
     ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
@@ -92,6 +77,13 @@ pub(crate) fn parse_typed<I, T>(
         .ignore_then(item)
         .then_ignore(just(Token::TypeAnnotation))
         .then(ty)
+}
+
+pub(crate) fn parse_typed_without_from_here<I, T>(
+    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
+    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
+    item.then_ignore(just(Token::TypeAnnotation)).then(ty)
 }
 
 pub(crate) fn concat_range<T: Clone + Ord>(a: &Range<T>, b: &Range<T>) -> Range<T> {

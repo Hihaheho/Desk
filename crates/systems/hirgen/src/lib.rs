@@ -79,7 +79,6 @@ impl HirGen {
                 class: Box::new(self.gen_type(*class)?),
                 handler: Box::new(self.handler_type(*handler)?),
             }),
-            ast::ty::Type::Hole => self.with_meta(Type::Hole),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
             ast::ty::Type::Alias(alias) => todo!(),
@@ -127,6 +126,7 @@ impl HirGen {
                 ast::expr::Literal::Int(value) => Literal::Int(value),
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(a, b),
                 ast::expr::Literal::Float(value) => Literal::Float(value),
+                ast::expr::Literal::Uuid(value) => Literal::Uuid(value),
             })),
             ast::expr::Expr::Let {
                 definition,
@@ -176,9 +176,13 @@ impl HirGen {
                 expr: Box::new(self.gen(*expr)?),
             }),
             ast::expr::Expr::Hole => self.with_meta(Expr::Hole),
-            ast::expr::Expr::Function(body) => {
-                self.with_meta(Expr::Function(Box::new(self.gen(*body)?)))
-            }
+            ast::expr::Expr::Function { parameters, body } => self.with_meta(Expr::Function {
+                parameters: parameters
+                    .into_iter()
+                    .map(|parameter| self.gen_type(parameter))
+                    .collect::<Result<_, _>>()?,
+                body: Box::new(self.gen(*body)?),
+            }),
             ast::expr::Expr::Array(items) => self.with_meta(Expr::Array(
                 items
                     .into_iter()

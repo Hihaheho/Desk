@@ -8,6 +8,7 @@ pub enum Literal {
     Int(i64),
     Rational(i64, i64),
     Float(f64),
+    Uuid(Uuid),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -41,7 +42,10 @@ pub enum Expr {
         expr: Box<WithMeta<Self>>,
     },
     Hole,
-    Function(Box<WithMeta<Self>>),
+    Function {
+        parameters: Vec<WithMeta<Type>>,
+        body: Box<WithMeta<Self>>,
+    },
     Array(Vec<WithMeta<Self>>),
     Set(Vec<WithMeta<Self>>),
 }

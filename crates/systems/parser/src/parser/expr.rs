@@ -22,12 +22,18 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .then_ignore(just(Token::Divide))
             .then(int64)
             .map(|(a, b)| Expr::Literal(Literal::Rational(a, b)));
+        let string = filter_map(|span, token| match token {
+            Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
+            _ => Err(Simple::custom(span, "expected string literal")),
+        });
+        let uuid = filter_map(|span, token| match token {
+            Token::Uuid(uuid) => Ok(Expr::Literal(Literal::Uuid(uuid))),
+            _ => Err(Simple::custom(span, "expected uuid literal")),
+        });
         let literal = rational
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
-            .or(filter_map(|span, token| match token {
-                Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
-                _ => Err(Simple::custom(span, "expected string literal")),
-            }));
+            .or(string)
+            .or(uuid);
         let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in =
             parse_let_in(expr.clone(), type_.clone()).map(|(definition, type_, expression)| {
@@ -76,9 +82,17 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .dot();
         let product =
             parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
-        let function = just(Token::Lambda)
-            .ignore_then(expr.clone())
-            .map(|expr| Expr::Function(Box::new(expr)));
+        let function = parse_function(
+            just(Token::Lambda),
+            type_.clone(),
+            just(Token::Arrow),
+            expr.clone(),
+        )
+        .map(|(parameters, body)| Expr::Function {
+            parameters,
+            body: Box::new(body),
+        });
+
         let array =
             parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Array);
         let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
@@ -95,6 +109,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(function)
             .or(array)
             .or(set)
+            // bound must be the last to minimize the bounded span.
             .or(typed)
             .map_with_span(|token, span| (token, span))
     })
@@ -136,6 +151,18 @@ mod tests {
         assert_eq!(
             parse(r#""abc""#).unwrap().0,
             Expr::Literal(Literal::String("abc".into()))
+        );
+    }
+
+    #[test]
+    fn parse_literal_uuid() {
+        assert_eq!(
+            parse(r#"'uuid 00000000-0000-0000-0000-000000000000"#)
+                .unwrap()
+                .0,
+            Expr::Literal(Literal::Uuid(
+                "00000000-0000-0000-0000-000000000000".parse().unwrap()
+            ))
         );
     }
 
@@ -229,8 +256,11 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ ?"#).unwrap().0,
-            Expr::Function(Box::new((Expr::Hole, 2..3))),
+            parse(r#"\ <'number>, <_> -> ?"#).unwrap().0,
+            Expr::Function {
+                parameters: vec![(Type::Number, 3..10), (Type::Infer, 14..15)],
+                body: Box::new((Expr::Hole, 20..21)),
+            },
         );
     }
 

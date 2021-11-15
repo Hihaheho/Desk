@@ -7,8 +7,8 @@ use chumsky::prelude::*;
 use crate::lexer::Token;
 
 use super::common::{
-    concat_range, parse_collection, parse_effectful, parse_function, parse_let_in, parse_op,
-    parse_typed, ParserExt,
+    concat_range, parse_effectful, parse_function, parse_let_in, parse_op, parse_typed,
+    parse_typed_without_from_here, ParserExt,
 };
 
 pub fn effect_parser(
@@ -22,8 +22,7 @@ pub fn effect_parser(
 }
 
 pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
-    recursive(|type_| {
-        let hole = just(Token::Hole).to(Type::Hole);
+    let type_ = recursive(|type_| {
         let infer = just(Token::Infer).to(Type::Infer);
         let this = just(Token::This).to(Type::This);
         let number = just(Token::NumberType).to(Type::Number);
@@ -122,7 +121,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                 handler: Box::new(handler),
             });
 
-        hole.or(infer)
+        infer
             .or(this)
             .or(number)
             .or(string)
@@ -139,7 +138,21 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(let_in)
             .or(identifier)
             .map_with_span(|t, span| (t, span))
-    })
+    });
+
+    let bound = parse_typed_without_from_here(type_.clone(), type_.clone()).map_with_span(
+        |(item, bound), span| {
+            (
+                Type::Bound {
+                    item: Box::new(item),
+                    bound: Box::new(bound),
+                },
+                span,
+            )
+        },
+    );
+
+    bound.or(type_)
 }
 
 #[cfg(test)]
@@ -171,12 +184,12 @@ mod tests {
 
     #[test]
     fn parse_trait() {
-        let trait_ = dbg!(parse("% 'number, ?.").unwrap().0);
+        let trait_ = dbg!(parse("% 'number, _.").unwrap().0);
 
         if let Type::Trait(trait_) = trait_ {
             assert_eq!(trait_.len(), 2);
             assert_eq!(trait_[0].0, Type::Number);
-            assert_eq!(trait_[1].0, Type::Hole);
+            assert_eq!(trait_[1].0, Type::Infer);
         } else {
             panic!("Expected trait");
         }
@@ -184,7 +197,7 @@ mod tests {
 
     #[test]
     fn parse_handler_in_class() {
-        let trait_ = parse("% 'number => ?.").unwrap().0;
+        let trait_ = parse("% 'number => _.").unwrap().0;
 
         if let Type::Class(class) = trait_ {
             assert_eq!(class.len(), 1);
@@ -192,7 +205,7 @@ mod tests {
                 class[0],
                 Handler {
                     input: (Type::Number, _),
-                    output: (Type::Hole, _),
+                    output: (Type::Infer, _),
                 }
             );
         } else {
@@ -211,14 +224,14 @@ mod tests {
     #[test]
     fn parse_single_token() {
         assert_eq!(parse("_").unwrap().0, Type::Infer);
-        assert_eq!(parse("?").unwrap().0, Type::Hole);
+        assert_eq!(parse("_").unwrap().0, Type::Infer);
         assert_eq!(parse("&").unwrap().0, Type::This);
     }
 
     #[test]
     fn parse_effectful() {
         assert_eq!(
-            parse("# 'a class ~ 'number ; 'a num_to_num => ?, 'a str_to_str => _")
+            parse("# 'a class ~ 'number ; 'a num_to_num => _, 'a str_to_str => _")
                 .unwrap()
                 .0,
             Type::Effectful {
@@ -227,7 +240,7 @@ mod tests {
                 handlers: vec![
                     Handler {
                         input: (Type::Alias("num_to_num".into()), 23..36),
-                        output: (Type::Hole, 40..41),
+                        output: (Type::Infer, 40..41),
                     },
                     Handler {
                         input: (Type::Alias("str_to_str".into()), 43..56),
@@ -241,10 +254,10 @@ mod tests {
     #[test]
     fn parse_product_and_sum() {
         assert_eq!(
-            parse("* + 'number, ?., *.").unwrap().0,
+            parse("* + 'number, _., *.").unwrap().0,
             Type::Product(vec![
                 (
-                    Type::Sum(vec![(Type::Number, 4..11), (Type::Hole, 13..14)]),
+                    Type::Sum(vec![(Type::Number, 4..11), (Type::Infer, 13..14)]),
                     2..15
                 ),
                 (Type::Product(vec![]), 17..19)
@@ -255,10 +268,10 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ 'number, 'number -> ?"#).unwrap().0,
+            parse(r#"\ 'number, 'number -> _"#).unwrap().0,
             Type::Function {
                 parameters: vec![(Type::Number, 2..9), (Type::Number, 11..18)],
-                body: Box::new((Type::Hole, 22..23)),
+                body: Box::new((Type::Infer, 22..23)),
             }
         );
     }
@@ -282,10 +295,21 @@ mod tests {
     #[test]
     fn parse_trait_bound() {
         assert_eq!(
-            parse("^?: 'a bound").unwrap().0,
+            parse("^_: 'a bound").unwrap().0,
             Type::Bound {
-                item: Box::new((Type::Hole, 1..2)),
+                item: Box::new((Type::Infer, 1..2)),
                 bound: Box::new((Type::Alias("bound".into()), 4..12)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_bound() {
+        assert_eq!(
+            parse("_: 'a bound").unwrap().0,
+            Type::Bound {
+                item: Box::new((Type::Infer, 0..1)),
+                bound: Box::new((Type::Alias("bound".into()), 3..11)),
             }
         );
     }
@@ -293,10 +317,10 @@ mod tests {
     #[test]
     fn parse_let_in() {
         assert_eq!(
-            parse("$ x ~ ?").unwrap().0,
+            parse("$ x ~ _").unwrap().0,
             Type::Let {
                 definition: Box::new((Type::Identifier("x".into()), 2..3)),
-                body: Box::new((Type::Hole, 6..7)),
+                body: Box::new((Type::Infer, 6..7)),
             }
         );
     }
@@ -304,7 +328,7 @@ mod tests {
     #[test]
     fn parse_let_in_with_bound() {
         assert_eq!(
-            parse("$ x: 'a trait ~ ?").unwrap().0,
+            parse("$ x: 'a trait ~ _").unwrap().0,
             Type::Let {
                 definition: Box::new((
                     Type::Bound {
@@ -313,7 +337,7 @@ mod tests {
                     },
                     2..13
                 )),
-                body: Box::new((Type::Hole, 16..17)),
+                body: Box::new((Type::Infer, 16..17)),
             }
         );
     }
@@ -321,12 +345,12 @@ mod tests {
     #[test]
     fn parse_effect() {
         assert_eq!(
-            parse("! 'a trait ~ 'number => ?").unwrap().0,
+            parse("! 'a trait ~ 'number => _").unwrap().0,
             Type::Effect {
                 class: Box::new((Type::Alias("trait".into()), 2..10)),
                 handler: Box::new(Handler {
                     input: (Type::Number, 13..20),
-                    output: (Type::Hole, 24..25),
+                    output: (Type::Infer, 24..25),
                 })
             }
         );
