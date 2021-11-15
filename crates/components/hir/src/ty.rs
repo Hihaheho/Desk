@@ -12,14 +12,13 @@ pub enum Type {
     String,
     Trait(Vec<WithMeta<Self>>),
     // Handlers do not need to be spanned because it has not leading token.
-    Class(Vec<Handler>),
     Effectful {
-        class: Box<WithMeta<Self>>,
+        class: Vec<Handler>,
         ty: Box<WithMeta<Self>>,
         handlers: Vec<Handler>,
     },
     Effect {
-        class: Box<WithMeta<Self>>,
+        class: Vec<Handler>,
         handler: Box<Handler>,
     },
     Infer,

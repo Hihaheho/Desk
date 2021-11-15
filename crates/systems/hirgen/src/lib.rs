@@ -23,7 +23,7 @@ impl HirGen {
         WithMeta {
             meta: Meta {
                 id,
-                span: self.next_span.borrow_mut().pop().unwrap(),
+                span: self.pop_span().unwrap(),
             },
             value,
         }
@@ -39,6 +39,17 @@ impl HirGen {
         })
     }
 
+    pub fn gen_class(&self, ty: Spanned<ast::ty::Type>) -> Result<Vec<Handler>, HirGenError> {
+        if let ast::ty::Type::Class(class) = ty.0 {
+            Ok(class
+                .into_iter()
+                .map(|handler| self.handler_type(handler))
+                .collect::<Result<_, _>>()?)
+        } else {
+            Err(HirGenError::ClassExpected { span: ty.1 })
+        }
+    }
+
     pub fn gen_type(&self, ty: Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
         let (ty, span) = ty;
         self.push_span(span);
@@ -52,23 +63,15 @@ impl HirGen {
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::ty::Type::Class(handlers) => self.with_meta(Type::Class(
-                handlers
-                    .into_iter()
-                    .map(|ast::ty::Handler { input, output }| {
-                        Ok(Handler {
-                            input: self.gen_type(input)?,
-                            output: self.gen_type(output)?,
-                        })
-                    })
-                    .collect::<Result<_, _>>()?,
-            )),
+            ast::ty::Type::Class(_handlers) => Err(HirGenError::UnexpectedClass {
+                span: self.pop_span().unwrap(),
+            })?,
             ast::ty::Type::Effectful {
                 class,
                 ty,
                 handlers,
             } => self.with_meta(Type::Effectful {
-                class: Box::new(self.gen_type(*class)?),
+                class: self.gen_class(*class)?,
                 ty: Box::new(self.gen_type(*ty)?),
                 handlers: handlers
                     .into_iter()
@@ -76,7 +79,7 @@ impl HirGen {
                     .collect::<Result<_, _>>()?,
             }),
             ast::ty::Type::Effect { class, handler } => self.with_meta(Type::Effect {
-                class: Box::new(self.gen_type(*class)?),
+                class: self.gen_class(*class)?,
                 handler: Box::new(self.handler_type(*handler)?),
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
@@ -206,6 +209,10 @@ impl HirGen {
 
     pub(crate) fn push_span(&self, span: Span) {
         self.next_span.borrow_mut().push(span);
+    }
+
+    pub(crate) fn pop_span(&self) -> Option<Span> {
+        self.next_span.borrow_mut().pop()
     }
 }
 
