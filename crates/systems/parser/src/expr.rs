@@ -6,8 +6,7 @@ use chumsky::prelude::*;
 use tokens::Token;
 
 use super::common::{
-    parse_collection, parse_effectful, parse_function, parse_op, parse_typed,
-    ParserExt,
+    parse_collection, parse_effectful, parse_function, parse_op, parse_typed, ParserExt,
 };
 
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
@@ -109,10 +108,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 #[cfg(test)]
 mod tests {
     use ast::ty::Type;
-
     use chumsky::Stream;
-
-    use crate::lexer::lexer;
+    use lexer::lexer;
 
     use super::*;
 

@@ -1,5 +1,5 @@
 [package]
-name = "deskc-parser"
+name = "deskc-lexer"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,6 @@ edition = "2021"
 
 [dependencies]
 tokens = { path = "../../components/tokens", version = "0.1.0", package = "deskc-tokens" }
-ast = { path = "../../components/ast", version = "0.1.0", package = "deskc-ast" }
 chumsky = { git = "https://github.com/ryo33/chumsky" }
 
-[dev-dependencies]
-lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
+uuid = "*"

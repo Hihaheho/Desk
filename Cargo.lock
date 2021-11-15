@@ -12,15 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ariadne"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7080ae01b2f0c312065d4914cd0f0de045eb8832e9415b355106a6cff3073cb4"
-dependencies = [
- "yansi",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -98,6 +89,15 @@ name = "deskc-language-server"
 version = "0.1.0"
 
 [[package]]
+name = "deskc-lexer"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "deskc-tokens",
+ "uuid",
+]
+
+[[package]]
 name = "deskc-mir"
 version = "0.1.0"
 
@@ -105,11 +105,10 @@ version = "0.1.0"
 name = "deskc-parser"
 version = "0.1.0"
 dependencies = [
- "ariadne",
  "chumsky",
  "deskc-ast",
+ "deskc-lexer",
  "deskc-tokens",
- "uuid",
 ]
 
 [[package]]
@@ -223,9 +222,3 @@ name = "wasi"
 version = "0.10.2+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
-
-[[package]]
-name = "yansi"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fc79f4a1e39857fc00c3f662cbf2651c771f00e9c15fe2abc341806bd46bd71"

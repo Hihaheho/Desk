@@ -136,8 +136,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
 #[cfg(test)]
 mod tests {
     use chumsky::Stream;
-
-    use crate::lexer::lexer;
+    use lexer::lexer;
 
     use super::*;
 
