@@ -33,13 +33,13 @@ pub enum Type {
     },
     Array(Box<Spanned<Self>>),
     Set(Box<Spanned<Self>>),
-    Bound {
-        bound: Box<Spanned<Self>>,
-        item: Box<Spanned<Self>>,
-    },
     Let {
         definition: Box<Spanned<Self>>,
         body: Box<Spanned<Self>>,
     },
-    Identifier(String),
+    Variable(String),
+    BoundedVariable {
+        bound: Box<Spanned<Self>>,
+        identifier: String,
+    },
 }

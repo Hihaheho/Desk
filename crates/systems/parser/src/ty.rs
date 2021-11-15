@@ -5,10 +5,7 @@ use ast::{
 use chumsky::prelude::*;
 use tokens::Token;
 
-use super::common::{
-    parse_effectful, parse_function, parse_op, parse_typed, parse_typed_without_from_here,
-    ParserExt,
-};
+use super::common::{parse_effectful, parse_function, parse_op, ParserExt};
 
 pub fn effect_parser(
     parser: impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone,
@@ -21,6 +18,13 @@ pub fn effect_parser(
 }
 
 pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
+    let identifier = filter_map(|span, token| {
+        if let Token::Ident(ident) = token {
+            Ok(ident)
+        } else {
+            Err(Simple::custom(span, "Expected identifier"))
+        }
+    });
     let type_ = recursive(|type_| {
         let infer = just(Token::Infer).to(Type::Infer);
         let this = just(Token::This).to(Type::This);
@@ -80,17 +84,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
-        let bound = parse_typed(type_.clone(), type_.clone()).map(|(item, bound)| Type::Bound {
-            item: Box::new(item),
-            bound: Box::new(bound),
-        });
-        let identifier = filter_map(|span, token| {
-            if let Token::Ident(ident) = token {
-                Ok(Type::Identifier(ident))
-            } else {
-                Err(Simple::custom(span, "Expected identifier"))
-            }
-        });
         let effect = just(Token::Perform)
             .ignore_then(type_.clone())
             .in_()
@@ -99,6 +92,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
                 class: Box::new(class),
                 handler: Box::new(handler),
             });
+        let variable = identifier.clone().map(Type::Variable);
 
         infer
             .or(this)
@@ -113,22 +107,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(array)
             .or(set)
             .or(function)
-            .or(bound)
-            .or(identifier)
+            .or(variable.clone())
             .map_with_span(|t, span| (t, span))
     });
 
-    let bound = parse_typed_without_from_here(type_.clone(), type_.clone()).map_with_span(
-        |(item, bound), span| {
+    let bound = identifier
+        .then_ignore(just(Token::TypeAnnotation))
+        .then(type_.clone())
+        .map_with_span(|(identifier, bound), span| {
             (
-                Type::Bound {
-                    item: Box::new(item),
+                Type::BoundedVariable {
                     bound: Box::new(bound),
+                    identifier,
                 },
                 span,
             )
-        },
-    );
+        });
 
     bound.or(type_)
 }
@@ -269,22 +263,11 @@ mod tests {
     }
 
     #[test]
-    fn parse_trait_bound() {
-        assert_eq!(
-            parse("^_: 'a bound").unwrap().0,
-            Type::Bound {
-                item: Box::new((Type::Infer, 1..2)),
-                bound: Box::new((Type::Alias("bound".into()), 4..12)),
-            }
-        );
-    }
-
-    #[test]
     fn parse_bound() {
         assert_eq!(
-            parse("_: 'a bound").unwrap().0,
-            Type::Bound {
-                item: Box::new((Type::Infer, 0..1)),
+            parse("a: 'a bound").unwrap().0,
+            Type::BoundedVariable {
+                identifier: "a".into(),
                 bound: Box::new((Type::Alias("bound".into()), 3..11)),
             }
         );

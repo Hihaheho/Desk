@@ -64,13 +64,6 @@ pub(crate) fn parse_typed<I, T>(
         .then(ty)
 }
 
-pub(crate) fn parse_typed_without_from_here<I, T>(
-    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
-    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
-    item.then_ignore(just(Token::TypeAnnotation)).then(ty)
-}
-
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,

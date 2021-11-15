@@ -6,7 +6,7 @@ use ast::span::{Span, Spanned};
 use error::HirGenError;
 use hir::{
     expr::{Expr, Literal},
-    meta::{Id, Meta, WithMeta},
+    meta::{Meta, WithMeta},
     ty::{Handler, Type},
 };
 
@@ -106,15 +106,17 @@ impl HirGen {
             }),
             ast::ty::Type::Array(ty) => self.with_meta(Type::Array(Box::new(self.gen_type(*ty)?))),
             ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(*ty)?))),
-            ast::ty::Type::Bound { bound, item } => self.with_meta(Type::Bound {
-                bound: Box::new(self.gen_type(*bound)?),
-                item: Box::new(self.gen_type(*item)?),
-            }),
             ast::ty::Type::Let { definition, body } => self.with_meta(Type::Let {
                 definition: Box::new(self.gen_type(*definition)?),
                 body: Box::new(self.gen_type(*body)?),
             }),
-            ast::ty::Type::Identifier(ident) => self.with_meta(Type::Identifier(ident)),
+            ast::ty::Type::Variable(ident) => self.with_meta(Type::Variable(ident)),
+            ast::ty::Type::BoundedVariable { bound, identifier } => {
+                self.with_meta(Type::BoundedVariable {
+                    bound: Box::new(self.gen_type(*bound)?),
+                    identifier,
+                })
+            }
         };
         Ok(with_meta)
     }

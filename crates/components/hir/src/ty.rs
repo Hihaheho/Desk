@@ -32,13 +32,13 @@ pub enum Type {
     },
     Array(Box<WithMeta<Self>>),
     Set(Box<WithMeta<Self>>),
-    Bound {
-        bound: Box<WithMeta<Self>>,
-        item: Box<WithMeta<Self>>,
-    },
     Let {
         definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
-    Identifier(String),
+    Variable(String),
+    BoundedVariable {
+        bound: Box<WithMeta<Self>>,
+        identifier: String,
+    },
 }
