@@ -33,7 +33,7 @@ pub enum Expr {
         expr: Box<WithMeta<Self>>,
         handlers: Vec<Handler>,
     },
-    Call {
+    Apply {
         function: WithMeta<Type>,
         arguments: Vec<WithMeta<Self>>,
     },
@@ -44,7 +44,7 @@ pub enum Expr {
     },
     Hole,
     Function {
-        parameters: Vec<WithMeta<Type>>,
+        parameter: Box<WithMeta<Type>>,
         body: Box<WithMeta<Self>>,
     },
     Array(Vec<WithMeta<Self>>),

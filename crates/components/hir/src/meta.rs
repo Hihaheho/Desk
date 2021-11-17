@@ -10,6 +10,13 @@ pub struct Meta {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WithMeta<T> {
-    pub meta: Meta,
+    pub meta: Option<Meta>,
     pub value: T,
+}
+
+pub fn no_meta<T>(value: T) -> WithMeta<T> {
+    WithMeta {
+        meta: None,
+        value,
+    }
 }

@@ -1,6 +1,7 @@
 use ast::{
     expr::{Expr, Handler, Literal},
     span::Spanned,
+    ty::Type,
 };
 use chumsky::prelude::*;
 use tokens::Token;
@@ -35,7 +36,13 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in = just(Token::Let)
             .ignore_then(expr.clone())
-            .then(just(Token::TypeAnnotation).ignore_then(type_.clone()))
+            // TODO: span for Type::Infer
+            .then(
+                just(Token::TypeAnnotation)
+                    .ignore_then(type_.clone())
+                    .or_not()
+                    .map(|ty| ty.unwrap_or((Type::Infer, 0..0))),
+            )
             .in_()
             .then(expr.clone())
             .map(|((definition, ty), expression)| Expr::Let {
@@ -62,10 +69,10 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                         .collect(),
                 }
             });
-        let call = type_
+        let apply = type_
             .clone()
             .then(expr.clone().separated_by(just(Token::Comma)))
-            .map(|(function, arguments)| Expr::Call {
+            .map(|(function, arguments)| Expr::Apply {
                 function,
                 arguments,
             })
@@ -94,12 +101,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(let_in)
             .or(perform)
             .or(effectful)
-            .or(call)
             .or(product)
             .or(function)
             .or(array)
             .or(set)
-            // bound must be the last to minimize the bounded span.
+            .or(apply)
+            // typed must be here to minimize the bounded span.
             .or(typed)
             .map_with_span(|token, span| (token, span))
     })
@@ -193,7 +200,7 @@ mod tests {
     fn parse_call() {
         assert_eq!(
             parse("<'a add> 1, 2.").unwrap().0,
-            Expr::Call {
+            Expr::Apply {
                 function: (Type::Alias("add".into()), 1..7),
                 arguments: vec![
                     (Expr::Literal(Literal::Int(1)), 9..10),

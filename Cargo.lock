@@ -119,6 +119,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-type-inference"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "deskc-hir",
+ "deskc-hirgen",
+ "deskc-lexer",
+ "deskc-parser",
+ "deskc-types",
+ "thiserror",
+]
+
+[[package]]
+name = "deskc-types"
+version = "0.1.0"
+
+[[package]]
 name = "getrandom"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

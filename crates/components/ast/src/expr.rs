@@ -33,7 +33,7 @@ pub enum Expr {
         expr: Box<Spanned<Self>>,
         handlers: Vec<Handler>,
     },
-    Call {
+    Apply {
         function: Spanned<Type>,
         arguments: Vec<Spanned<Self>>,
     },

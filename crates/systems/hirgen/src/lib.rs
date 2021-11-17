@@ -1,30 +1,43 @@
 mod error;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap};
 
 use ast::span::{Span, Spanned};
 use error::HirGenError;
 use hir::{
     expr::{Expr, Literal},
-    meta::{Meta, WithMeta},
+    meta::{Id, Meta, WithMeta},
     ty::{Handler, Type},
 };
 
 #[derive(Default)]
 pub struct HirGen {
-    next_id: RefCell<usize>,
+    next_id: RefCell<Id>,
+    variables: RefCell<HashMap<String, Id>>,
     next_span: RefCell<Vec<Span>>,
 }
 
 impl HirGen {
-    pub fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
+    pub fn get_id_of(&self, ident: String) -> usize {
+        *self
+            .variables
+            .borrow_mut()
+            .entry(ident)
+            .or_insert_with(|| self.next_id())
+    }
+
+    pub fn next_id(&self) -> Id {
         let id = *self.next_id.borrow();
         *self.next_id.borrow_mut() += 1;
+        id
+    }
+
+    pub fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         WithMeta {
-            meta: Meta {
-                id,
+            meta: Some(Meta {
+                id: self.next_id(),
                 span: self.pop_span().unwrap(),
-            },
+            }),
             value,
         }
     }
@@ -97,20 +110,28 @@ impl HirGen {
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::ty::Type::Function { parameters, body } => self.with_meta(Type::Function {
-                parameters: parameters
+            ast::ty::Type::Function { parameters, body } => {
+                let span = self.pop_span().unwrap();
+                parameters
                     .into_iter()
-                    .map(|ty| self.gen_type(ty))
-                    .collect::<Result<_, _>>()?,
-                body: Box::new(self.gen_type(*body)?),
-            }),
+                    .map(|parameter| self.gen_type(parameter))
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .try_rfold(self.gen_type(*body)?, |body, parameter| {
+                        self.push_span(span.clone());
+                        Ok(self.with_meta(Type::Function {
+                            parameter: Box::new(parameter),
+                            body: Box::new(body),
+                        }))
+                    })?
+            }
             ast::ty::Type::Array(ty) => self.with_meta(Type::Array(Box::new(self.gen_type(*ty)?))),
             ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(*ty)?))),
             ast::ty::Type::Let { definition, body } => self.with_meta(Type::Let {
                 definition: Box::new(self.gen_type(*definition)?),
                 body: Box::new(self.gen_type(*body)?),
             }),
-            ast::ty::Type::Variable(ident) => self.with_meta(Type::Variable(ident)),
+            ast::ty::Type::Variable(ident) => self.with_meta(Type::Variable(self.get_id_of(ident))),
             ast::ty::Type::BoundedVariable { bound, identifier } => {
                 self.with_meta(Type::BoundedVariable {
                     bound: Box::new(self.gen_type(*bound)?),
@@ -162,10 +183,10 @@ impl HirGen {
                     })
                     .collect::<Result<Vec<hir::expr::Handler>, _>>()?,
             }),
-            ast::expr::Expr::Call {
+            ast::expr::Expr::Apply {
                 function,
                 arguments,
-            } => self.with_meta(Expr::Call {
+            } => self.with_meta(Expr::Apply {
                 function: self.gen_type(function)?,
                 arguments: arguments
                     .into_iter()
@@ -183,13 +204,21 @@ impl HirGen {
                 expr: Box::new(self.gen(*expr)?),
             }),
             ast::expr::Expr::Hole => self.with_meta(Expr::Hole),
-            ast::expr::Expr::Function { parameters, body } => self.with_meta(Expr::Function {
-                parameters: parameters
+            ast::expr::Expr::Function { parameters, body } => {
+                let span = self.pop_span().unwrap();
+                parameters
                     .into_iter()
                     .map(|parameter| self.gen_type(parameter))
-                    .collect::<Result<_, _>>()?,
-                body: Box::new(self.gen(*body)?),
-            }),
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .try_rfold(self.gen(*body)?, |body, parameter| {
+                        self.push_span(span.clone());
+                        Ok(self.with_meta(Expr::Function {
+                            parameter: Box::new(parameter),
+                            body: Box::new(body),
+                        }))
+                    })?
+            }
             ast::expr::Expr::Array(items) => self.with_meta(Expr::Array(
                 items
                     .into_iter()
@@ -229,28 +258,30 @@ mod tests {
         let mut gen = HirGen::default();
         assert_eq!(
             gen.gen((
-                ast::expr::Expr::Call {
+                ast::expr::Expr::Apply {
                     function: (ast::ty::Type::Number, 3..10),
                     arguments: vec![(ast::expr::Expr::Hole, 26..27)],
                 },
                 0..27
             ),),
             Ok(WithMeta {
-                meta: Meta { id: 2, span: 0..27 },
-                value: Expr::Call {
+                meta: Some(Meta { id: 2, span: 0..27 }),
+                value: Expr::Apply {
                     function: WithMeta {
-                        meta: Meta { id: 0, span: 3..10 },
+                        meta: Some(Meta { id: 0, span: 3..10 }),
                         value: Type::Number
                     },
                     arguments: vec![WithMeta {
-                        meta: Meta {
+                        meta: Some(Meta {
                             id: 1,
                             span: 26..27
-                        },
+                        }),
                         value: Expr::Hole
                     }],
                 },
             })
         );
     }
+
+    // TODO flatten product and sum
 }

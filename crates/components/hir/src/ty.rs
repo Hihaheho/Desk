@@ -1,4 +1,4 @@
-use crate::meta::WithMeta;
+use crate::meta::{Id, WithMeta};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
@@ -23,11 +23,10 @@ pub enum Type {
     },
     Infer,
     This,
-    Alias(String),
     Product(Vec<WithMeta<Self>>),
     Sum(Vec<WithMeta<Self>>),
     Function {
-        parameters: Vec<WithMeta<Self>>,
+        parameter: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
     Array(Box<WithMeta<Self>>),
@@ -36,7 +35,7 @@ pub enum Type {
         definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
-    Variable(String),
+    Variable(Id),
     BoundedVariable {
         bound: Box<WithMeta<Self>>,
         identifier: String,
