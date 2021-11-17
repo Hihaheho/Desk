@@ -53,4 +53,8 @@ pub enum Expr {
     Export {
         ty: Spanned<Type>,
     },
+    Attribute {
+        attr: Box<Spanned<Self>>,
+        expr: Box<Spanned<Self>>,
+    }
 }

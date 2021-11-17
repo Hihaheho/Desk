@@ -87,7 +87,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
-
         let array =
             parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Array);
         let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
@@ -95,6 +94,14 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             ty,
             expr: Box::new(expr),
         });
+        let attribute = just(Token::Attribute)
+            .ignore_then(expr.clone())
+            .in_()
+            .then(expr.clone())
+            .map(|(attr, expr)| Expr::Attribute {
+                attr: Box::new(attr),
+                expr: Box::new(expr),
+            });
         hole.or(literal)
             .or(let_in)
             .or(perform)
@@ -104,8 +111,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(array)
             .or(set)
             .or(apply)
-            // typed must be here to minimize the bounded span.
             .or(typed)
+            .or(attribute)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -262,6 +269,17 @@ mod tests {
             Expr::Typed {
                 expr: Box::new((Expr::Hole, 1..2)),
                 ty: (Type::Number, 5..12),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_attribute() {
+        assert_eq!(
+            parse("# 3 ~ ?").unwrap().0,
+            Expr::Attribute {
+                attr: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
+                expr: Box::new((Expr::Hole, 6..7)),
             }
         );
     }
