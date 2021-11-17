@@ -7,26 +7,6 @@ use chumsky::{
 };
 use tokens::Token;
 
-pub(crate) fn parse_effectful<I, T>(
-    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
-    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Spanned<T>, Spanned<I>, Vec<(Spanned<T>, Spanned<I>)>), Error = Simple<Token>>
-       + Clone {
-    just(Token::Effectful)
-        .ignore_then(ty.clone())
-        .in_()
-        .then(item.clone())
-        .then_ignore(just(Token::WithHandler))
-        .then(
-            ty.clone()
-                .then_ignore(just(Token::EArrow))
-                .then(item.clone())
-                .separated_by(just(Token::Comma)),
-        )
-        .map(|((class, item), handlers)| (class, item, handlers))
-        .dot()
-}
-
 pub(crate) fn parse_op<U, O>(
     op: impl Parser<Token, U, Error = Simple<Token>> + Clone,
     item: impl Parser<Token, Spanned<O>, Error = Simple<Token>> + Clone,

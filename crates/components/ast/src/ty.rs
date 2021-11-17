@@ -1,7 +1,7 @@
 use crate::span::Spanned;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Handler {
+pub struct Effect {
     pub input: Spanned<Type>,
     pub output: Spanned<Type>,
 }
@@ -11,16 +11,9 @@ pub enum Type {
     Number,
     String,
     Trait(Vec<Spanned<Self>>),
-    // Handlers do not need to be spanned because it has not leading token.
-    Class(Vec<Handler>),
     Effectful {
-        class: Box<Spanned<Self>>,
         ty: Box<Spanned<Self>>,
-        handlers: Vec<Handler>,
-    },
-    Effect {
-        class: Box<Spanned<Self>>,
-        handler: Box<Handler>,
+        effects: Vec<Effect>,
     },
     Infer,
     This,

@@ -1,20 +1,20 @@
 use ast::{
     span::Spanned,
-    ty::{Handler, Type},
+    ty::{Effect, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use super::common::{parse_effectful, parse_function, parse_op, ParserExt};
+use super::common::{parse_function, parse_op, ParserExt};
 
 pub fn effect_parser(
     parser: impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, Handler, Error = Simple<Token>> + Clone {
+) -> impl Parser<Token, Effect, Error = Simple<Token>> + Clone {
     parser
         .clone()
         .then_ignore(just(Token::EArrow))
         .then(parser)
-        .map(|(input, output)| Handler { input, output })
+        .map(|(input, output)| Effect { input, output })
 }
 
 pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
@@ -32,34 +32,33 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
         let string = just(Token::StringType).to(Type::String);
         let trait_ = just(Token::Trait)
             .ignore_then(
-                effect_parser(type_.clone())
+                type_
+                    .clone()
                     .separated_by(just(Token::Comma))
                     .at_least(1)
-                    .map(|types| Type::Class(types))
-                    .or(type_
-                        .clone()
-                        .separated_by(just(Token::Comma))
-                        .at_least(1)
-                        .map(|types| Type::Trait(types))),
+                    .map(|types| Type::Trait(types)),
             )
             .dot();
         let alias = just(Token::A).ignore_then(filter_map(|span, token| match token {
             Token::Ident(ident) => Ok(Type::Alias(ident)),
             _ => Err(Simple::custom(span, "Expected identifier")),
         }));
-        let effectful =
-            parse_effectful(type_.clone(), type_.clone()).map(|(class, ty, handlers)| {
-                Type::Effectful {
-                    class: Box::new(class),
-                    ty: Box::new(ty),
-                    handlers: handlers
-                        .into_iter()
-                        .map(|handler| Handler {
-                            input: handler.0,
-                            output: handler.1,
-                        })
-                        .collect(),
-                }
+        let effectful = just(Token::Perform)
+            .ignore_then(type_.clone())
+            .in_()
+            .then(
+                type_
+                    .clone()
+                    .then_ignore(just(Token::EArrow))
+                    .then(type_.clone())
+                    .map(|(input, output)| Effect { input, output })
+                    .separated_by(just(Token::Comma))
+                    .at_least(1)
+                    .dot(),
+            )
+            .map(|(ty, effects)| Type::Effectful {
+                ty: Box::new(ty),
+                effects,
             });
         let product =
             parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
@@ -84,14 +83,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
-        let effect = just(Token::Perform)
-            .ignore_then(type_.clone())
-            .in_()
-            .then(effect_parser(type_.clone()))
-            .map(|(class, handler)| Type::Effect {
-                class: Box::new(class),
-                handler: Box::new(handler),
-            });
         let variable = identifier.clone().map(Type::Variable);
 
         infer
@@ -101,7 +92,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(trait_)
             .or(alias)
             .or(effectful)
-            .or(effect)
             .or(product)
             .or(sum)
             .or(array)
@@ -166,24 +156,6 @@ mod tests {
     }
 
     #[test]
-    fn parse_handler_in_class() {
-        let trait_ = parse("% 'number => _.").unwrap().0;
-
-        if let Type::Class(class) = trait_ {
-            assert_eq!(class.len(), 1);
-            assert_eq!(
-                class[0],
-                Handler {
-                    input: (Type::Number, 2..9),
-                    output: (Type::Infer, 13..14),
-                }
-            );
-        } else {
-            panic!("Expected trait");
-        }
-    }
-
-    #[test]
     fn parse_type_alias() {
         assert_eq!(
             parse("'a something").unwrap().0,
@@ -196,29 +168,6 @@ mod tests {
         assert_eq!(parse("_").unwrap().0, Type::Infer);
         assert_eq!(parse("_").unwrap().0, Type::Infer);
         assert_eq!(parse("&").unwrap().0, Type::This);
-    }
-
-    #[test]
-    fn parse_effectful() {
-        assert_eq!(
-            parse("# 'a class ~ 'number ; 'a num_to_num => _, 'a str_to_str => _")
-                .unwrap()
-                .0,
-            Type::Effectful {
-                class: Box::new((Type::Alias("class".into()), 2..10)),
-                ty: Box::new((Type::Number, 13..20)),
-                handlers: vec![
-                    Handler {
-                        input: (Type::Alias("num_to_num".into()), 23..36),
-                        output: (Type::Infer, 40..41),
-                    },
-                    Handler {
-                        input: (Type::Alias("str_to_str".into()), 43..56),
-                        output: (Type::Infer, 60..61),
-                    },
-                ],
-            }
-        );
     }
 
     #[test]
@@ -274,15 +223,23 @@ mod tests {
     }
 
     #[test]
-    fn parse_effect() {
+    fn parse_effectful() {
         assert_eq!(
-            parse("! 'a trait ~ 'number => _").unwrap().0,
-            Type::Effect {
-                class: Box::new((Type::Alias("trait".into()), 2..10)),
-                handler: Box::new(Handler {
-                    input: (Type::Number, 13..20),
-                    output: (Type::Infer, 24..25),
-                })
+            parse("! 'a result ~ 'number => 'string, 'string => 'number.")
+                .unwrap()
+                .0,
+            Type::Effectful {
+                ty: Box::new((Type::Alias("result".into()), 2..11)),
+                effects: vec![
+                    Effect {
+                        input: (Type::Number, 14..21),
+                        output: (Type::String, 25..32),
+                    },
+                    Effect {
+                        input: (Type::String, 34..41),
+                        output: (Type::Number, 45..52),
+                    }
+                ]
             }
         );
     }

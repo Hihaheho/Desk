@@ -32,12 +32,7 @@ fn from_hir_type(ty: &hir::ty::Type) -> Type {
         Number => Type::Number,
         String => Type::String,
         Trait(types) => todo!(),
-        Effectful {
-            class,
-            ty,
-            handlers,
-        } => todo!(),
-        Effect { class, handler } => todo!(),
+        Effectful { ty, effects } => todo!(),
         Infer => todo!(),
         This => todo!(),
         Product(types) => {
@@ -179,6 +174,7 @@ impl Ctx {
                     meta: _,
                 } = &ty
                 {
+                    // TODO: support let rec
                     let (ctx, def_ty) = self.synth(&definition.value)?;
                     let (ctx, ty) = ctx
                         .add(Log::TypedVariable(*var, def_ty.clone()))
@@ -189,11 +185,12 @@ impl Ctx {
                     self.synth(&expression.value)?
                 }
             }
-            Expr::Perform { effect } => todo!(),
-            Expr::Effectful {
-                class,
+            Expr::Perform { input, output } => todo!(),
+            Expr::Handle {
+                input,
+                output,
+                handler,
                 expr,
-                handlers,
             } => todo!(),
             Expr::Apply {
                 function,

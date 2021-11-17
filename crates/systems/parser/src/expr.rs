@@ -1,14 +1,12 @@
 use ast::{
-    expr::{Expr, Handler, Literal},
+    expr::{Expr, Literal},
     span::Spanned,
     ty::Type,
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use super::common::{
-    parse_collection, parse_effectful, parse_function, parse_op, parse_typed, ParserExt,
-};
+use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
     recursive(|expr| {
@@ -52,22 +50,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let perform = just(Token::Perform)
             .ignore_then(expr.clone())
-            .map(|effect| Expr::Perform {
-                effect: Box::new(effect),
+            .then_ignore(just(Token::EArrow))
+            .then(type_.clone())
+            .map(|(effect, output)| Expr::Perform {
+                input: Box::new(effect),
+                output,
             });
-        let effectful =
-            parse_effectful(expr.clone(), type_.clone()).map(|(class, expr, handlers)| {
-                Expr::Effectful {
-                    class,
-                    expr: Box::new(expr),
-                    handlers: handlers
-                        .into_iter()
-                        .map(|handler| Handler {
-                            ty: handler.0,
-                            expr: handler.1,
-                        })
-                        .collect(),
-                }
+        let handle = type_
+            .clone()
+            .then_ignore(just(Token::EArrow))
+            .then(type_.clone())
+            .then(expr.clone().in_().then(expr.clone()))
+            .map(|((input, output), (handler, expr))| Expr::Handle {
+                input,
+                output,
+                handler: Box::new(handler),
+                expr: Box::new(expr),
             });
         let apply = type_
             .clone()
@@ -100,7 +98,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         hole.or(literal)
             .or(let_in)
             .or(perform)
-            .or(effectful)
+            .or(handle)
             .or(product)
             .or(function)
             .or(array)
@@ -173,25 +171,26 @@ mod tests {
     }
 
     #[test]
+    fn parse_perform() {
+        assert_eq!(
+            parse("! ? => <'string>").unwrap().0,
+            Expr::Perform {
+                input: Box::new((Expr::Hole, 2..3)),
+                output: (Type::String, 8..15),
+            }
+        );
+    }
+
+    #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"# <'a class> ?; <'a num_to_num> => ?, <'a str_to_str> => ?"#)
-            .unwrap()
-            .0;
+        let trait_ = parse(r#"<'number> => <'string> 3 ~ ?"#).unwrap().0;
         assert_eq!(
             trait_,
-            Expr::Effectful {
-                class: (Type::Alias("class".into()), 3..11),
-                expr: Box::new((Expr::Hole, 13..14)),
-                handlers: vec![
-                    Handler {
-                        ty: (Type::Alias("num_to_num".into()), 17..30),
-                        expr: (Expr::Hole, 35..36),
-                    },
-                    Handler {
-                        ty: (Type::Alias("str_to_str".into()), 39..52),
-                        expr: (Expr::Hole, 57..58),
-                    }
-                ]
+            Expr::Handle {
+                input: (Type::Number, 1..8),
+                output: (Type::String, 14..21),
+                handler: Box::new((Expr::Literal(Literal::Int(3)), 23..24)),
+                expr: Box::new((Expr::Hole, 27..28)),
             }
         );
     }

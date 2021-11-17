@@ -7,7 +7,7 @@ use error::HirGenError;
 use hir::{
     expr::{Expr, Literal},
     meta::{Id, Meta, WithMeta},
-    ty::{Handler, Type},
+    ty::{Effect, Type},
 };
 
 #[derive(Default)]
@@ -42,25 +42,14 @@ impl HirGen {
         }
     }
 
-    fn handler_type(
+    fn effect(
         &self,
-        ast::ty::Handler { input, output }: ast::ty::Handler,
-    ) -> Result<Handler, HirGenError> {
-        Ok(Handler {
+        ast::ty::Effect { input, output }: ast::ty::Effect,
+    ) -> Result<Effect, HirGenError> {
+        Ok(Effect {
             input: self.gen_type(input)?,
             output: self.gen_type(output)?,
         })
-    }
-
-    pub fn gen_class(&self, ty: Spanned<ast::ty::Type>) -> Result<Vec<Handler>, HirGenError> {
-        if let ast::ty::Type::Class(class) = ty.0 {
-            Ok(class
-                .into_iter()
-                .map(|handler| self.handler_type(handler))
-                .collect::<Result<_, _>>()?)
-        } else {
-            Err(HirGenError::ClassExpected { span: ty.1 })
-        }
     }
 
     pub fn gen_type(&self, ty: Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
@@ -76,24 +65,12 @@ impl HirGen {
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::ty::Type::Class(_handlers) => Err(HirGenError::UnexpectedClass {
-                span: self.pop_span().unwrap(),
-            })?,
-            ast::ty::Type::Effectful {
-                class,
-                ty,
-                handlers,
-            } => self.with_meta(Type::Effectful {
-                class: self.gen_class(*class)?,
+            ast::ty::Type::Effectful { ty, effects } => self.with_meta(Type::Effectful {
                 ty: Box::new(self.gen_type(*ty)?),
-                handlers: handlers
+                effects: effects
                     .into_iter()
-                    .map(|handler| self.handler_type(handler))
+                    .map(|effect| self.effect(effect))
                     .collect::<Result<_, _>>()?,
-            }),
-            ast::ty::Type::Effect { class, handler } => self.with_meta(Type::Effect {
-                class: self.gen_class(*class)?,
-                handler: Box::new(self.handler_type(*handler)?),
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
@@ -163,25 +140,20 @@ impl HirGen {
                 definition: Box::new(self.gen(*definition)?),
                 expression: Box::new(self.gen(*expression)?),
             }),
-            ast::expr::Expr::Perform { effect } => self.with_meta(Expr::Perform {
-                effect: Box::new(self.gen(*effect)?),
+            ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
+                input: Box::new(self.gen(*input)?),
+                output: self.gen_type(output)?,
             }),
-            ast::expr::Expr::Effectful {
-                class,
+            ast::expr::Expr::Handle {
+                input,
+                output,
+                handler,
                 expr,
-                handlers,
-            } => self.with_meta(Expr::Effectful {
-                class: self.gen_type(class)?,
+            } => self.with_meta(Expr::Handle {
+                input: self.gen_type(input)?,
+                output: self.gen_type(output)?,
+                handler: Box::new(self.gen(*handler)?),
                 expr: Box::new(self.gen(*expr)?),
-                handlers: handlers
-                    .into_iter()
-                    .map(|ast::expr::Handler { ty, expr }| {
-                        Ok(hir::expr::Handler {
-                            ty: self.gen_type(ty)?,
-                            expr: self.gen(expr)?,
-                        })
-                    })
-                    .collect::<Result<Vec<hir::expr::Handler>, _>>()?,
             }),
             ast::expr::Expr::Apply {
                 function,
@@ -255,7 +227,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut gen = HirGen::default();
+        let gen = HirGen::default();
         assert_eq!(
             gen.gen((
                 ast::expr::Expr::Apply {
