@@ -10,7 +10,6 @@ pub type Id = usize;
 pub enum Type {
     Number,
     String,
-    Uuid,
     Product(Vec<Self>),
     Sum(Vec<Self>),
     Function {
@@ -24,7 +23,7 @@ pub enum Type {
         variable: Id,
         body: Box<Self>,
     },
-    Existential(Id)
+    Existential(Id),
 }
 
 mod tests {

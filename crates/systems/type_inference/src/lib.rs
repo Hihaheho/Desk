@@ -70,8 +70,8 @@ impl Ctx {
         }
     }
 
-    fn index(&self, log: &Log) -> usize {
-        self.logs.iter().position(|x| x == log).unwrap()
+    fn index(&self, log: &Log) -> Option<usize> {
+        self.logs.iter().position(|x| x == log)
     }
 
     fn fresh_existential(&self) -> Id {
@@ -92,14 +92,20 @@ impl Ctx {
 
     fn insert_in_place(&self, log: &Log, logs: Vec<Log>) -> Ctx {
         let mut cloned = self.clone();
-        let index = cloned.index(log);
+        let index = cloned.index(log).expect(&format!(
+            "{:?}: log not found: {:?} to be replaced {:?}",
+            self.logs, log, logs
+        ));
         cloned.logs.splice(index..=index, logs);
         cloned
     }
 
     fn truncate_from(&self, log: &Log) -> Ctx {
         let mut cloned = self.clone();
-        cloned.logs.truncate(self.index(log));
+        cloned.logs.truncate(self.index(log).expect(&format!(
+            "{:?}: log not found: {:?} to be truncated",
+            self.logs, log
+        )));
         cloned
     }
 
@@ -142,7 +148,7 @@ impl Ctx {
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::String(_)), Type::String) => self.clone(),
-            (Expr::Literal(Literal::Uuid(_)), Type::Uuid) => self.clone(),
+            (Expr::Literal(Literal::Uuid(_)), Type::String) => self.clone(),
             (
                 Expr::Function { parameter, body },
                 Type::Function {
@@ -173,7 +179,7 @@ impl Ctx {
             Expr::Literal(Literal::Float(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Rational(_, _)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::String(_)) => (self.clone(), Type::String),
-            Expr::Literal(Literal::Uuid(_)) => (self.clone(), Type::Uuid),
+            Expr::Literal(Literal::Uuid(_)) => (self.clone(), Type::String),
             Expr::Let {
                 ty,
                 definition,
@@ -225,7 +231,16 @@ impl Ctx {
                         .try_fold((self.clone(), fun), |(ctx, fun), arg| ctx.apply(&fun, &arg))?
                 }
             }
-            Expr::Product(_) => todo!(),
+            Expr::Product(exprs) => {
+                let mut ctx = self.clone();
+                let mut types = Vec::with_capacity(exprs.len());
+                for expr in exprs {
+                    let (delta, ty) = ctx.synth(expr)?;
+                    ctx = delta;
+                    types.push(ty);
+                }
+                ctx.with_type(Type::Product(types))
+            }
             Expr::Typed { ty, expr } => {
                 let ty = from_hir_type(&ty.value);
                 self.check(&expr, &ty)?.with_type(ty)
@@ -245,12 +260,12 @@ impl Ctx {
                             body: Box::new(Type::Existential(b)),
                         })
                 } else {
-                    let b = self.fresh_existential();
-                    self.check(&body, &Type::Existential(b))?
-                        .truncate_from(&Log::Existential(b))
+                    let a = self.fresh_existential();
+                    self.add(Log::Existential(a))
+                        .check(&body, &Type::Existential(a))?
                         .with_type(Type::Function {
                             parameter: Box::new(from_hir_type(&parameter.value)),
-                            body: Box::new(Type::Existential(b)),
+                            body: Box::new(Type::Existential(a)),
                         })
                 }
             }
@@ -265,21 +280,17 @@ impl Ctx {
         let ret = match ty {
             Type::Function { parameter, body } => {
                 let delta = self.check(expr, &*parameter)?;
-                // if output is a type variable and expr is synthed, output can be replaced with the type of expr.
-                let ty = match &**body {
-                    Type::Variable(var) => self.synth(expr).ok().map(|(ctx, ty)| {
-                        ctx.empty()
-                            .add(Log::TypedVariable(*var, ty.clone()))
-                            .substitute_from_ctx(body)
-                    }),
-                    Type::Existential(var) => self.synth(expr).ok().map(|(ctx, ty)| {
-                        ctx.empty()
-                            .add(Log::Solved(*var, ty.clone()))
-                            .substitute_from_ctx(body)
-                    }),
-                    _ => None,
-                };
-                (delta, ty.unwrap_or(*body.clone()))
+                // if a type of expr is synthed, output can be substituded with the type.
+                let ty = self
+                    .synth(expr)
+                    .ok()
+                    .and_then(|(ctx, ty)| {
+                        ctx.subtype(&ty, parameter)
+                            .ok()
+                            .map(|ctx| ctx.substitute_from_ctx(body))
+                    })
+                    .unwrap_or(*body.clone());
+                (delta, ty)
             }
             Type::Existential(id) => {
                 let a1 = self.fresh_existential();
@@ -312,7 +323,6 @@ impl Ctx {
         match ty {
             Type::Number => true,
             Type::String => true,
-            Type::Uuid => true,
             Type::Function { parameter, body } => {
                 self.is_well_formed(parameter) && self.is_well_formed(body)
             }
@@ -340,15 +350,32 @@ impl Ctx {
             }
         };
         let ctx = match (sub, ty) {
+            (Type::Variable(id), Type::Variable(id2)) if id == id2 => self.clone(),
+            (Type::Existential(id), Type::Existential(id2)) if id == id2 => self.clone(),
             (Type::Number, Type::Number) => self.clone(),
             (Type::String, Type::String) => self.clone(),
-            (Type::Uuid, Type::Uuid) => self.clone(),
-            (Type::Product(sub_types), Type::Product(types)) => todo!(),
-            // TODO: subtype of item
-            (Type::Product(sub_types), ty) => subtype_if(sub_types.contains(ty))?,
-            (Type::Sum(sub_types), Type::Sum(types)) => todo!(),
-            // TODO: subtype of item
-            (sub, Type::Sum(types)) => subtype_if(types.contains(sub))?,
+            // TODO: return multi pass for error recovery?
+            (Type::Product(sub_types), ty) => sub_types
+                .iter()
+                .find_map(|sub_ty| match self.subtype(sub_ty, ty) {
+                    Ok(ctx) => Some(ctx),
+                    Err(_) => None,
+                })
+                .ok_or(TypeError::NotSubtype {
+                    sub: sub.clone(),
+                    ty: ty.clone(),
+                })?,
+            // TODO: return multi pass for error recovery?
+            (sub, Type::Sum(types)) => types
+                .iter()
+                .find_map(|ty| match self.subtype(sub, ty) {
+                    Ok(ctx) => Some(ctx),
+                    Err(_) => None,
+                })
+                .ok_or(TypeError::NotSubtype {
+                    sub: sub.clone(),
+                    ty: ty.clone(),
+                })?,
             (
                 Type::Function {
                     parameter: sub_parameter,
@@ -405,6 +432,7 @@ impl Ctx {
     }
 
     fn instantiate_subtype(&self, id: &Id, sup: &Type) -> Result<Ctx, TypeError> {
+        // In here, we can assume the context contains the existential type.
         if is_monotype(sup)
             && self
                 .truncate_from(&Log::Existential(*id))
@@ -482,6 +510,7 @@ impl Ctx {
     }
 
     fn instantiate_supertype(&self, sub: &Type, id: &Id) -> Result<Ctx, TypeError> {
+        // In here, we can assume the context contains the existential type.
         if is_monotype(sub)
             && self
                 .truncate_from(&Log::Existential(*id))
@@ -598,7 +627,6 @@ impl Ctx {
         match a {
             Type::Number => Type::Number,
             Type::String => Type::String,
-            Type::Uuid => Type::Uuid,
             Type::Product(types) => Type::Product(
                 types
                     .iter()
@@ -638,7 +666,6 @@ fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
     match to {
         Type::Number => Type::Number,
         Type::String => Type::String,
-        Type::Uuid => Type::Uuid,
         Type::Product(types) => {
             Type::Product(types.iter().map(|ty| substitute(ty, id, by)).collect())
         }
@@ -658,12 +685,12 @@ fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
     }
 }
 
+// existential type is occurs in the type
 fn occurs_in(id: &Id, ty: &Type) -> bool {
     match ty {
         Type::Variable(_) => false,
         Type::Number => false,
         Type::String => false,
-        Type::Uuid => false,
         Type::Product(types) => types.iter().any(|ty| occurs_in(id, ty)),
         Type::Sum(types) => types.iter().any(|ty| occurs_in(id, ty)),
         Type::Function { parameter, body } => occurs_in(id, parameter) || occurs_in(id, body),
@@ -678,7 +705,6 @@ fn is_monotype(ty: &Type) -> bool {
     match ty {
         Type::Number => true,
         Type::String => true,
-        Type::Uuid => true,
         Type::Product(types) => types.iter().all(|ty| is_monotype(ty)),
         Type::Sum(types) => types.iter().all(|ty| is_monotype(ty)),
         Type::Function { parameter, body } => is_monotype(parameter) && is_monotype(body),
@@ -721,7 +747,7 @@ mod tests {
             .unwrap();
         let gen = hirgen::HirGen::default();
         let expr = gen.gen(expr).unwrap();
-        (gen, dbg!(expr))
+        (gen, expr)
     }
 
     fn assert_types(hirgen: &HirGen, ctx: &Ctx, types: Vec<(Expr, Type)>) {
@@ -843,6 +869,37 @@ mod tests {
                 (Expr::Literal(Literal::Int(3)), Type::Existential(0)),
                 (Expr::Literal(Literal::Int(4)), Type::Number),
                 (Expr::Literal(Literal::Int(5)), Type::Number),
+            ],
+        );
+    }
+
+    #[test]
+    fn subtyping_sum_in_product() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            $ #1 \ < + 'number, *. > -> 1: <fun> ~
+            #3 <fun> #2 * 1, "a"
+        "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+
+        assert_types(
+            &hirgen,
+            &ctx,
+            vec![
+                (
+                    Expr::Literal(Literal::Int(1)),
+                    Type::Function {
+                        parameter: Box::new(Type::Sum(vec![Type::Number, Type::Product(vec![])])),
+                        body: Box::new(Type::Number),
+                    },
+                ),
+                (
+                    Expr::Literal(Literal::Int(2)),
+                    Type::Product(vec![Type::Number, Type::String]),
+                ),
+                (Expr::Literal(Literal::Int(3)), Type::Number),
             ],
         );
     }
