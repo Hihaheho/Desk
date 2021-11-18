@@ -7,7 +7,7 @@ use hir::{
     expr::{Expr, Literal},
     meta::WithMeta,
 };
-use types::Type;
+use types::{Effect, Type};
 
 pub type Id = usize;
 
@@ -335,6 +335,12 @@ impl Ctx {
             }
             Type::Variable(id) => self.has_variable(id),
             Type::Existential(id) => self.has_existential(id) || self.get_solved(id).is_some(),
+            Type::Effectful { ty, effects } => {
+                self.is_well_formed(ty)
+                    && effects.iter().all(|Effect { input, output }| {
+                        self.is_well_formed(input) && self.is_well_formed(output)
+                    })
+            }
         }
     }
 
@@ -651,6 +657,16 @@ impl Ctx {
                 body: Box::new(self.substitute_from_ctx(body)),
             },
             Type::Existential(id) => self.get_solved(id).unwrap_or(a.clone()),
+            Type::Effectful { ty, effects } => Type::Effectful {
+                ty: Box::new(self.substitute_from_ctx(ty)),
+                effects: effects
+                    .iter()
+                    .map(|Effect { input, output }| Effect {
+                        input: self.substitute_from_ctx(input),
+                        output: self.substitute_from_ctx(output),
+                    })
+                    .collect(),
+            },
         }
     }
 }
@@ -682,6 +698,16 @@ fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
             body: Box::new(substitute(body, id, by)),
         },
         Type::Existential(var) => sub_if(*var == *id),
+        Type::Effectful { ty, effects } => Type::Effectful {
+            ty: Box::new(substitute(ty, id, by)),
+            effects: effects
+                .iter()
+                .map(|Effect { input, output }| Effect {
+                    input: substitute(input, id, by),
+                    output: substitute(output, id, by),
+                })
+                .collect(),
+        },
     }
 }
 
@@ -698,6 +724,12 @@ fn occurs_in(id: &Id, ty: &Type) -> bool {
         Type::Set(ty) => occurs_in(id, ty),
         Type::ForAll { variable, body } => variable == id || occurs_in(id, body),
         Type::Existential(ty_id) => ty_id == id,
+        Type::Effectful { ty, effects } => {
+            occurs_in(id, ty)
+                || effects
+                    .iter()
+                    .any(|Effect { input, output }| occurs_in(id, input) || occurs_in(id, output))
+        }
     }
 }
 
@@ -713,6 +745,12 @@ fn is_monotype(ty: &Type) -> bool {
         Type::Variable(_) => true,
         Type::ForAll { .. } => false,
         Type::Existential(_) => true,
+        Type::Effectful { ty, effects } => {
+            is_monotype(ty)
+                && effects
+                    .iter()
+                    .all(|Effect { input, output }| is_monotype(input) && is_monotype(output))
+        }
     }
 }
 

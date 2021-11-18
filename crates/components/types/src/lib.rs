@@ -7,6 +7,12 @@ pub struct Handler {
 pub type Id = usize;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Effect {
+    pub input: Type,
+    pub output: Type,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Number,
     String,
@@ -24,6 +30,10 @@ pub enum Type {
         body: Box<Self>,
     },
     Existential(Id),
+    Effectful {
+        ty: Box<Self>,
+        effects: Vec<Effect>,
+    },
 }
 
 mod tests {
