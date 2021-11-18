@@ -124,7 +124,7 @@ impl Ctx {
         })
     }
 
-    fn get_type(&self, id: &Id) -> Result<Type, TypeError> {
+    fn get_typed_var(&self, id: &Id) -> Result<Type, TypeError> {
         self.logs
             .iter()
             .find_map(|log| {
@@ -198,6 +198,7 @@ impl Ctx {
                     ctx.insert_in_place(&Log::TypedVariable(*var, def_ty), vec![])
                         .with_type(ty)
                 } else {
+                    let (_ctx, _ty) = self.synth(&definition)?;
                     self.synth(&expression)?
                 }
             }
@@ -216,14 +217,14 @@ impl Ctx {
                     // Reference
                     let fun = from_hir_type(&function.value);
                     if let Type::Variable(id) = fun {
-                        self.clone().with_type(self.get_type(&id)?)
+                        self.clone().with_type(self.get_typed_var(&id)?)
                     } else {
                         self.clone().with_type(fun)
                     }
                 } else {
                     // Normal application
                     let fun = match from_hir_type(&function.value) {
-                        Type::Variable(var) => self.get_type(&var)?,
+                        Type::Variable(var) => self.get_typed_var(&var)?,
                         ty => ty,
                     };
                     arguments
@@ -651,7 +652,7 @@ impl Ctx {
             },
             Type::Array(ty) => Type::Array(Box::new(self.substitute_from_ctx(ty))),
             Type::Set(ty) => Type::Set(Box::new(self.substitute_from_ctx(ty))),
-            Type::Variable(id) => self.get_type(id).unwrap_or(a.clone()),
+            Type::Variable(id) => self.get_typed_var(id).unwrap_or(a.clone()),
             Type::ForAll { variable, body } => Type::ForAll {
                 variable: *variable,
                 body: Box::new(self.substitute_from_ctx(body)),
@@ -886,7 +887,8 @@ mod tests {
         let (hirgen, expr) = parse_inner(
             r#"
             #1 $ #2 \ <x> -> #3 <x>: <id> ~
-            #4 <id> #5 1
+            $ #4 <id> #5 1 ~
+            #6 <id> #7 "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -896,7 +898,7 @@ mod tests {
             &hirgen,
             &ctx,
             vec![
-                (Expr::Literal(Literal::Int(1)), Type::Number),
+                (Expr::Literal(Literal::Int(1)), Type::String),
                 (
                     Expr::Literal(Literal::Int(2)),
                     Type::Function {
@@ -907,6 +909,8 @@ mod tests {
                 (Expr::Literal(Literal::Int(3)), Type::Existential(0)),
                 (Expr::Literal(Literal::Int(4)), Type::Number),
                 (Expr::Literal(Literal::Int(5)), Type::Number),
+                (Expr::Literal(Literal::Int(6)), Type::String),
+                (Expr::Literal(Literal::Int(7)), Type::String),
             ],
         );
     }
