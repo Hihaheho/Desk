@@ -1,6 +1,6 @@
 use hir::expr::Expr;
 use thiserror::Error;
-use types::{Id, Type};
+use types::{Effect, Id, Type};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TypeError {
@@ -14,4 +14,6 @@ pub enum TypeError {
     NotInstantiable { ty: Type },
     #[error("variable not typed {id}")]
     VariableNotTyped { id: Id },
+    #[error("unknown effect handled: {effect:?}")]
+    UnknownEffectHandled { effect: Effect },
 }

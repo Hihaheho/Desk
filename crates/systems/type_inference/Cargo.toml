@@ -10,6 +10,7 @@ hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" 
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 thiserror = "1.0.30"
 chumsky = { git = "https://github.com/ryo33/chumsky" }
+pretty_assertions = "1.0.0"
 
 [dev-dependencies]
 lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
