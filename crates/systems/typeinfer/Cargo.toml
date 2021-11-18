@@ -1,5 +1,5 @@
 [package]
-name = "deskc-type-inference"
+name = "deskc-typeinfer"
 version = "0.1.0"
 edition = "2021"
 

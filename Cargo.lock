@@ -117,10 +117,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-mir"
-version = "0.1.0"
-
-[[package]]
 name = "deskc-parser"
 version = "0.1.0"
 dependencies = [
@@ -138,7 +134,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-type-inference"
+name = "deskc-typeinfer"
 version = "0.1.0"
 dependencies = [
  "chumsky",

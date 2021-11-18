@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
     pub input: Type,
@@ -34,6 +36,10 @@ pub enum Type {
         ty: Box<Self>,
         effects: Vec<Effect>,
     },
+}
+
+pub struct ExprTypes {
+    pub types: HashMap<Id, Type>,
 }
 
 mod tests {

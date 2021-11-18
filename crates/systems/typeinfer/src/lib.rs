@@ -8,7 +8,7 @@ use hir::{
     expr::{Expr, Literal},
     meta::WithMeta,
 };
-use types::{Effect, Type};
+use types::{Effect, ExprTypes, Type};
 
 use crate::utils::{from_hir_type, with_effects};
 
@@ -64,6 +64,12 @@ impl Ctx {
             self.expr_types
                 .borrow_mut()
                 .insert(meta.id, with_effects(self.substitute_from_ctx(ty), effects));
+        }
+    }
+
+    fn get_expr_types(&self) -> ExprTypes {
+        ExprTypes {
+            types: self.expr_types.borrow().clone(),
         }
     }
 
