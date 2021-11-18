@@ -13,8 +13,9 @@ use hir::{
 #[derive(Default)]
 pub struct HirGen {
     next_id: RefCell<Id>,
-    variables: RefCell<HashMap<String, Id>>,
     next_span: RefCell<Vec<Span>>,
+    pub variables: RefCell<HashMap<String, Id>>,
+    pub expr_attrs: RefCell<HashMap<Id, Expr>>,
 }
 
 impl HirGen {
@@ -35,6 +36,7 @@ impl HirGen {
     pub fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         WithMeta {
             meta: Some(Meta {
+                attr: None,
                 id: self.next_id(),
                 span: self.pop_span().unwrap(),
             }),
@@ -206,6 +208,16 @@ impl HirGen {
             ast::expr::Expr::Module(_) => todo!(),
             ast::expr::Expr::Import { ty, uuid } => todo!(),
             ast::expr::Expr::Export { ty } => todo!(),
+            ast::expr::Expr::Attribute { attr, expr } => {
+                self.pop_span();
+                let mut ret = self.gen(*expr)?;
+                if let Some(meta) = &mut ret.meta {
+                    let attr = self.gen(*attr)?.value;
+                    meta.attr = Some(Box::new(attr.clone()));
+                    self.expr_attrs.borrow_mut().insert(meta.id, attr);
+                }
+                ret
+            }
         };
         Ok(with_meta)
     }
@@ -232,19 +244,37 @@ mod tests {
             gen.gen((
                 ast::expr::Expr::Apply {
                     function: (ast::ty::Type::Number, 3..10),
-                    arguments: vec![(ast::expr::Expr::Hole, 26..27)],
+                    arguments: vec![(
+                        ast::expr::Expr::Attribute {
+                            attr: Box::new((
+                                ast::expr::Expr::Literal(ast::expr::Literal::Int(3)),
+                                24..25
+                            )),
+                            expr: Box::new((ast::expr::Expr::Hole, 26..27)),
+                        },
+                        24..27
+                    )],
                 },
                 0..27
             ),),
             Ok(WithMeta {
-                meta: Some(Meta { id: 2, span: 0..27 }),
+                meta: Some(Meta {
+                    attr: None,
+                    id: 3,
+                    span: 0..27
+                }),
                 value: Expr::Apply {
                     function: WithMeta {
-                        meta: Some(Meta { id: 0, span: 3..10 }),
+                        meta: Some(Meta {
+                            attr: None,
+                            id: 0,
+                            span: 3..10
+                        }),
                         value: Type::Number
                     },
                     arguments: vec![WithMeta {
                         meta: Some(Meta {
+                            attr: Some(Box::new(Expr::Literal(Literal::Int(3)))),
                             id: 1,
                             span: 26..27
                         }),
@@ -252,6 +282,11 @@ mod tests {
                     }],
                 },
             })
+        );
+
+        assert_eq!(
+            gen.expr_attrs.borrow_mut().get(&1),
+            Some(&Expr::Literal(Literal::Int(3)))
         );
     }
 

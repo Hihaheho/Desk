@@ -1,18 +1,18 @@
 use crate::meta::{Id, WithMeta};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Handler {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Effect {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Number,
     String,

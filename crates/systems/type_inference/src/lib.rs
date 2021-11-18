@@ -1,6 +1,6 @@
 mod error;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use error::TypeError;
 use hir::{
@@ -24,6 +24,8 @@ enum Log {
 pub struct Ctx {
     next_id: Rc<RefCell<usize>>,
     logs: Vec<Log>,
+    // Result of type inference
+    expr_types: Rc<RefCell<HashMap<Id, Type>>>,
 }
 
 fn from_hir_type(ty: &hir::ty::Type) -> Type {
@@ -56,6 +58,15 @@ impl Ctx {
         Self {
             next_id: self.next_id.clone(),
             logs: Vec::new(),
+            expr_types: self.expr_types.clone(),
+        }
+    }
+
+    fn store_type(&self, expr: &WithMeta<Expr>, ty: &Type) {
+        if let Some(meta) = &expr.meta {
+            self.expr_types
+                .borrow_mut()
+                .insert(meta.id, self.substitute_from_ctx(ty));
         }
     }
 
@@ -102,17 +113,17 @@ impl Ctx {
 
     fn get_solved(&self, id: &Id) -> Option<Type> {
         self.logs.iter().find_map(|log| match log {
-            Log::Solved(_, ty) => Some(ty.clone()),
+            Log::Solved(var, ty) if var == id => Some(ty.clone()),
             _ => None,
         })
     }
 
-    fn get_type(&self, id: Id) -> Result<Type, TypeError> {
+    fn get_type(&self, id: &Id) -> Result<Type, TypeError> {
         self.logs
             .iter()
             .find_map(|log| {
                 if let Log::TypedVariable(typed_id, ty) = log {
-                    if *typed_id == id {
+                    if *typed_id == *id {
                         Some(ty)
                     } else {
                         None
@@ -122,11 +133,11 @@ impl Ctx {
                 }
             })
             .cloned()
-            .ok_or(TypeError::VariableNotTyped { id })
+            .ok_or(TypeError::VariableNotTyped { id: *id })
     }
 
-    fn check(&self, expr: &Expr, ty: &Type) -> Result<Ctx, TypeError> {
-        let ctx = match (expr, ty) {
+    fn check(&self, expr: &WithMeta<Expr>, ty: &Type) -> Result<Ctx, TypeError> {
+        let ctx = match (&expr.value, ty) {
             (Expr::Literal(Literal::Int(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
@@ -141,11 +152,10 @@ impl Ctx {
             ) => {
                 todo!()
             }
-            (expr, Type::ForAll { variable, body }) => {
+            (_, Type::ForAll { variable, body }) => {
                 self.add(Log::Variable(*variable)).check(expr, &*body)?
             }
-            (expr, ty) => {
-                dbg!((expr, ty));
+            (_, ty) => {
                 let (ctx, synthed) = self.synth(expr)?;
                 ctx.subtype(
                     &ctx.substitute_from_ctx(&synthed),
@@ -153,12 +163,12 @@ impl Ctx {
                 )?
             }
         };
-
+        ctx.store_type(expr, ty);
         Ok(ctx)
     }
 
-    pub fn synth(&self, expr: &Expr) -> Result<(Ctx, Type), TypeError> {
-        let ctx = match expr {
+    pub fn synth(&self, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
+        let (ctx, ty) = match &expr.value {
             Expr::Literal(Literal::Int(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Float(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Rational(_, _)) => (self.clone(), Type::Number),
@@ -175,14 +185,14 @@ impl Ctx {
                 } = &ty
                 {
                     // TODO: support let rec
-                    let (ctx, def_ty) = self.synth(&definition.value)?;
+                    let (ctx, def_ty) = self.synth(&definition)?;
                     let (ctx, ty) = ctx
                         .add(Log::TypedVariable(*var, def_ty.clone()))
-                        .synth(&expression.value)?;
-                    ctx.truncate_from(&Log::TypedVariable(*var, def_ty))
+                        .synth(&expression)?;
+                    ctx.insert_in_place(&Log::TypedVariable(*var, def_ty), vec![])
                         .with_type(ty)
                 } else {
-                    self.synth(&expression.value)?
+                    self.synth(&expression)?
                 }
             }
             Expr::Perform { input, output } => todo!(),
@@ -197,28 +207,28 @@ impl Ctx {
                 arguments,
             } => {
                 if arguments.is_empty() {
+                    // Reference
                     let fun = from_hir_type(&function.value);
                     if let Type::Variable(id) = fun {
-                        self.clone().with_type(self.get_type(id)?)
+                        self.clone().with_type(self.get_type(&id)?)
                     } else {
                         self.clone().with_type(fun)
                     }
                 } else {
+                    // Normal application
                     let fun = match from_hir_type(&function.value) {
-                        Type::Variable(var) => self.get_type(var)?,
+                        Type::Variable(var) => self.get_type(&var)?,
                         ty => ty,
                     };
                     arguments
                         .iter()
-                        .try_fold((self.clone(), fun), |(ctx, fun), arg| {
-                            ctx.apply(&fun, &arg.value)
-                        })?
+                        .try_fold((self.clone(), fun), |(ctx, fun), arg| ctx.apply(&fun, &arg))?
                 }
             }
             Expr::Product(_) => todo!(),
             Expr::Typed { ty, expr } => {
                 let ty = from_hir_type(&ty.value);
-                self.check(&expr.value, &ty)?.with_type(ty)
+                self.check(&expr, &ty)?.with_type(ty)
             }
             Expr::Hole => todo!(),
             Expr::Function { parameter, body } => {
@@ -228,7 +238,7 @@ impl Ctx {
                     self.add(Log::Existential(a))
                         .add(Log::Existential(b))
                         .add(Log::TypedVariable(id, Type::Existential(a)))
-                        .check(&body.value, &Type::Existential(b))?
+                        .check(&body, &Type::Existential(b))?
                         .truncate_from(&Log::TypedVariable(id, Type::Existential(a)))
                         .with_type(Type::Function {
                             parameter: Box::new(Type::Existential(a)),
@@ -236,7 +246,7 @@ impl Ctx {
                         })
                 } else {
                     let b = self.fresh_existential();
-                    self.check(&body.value, &Type::Existential(b))?
+                    self.check(&body, &Type::Existential(b))?
                         .truncate_from(&Log::Existential(b))
                         .with_type(Type::Function {
                             parameter: Box::new(from_hir_type(&parameter.value)),
@@ -247,14 +257,29 @@ impl Ctx {
             Expr::Array(_) => todo!(),
             Expr::Set(_) => todo!(),
         };
-        Ok(ctx)
+        ctx.store_type(expr, &ty);
+        Ok((ctx, ty))
     }
 
-    fn apply(&self, ty: &Type, expr: &Expr) -> Result<(Ctx, Type), TypeError> {
+    fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
         let ret = match ty {
             Type::Function { parameter, body } => {
-                let ctx = self.check(expr, &*parameter)?;
-                (ctx, *body.clone())
+                let delta = self.check(expr, &*parameter)?;
+                // if output is a type variable and expr is synthed, output can be replaced with the type of expr.
+                let ty = match &**body {
+                    Type::Variable(var) => self.synth(expr).ok().map(|(ctx, ty)| {
+                        ctx.empty()
+                            .add(Log::TypedVariable(*var, ty.clone()))
+                            .substitute_from_ctx(body)
+                    }),
+                    Type::Existential(var) => self.synth(expr).ok().map(|(ctx, ty)| {
+                        ctx.empty()
+                            .add(Log::Solved(*var, ty.clone()))
+                            .substitute_from_ctx(body)
+                    }),
+                    _ => None,
+                };
+                (delta, ty.unwrap_or(*body.clone()))
             }
             Type::Existential(id) => {
                 let a1 = self.fresh_existential();
@@ -277,7 +302,7 @@ impl Ctx {
             )?,
             _ => Err(TypeError::NotApplicable {
                 ty: ty.clone(),
-                expr: expr.clone(),
+                expr: expr.value.clone(),
             })?,
         };
         Ok(ret)
@@ -488,13 +513,14 @@ impl Ctx {
                     .instantiate_subtype(&a1, parameter)?;
                 theta.instantiate_supertype(&theta.substitute_from_ctx(&body), &a2)?
             }
-            Type::ForAll { variable, body } => {
-                let beta = self.fresh_existential();
-                self.add(Log::Marker(beta))
-                    .add(Log::Existential(beta))
-                    .instantiate_supertype(&substitute(body, &beta, &Type::Existential(beta)), id)?
-                    .truncate_from(&Log::Marker(beta))
-            }
+            Type::ForAll { variable, body } => self
+                .add(Log::Marker(*variable))
+                .add(Log::Existential(*variable))
+                .instantiate_supertype(
+                    &substitute(body, variable, &Type::Existential(*variable)),
+                    id,
+                )?
+                .truncate_from(&Log::Marker(*variable)),
             Type::Existential(var) => self.insert_in_place(
                 &Log::Existential(*var),
                 vec![Log::Solved(*var, Type::Existential(*id))],
@@ -591,12 +617,12 @@ impl Ctx {
             },
             Type::Array(ty) => Type::Array(Box::new(self.substitute_from_ctx(ty))),
             Type::Set(ty) => Type::Set(Box::new(self.substitute_from_ctx(ty))),
-            Type::Variable(id) => Type::Variable(id.clone()),
+            Type::Variable(id) => self.get_type(id).unwrap_or(a.clone()),
             Type::ForAll { variable, body } => Type::ForAll {
                 variable: *variable,
                 body: Box::new(self.substitute_from_ctx(body)),
             },
-            Type::Existential(id) => self.get_solved(id).unwrap_or(Type::Existential(*id)),
+            Type::Existential(id) => self.get_solved(id).unwrap_or(a.clone()),
         }
     }
 }
@@ -667,15 +693,20 @@ fn is_monotype(ty: &Type) -> bool {
 #[cfg(test)]
 mod tests {
     use hir::meta::no_meta;
+    use hirgen::HirGen;
 
     use super::*;
 
-    fn synth(expr: Expr) -> Result<Type, TypeError> {
+    fn synth(expr: WithMeta<Expr>) -> Result<Type, TypeError> {
         let (ctx, ty) = Ctx::default().synth(&expr)?;
         Ok(ctx.substitute_from_ctx(&ty))
     }
 
-    fn parse(input: &str) -> Expr {
+    fn parse(input: &str) -> WithMeta<Expr> {
+        parse_inner(input).1
+    }
+
+    fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
         use chumsky::prelude::end;
         use chumsky::{Parser, Stream};
         let expr = parser::expr::parser()
@@ -688,24 +719,48 @@ mod tests {
                     .into_iter(),
             ))
             .unwrap();
-        dbg!(hirgen::HirGen::default().gen(expr).unwrap().value)
+        let gen = hirgen::HirGen::default();
+        let expr = gen.gen(expr).unwrap();
+        (gen, dbg!(expr))
+    }
+
+    fn assert_types(hirgen: &HirGen, ctx: &Ctx, types: Vec<(Expr, Type)>) {
+        let attrs: HashMap<String, Id> = hirgen
+            .expr_attrs
+            .borrow()
+            .iter()
+            .map(|(id, attr)| (format!("{:?}", attr), id.clone()))
+            .collect();
+        for (expr, ty) in types {
+            assert_eq!(
+                ctx.expr_types
+                    .borrow()
+                    .get(attrs.get(&format!("{:?}", expr)).unwrap()),
+                Some(&ty),
+                "attr is {:?}",
+                expr
+            );
+        }
     }
 
     #[test]
     fn number() {
-        assert_eq!(synth(Expr::Literal(Literal::Int(1))), Ok(Type::Number));
+        assert_eq!(
+            synth(no_meta(Expr::Literal(Literal::Int(1)))),
+            Ok(Type::Number)
+        );
     }
 
     #[test]
     fn function() {
         assert_eq!(
-            synth(Expr::Apply {
+            synth(no_meta(Expr::Apply {
                 function: no_meta(hir::ty::Type::Function {
                     parameter: Box::new(no_meta(hir::ty::Type::Number)),
                     body: Box::new(no_meta(hir::ty::Type::String)),
                 }),
                 arguments: vec![no_meta(Expr::Literal(Literal::Int(1))),]
-            }),
+            })),
             Ok(Type::String)
         );
     }
@@ -759,6 +814,36 @@ mod tests {
             "#
             )),
             Ok(Type::Number)
+        );
+    }
+
+    #[test]
+    fn typing_expressions() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            #1 $ #2 \ <x> -> #3 <x>: <id> ~
+            #4 <id> #5 1
+        "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+
+        assert_types(
+            &hirgen,
+            &ctx,
+            vec![
+                (Expr::Literal(Literal::Int(1)), Type::Number),
+                (
+                    Expr::Literal(Literal::Int(2)),
+                    Type::Function {
+                        parameter: Box::new(Type::Existential(0)),
+                        body: Box::new(Type::Existential(0)),
+                    },
+                ),
+                (Expr::Literal(Literal::Int(3)), Type::Existential(0)),
+                (Expr::Literal(Literal::Int(4)), Type::Number),
+                (Expr::Literal(Literal::Int(5)), Type::Number),
+            ],
         );
     }
 }
