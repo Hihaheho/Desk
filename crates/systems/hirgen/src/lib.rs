@@ -142,8 +142,9 @@ impl HirGen {
                 definition: Box::new(self.gen(*definition)?),
                 expression: Box::new(self.gen(*expression)?),
             }),
-            ast::expr::Expr::Perform { input } => self.with_meta(Expr::Perform {
+            ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
                 input: Box::new(self.gen(*input)?),
+                output: self.gen_type(output)?,
             }),
             ast::expr::Expr::Handle {
                 input,

@@ -21,6 +21,7 @@ pub enum Expr {
     },
     Perform {
         input: Box<Spanned<Self>>,
+        output: Spanned<Type>,
     },
     Handle {
         input: Spanned<Type>,

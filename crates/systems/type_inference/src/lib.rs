@@ -202,7 +202,7 @@ impl Ctx {
                     self.synth(&expression)?
                 }
             }
-            Expr::Perform { input } => todo!(),
+            Expr::Perform { input, output } => todo!(),
             Expr::Handle {
                 input,
                 output,

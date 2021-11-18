@@ -50,8 +50,11 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let perform = just(Token::Perform)
             .ignore_then(expr.clone())
-            .map(|effect| Expr::Perform {
+            .then_ignore(just(Token::EArrow))
+            .then(type_.clone())
+            .map(|(effect, output)| Expr::Perform {
                 input: Box::new(effect),
+                output,
             });
         let handle = type_
             .clone()
@@ -177,9 +180,10 @@ mod tests {
     #[test]
     fn parse_perform() {
         assert_eq!(
-            parse("! ?").unwrap().0,
+            parse("! ? => <'string>").unwrap().0,
             Expr::Perform {
                 input: Box::new((Expr::Hole, 2..3)),
+                output: (Type::String, 8..15),
             }
         );
     }

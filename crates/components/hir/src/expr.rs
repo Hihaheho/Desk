@@ -21,6 +21,7 @@ pub enum Expr {
     },
     Perform {
         input: Box<WithMeta<Self>>,
+        output: WithMeta<Type>,
     },
     Handle {
         input: WithMeta<Type>,
