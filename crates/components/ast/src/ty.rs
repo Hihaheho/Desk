@@ -8,6 +8,10 @@ pub struct Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
+    Brand {
+        brand: String,
+        item: Box<Spanned<Type>>,
+    },
     Number,
     String,
     Trait(Vec<Spanned<Self>>),

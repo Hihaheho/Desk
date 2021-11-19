@@ -84,6 +84,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-evalmir"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "deskc-hirgen",
+ "deskc-lexer",
+ "deskc-mir",
+ "deskc-parser",
+ "deskc-typeinfer",
+ "deskc-types",
+]
+
+[[package]]
 name = "deskc-fmt"
 version = "0.1.0"
 
@@ -98,8 +111,12 @@ dependencies = [
 name = "deskc-hirgen"
 version = "0.1.0"
 dependencies = [
+ "chumsky",
  "deskc-ast",
  "deskc-hir",
+ "deskc-lexer",
+ "deskc-parser",
+ "pretty_assertions",
  "thiserror",
 ]
 
@@ -117,6 +134,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-mir"
+version = "0.1.0"
+
+[[package]]
 name = "deskc-parser"
 version = "0.1.0"
 dependencies = [
@@ -124,6 +145,28 @@ dependencies = [
  "deskc-ast",
  "deskc-lexer",
  "deskc-tokens",
+]
+
+[[package]]
+name = "deskc-thir"
+version = "0.1.0"
+dependencies = [
+ "deskc-types",
+]
+
+[[package]]
+name = "deskc-thirgen"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "deskc-hir",
+ "deskc-hirgen",
+ "deskc-lexer",
+ "deskc-parser",
+ "deskc-thir",
+ "deskc-typeinfer",
+ "deskc-types",
+ "thiserror",
 ]
 
 [[package]]

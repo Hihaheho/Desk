@@ -23,14 +23,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             Token::Str(string) => Ok(Expr::Literal(Literal::String(string))),
             _ => Err(Simple::custom(span, "expected string literal")),
         });
-        let uuid = filter_map(|span, token| match token {
-            Token::Uuid(uuid) => Ok(Expr::Literal(Literal::Uuid(uuid))),
-            _ => Err(Simple::custom(span, "expected uuid literal")),
-        });
         let literal = rational
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
-            .or(string)
-            .or(uuid);
+            .or(string);
         let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in = just(Token::Let)
             .ignore_then(expr.clone())
@@ -102,6 +97,18 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 attr: Box::new(attr),
                 expr: Box::new(expr),
             });
+        let ident = filter_map(|span, token| match token {
+            Token::Ident(ident) => Ok(ident),
+            _ => Err(Simple::custom(span, "expected identifier")),
+        });
+        let brand = just(Token::Brands)
+            .ignore_then(ident.separated_by(just(Token::Comma)).dot())
+            .in_()
+            .then(expr.clone())
+            .map(|(brands, expr)| Expr::Brand {
+                brands,
+                expr: Box::new(expr),
+            });
         hole.or(literal)
             .or(let_in)
             .or(perform)
@@ -113,6 +120,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(apply)
             .or(typed)
             .or(attribute)
+            .or(brand)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -150,18 +158,6 @@ mod tests {
         assert_eq!(
             parse(r#""abc""#).unwrap().0,
             Expr::Literal(Literal::String("abc".into()))
-        );
-    }
-
-    #[test]
-    fn parse_literal_uuid() {
-        assert_eq!(
-            parse(r#"'uuid 00000000-0000-0000-0000-000000000000"#)
-                .unwrap()
-                .0,
-            Expr::Literal(Literal::Uuid(
-                "00000000-0000-0000-0000-000000000000".parse().unwrap()
-            ))
         );
     }
 
@@ -280,6 +276,17 @@ mod tests {
             Expr::Attribute {
                 attr: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
                 expr: Box::new((Expr::Hole, 6..7)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_brand() {
+        assert_eq!(
+            parse("'brand a, b. ~ ?").unwrap().0,
+            Expr::Brand {
+                brands: vec!["a".into(), "b".into()],
+                expr: Box::new((Expr::Hole, 15..16)),
             }
         );
     }

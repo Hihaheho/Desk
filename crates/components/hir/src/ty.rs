@@ -40,4 +40,13 @@ pub enum Type {
         bound: Box<WithMeta<Self>>,
         identifier: String,
     },
+    Brand {
+        brand: String,
+        item: Box<WithMeta<Self>>,
+    },
+    // just label brand
+    Label {
+        label: String,
+        item: Box<WithMeta<Self>>,
+    },
 }

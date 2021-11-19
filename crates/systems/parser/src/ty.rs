@@ -83,6 +83,18 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
+        let brand = filter_map(|span, input| {
+            if let Token::Brand(ident) = input {
+                Ok(ident)
+            } else {
+                Err(Simple::custom(span, "Expected brand"))
+            }
+        })
+        .then(type_.clone())
+        .map(|(brand, ty)| Type::Brand {
+            brand,
+            item: Box::new(ty),
+        });
         let variable = identifier.clone().map(Type::Variable);
 
         infer
@@ -97,6 +109,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(array)
             .or(set)
             .or(function)
+            .or(brand)
             .or(variable.clone())
             .map_with_span(|t, span| (t, span))
     });
@@ -240,6 +253,17 @@ mod tests {
                         output: (Type::Number, 45..52),
                     }
                 ]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_brand() {
+        assert_eq!(
+            parse("@added 'number").unwrap().0,
+            Type::Brand {
+                brand: "added".into(),
+                item: Box::new((Type::Number, 7..14)),
             }
         );
     }

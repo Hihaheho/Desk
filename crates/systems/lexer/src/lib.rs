@@ -64,9 +64,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
             "number" => Ok(Token::NumberType),
             "string" => Ok(Token::StringType),
             "alias" => Ok(Token::Alias),
+            "brand" => Ok(Token::Brands),
             "type" => Ok(Token::Type),
-            "private" => Ok(Token::Private),
-            "continue" => Ok(Token::Continue),
             "a" => Ok(Token::A),
             _ => Err(Simple::custom(
                 span,

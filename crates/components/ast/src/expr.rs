@@ -8,7 +8,6 @@ pub enum Literal {
     Int(i64),
     Rational(i64, i64),
     Float(f64),
-    Uuid(Uuid),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -56,5 +55,9 @@ pub enum Expr {
     Attribute {
         attr: Box<Spanned<Self>>,
         expr: Box<Spanned<Self>>,
-    }
+    },
+    Brand {
+        brands: Vec<String>,
+        expr: Box<Spanned<Self>>,
+    },
 }

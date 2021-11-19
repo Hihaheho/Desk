@@ -1,6 +1,9 @@
 mod error;
 
-use std::{cell::RefCell, collections::HashMap};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+};
 
 use ast::span::{Span, Spanned};
 use error::HirGenError;
@@ -16,6 +19,7 @@ pub struct HirGen {
     next_span: RefCell<Vec<Span>>,
     pub variables: RefCell<HashMap<String, Id>>,
     pub expr_attrs: RefCell<HashMap<Id, Expr>>,
+    brands: RefCell<HashSet<String>>,
 }
 
 impl HirGen {
@@ -117,6 +121,19 @@ impl HirGen {
                     identifier,
                 })
             }
+            ast::ty::Type::Brand { brand, item } => {
+                if self.brands.borrow().contains(&brand) {
+                    self.with_meta(Type::Brand {
+                        brand,
+                        item: Box::new(self.gen_type(*item)?),
+                    })
+                } else {
+                    self.with_meta(Type::Label {
+                        label: brand,
+                        item: Box::new(self.gen_type(*item)?),
+                    })
+                }
+            }
         };
         Ok(with_meta)
     }
@@ -131,8 +148,8 @@ impl HirGen {
                 ast::expr::Literal::Int(value) => Literal::Int(value),
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(a, b),
                 ast::expr::Literal::Float(value) => Literal::Float(value),
-                ast::expr::Literal::Uuid(value) => Literal::Uuid(value),
             })),
+            ast::expr::Expr::Hole => self.with_meta(Expr::Literal(Literal::Hole)),
             ast::expr::Expr::Let {
                 ty: variable,
                 definition,
@@ -177,7 +194,6 @@ impl HirGen {
                 ty: self.gen_type(ty)?,
                 expr: Box::new(self.gen(*expr)?),
             }),
-            ast::expr::Expr::Hole => self.with_meta(Expr::Hole),
             ast::expr::Expr::Function { parameters, body } => {
                 let span = self.pop_span().unwrap();
                 parameters
@@ -188,7 +204,7 @@ impl HirGen {
                     .try_rfold(self.gen(*body)?, |body, parameter| {
                         self.push_span(span.clone());
                         Ok(self.with_meta(Expr::Function {
-                            parameter: Box::new(parameter),
+                            parameter,
                             body: Box::new(body),
                         }))
                     })?
@@ -218,6 +234,12 @@ impl HirGen {
                 }
                 ret
             }
+            ast::expr::Expr::Brand { brands, expr } => {
+                brands.into_iter().for_each(|brand| {
+                    self.brands.borrow_mut().insert(brand);
+                });
+                self.gen(*expr)?
+            }
         };
         Ok(with_meta)
     }
@@ -233,9 +255,127 @@ impl HirGen {
 
 #[cfg(test)]
 mod tests {
-    use hir::{meta::Meta, ty::Type};
+    use hir::{
+        meta::{no_meta, Meta},
+        ty::Type,
+    };
+    use pretty_assertions::assert_eq;
 
     use super::*;
+
+    fn parse(input: &str) -> Spanned<ast::expr::Expr> {
+        use chumsky::prelude::end;
+        use chumsky::{Parser, Stream};
+        parser::expr::parser()
+            .then_ignore(end())
+            .parse(Stream::from_iter(
+                input.len()..input.len() + 1,
+                lexer::lexer()
+                    .then_ignore(end())
+                    .parse(input)
+                    .unwrap()
+                    .into_iter(),
+            ))
+            .unwrap()
+    }
+    fn remove_meta_ty(ty: WithMeta<Type>) -> WithMeta<Type> {
+        let value = match ty.value {
+            Type::Number => ty.value,
+            Type::String => ty.value,
+            Type::Trait(_) => todo!(),
+            Type::Effectful { ty, effects } => Type::Effectful {
+                ty: Box::new(remove_meta_ty(*ty)),
+                effects,
+            },
+            Type::Infer => ty.value,
+            Type::This => ty.value,
+            Type::Product(types) => {
+                Type::Product(types.into_iter().map(|ty| remove_meta_ty(ty)).collect())
+            }
+            Type::Sum(types) => Type::Sum(types.into_iter().map(|ty| remove_meta_ty(ty)).collect()),
+            Type::Function { parameter, body } => Type::Function {
+                parameter: Box::new(remove_meta_ty(*parameter)),
+                body: Box::new(remove_meta_ty(*body)),
+            },
+            Type::Array(ty) => Type::Array(Box::new(remove_meta_ty(*ty))),
+            Type::Set(ty) => Type::Set(Box::new(remove_meta_ty(*ty))),
+            Type::Let { definition, body } => Type::Let {
+                definition: Box::new(remove_meta_ty(*definition)),
+                body: Box::new(remove_meta_ty(*body)),
+            },
+            Type::Variable(_) => ty.value,
+            Type::BoundedVariable { bound, identifier } => Type::BoundedVariable {
+                bound: Box::new(remove_meta_ty(*bound)),
+                identifier,
+            },
+            Type::Brand { brand, item } => Type::Brand {
+                brand,
+                item: Box::new(remove_meta_ty(*item)),
+            },
+            Type::Label { label, item } => Type::Label {
+                label,
+                item: Box::new(remove_meta_ty(*item)),
+            },
+        };
+        no_meta(value)
+    }
+    fn remove_meta(expr: WithMeta<Expr>) -> WithMeta<Expr> {
+        let value = match expr.value {
+            Expr::Literal(_) => expr.value,
+            Expr::Let {
+                ty,
+                definition,
+                expression,
+            } => Expr::Let {
+                ty: remove_meta_ty(ty),
+                definition: Box::new(remove_meta(*definition)),
+                expression: Box::new(remove_meta(*expression)),
+            },
+            Expr::Perform { input, output } => Expr::Perform {
+                input: Box::new(remove_meta(*input)),
+                output: remove_meta_ty(output),
+            },
+            Expr::Handle {
+                input,
+                output,
+                handler,
+                expr,
+            } => Expr::Handle {
+                input: remove_meta_ty(input),
+                output: remove_meta_ty(output),
+                handler: Box::new(remove_meta(*handler)),
+                expr: Box::new(remove_meta(*expr)),
+            },
+            Expr::Apply {
+                function,
+                arguments,
+            } => Expr::Apply {
+                function: remove_meta_ty(function),
+                arguments: arguments
+                    .into_iter()
+                    .map(|argument| remove_meta(argument))
+                    .collect(),
+            },
+            Expr::Product(exprs) => {
+                Expr::Product(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
+            }
+            Expr::Typed { ty, expr } => Expr::Typed {
+                ty: remove_meta_ty(ty),
+                expr: Box::new(remove_meta(*expr)),
+            },
+            Expr::Function { parameter, body } => Expr::Function {
+                parameter: remove_meta_ty(parameter),
+                body: Box::new(remove_meta(*body)),
+            },
+            Expr::Array(exprs) => {
+                Expr::Array(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
+            }
+            Expr::Set(exprs) => {
+                Expr::Set(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
+            }
+        };
+        no_meta(value)
+    }
 
     #[test]
     fn test() {
@@ -278,7 +418,7 @@ mod tests {
                             id: 1,
                             span: 26..27
                         }),
-                        value: Expr::Hole
+                        value: Expr::Literal(Literal::Hole)
                     }],
                 },
             })
@@ -290,5 +430,47 @@ mod tests {
         );
     }
 
-    // TODO flatten product and sum
+    #[test]
+    fn label_and_brand() {
+        let expr = parse(
+            r#"
+        $ <@brand 'number> ~
+        'brand brand ~
+        $ <@brand 'number> ~
+        <@label 'number>
+        "#,
+        );
+
+        let gen = HirGen::default();
+        assert_eq!(
+            remove_meta(gen.gen(expr).unwrap()),
+            no_meta(Expr::Let {
+                ty: no_meta(Type::Infer),
+                definition: Box::new(no_meta(Expr::Apply {
+                    function: no_meta(Type::Label {
+                        label: "brand".into(),
+                        item: Box::new(no_meta(Type::Number)),
+                    }),
+                    arguments: vec![],
+                })),
+                expression: Box::new(no_meta(Expr::Let {
+                    ty: no_meta(Type::Infer),
+                    definition: Box::new(no_meta(Expr::Apply {
+                        function: no_meta(Type::Brand {
+                            brand: "brand".into(),
+                            item: Box::new(no_meta(Type::Number)),
+                        }),
+                        arguments: vec![],
+                    })),
+                    expression: Box::new(no_meta(Expr::Apply {
+                        function: no_meta(Type::Label {
+                            label: "label".into(),
+                            item: Box::new(no_meta(Type::Number)),
+                        }),
+                        arguments: vec![],
+                    }))
+                }))
+            })
+        )
+    }
 }

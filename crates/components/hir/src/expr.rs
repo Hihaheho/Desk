@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{meta::WithMeta, ty::Type};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -8,7 +6,7 @@ pub enum Literal {
     Int(i64),
     Rational(i64, i64),
     Float(f64),
-    Uuid(Uuid),
+    Hole,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,9 +36,8 @@ pub enum Expr {
         ty: WithMeta<Type>,
         expr: Box<WithMeta<Self>>,
     },
-    Hole,
     Function {
-        parameter: Box<WithMeta<Type>>,
+        parameter: WithMeta<Type>,
         body: Box<WithMeta<Self>>,
     },
     Array(Vec<WithMeta<Self>>),

@@ -1,6 +1,6 @@
+use crate::ty::{Effect, Id, Type};
 use hir::expr::Expr;
 use thiserror::Error;
-use types::{Effect, Id, Type};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TypeError {

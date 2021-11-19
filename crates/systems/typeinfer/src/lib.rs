@@ -1,4 +1,5 @@
 mod error;
+mod ty;
 mod utils;
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
@@ -8,9 +9,11 @@ use hir::{
     expr::{Expr, Literal},
     meta::WithMeta,
 };
-use types::{Effect, ExprTypes, Type};
+use ty::{Effect, Type};
+use types::{IdGen, Types};
+use utils::into_type;
 
-use crate::utils::{from_hir_type, with_effects};
+use crate::utils::with_effects;
 
 pub type Id = usize;
 
@@ -26,10 +29,10 @@ enum Log {
 
 #[derive(Default, Debug, Clone)]
 pub struct Ctx {
-    next_id: Rc<RefCell<usize>>,
+    id_gen: Rc<RefCell<IdGen>>,
     logs: RefCell<Vec<Log>>,
     // Result of type inference
-    expr_types: Rc<RefCell<HashMap<Id, Type>>>,
+    types: Rc<RefCell<HashMap<Id, Type>>>,
 }
 
 pub struct WithEffects<T>(T, Vec<Effect>);
@@ -47,9 +50,9 @@ impl CtxWithEffects {
 impl Ctx {
     fn empty(&self) -> Self {
         Self {
-            next_id: self.next_id.clone(),
+            id_gen: self.id_gen.clone(),
             logs: Default::default(),
-            expr_types: self.expr_types.clone(),
+            types: self.types.clone(),
         }
     }
 
@@ -59,17 +62,33 @@ impl Ctx {
         id
     }
 
-    fn store_type(&self, expr: &WithMeta<Expr>, ty: &Type, effects: Vec<Effect>) {
+    fn store_type<T>(&self, expr: &WithMeta<T>, ty: &Type, effects: Vec<Effect>) {
         if let Some(meta) = &expr.meta {
-            self.expr_types
+            self.types
                 .borrow_mut()
                 .insert(meta.id, with_effects(self.substitute_from_ctx(ty), effects));
         }
     }
 
-    fn get_expr_types(&self) -> ExprTypes {
-        ExprTypes {
-            types: self.expr_types.borrow().clone(),
+    fn from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
+        let ty = crate::utils::from_hir_type(&hir_ty.value);
+        let ty = self.substitute_from_ctx(&ty);
+        self.store_type(&hir_ty, &ty, vec![]);
+        ty
+    }
+
+    pub fn get_id_gen(&self) -> IdGen {
+        self.id_gen.borrow().clone()
+    }
+
+    pub fn get_types(&self) -> Types {
+        Types {
+            types: self
+                .types
+                .borrow()
+                .iter()
+                .map(|(id, ty)| (id.clone(), into_type(ty)))
+                .collect(),
         }
     }
 
@@ -92,9 +111,7 @@ impl Ctx {
     }
 
     fn fresh_existential(&self) -> Id {
-        let id = *self.next_id.borrow();
-        *self.next_id.borrow_mut() += 1;
-        id
+        self.id_gen.borrow_mut().next_id()
     }
 
     fn with_type(self, ty: Type) -> (Self, Type) {
@@ -191,7 +208,6 @@ impl Ctx {
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::String(_)), Type::String) => self.clone(),
-            (Expr::Literal(Literal::Uuid(_)), Type::String) => self.clone(),
             (
                 Expr::Function { parameter, body },
                 Type::Function {
@@ -232,7 +248,7 @@ impl Ctx {
             Expr::Literal(Literal::Float(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Rational(_, _)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::String(_)) => (self.clone(), Type::String),
-            Expr::Literal(Literal::Uuid(_)) => (self.clone(), Type::String),
+            Expr::Literal(Literal::Hole) => todo!(),
             Expr::Let {
                 ty,
                 definition,
@@ -258,7 +274,7 @@ impl Ctx {
             }
             Expr::Perform { input, output } => {
                 let (ctx, ty) = self.synth(&input)?;
-                let output = from_hir_type(&output.value);
+                let output = ctx.from_hir_type(output);
                 ctx.add(Log::Effect(Effect {
                     input: ty,
                     output: output.clone(),
@@ -284,8 +300,8 @@ impl Ctx {
                     .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));
                 // handled effect and continue effect
                 let handled_effect = self.substitute_from_context_effect(&Effect {
-                    input: from_hir_type(&input.value),
-                    output: from_hir_type(&output.value),
+                    input: self.from_hir_type(input),
+                    output: self.from_hir_type(output),
                 });
                 let continue_effect = self.substitute_from_context_effect(&Effect {
                     input: handled_effect.output.clone(),
@@ -316,7 +332,7 @@ impl Ctx {
             } => {
                 if arguments.is_empty() {
                     // Reference
-                    let fun = from_hir_type(&function.value);
+                    let fun = self.from_hir_type(function);
                     if let Type::Variable(id) = fun {
                         self.clone().with_type(self.get_typed_var(&id)?)
                     } else {
@@ -324,7 +340,7 @@ impl Ctx {
                     }
                 } else {
                     // Normal application
-                    let fun = match from_hir_type(&function.value) {
+                    let fun = match self.from_hir_type(function) {
                         Type::Variable(var) => self.get_typed_var(&var)?,
                         ty => ty,
                     };
@@ -344,12 +360,11 @@ impl Ctx {
                 ctx.with_type(Type::Product(types))
             }
             Expr::Typed { ty, expr } => {
-                let ty = from_hir_type(&ty.value);
+                let ty = self.from_hir_type(ty);
                 self.check(&expr, &ty)?.with_type(ty)
             }
-            Expr::Hole => todo!(),
             Expr::Function { parameter, body } => {
-                if let Type::Variable(id) = from_hir_type(&parameter.value) {
+                if let Type::Variable(id) = self.from_hir_type(parameter) {
                     let a = self.fresh_existential();
                     let b = self.fresh_existential();
                     let WithEffects(ctx, effects) = self
@@ -368,7 +383,7 @@ impl Ctx {
                     self.add(Log::Existential(a))
                         .check(&body, &Type::Existential(a))?
                         .with_type(Type::Function {
-                            parameter: Box::new(from_hir_type(&parameter.value)),
+                            parameter: Box::new(self.from_hir_type(parameter)),
                             body: Box::new(Type::Existential(a)),
                         })
                 }
@@ -456,6 +471,7 @@ impl Ctx {
                         self.is_well_formed(input) && self.is_well_formed(output)
                     })
             }
+            Type::Brand { item, .. } | Type::Label { item, .. } => self.is_well_formed(item),
         }
     }
 
@@ -546,6 +562,12 @@ impl Ctx {
                     self.instantiate_supertype(sub, id)?
                 }
             }
+
+            // handling labels must be under the instantiations
+            (sub, Type::Label { item, label: _ }) => self.subtype(sub, item)?,
+            (Type::Label { item, label: _ }, sup) => self.subtype(item, sup)?,
+            (Type::Brand { item, brand: _ }, sup) => self.subtype(item, sup)?,
+
             (
                 Type::Effectful { ty, effects },
                 Type::Effectful {
@@ -819,6 +841,14 @@ impl Ctx {
                     })
                     .collect(),
             },
+            Type::Brand { brand, item } => Type::Brand {
+                brand: brand.clone(),
+                item: Box::new(self.substitute_from_ctx(item)),
+            },
+            Type::Label { label, item } => Type::Label {
+                label: label.clone(),
+                item: Box::new(self.substitute_from_ctx(item)),
+            },
         }
     }
 
@@ -874,6 +904,14 @@ fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
                 })
                 .collect(),
         },
+        Type::Brand { brand, item } => Type::Brand {
+            brand: brand.clone(),
+            item: Box::new(substitute(item, id, by)),
+        },
+        Type::Label { label, item } => Type::Label {
+            label: label.clone(),
+            item: Box::new(substitute(item, id, by)),
+        },
     }
 }
 
@@ -896,6 +934,7 @@ fn occurs_in(id: &Id, ty: &Type) -> bool {
                     .iter()
                     .any(|Effect { input, output }| occurs_in(id, input) || occurs_in(id, output))
         }
+        Type::Brand { item, .. } | Type::Label { item, .. } => occurs_in(id, item),
     }
 }
 
@@ -917,6 +956,7 @@ fn is_monotype(ty: &Type) -> bool {
                     .iter()
                     .all(|Effect { input, output }| is_monotype(input) && is_monotype(output))
         }
+        Type::Brand { item, .. } | Type::Label { item, .. } => is_monotype(item),
     }
 }
 
@@ -967,7 +1007,7 @@ mod tests {
             .map_while(|i| {
                 attrs
                     .get(&format!("{:?}", Expr::Literal(Literal::Int(i as i64))))
-                    .and_then(|id| ctx.expr_types.borrow().get(id).cloned())
+                    .and_then(|id| ctx.types.borrow().get(id).cloned())
                     .map(|ty| (i, ty))
             })
             .collect()
@@ -1222,4 +1262,77 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn label() {
+        let expr = parse(
+            r#"
+            ^^^1: <@labeled 'number>: <'number>: <@labeled 'number>
+        "#,
+        );
+        assert_eq!(
+            synth(expr),
+            Ok(Type::Label {
+                label: "labeled".into(),
+                item: Box::new(Type::Number),
+            })
+        );
+    }
+
+    #[test]
+    fn instantiate_label() {
+        let expr = parse(
+            r#"
+            \ <x> -> ^<x>: <@labeled 'number>
+        "#,
+        );
+        assert_eq!(
+            synth(expr),
+            Ok(Type::Function {
+                parameter: Box::new(Type::Label {
+                    label: "labeled".into(),
+                    item: Box::new(Type::Number),
+                }),
+                body: Box::new(Type::Label {
+                    label: "labeled".into(),
+                    item: Box::new(Type::Number),
+                })
+            })
+        );
+    }
+
+    #[test]
+    fn brand_supertype() {
+        let expr = parse(
+            r#"
+            'brand brand
+            ^1: <@brand 'number>
+        "#,
+        );
+        assert_eq!(
+            synth(expr),
+            Err(TypeError::NotSubtype {
+                sub: Type::Number,
+                ty: Type::Brand {
+                    brand: "brand".into(),
+                    item: Box::new(Type::Number),
+                },
+            })
+        );
+    }
+
+    #[test]
+    fn brand_subtype() {
+        let expr = parse(
+            r#"
+            'brand brand
+            ^<@brand 'number>: <'number>
+        "#,
+        );
+        assert_eq!(synth(expr), Ok(Type::Number));
+    }
+
+    // Priority labels in function application
+
+    // Priority labels in product and sum
 }
