@@ -3,10 +3,10 @@ mod builtin;
 use std::cell::RefCell;
 
 use hir::{
-    expr::{Expr, Literal},
+    expr::{Expr, Literal, MatchCase},
     meta::{Meta, WithMeta},
 };
-use thir::{MatchCase, TypedHir};
+use thir::TypedHir;
 use types::{IdGen, Type, Types};
 
 use crate::builtin::find_builtin;
@@ -14,7 +14,7 @@ use crate::builtin::find_builtin;
 #[derive(Debug, Default, Clone)]
 pub struct TypedHirGen {
     types: Types,
-    id_gen: RefCell<IdGen>,
+    _id_gen: RefCell<IdGen>,
 }
 
 impl TypedHirGen {
@@ -60,11 +60,7 @@ impl TypedHirGen {
                 function,
                 arguments,
             } => {
-                let default = || thir::Expr::Apply {
-                    function: self.get_type(&function),
-                    arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
-                };
-                // TODO: make this logic stateful (lookup defined, imported types) to allow overwrite the builtin functions
+                // TODO: lookup imported uuid to allow overwrite the builtin functions
                 if let Some((builtin, params)) = find_builtin(&self.get_type(&function)) {
                     let op = thir::Expr::BuiltinOp {
                         op: builtin,
@@ -79,35 +75,11 @@ impl TypedHirGen {
                 } else {
                     if arguments.is_empty() {
                         thir::Expr::Reference
-                    } else if let hir::ty::Type::Label {
-                        label,
-                        item: _type_checked,
-                    } = &function.value
-                    {
-                        // TODO: make this more accurate
-                        // TODO: exhaustive check
-                        if label == "match" {
-                            thir::Expr::Match {
-                                input: Box::new(self.gen(&arguments[0])),
-                                cases: arguments[1..]
-                                    .iter()
-                                    .map(|arg| {
-                                        if let Expr::Function { parameter, body } = &arg.value {
-                                            MatchCase {
-                                                ty: self.get_type(&parameter),
-                                                expr: self.gen(&*body),
-                                            }
-                                        } else {
-                                            panic!("match case must be a function")
-                                        }
-                                    })
-                                    .collect(),
-                            }
-                        } else {
-                            default()
-                        }
                     } else {
-                        default()
+                        thir::Expr::Apply {
+                            function: self.get_type(&function),
+                            arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
+                        }
                     }
                 }
             }
@@ -142,6 +114,16 @@ impl TypedHirGen {
             Expr::Set(values) => {
                 thir::Expr::Set(values.iter().map(|value| self.gen(&*value)).collect())
             }
+            Expr::Match { of, cases } => thir::Expr::Match {
+                input: Box::new(self.gen(&*of)),
+                cases: cases
+                    .iter()
+                    .map(|MatchCase { ty, expr }| thir::MatchCase {
+                        ty: self.get_type(ty),
+                        expr: self.gen(expr),
+                    })
+                    .collect(),
+            },
         };
         TypedHir { id: *id, ty, expr }
     }
@@ -266,9 +248,9 @@ mod tests {
     #[test]
     fn builtin_curried() {
         let expr = parse(r#"<\'number, 'number -> @sum 'number>"#);
-        let gen = TypedHirGen {
+        let _gen = TypedHirGen {
             types: infer(&expr),
-            id_gen: RefCell::new(IdGen { next: 100 }),
+            _id_gen: RefCell::new(IdGen { next: 100 }),
         };
         // TODO
         // assert_eq!(
@@ -327,9 +309,9 @@ mod tests {
     fn match_() {
         let expr = parse(
             r#"
-        <@match \ +'number, 'string., _, _ -> 'number> 3,
-            \<'number> -> 1,
-            \<'string> -> 2
+        + 3 ~
+            <'number> -> 1,
+            <'string> -> "2".
         "#,
         );
         let gen = TypedHirGen {
@@ -339,29 +321,29 @@ mod tests {
         assert_eq!(
             gen.gen(&expr),
             TypedHir {
-                id: 17,
-                ty: Type::Number,
+                id: 5,
+                ty: Type::Sum(vec![Type::Number, Type::String]),
                 expr: thir::Expr::Match {
                     input: Box::new(TypedHir {
-                        id: 10,
+                        id: 0,
                         ty: Type::Number,
                         expr: thir::Expr::Literal(thir::Literal::Int(3)),
                     }),
                     cases: vec![
-                        MatchCase {
+                        thir::MatchCase {
                             ty: Type::Number,
                             expr: TypedHir {
-                                id: 12,
+                                id: 2,
                                 ty: Type::Number,
                                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
                             }
                         },
-                        MatchCase {
+                        thir::MatchCase {
                             ty: Type::String,
                             expr: TypedHir {
-                                id: 15,
-                                ty: Type::Number,
-                                expr: thir::Expr::Literal(thir::Literal::Int(2)),
+                                id: 4,
+                                ty: Type::String,
+                                expr: thir::Expr::Literal(thir::Literal::String("2".into())),
                             }
                         },
                     ]

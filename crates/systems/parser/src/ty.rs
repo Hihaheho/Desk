@@ -6,7 +6,7 @@ use ast::{
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::{common::parse_attr, expr};
+use crate::common::parse_attr;
 
 use super::common::{parse_function, parse_op, ParserExt};
 
@@ -146,6 +146,8 @@ mod tests {
     use ast::expr::{Expr, Literal};
     use chumsky::Stream;
     use lexer::lexer;
+
+    use crate::expr;
 
     use super::*;
 

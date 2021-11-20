@@ -1,5 +1,5 @@
 use ast::{
-    expr::{Expr, Literal},
+    expr::{Expr, Literal, MatchCase},
     span::Spanned,
     ty::Type,
 };
@@ -108,6 +108,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 brands,
                 expr: Box::new(expr),
             });
+        let match_ = just(Token::Sum)
+            .ignore_then(expr.clone())
+            .in_()
+            .then(
+                type_
+                    .clone()
+                    .then_ignore(just(Token::Arrow))
+                    .then(expr.clone())
+                    .map(|(ty, expr)| MatchCase { ty, expr })
+                    .separated_by(just(Token::Comma))
+                    .dot(),
+            )
+            .map(|(of, cases)| Expr::Match {
+                of: Box::new(of),
+                cases,
+            });
         hole.or(literal)
             .or(let_in)
             .or(perform)
@@ -120,13 +136,14 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(typed)
             .or(attribute)
             .or(brand)
+            .or(match_)
             .map_with_span(|token, span| (token, span))
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use ast::ty::Type;
+    use ast::{expr::MatchCase, ty::Type};
     use chumsky::Stream;
     use lexer::lexer;
 
@@ -286,6 +303,34 @@ mod tests {
             Expr::Brand {
                 brands: vec!["a".into(), "b".into()],
                 expr: Box::new((Expr::Hole, 15..16)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_match() {
+        assert_eq!(
+            parse(
+                r#"
+            + ? ~
+            <'number> -> "number",
+            <'string> -> "string".
+            "#
+            )
+            .unwrap()
+            .0,
+            Expr::Match {
+                of: Box::new((Expr::Hole, 15..16)),
+                cases: vec![
+                    MatchCase {
+                        ty: (Type::Number, 32..39),
+                        expr: (Expr::Literal(Literal::String("number".into())), 44..52),
+                    },
+                    MatchCase {
+                        ty: (Type::String, 67..74),
+                        expr: (Expr::Literal(Literal::String("string".into())), 79..87),
+                    },
+                ]
             }
         );
     }

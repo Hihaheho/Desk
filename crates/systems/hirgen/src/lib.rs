@@ -8,7 +8,7 @@ use std::{
 use ast::span::{Span, Spanned};
 use error::HirGenError;
 use hir::{
-    expr::{Expr, Literal},
+    expr::{Expr, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
     ty::{Effect, Type},
 };
@@ -252,6 +252,18 @@ impl HirGen {
                 });
                 self.gen(*expr)?
             }
+            ast::expr::Expr::Match { of, cases } => self.with_meta(Expr::Match {
+                of: Box::new(self.gen(*of)?),
+                cases: cases
+                    .into_iter()
+                    .map(|ast::expr::MatchCase { ty, expr }| {
+                        Ok(MatchCase {
+                            ty: self.gen_type(ty)?,
+                            expr: self.gen(expr)?,
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+            }),
         };
         Ok(with_meta)
     }
@@ -385,6 +397,16 @@ mod tests {
             Expr::Set(exprs) => {
                 Expr::Set(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
             }
+            Expr::Match { of, cases } => Expr::Match {
+                of: Box::new(remove_meta(*of)),
+                cases: cases
+                    .into_iter()
+                    .map(|MatchCase { ty, expr }| MatchCase {
+                        ty: remove_meta_ty(ty),
+                        expr: remove_meta(expr),
+                    })
+                    .collect(),
+            },
         };
         no_meta(value)
     }

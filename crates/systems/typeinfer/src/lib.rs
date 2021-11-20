@@ -13,7 +13,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use error::TypeError;
 use hir::{
-    expr::{Expr, Literal},
+    expr::{Expr, Literal, MatchCase},
     meta::WithMeta,
 };
 use mono_type::MonoType;
@@ -24,7 +24,7 @@ use ty::{Effect, Type, TypeVisitor, TypeVisitorMut};
 use types::{IdGen, Types};
 use well_formed::WellFormed;
 
-use crate::utils::with_effects;
+use crate::utils::{sum_all, with_effects};
 
 pub type Id = usize;
 
@@ -415,6 +415,17 @@ impl Ctx {
             }
             Expr::Array(_) => todo!(),
             Expr::Set(_) => todo!(),
+            Expr::Match { of, cases } => {
+                let (ty, out): (Vec<_>, Vec<_>) = cases
+                    .iter()
+                    .map(|MatchCase { ty, expr }| Ok((self.from_hir_type(ty), self.synth(expr)?.1)))
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .unzip();
+                let ty = dbg!(sum_all(self, ty));
+                let out = dbg!(sum_all(self, out));
+                self.check(&*of, &ty)?.with_type(out)
+            }
         };
         let effects = ctx.end_scope(scope);
         ctx.store_type_and_effects(expr, &ty, effects.clone());
@@ -1262,6 +1273,40 @@ mod tests {
         assert_eq!(
             get_types(&hirgen, &ctx),
             vec![(1, Type::String,), (2, Type::Number,)]
+        );
+    }
+
+    #[test]
+    fn test_match() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            \ <x> ->
+              #2 + #1 <x> ~
+                <'number> -> ^1: <@a 'number>,
+                <'string> -> ^2: <@b 'number>.
+            "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+
+        assert_eq!(
+            get_types(&hirgen, &ctx),
+            vec![
+                (1, Type::Sum(vec![Type::Number, Type::String])),
+                (
+                    2,
+                    Type::Sum(vec![
+                        Type::Label {
+                            label: "a".into(),
+                            item: Box::new(Type::Number)
+                        },
+                        Type::Label {
+                            label: "b".into(),
+                            item: Box::new(Type::Number)
+                        }
+                    ])
+                )
+            ]
         );
     }
 

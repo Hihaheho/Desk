@@ -33,6 +33,10 @@ pub enum Expr {
         arguments: Vec<Spanned<Self>>,
     },
     Product(Vec<Spanned<Self>>),
+    Match {
+        of: Box<Spanned<Self>>,
+        cases: Vec<MatchCase>,
+    },
     Typed {
         ty: Spanned<Type>,
         expr: Box<Spanned<Self>>,
@@ -60,4 +64,10 @@ pub enum Expr {
         brands: Vec<String>,
         expr: Box<Spanned<Self>>,
     },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct MatchCase {
+    pub ty: Spanned<Type>,
+    pub expr: Spanned<Expr>,
 }

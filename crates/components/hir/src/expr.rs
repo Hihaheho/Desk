@@ -32,6 +32,10 @@ pub enum Expr {
         arguments: Vec<WithMeta<Self>>,
     },
     Product(Vec<WithMeta<Self>>),
+    Match {
+        of: Box<WithMeta<Self>>,
+        cases: Vec<MatchCase>,
+    },
     Typed {
         ty: WithMeta<Type>,
         expr: Box<WithMeta<Self>>,
@@ -42,4 +46,10 @@ pub enum Expr {
     },
     Array(Vec<WithMeta<Self>>),
     Set(Vec<WithMeta<Self>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct MatchCase {
+    pub ty: WithMeta<Type>,
+    pub expr: WithMeta<Expr>,
 }
