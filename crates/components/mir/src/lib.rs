@@ -1,8 +1,8 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+pub mod block;
+pub mod scope;
+pub mod stmt;
+pub mod var;
+pub mod mir;
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct FnId(usize);

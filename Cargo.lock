@@ -136,6 +136,9 @@ dependencies = [
 [[package]]
 name = "deskc-mir"
 version = "0.1.0"
+dependencies = [
+ "deskc-types",
+]
 
 [[package]]
 name = "deskc-parser"
