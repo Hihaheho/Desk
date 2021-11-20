@@ -6,7 +6,7 @@ pub type Id = usize;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Meta {
-    pub attr: Option<Box<Expr>>,
+    pub attrs: Vec<Expr>,
     pub id: Id,
     pub span: Range<usize>,
 }

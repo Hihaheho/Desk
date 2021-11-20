@@ -18,7 +18,7 @@ pub struct HirGen {
     next_id: RefCell<Id>,
     next_span: RefCell<Vec<Span>>,
     pub variables: RefCell<HashMap<String, Id>>,
-    pub attrs: RefCell<HashMap<Id, Expr>>,
+    pub attrs: RefCell<HashMap<Id, Vec<Expr>>>,
     brands: RefCell<HashSet<String>>,
 }
 
@@ -40,7 +40,7 @@ impl HirGen {
     pub fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         WithMeta {
             meta: Some(Meta {
-                attr: None,
+                attrs: vec![],
                 id: self.next_id(),
                 span: self.pop_span().unwrap(),
             }),
@@ -135,13 +135,12 @@ impl HirGen {
                 }
             }
             ast::ty::Type::Attribute { attr, ty } => {
-                // TODO handle multiplue attributes
                 self.pop_span();
                 let mut ret = self.gen_type(*ty)?;
                 if let Some(meta) = &mut ret.meta {
                     let attr = self.gen(*attr)?.value;
-                    meta.attr = Some(Box::new(attr.clone()));
-                    self.attrs.borrow_mut().insert(meta.id, attr);
+                    meta.attrs.push(attr);
+                    self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
                 }
                 ret
             }
@@ -236,13 +235,12 @@ impl HirGen {
             ast::expr::Expr::Import { ty, uuid } => todo!(),
             ast::expr::Expr::Export { ty } => todo!(),
             ast::expr::Expr::Attribute { attr, expr } => {
-                // TODO handle multiplue attributes
                 self.pop_span();
                 let mut ret = self.gen(*expr)?;
                 if let Some(meta) = &mut ret.meta {
                     let attr = self.gen(*attr)?.value;
-                    meta.attr = Some(Box::new(attr.clone()));
-                    self.attrs.borrow_mut().insert(meta.id, attr);
+                    meta.attrs.push(attr.clone());
+                    self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
                 }
                 ret
             }
@@ -421,10 +419,19 @@ mod tests {
                     arguments: vec![(
                         ast::expr::Expr::Attribute {
                             attr: Box::new((
-                                ast::expr::Expr::Literal(ast::expr::Literal::Int(3)),
+                                ast::expr::Expr::Literal(ast::expr::Literal::Int(1)),
                                 24..25
                             )),
-                            expr: Box::new((ast::expr::Expr::Hole, 26..27)),
+                            expr: Box::new((
+                                ast::expr::Expr::Attribute {
+                                    attr: Box::new((
+                                        ast::expr::Expr::Literal(ast::expr::Literal::Int(2)),
+                                        24..25
+                                    )),
+                                    expr: Box::new((ast::expr::Expr::Hole, 26..27)),
+                                },
+                                25..26
+                            )),
                         },
                         24..27
                     )],
@@ -433,14 +440,14 @@ mod tests {
             ),),
             Ok(WithMeta {
                 meta: Some(Meta {
-                    attr: None,
-                    id: 3,
+                    attrs: vec![],
+                    id: 4,
                     span: 0..27
                 }),
                 value: Expr::Apply {
                     function: WithMeta {
                         meta: Some(Meta {
-                            attr: None,
+                            attrs: vec![],
                             id: 0,
                             span: 3..10
                         }),
@@ -448,7 +455,10 @@ mod tests {
                     },
                     arguments: vec![WithMeta {
                         meta: Some(Meta {
-                            attr: Some(Box::new(Expr::Literal(Literal::Int(3)))),
+                            attrs: vec![
+                                Expr::Literal(Literal::Int(2)),
+                                Expr::Literal(Literal::Int(1))
+                            ],
                             id: 1,
                             span: 26..27
                         }),
@@ -460,7 +470,10 @@ mod tests {
 
         assert_eq!(
             gen.attrs.borrow_mut().get(&1),
-            Some(&Expr::Literal(Literal::Int(3)))
+            Some(&vec![
+                Expr::Literal(Literal::Int(2)),
+                Expr::Literal(Literal::Int(1))
+            ])
         );
     }
 

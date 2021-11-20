@@ -928,7 +928,7 @@ mod tests {
             .attrs
             .borrow()
             .iter()
-            .map(|(id, attr)| (format!("{:?}", attr), id.clone()))
+            .flat_map(|(id, attrs)| attrs.iter().map(|attr| (format!("{:?}", attr), id.clone())))
             .collect();
         (1usize..)
             .map_while(|i| {
