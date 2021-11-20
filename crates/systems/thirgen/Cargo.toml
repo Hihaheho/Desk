@@ -10,6 +10,7 @@ hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" 
 thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thir" }
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 thiserror = "1.0.30"
+pretty_assertions = "1.0.0"
 
 [dev-dependencies]
 lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }

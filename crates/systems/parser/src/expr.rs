@@ -6,6 +6,8 @@ use ast::{
 use chumsky::prelude::*;
 use tokens::Token;
 
+use crate::common::parse_attr;
+
 use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
@@ -26,7 +28,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let literal = rational
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
             .or(string);
-        let type_ = super::ty::parser().delimited_by(Token::TypeBegin, Token::TypeEnd);
+        let type_ = super::ty::parser(expr.clone()).delimited_by(Token::TypeBegin, Token::TypeEnd);
         let let_in = just(Token::Let)
             .ignore_then(expr.clone())
             // TODO: span for Type::Infer
@@ -89,11 +91,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             ty,
             expr: Box::new(expr),
         });
-        let attribute = just(Token::Attribute)
-            .ignore_then(expr.clone())
-            .in_()
-            .then(expr.clone())
-            .map(|(attr, expr)| Expr::Attribute {
+        let attribute =
+            parse_attr(expr.clone(), expr.clone()).map(|(attr, expr)| Expr::Attribute {
                 attr: Box::new(attr),
                 expr: Box::new(expr),
             });

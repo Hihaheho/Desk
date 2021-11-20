@@ -44,6 +44,13 @@ pub(crate) fn parse_typed<I, T>(
         .then(ty)
 }
 
+pub(crate) fn parse_attr<I, T>(
+    attr: impl Parser<Token, Spanned<I>, Error = Simple<Token>>,
+    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>>,
+) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> {
+    just(Token::Attribute).ignore_then(attr).in_().then(item)
+}
+
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,

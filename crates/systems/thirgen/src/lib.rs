@@ -79,8 +79,13 @@ impl TypedHirGen {
                 } else {
                     if arguments.is_empty() {
                         thir::Expr::Reference
-                    } else if let hir::ty::Type::Label { label, item } = &function.value {
-                        // TODO make this more accurate
+                    } else if let hir::ty::Type::Label {
+                        label,
+                        item: _type_checked,
+                    } = &function.value
+                    {
+                        // TODO: make this more accurate
+                        // TODO: exhaustive check
                         if label == "match" {
                             thir::Expr::Match {
                                 input: Box::new(self.gen(&arguments[0])),
@@ -154,6 +159,7 @@ mod tests {
     use thir::BuiltinOp;
 
     use super::*;
+    use pretty_assertions::assert_eq;
 
     fn parse(input: &str) -> WithMeta<Expr> {
         use chumsky::prelude::end;
@@ -316,4 +322,53 @@ mod tests {
         //     }
         // );
     }
+
+    #[test]
+    fn match_() {
+        let expr = parse(
+            r#"
+        <@match \ +'number, 'string., _, _ -> 'number> 3,
+            \<'number> -> 1,
+            \<'string> -> 2
+        "#,
+        );
+        let gen = TypedHirGen {
+            types: infer(&expr),
+            ..Default::default()
+        };
+        assert_eq!(
+            gen.gen(&expr),
+            TypedHir {
+                id: 17,
+                ty: Type::Number,
+                expr: thir::Expr::Match {
+                    input: Box::new(TypedHir {
+                        id: 10,
+                        ty: Type::Number,
+                        expr: thir::Expr::Literal(thir::Literal::Int(3)),
+                    }),
+                    cases: vec![
+                        MatchCase {
+                            ty: Type::Number,
+                            expr: TypedHir {
+                                id: 12,
+                                ty: Type::Number,
+                                expr: thir::Expr::Literal(thir::Literal::Int(1)),
+                            }
+                        },
+                        MatchCase {
+                            ty: Type::String,
+                            expr: TypedHir {
+                                id: 15,
+                                ty: Type::Number,
+                                expr: thir::Expr::Literal(thir::Literal::Int(2)),
+                            }
+                        },
+                    ]
+                },
+            }
+        );
+    }
+
+    // TODO: match exhaustive check
 }

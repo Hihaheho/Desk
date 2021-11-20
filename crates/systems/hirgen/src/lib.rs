@@ -18,7 +18,7 @@ pub struct HirGen {
     next_id: RefCell<Id>,
     next_span: RefCell<Vec<Span>>,
     pub variables: RefCell<HashMap<String, Id>>,
-    pub expr_attrs: RefCell<HashMap<Id, Expr>>,
+    pub attrs: RefCell<HashMap<Id, Expr>>,
     brands: RefCell<HashSet<String>>,
 }
 
@@ -134,6 +134,17 @@ impl HirGen {
                     })
                 }
             }
+            ast::ty::Type::Attribute { attr, ty } => {
+                // TODO handle multiplue attributes
+                self.pop_span();
+                let mut ret = self.gen_type(*ty)?;
+                if let Some(meta) = &mut ret.meta {
+                    let attr = self.gen(*attr)?.value;
+                    meta.attr = Some(Box::new(attr.clone()));
+                    self.attrs.borrow_mut().insert(meta.id, attr);
+                }
+                ret
+            }
         };
         Ok(with_meta)
     }
@@ -225,12 +236,13 @@ impl HirGen {
             ast::expr::Expr::Import { ty, uuid } => todo!(),
             ast::expr::Expr::Export { ty } => todo!(),
             ast::expr::Expr::Attribute { attr, expr } => {
+                // TODO handle multiplue attributes
                 self.pop_span();
                 let mut ret = self.gen(*expr)?;
                 if let Some(meta) = &mut ret.meta {
                     let attr = self.gen(*attr)?.value;
                     meta.attr = Some(Box::new(attr.clone()));
-                    self.expr_attrs.borrow_mut().insert(meta.id, attr);
+                    self.attrs.borrow_mut().insert(meta.id, attr);
                 }
                 ret
             }
@@ -425,7 +437,7 @@ mod tests {
         );
 
         assert_eq!(
-            gen.expr_attrs.borrow_mut().get(&1),
+            gen.attrs.borrow_mut().get(&1),
             Some(&Expr::Literal(Literal::Int(3)))
         );
     }

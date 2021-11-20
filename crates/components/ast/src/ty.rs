@@ -1,12 +1,12 @@
-use crate::span::Spanned;
+use crate::{expr::Expr, span::Spanned};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Effect {
     pub input: Spanned<Type>,
     pub output: Spanned<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Brand {
         brand: String,
@@ -38,5 +38,9 @@ pub enum Type {
     BoundedVariable {
         bound: Box<Spanned<Self>>,
         identifier: String,
+    },
+    Attribute {
+        attr: Box<Spanned<Expr>>,
+        ty: Box<Spanned<Self>>,
     },
 }

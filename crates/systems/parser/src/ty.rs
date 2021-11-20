@@ -1,9 +1,12 @@
 use ast::{
+    expr::Expr,
     span::Spanned,
     ty::{Effect, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
+
+use crate::{common::parse_attr, expr};
 
 use super::common::{parse_function, parse_op, ParserExt};
 
@@ -17,7 +20,10 @@ pub fn effect_parser(
         .map(|(input, output)| Effect { input, output })
 }
 
-pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
+pub fn parser(
+    // Needs this for parse attributes
+    expr: impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + 'static,
+) -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
     let identifier = filter_map(|span, token| {
         if let Token::Ident(ident) = token {
             Ok(ident)
@@ -83,6 +89,10 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             parameters,
             body: Box::new(body),
         });
+        let attribute = parse_attr(expr, type_.clone()).map(|(attr, ty)| Type::Attribute {
+            attr: Box::new(attr),
+            ty: Box::new(ty),
+        });
         let brand = filter_map(|span, input| {
             if let Token::Brand(ident) = input {
                 Ok(ident)
@@ -110,7 +120,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
             .or(set)
             .or(function)
             .or(brand)
-            .or(variable.clone())
+            .or(variable)
+            .or(attribute)
             .map_with_span(|t, span| (t, span))
     });
 
@@ -132,22 +143,19 @@ pub fn parser() -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Cl
 
 #[cfg(test)]
 mod tests {
+    use ast::expr::{Expr, Literal};
     use chumsky::Stream;
     use lexer::lexer;
 
     use super::*;
 
     fn parse(input: &str) -> Result<Spanned<Type>, Vec<Simple<Token>>> {
-        dbg!(parser()
+        parser(expr::parser())
             .then_ignore(end())
-            .parse_recovery_verbose(Stream::from_iter(
+            .parse(Stream::from_iter(
                 input.len()..input.len() + 1,
                 dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
-            )));
-        parser().then_ignore(end()).parse(Stream::from_iter(
-            input.len()..input.len() + 1,
-            dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
-        ))
+            ))
     }
 
     #[test]
@@ -264,6 +272,17 @@ mod tests {
             Type::Brand {
                 brand: "added".into(),
                 item: Box::new((Type::Number, 7..14)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_attribute() {
+        assert_eq!(
+            parse("#1 ~ 'number").unwrap().0,
+            Type::Attribute {
+                attr: Box::new((Expr::Literal(Literal::Int(1)), 1..2)),
+                ty: Box::new((Type::Number, 5..12)),
             }
         );
     }

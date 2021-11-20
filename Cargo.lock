@@ -166,6 +166,7 @@ dependencies = [
  "deskc-thir",
  "deskc-typeinfer",
  "deskc-types",
+ "pretty_assertions",
  "thiserror",
 ]
 

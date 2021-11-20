@@ -4,8 +4,7 @@ pub mod value;
 use std::cell::RefCell;
 
 use stack::Stack;
-use types::{Type, Types};
-use value::Value;
+use types::Types;
 
 #[derive(Debug, Clone, Default)]
 pub struct EvalMir {
@@ -17,11 +16,11 @@ impl EvalMir {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     #[test]
     fn literal() {
-        let evalmir = EvalMir::default();
+        // let evalmir = EvalMir::default();
         // assert_eq!(
         //     evalmir.eval(),
         //     Value::Int(1)

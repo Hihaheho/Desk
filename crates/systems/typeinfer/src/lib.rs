@@ -73,18 +73,27 @@ impl Ctx {
         id
     }
 
-    fn store_type<T>(&self, expr: &WithMeta<T>, ty: &Type, effects: Vec<Effect>) {
+    fn store_type_and_effects<T>(&self, expr: &WithMeta<T>, ty: &Type, effects: Vec<Effect>) {
         if let Some(meta) = &expr.meta {
-            self.types
-                .borrow_mut()
-                .insert(meta.id, with_effects(self.substitute_from_ctx(ty), effects));
+            self.store_type(meta.id, with_effects(self.substitute_from_ctx(ty), effects));
+        }
+    }
+
+    fn store_type(&self, id: Id, ty: Type) {
+        let mut types = self.types.borrow_mut();
+        match types.get(&id) {
+            None | Some(&Type::Existential(_)) => {
+                types.insert(id, ty);
+            }
+            // Keeps the generic one
+            _ => {}
         }
     }
 
     fn from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
         let ty = from_hir_type::from_hir_type(self, hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type(&hir_ty, &ty, vec![]);
+        self.store_type_and_effects(&hir_ty, &ty, vec![]);
         ty
     }
 
@@ -98,7 +107,7 @@ impl Ctx {
                 .types
                 .borrow()
                 .iter()
-                .map(|(id, ty)| (id.clone(), into_type(ty)))
+                .map(|(id, ty)| (id.clone(), self.into_type(ty)))
                 .collect(),
         }
     }
@@ -153,7 +162,8 @@ impl Ctx {
         let cloned = self.clone();
         let index = self.index(log).expect(&format!(
             "{:?}: log not found: {:?} to be truncated",
-            self.logs, log
+            self.logs.borrow(),
+            log
         ));
 
         let tail_ctx = self.empty();
@@ -244,7 +254,7 @@ impl Ctx {
             }
         };
         let effects = ctx.end_scope(scope);
-        ctx.store_type(expr, ty, effects.clone());
+        ctx.store_type_and_effects(expr, ty, effects.clone());
         Ok(WithEffects(ctx, effects))
     }
 
@@ -407,7 +417,7 @@ impl Ctx {
             Expr::Set(_) => todo!(),
         };
         let effects = ctx.end_scope(scope);
-        ctx.store_type(expr, &ty, effects.clone());
+        ctx.store_type_and_effects(expr, &ty, effects.clone());
         Ok(WithEffects((ctx, ty), effects))
     }
 
@@ -418,6 +428,8 @@ impl Ctx {
 
     fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
         let ret = match ty {
+            Type::Label { label: _, item } => self.apply(item, expr)?,
+            Type::Brand { brand: _, item } => self.apply(item, expr)?,
             Type::Function { parameter, body } => {
                 let delta = self.check(expr, &*parameter)?;
                 // if a type of expr is synthed, output can be substituded with the type.
@@ -610,171 +622,173 @@ impl Ctx {
 
     fn instantiate_subtype(&self, id: &Id, sup: &Type) -> Result<Ctx, TypeError> {
         // In here, we can assume the context contains the existential type.
-        if is_monotype(sup)
+        let ctx = if is_monotype(sup)
             && self
                 .truncate_from(&Log::Existential(*id))
                 .recover_effects()
                 .is_well_formed(sup)
         {
-            return Ok(
-                self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sup.clone())])
-            );
-        }
-        let ctx = match sup {
-            Type::Effectful { ty, effects: _ } => self.instantiate_subtype(id, ty)?,
-            Type::Function { parameter, body } => {
-                let a1 = self.fresh_existential();
-                let a2 = self.fresh_existential();
-                let theta = self
-                    .insert_in_place(
+            self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sup.clone())])
+        } else {
+            match sup {
+                Type::Effectful { ty, effects: _ } => self.instantiate_subtype(id, ty)?,
+                Type::Function { parameter, body } => {
+                    let a1 = self.fresh_existential();
+                    let a2 = self.fresh_existential();
+                    let theta = self
+                        .insert_in_place(
+                            &Log::Existential(*id),
+                            vec![
+                                Log::Existential(a2),
+                                Log::Existential(a1),
+                                Log::Solved(
+                                    *id,
+                                    Type::Function {
+                                        parameter: Box::new(Type::Existential(a1)),
+                                        body: Box::new(Type::Existential(a2)),
+                                    },
+                                ),
+                            ],
+                        )
+                        .instantiate_supertype(parameter, &a1)?;
+                    theta.instantiate_subtype(&a2, &theta.substitute_from_ctx(&body))?
+                }
+                Type::ForAll { variable, body } => self
+                    .add(Log::Variable(*variable))
+                    .instantiate_subtype(id, body)?
+                    .truncate_from(&Log::Variable(*variable))
+                    .recover_effects(),
+                Type::Existential(var) => self.insert_in_place(
+                    &Log::Existential(*var),
+                    vec![Log::Solved(*var, Type::Existential(*id))],
+                ),
+                Type::Product(types) => self.instantiate_composite_type_vec(
+                    *id,
+                    types,
+                    Type::Product,
+                    |ctx, id, sup| ctx.instantiate_subtype(id, sup),
+                )?,
+                Type::Sum(types) => {
+                    self.instantiate_composite_type_vec(*id, types, Type::Sum, |ctx, id, sup| {
+                        ctx.instantiate_subtype(id, sup)
+                    })?
+                }
+                Type::Array(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
                         &Log::Existential(*id),
                         vec![
-                            Log::Existential(a2),
-                            Log::Existential(a1),
-                            Log::Solved(
-                                *id,
-                                Type::Function {
-                                    parameter: Box::new(Type::Existential(a1)),
-                                    body: Box::new(Type::Existential(a2)),
-                                },
-                            ),
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
                         ],
                     )
-                    .instantiate_supertype(parameter, &a1)?;
-                theta.instantiate_subtype(&a2, &theta.substitute_from_ctx(&body))?
+                    .instantiate_subtype(&a, ty)?
+                }
+                Type::Set(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
+                        ],
+                    )
+                    .instantiate_subtype(&a, ty)?
+                }
+                ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
             }
-            Type::ForAll { variable, body } => self
-                .add(Log::Variable(*variable))
-                .instantiate_subtype(id, body)?
-                .truncate_from(&Log::Variable(*variable))
-                .recover_effects(),
-            Type::Existential(var) => self.insert_in_place(
-                &Log::Existential(*var),
-                vec![Log::Solved(*var, Type::Existential(*id))],
-            ),
-            Type::Product(types) => {
-                self.instantiate_composite_type_vec(*id, types, Type::Product, |ctx, id, sup| {
-                    ctx.instantiate_subtype(id, sup)
-                })?
-            }
-            Type::Sum(types) => {
-                self.instantiate_composite_type_vec(*id, types, Type::Sum, |ctx, id, sup| {
-                    ctx.instantiate_subtype(id, sup)
-                })?
-            }
-            Type::Array(ty) => {
-                let a = self.fresh_existential();
-                self.insert_in_place(
-                    &Log::Existential(*id),
-                    vec![
-                        Log::Existential(a),
-                        Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
-                    ],
-                )
-                .instantiate_subtype(&a, ty)?
-            }
-            Type::Set(ty) => {
-                let a = self.fresh_existential();
-                self.insert_in_place(
-                    &Log::Existential(*id),
-                    vec![
-                        Log::Existential(a),
-                        Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
-                    ],
-                )
-                .instantiate_subtype(&a, ty)?
-            }
-            ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
         };
+        self.store_type(*id, sup.clone());
         Ok(ctx)
     }
 
     fn instantiate_supertype(&self, sub: &Type, id: &Id) -> Result<Ctx, TypeError> {
         // In here, we can assume the context contains the existential type.
-        if is_monotype(sub)
+        let ctx = if is_monotype(sub)
             && self
                 .truncate_from(&Log::Existential(*id))
                 .recover_effects()
                 .is_well_formed(sub)
         {
-            return Ok(
-                self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sub.clone())])
-            );
-        }
-        let ctx = match sub {
-            Type::Effectful { ty, effects } => effects
-                .iter()
-                .fold(self.instantiate_supertype(ty, id)?, |ctx, effect| {
-                    ctx.add(Log::Effect(effect.clone()))
-                }),
-            Type::Function { parameter, body } => {
-                let a1 = self.fresh_existential();
-                let a2 = self.fresh_existential();
-                let theta = self
-                    .insert_in_place(
+            self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sub.clone())])
+        } else {
+            match sub {
+                Type::Effectful { ty, effects } => effects
+                    .iter()
+                    .fold(self.instantiate_supertype(ty, id)?, |ctx, effect| {
+                        ctx.add(Log::Effect(effect.clone()))
+                    }),
+                Type::Function { parameter, body } => {
+                    let a1 = self.fresh_existential();
+                    let a2 = self.fresh_existential();
+                    let theta = self
+                        .insert_in_place(
+                            &Log::Existential(*id),
+                            vec![
+                                Log::Existential(a2),
+                                Log::Existential(a1),
+                                Log::Solved(
+                                    *id,
+                                    Type::Function {
+                                        parameter: Box::new(Type::Existential(a1)),
+                                        body: Box::new(Type::Existential(a2)),
+                                    },
+                                ),
+                            ],
+                        )
+                        .instantiate_subtype(&a1, parameter)?;
+                    theta.instantiate_supertype(&theta.substitute_from_ctx(&body), &a2)?
+                }
+                Type::ForAll { variable, body } => self
+                    .add(Log::Marker(*variable))
+                    .add(Log::Existential(*variable))
+                    .instantiate_supertype(
+                        &substitute(body, variable, &Type::Existential(*variable)),
+                        id,
+                    )?
+                    .truncate_from(&Log::Marker(*variable))
+                    .recover_effects(),
+                Type::Existential(var) => self.insert_in_place(
+                    &Log::Existential(*var),
+                    vec![Log::Solved(*var, Type::Existential(*id))],
+                ),
+                Type::Product(types) => self.instantiate_composite_type_vec(
+                    *id,
+                    types,
+                    Type::Product,
+                    |ctx, id, sub| ctx.instantiate_supertype(sub, id),
+                )?,
+                Type::Sum(types) => {
+                    self.instantiate_composite_type_vec(*id, types, Type::Sum, |ctx, id, sub| {
+                        ctx.instantiate_supertype(sub, id)
+                    })?
+                }
+                Type::Array(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
                         &Log::Existential(*id),
                         vec![
-                            Log::Existential(a2),
-                            Log::Existential(a1),
-                            Log::Solved(
-                                *id,
-                                Type::Function {
-                                    parameter: Box::new(Type::Existential(a1)),
-                                    body: Box::new(Type::Existential(a2)),
-                                },
-                            ),
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
                         ],
                     )
-                    .instantiate_subtype(&a1, parameter)?;
-                theta.instantiate_supertype(&theta.substitute_from_ctx(&body), &a2)?
+                    .instantiate_supertype(ty, &a)?
+                }
+                Type::Set(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
+                        ],
+                    )
+                    .instantiate_supertype(ty, &a)?
+                }
+                ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
             }
-            Type::ForAll { variable, body } => self
-                .add(Log::Marker(*variable))
-                .add(Log::Existential(*variable))
-                .instantiate_supertype(
-                    &substitute(body, variable, &Type::Existential(*variable)),
-                    id,
-                )?
-                .truncate_from(&Log::Marker(*variable))
-                .recover_effects(),
-            Type::Existential(var) => self.insert_in_place(
-                &Log::Existential(*var),
-                vec![Log::Solved(*var, Type::Existential(*id))],
-            ),
-            Type::Product(types) => {
-                self.instantiate_composite_type_vec(*id, types, Type::Product, |ctx, id, sub| {
-                    ctx.instantiate_supertype(sub, id)
-                })?
-            }
-            Type::Sum(types) => {
-                self.instantiate_composite_type_vec(*id, types, Type::Sum, |ctx, id, sub| {
-                    ctx.instantiate_supertype(sub, id)
-                })?
-            }
-            Type::Array(ty) => {
-                let a = self.fresh_existential();
-                self.insert_in_place(
-                    &Log::Existential(*id),
-                    vec![
-                        Log::Existential(a),
-                        Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
-                    ],
-                )
-                .instantiate_supertype(ty, &a)?
-            }
-            Type::Set(ty) => {
-                let a = self.fresh_existential();
-                self.insert_in_place(
-                    &Log::Existential(*id),
-                    vec![
-                        Log::Existential(a),
-                        Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
-                    ],
-                )
-                .instantiate_supertype(ty, &a)?
-            }
-            ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
         };
+        self.store_type(*id, sub.clone());
         Ok(ctx)
     }
 
@@ -867,7 +881,11 @@ mod tests {
     use super::*;
 
     fn synth(expr: WithMeta<Expr>) -> Result<Type, TypeError> {
-        let (ctx, ty) = Ctx::default().synth(&expr)?;
+        let (ctx, ty) = Ctx {
+            id_gen: Rc::new(RefCell::new(IdGen { next: 100 })),
+            ..Default::default()
+        }
+        .synth(&expr)?;
         Ok(ctx.substitute_from_ctx(&ty))
     }
 
@@ -896,7 +914,7 @@ mod tests {
 
     fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {
         let attrs: HashMap<String, Id> = hirgen
-            .expr_attrs
+            .attrs
             .borrow()
             .iter()
             .map(|(id, attr)| (format!("{:?}", attr), id.clone()))
@@ -966,8 +984,8 @@ mod tests {
             "#
             )),
             Ok(Type::Function {
-                parameter: Box::new(Type::Existential(1)),
-                body: Box::new(Type::Existential(1)),
+                parameter: Box::new(Type::Existential(101)),
+                body: Box::new(Type::Existential(101)),
             })
         );
     }
@@ -1230,7 +1248,24 @@ mod tests {
         assert_eq!(synth(expr), Ok(Type::Number));
     }
 
-    // Priority labels in function application
+    #[test]
+    fn infer() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            ^<\ #1 _ -> #2 _> "a": <'number>
+            "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, ty) = ctx.synth(&expr).unwrap();
 
+        assert_eq!(ty, Type::Number);
+        assert_eq!(
+            get_types(&hirgen, &ctx),
+            vec![(1, Type::String,), (2, Type::Number,)]
+        );
+    }
+
+    // TODO:
+    // Priority labels in function application
     // Priority labels in product and sum
 }
