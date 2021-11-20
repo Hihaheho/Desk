@@ -1,6 +1,13 @@
 mod error;
+mod from_hir_type;
+mod into_type;
+mod mono_type;
+mod occurs_in;
+mod substitute;
+mod substitute_from_ctx;
 mod ty;
 mod utils;
+mod well_formed;
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
@@ -9,9 +16,13 @@ use hir::{
     expr::{Expr, Literal},
     meta::WithMeta,
 };
-use ty::{Effect, Type};
+use mono_type::MonoType;
+use occurs_in::OccursIn;
+use substitute::Substitute;
+use substitute_from_ctx::SubstituteFromCtx;
+use ty::{Effect, Type, TypeVisitor, TypeVisitorMut};
 use types::{IdGen, Types};
-use utils::into_type;
+use well_formed::WellFormed;
 
 use crate::utils::with_effects;
 
@@ -71,7 +82,7 @@ impl Ctx {
     }
 
     fn from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
-        let ty = crate::utils::from_hir_type(&hir_ty.value);
+        let ty = from_hir_type::from_hir_type(self, hir_ty);
         let ty = self.substitute_from_ctx(&ty);
         self.store_type(&hir_ty, &ty, vec![]);
         ty
@@ -90,6 +101,10 @@ impl Ctx {
                 .map(|(id, ty)| (id.clone(), into_type(ty)))
                 .collect(),
         }
+    }
+
+    pub fn into_type(&self, ty: &Type) -> types::Type {
+        into_type::into_type(self, ty)
     }
 
     fn end_scope(&self, scope: Id) -> Vec<Effect> {
@@ -450,29 +465,12 @@ impl Ctx {
     }
 
     fn is_well_formed(&self, ty: &Type) -> bool {
-        match ty {
-            Type::Number => true,
-            Type::String => true,
-            Type::Function { parameter, body } => {
-                self.is_well_formed(parameter) && self.is_well_formed(body)
-            }
-            Type::Product(types) => types.iter().all(|ty| self.is_well_formed(ty)),
-            Type::Sum(types) => types.iter().all(|ty| self.is_well_formed(ty)),
-            Type::Array(ty) => self.is_well_formed(ty),
-            Type::Set(ty) => self.is_well_formed(ty),
-            Type::ForAll { variable, body } => {
-                self.add(Log::Variable(*variable)).is_well_formed(body)
-            }
-            Type::Variable(id) => self.has_variable(id),
-            Type::Existential(id) => self.has_existential(id) || self.get_solved(id).is_some(),
-            Type::Effectful { ty, effects } => {
-                self.is_well_formed(ty)
-                    && effects.iter().all(|Effect { input, output }| {
-                        self.is_well_formed(input) && self.is_well_formed(output)
-                    })
-            }
-            Type::Brand { item, .. } | Type::Label { item, .. } => self.is_well_formed(item),
-        }
+        let mut well_formed = WellFormed {
+            ctx: self,
+            well_formed: true,
+        };
+        well_formed.visit(ty);
+        well_formed.well_formed
     }
 
     fn subtype(&self, sub: &Type, ty: &Type) -> Result<Ctx, TypeError> {
@@ -567,6 +565,15 @@ impl Ctx {
             (sub, Type::Label { item, label: _ }) => self.subtype(sub, item)?,
             (Type::Label { item, label: _ }, sup) => self.subtype(item, sup)?,
             (Type::Brand { item, brand: _ }, sup) => self.subtype(item, sup)?,
+
+            (Type::Infer(id), sup) => {
+                self.store_type(*id, sup.clone());
+                self.clone()
+            }
+            (sub, Type::Infer(id)) => {
+                self.store_type(*id, sub.clone());
+                self.clone()
+            }
 
             (
                 Type::Effectful { ty, effects },
@@ -804,52 +811,10 @@ impl Ctx {
     }
 
     pub fn substitute_from_ctx(&self, a: &Type) -> Type {
-        match a {
-            Type::Number => Type::Number,
-            Type::String => Type::String,
-            Type::Product(types) => Type::Product(
-                types
-                    .iter()
-                    .map(|ty| self.substitute_from_ctx(ty))
-                    .collect(),
-            ),
-            Type::Sum(types) => Type::Sum(
-                types
-                    .iter()
-                    .map(|ty| self.substitute_from_ctx(ty))
-                    .collect(),
-            ),
-            Type::Function { parameter, body } => Type::Function {
-                parameter: Box::new(self.substitute_from_ctx(parameter)),
-                body: Box::new(self.substitute_from_ctx(body)),
-            },
-            Type::Array(ty) => Type::Array(Box::new(self.substitute_from_ctx(ty))),
-            Type::Set(ty) => Type::Set(Box::new(self.substitute_from_ctx(ty))),
-            Type::Variable(id) => self.get_typed_var(id).unwrap_or(a.clone()),
-            Type::ForAll { variable, body } => Type::ForAll {
-                variable: *variable,
-                body: Box::new(self.substitute_from_ctx(body)),
-            },
-            Type::Existential(id) => self.get_solved(id).unwrap_or(a.clone()),
-            Type::Effectful { ty, effects } => Type::Effectful {
-                ty: Box::new(self.substitute_from_ctx(ty)),
-                effects: effects
-                    .iter()
-                    .map(|Effect { input, output }| Effect {
-                        input: self.substitute_from_ctx(input),
-                        output: self.substitute_from_ctx(output),
-                    })
-                    .collect(),
-            },
-            Type::Brand { brand, item } => Type::Brand {
-                brand: brand.clone(),
-                item: Box::new(self.substitute_from_ctx(item)),
-            },
-            Type::Label { label, item } => Type::Label {
-                label: label.clone(),
-                item: Box::new(self.substitute_from_ctx(item)),
-            },
-        }
+        let mut substitute_from_ctx = SubstituteFromCtx { ctx: self };
+        let mut a = a.clone();
+        substitute_from_ctx.visit(&mut a);
+        a
     }
 
     fn substitute_from_context_effect(&self, Effect { input, output }: &Effect) -> Effect {
@@ -868,96 +833,29 @@ impl Ctx {
 }
 
 fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
-    let sub_if = |pred: bool| -> Type {
-        if pred {
-            by.clone()
-        } else {
-            to.clone()
-        }
+    let mut substitute = Substitute {
+        id: *id,
+        ty: by.clone(),
     };
-    match to {
-        Type::Number => Type::Number,
-        Type::String => Type::String,
-        Type::Product(types) => {
-            Type::Product(types.iter().map(|ty| substitute(ty, id, by)).collect())
-        }
-        Type::Sum(types) => Type::Sum(types.iter().map(|ty| substitute(ty, id, by)).collect()),
-        Type::Function { parameter, body } => Type::Function {
-            parameter: Box::new(substitute(parameter, id, by)),
-            body: Box::new(substitute(body, id, by)),
-        },
-        Type::Array(ty) => Type::Array(Box::new(substitute(ty, id, by))),
-        Type::Set(ty) => Type::Set(Box::new(substitute(ty, id, by))),
-        Type::Variable(var) => sub_if(*var == *id),
-        Type::ForAll { variable, body } => Type::ForAll {
-            variable: *variable,
-            body: Box::new(substitute(body, id, by)),
-        },
-        Type::Existential(var) => sub_if(*var == *id),
-        Type::Effectful { ty, effects } => Type::Effectful {
-            ty: Box::new(substitute(ty, id, by)),
-            effects: effects
-                .iter()
-                .map(|Effect { input, output }| Effect {
-                    input: substitute(input, id, by),
-                    output: substitute(output, id, by),
-                })
-                .collect(),
-        },
-        Type::Brand { brand, item } => Type::Brand {
-            brand: brand.clone(),
-            item: Box::new(substitute(item, id, by)),
-        },
-        Type::Label { label, item } => Type::Label {
-            label: label.clone(),
-            item: Box::new(substitute(item, id, by)),
-        },
-    }
+    let mut to = to.clone();
+    substitute.visit(&mut to);
+    to
 }
 
 // existential type is occurs in the type
 fn occurs_in(id: &Id, ty: &Type) -> bool {
-    match ty {
-        Type::Variable(_) => false,
-        Type::Number => false,
-        Type::String => false,
-        Type::Product(types) => types.iter().any(|ty| occurs_in(id, ty)),
-        Type::Sum(types) => types.iter().any(|ty| occurs_in(id, ty)),
-        Type::Function { parameter, body } => occurs_in(id, parameter) || occurs_in(id, body),
-        Type::Array(ty) => occurs_in(id, ty),
-        Type::Set(ty) => occurs_in(id, ty),
-        Type::ForAll { variable, body } => variable == id || occurs_in(id, body),
-        Type::Existential(ty_id) => ty_id == id,
-        Type::Effectful { ty, effects } => {
-            occurs_in(id, ty)
-                || effects
-                    .iter()
-                    .any(|Effect { input, output }| occurs_in(id, input) || occurs_in(id, output))
-        }
-        Type::Brand { item, .. } | Type::Label { item, .. } => occurs_in(id, item),
-    }
+    let mut occurs_in = OccursIn {
+        id: *id,
+        occurs_in: false,
+    };
+    occurs_in.visit(ty);
+    occurs_in.occurs_in
 }
 
 fn is_monotype(ty: &Type) -> bool {
-    match ty {
-        Type::Number => true,
-        Type::String => true,
-        Type::Product(types) => types.iter().all(|ty| is_monotype(ty)),
-        Type::Sum(types) => types.iter().all(|ty| is_monotype(ty)),
-        Type::Function { parameter, body } => is_monotype(parameter) && is_monotype(body),
-        Type::Array(ty) => is_monotype(&*ty),
-        Type::Set(ty) => is_monotype(&*ty),
-        Type::Variable(_) => true,
-        Type::ForAll { .. } => false,
-        Type::Existential(_) => true,
-        Type::Effectful { ty, effects } => {
-            is_monotype(ty)
-                && effects
-                    .iter()
-                    .all(|Effect { input, output }| is_monotype(input) && is_monotype(output))
-        }
-        Type::Brand { item, .. } | Type::Label { item, .. } => is_monotype(item),
-    }
+    let mut monotype = MonoType { is_monotype: true };
+    monotype.visit(ty);
+    monotype.is_monotype
 }
 
 #[cfg(test)]

@@ -1,0 +1,24 @@
+use crate::{
+    ty::{Type, TypeVisitor},
+    Id,
+};
+
+pub(crate) struct MonoType {
+    pub is_monotype: bool,
+}
+
+impl TypeVisitor for MonoType {
+    fn visit_forall(&mut self, _variable: &Id, _body: &Type) {
+        self.is_monotype = false;
+    }
+    fn visit_infer(&mut self, _id: &Id) {
+        // TODO: this is too conservative, but we don't have a way to know
+        self.is_monotype = false;
+    }
+    fn visit(&mut self, ty: &Type) {
+        // walk while monotype
+        if self.is_monotype {
+            self.visit_inner(ty)
+        }
+    }
+}
