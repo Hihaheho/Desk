@@ -1,6 +1,6 @@
 use types::Type;
 
-use crate::{FnId, block::BlockId, var::VarId};
+use crate::{amir::AmirId, block::BlockId, link::LinkId, var::VarId};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StmtBind {
@@ -14,7 +14,7 @@ pub enum Stmt {
     Product(Vec<VarId>),
     Array(Vec<VarId>),
     Set(Vec<VarId>),
-    Fn(FnId),
+    Fn(FnRef),
     Perform(VarId),
     // TODO: Handle
     Apply {
@@ -25,6 +25,12 @@ pub enum Stmt {
         op: Op,
         operands: Vec<VarId>,
     },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum FnRef {
+    Amir(AmirId),
+    Link(LinkId),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -41,6 +47,7 @@ pub enum Op {
     Sub,
     Mul,
     Div,
+    Rem,
     Mod,
     Pow,
     Eq,
@@ -52,19 +59,22 @@ pub enum Op {
     Not,
     Neg,
     Pos,
+    Shl,
+    Shr,
+    BitAnd,
+    BitOr,
+    BitXor,
+    BitNot,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchCase {
-	pub ty: Type,
-	pub next: BlockId,
+    pub ty: Type,
+    pub next: BlockId,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Terminator {
-	Exit,
-	Match {
-		var: VarId,
-		cases: Vec<MatchCase>,
-	}
+    Return(VarId),
+    Match { var: VarId, cases: Vec<MatchCase> },
 }

@@ -77,6 +77,23 @@ name = "deskc"
 version = "0.1.0"
 
 [[package]]
+name = "deskc-amir"
+version = "0.1.0"
+dependencies = [
+ "deskc-types",
+]
+
+[[package]]
+name = "deskc-amirgen"
+version = "0.1.0"
+dependencies = [
+ "deskc-amir",
+ "deskc-thir",
+ "deskc-types",
+ "thiserror",
+]
+
+[[package]]
 name = "deskc-ast"
 version = "0.1.0"
 dependencies = [
@@ -84,13 +101,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-evalmir"
+name = "deskc-evalamir"
 version = "0.1.0"
 dependencies = [
  "chumsky",
+ "deskc-amir",
  "deskc-hirgen",
  "deskc-lexer",
- "deskc-mir",
  "deskc-parser",
  "deskc-typeinfer",
  "deskc-types",
@@ -131,13 +148,6 @@ dependencies = [
  "chumsky",
  "deskc-tokens",
  "uuid",
-]
-
-[[package]]
-name = "deskc-mir"
-version = "0.1.0"
-dependencies = [
- "deskc-types",
 ]
 
 [[package]]

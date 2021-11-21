@@ -7,12 +7,12 @@ use stack::Stack;
 use types::Types;
 
 #[derive(Debug, Clone, Default)]
-pub struct EvalMir {
+pub struct EvalAmir {
     pub expr_types: Types,
     pub stacks: RefCell<Vec<Stack>>,
 }
 
-impl EvalMir {}
+impl EvalAmir {}
 
 #[cfg(test)]
 mod tests {
@@ -20,20 +20,20 @@ mod tests {
 
     #[test]
     fn literal() {
-        // let evalmir = EvalMir::default();
+        // let evalamir = EvalAmir::default();
         // assert_eq!(
-        //     evalmir.eval(),
+        //     evalamir.eval(),
         //     Value::Int(1)
         // );
     }
 
     #[test]
     fn builtin() {
-        // let mir = parse(r#"<\'number, 'number -> @added 'number> 1, 2"#);
-        // let evalmir = EvalMir {
+        // let amir = parse(r#"<\'number, 'number -> @added 'number> 1, 2"#);
+        // let evalamir = EvalAmir {
         //     expr_types: infer(&hir),
         //     ..Default::default()
         // };
-        // assert_eq!(evalmir.eval(&hir), Value::Int(3));
+        // assert_eq!(evalamir.eval(&hir), Value::Int(3));
     }
 }

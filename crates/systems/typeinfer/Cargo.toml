@@ -9,10 +9,10 @@ edition = "2021"
 hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 thiserror = "1.0.30"
-pretty_assertions = "1.0.0"
 
 [dev-dependencies]
 lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
 parser = { path = "../../systems/parser", version = "0.1.0", package = "deskc-parser" }
 hirgen = { path = "../../systems/hirgen", version = "0.1.0", package = "deskc-hirgen" }
 chumsky = { git = "https://github.com/ryo33/chumsky" }
+pretty_assertions = "1.0.0"

@@ -10,7 +10,6 @@ hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" 
 thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thir" }
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 thiserror = "1.0.30"
-pretty_assertions = "1.0.0"
 
 [dev-dependencies]
 lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
@@ -18,3 +17,4 @@ parser = { path = "../../systems/parser", version = "0.1.0", package = "deskc-pa
 hirgen = { path = "../../systems/hirgen", version = "0.1.0", package = "deskc-hirgen" }
 typeinfer = { path = "../../systems/typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
 chumsky = { git = "https://github.com/ryo33/chumsky" }
+pretty_assertions = "1.0.0"

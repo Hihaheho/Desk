@@ -8,7 +8,6 @@ pub enum Literal {
     Int(i64),
     Float(f64),
     Rational(i64, i64),
-    Hole,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,7 +31,6 @@ pub enum Expr {
         cases: Vec<MatchCase>,
     },
     Let {
-        ty: Type,
         definition: Box<TypedHir>,
         body: Box<TypedHir>,
     },
@@ -44,9 +42,9 @@ pub enum Expr {
         expr: Box<TypedHir>,
     },
     Reference,
-    BuiltinOp {
+    Op {
         op: BuiltinOp,
-        arguments: Vec<TypedHir>,
+        operands: Vec<TypedHir>,
     },
     Apply {
         function: Type,
@@ -68,6 +66,7 @@ pub enum BuiltinOp {
     Mul,
     Div,
     Rem,
+    Mod,
     Eq,
     Neq,
     Lt,
@@ -84,5 +83,4 @@ pub enum BuiltinOp {
     BitNot,
     Shl,
     Shr,
-    Concat,
 }

@@ -2,9 +2,9 @@ use crate::stmt::{StmtBind, Terminator};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct BasicBlock {
-    pub statements: Vec<StmtBind>,
-    pub terminator: Option<Terminator>,
+    pub stmts: Vec<StmtBind>,
+    pub terminator: Terminator,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct BlockId(pub usize);

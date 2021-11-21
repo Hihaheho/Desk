@@ -22,7 +22,7 @@ impl TypedHirGen {
         let Meta { id, .. } = expr.meta.as_ref().expect("must have meta");
         let ty = self.types.get(&id).expect("must have type").clone();
         let expr = match &expr.value {
-            Expr::Literal(Literal::Hole) => thir::Expr::Literal(thir::Literal::Hole),
+            Expr::Literal(Literal::Hole) => todo!(),
             Expr::Literal(Literal::Int(value)) => {
                 thir::Expr::Literal(thir::Literal::Int(value.clone()))
             }
@@ -40,7 +40,6 @@ impl TypedHirGen {
                 definition,
                 expression,
             } => thir::Expr::Let {
-                ty: self.get_type(definition),
                 definition: Box::new(self.gen(&*definition)),
                 body: Box::new(self.gen(&*expression)),
             },
@@ -62,9 +61,9 @@ impl TypedHirGen {
             } => {
                 // TODO: lookup imported uuid to allow overwrite the builtin functions
                 if let Some((builtin, params)) = find_builtin(&self.get_type(&function)) {
-                    let op = thir::Expr::BuiltinOp {
+                    let op = thir::Expr::Op {
                         op: builtin,
-                        arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
+                        operands: arguments.iter().map(|arg| self.gen(arg)).collect(),
                     };
                     if arguments.len() < params {
                         // TODO wrap by function
@@ -226,9 +225,9 @@ mod tests {
                     label: "sum".to_string(),
                     item: Box::new(Type::Number),
                 },
-                expr: thir::Expr::BuiltinOp {
+                expr: thir::Expr::Op {
                     op: BuiltinOp::Add,
-                    arguments: vec![
+                    operands: vec![
                         TypedHir {
                             id: 6,
                             ty: Type::Number,
