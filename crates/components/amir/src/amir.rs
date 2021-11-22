@@ -13,5 +13,5 @@ pub struct Amir {
     pub links: Vec<ALink>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AmirId(pub usize);

@@ -3,10 +3,10 @@ use types::Type;
 use crate::stmt::{AStmt, StmtBind, Terminator};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ABasicBlock<S = AStmt> {
+pub struct ABasicBlock<S = AStmt, T = Type> {
     pub stmts: Vec<StmtBind<S>>,
-    pub terminator: Terminator,
+    pub terminator: Terminator<T>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BlockId(pub usize);

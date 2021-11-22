@@ -3,6 +3,7 @@ use amir::{
     var::VarId,
 };
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Const(Const),
     Product(Vec<VarId>),

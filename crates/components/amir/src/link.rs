@@ -1,6 +1,6 @@
 use types::Type;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LinkId(pub usize);
 
 #[derive(Clone, Debug, PartialEq)]

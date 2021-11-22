@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ScopeId(pub usize);
 
 #[derive(Clone, Debug, PartialEq, Default)]

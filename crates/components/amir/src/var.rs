@@ -2,7 +2,7 @@ use types::Type;
 
 use crate::scope::ScopeId;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct VarId(pub usize);
 
 #[derive(Clone, Debug, PartialEq)]

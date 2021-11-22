@@ -68,13 +68,16 @@ pub enum Op {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct MatchCase {
-    pub ty: VarId,
+pub struct MatchCase<T = Type> {
+    pub ty: T,
     pub next: BlockId,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Terminator {
+pub enum Terminator<T = Type> {
     Return(VarId),
-    Match { var: VarId, cases: Vec<MatchCase> },
+    Match {
+        var: VarId,
+        cases: Vec<MatchCase<T>>,
+    },
 }
