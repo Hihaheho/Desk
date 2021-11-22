@@ -4,6 +4,6 @@ use types::Type;
 pub struct LinkId(pub usize);
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Link {
-    pub ty: Type,
+pub struct ALink<T=Type> {
+    pub ty: T,
 }

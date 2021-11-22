@@ -3,13 +3,13 @@ use types::Type;
 use crate::{amir::AmirId, block::BlockId, link::LinkId, var::VarId};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct StmtBind {
+pub struct StmtBind<T = AStmt> {
     pub var: VarId,
-    pub stmt: Stmt,
+    pub stmt: T,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Stmt {
+pub enum AStmt {
     Const(Const),
     Product(Vec<VarId>),
     Array(Vec<VarId>),
@@ -27,7 +27,7 @@ pub enum Stmt {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum FnRef {
     Amir(AmirId),
     Link(LinkId),
@@ -69,7 +69,7 @@ pub enum Op {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchCase {
-    pub ty: Type,
+    pub ty: VarId,
     pub next: BlockId,
 }
 

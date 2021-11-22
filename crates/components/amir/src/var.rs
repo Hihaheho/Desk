@@ -6,7 +6,7 @@ use crate::scope::ScopeId;
 pub struct VarId(pub usize);
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Var {
-    pub ty: Type,
+pub struct AVar<T = Type> {
+    pub ty: T,
     pub scope: ScopeId,
 }

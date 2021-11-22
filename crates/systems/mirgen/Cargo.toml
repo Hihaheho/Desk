@@ -1,0 +1,11 @@
+[package]
+name = "deskc-mirgen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+amir = { path = "../../components/amir", version = "0.1.0", package = "deskc-amir" }
+mir = { path = "../../components/mir", version = "0.1.0", package = "deskc-mir" }
+types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }

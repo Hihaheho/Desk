@@ -1,8 +1,10 @@
-use crate::stmt::{StmtBind, Terminator};
+use types::Type;
+
+use crate::stmt::{AStmt, StmtBind, Terminator};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BasicBlock {
-    pub stmts: Vec<StmtBind>,
+pub struct ABasicBlock<S = AStmt> {
+    pub stmts: Vec<StmtBind<S>>,
     pub terminator: Terminator,
 }
 

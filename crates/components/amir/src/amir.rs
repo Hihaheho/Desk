@@ -1,16 +1,16 @@
 use types::Type;
 
-use crate::{block::BasicBlock, link::Link, scope::Scope, var::Var};
+use crate::{block::ABasicBlock, link::ALink, scope::Scope, var::AVar};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Amir {
     pub parameters: Vec<Type>,
     pub output: Type,
     // first N items in vars are arguments.
-    pub vars: Vec<Var>,
+    pub vars: Vec<AVar>,
     pub scopes: Vec<Scope>,
-    pub blocks: Vec<BasicBlock>,
-    pub links: Vec<Link>,
+    pub blocks: Vec<ABasicBlock>,
+    pub links: Vec<ALink>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]

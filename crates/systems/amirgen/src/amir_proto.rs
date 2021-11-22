@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use amir::{
     amir::Amir,
-    block::{BasicBlock, BlockId},
-    link::{Link, LinkId},
+    block::{ABasicBlock, BlockId},
+    link::{ALink, LinkId},
     scope::ScopeId,
-    stmt::{Stmt, StmtBind, Terminator},
-    var::{Var, VarId},
+    stmt::{AStmt, StmtBind, Terminator},
+    var::{AVar, VarId},
 };
 use types::Type;
 
@@ -16,9 +16,9 @@ pub struct AmirProto {
     parameters: Vec<Type>,
     scopes: Vec<ScopeProto>,
     blocks_proto: Vec<BlockProto>,
-    blocks: Vec<BasicBlock>,
-    vars: Vec<Var>,
-    links: Vec<Link>,
+    blocks: Vec<ABasicBlock>,
+    vars: Vec<AVar>,
+    links: Vec<ALink>,
     links_map: HashMap<Type, LinkId>,
     current_scope: Vec<ScopeId>,
     current_block: Vec<BlockId>,
@@ -56,7 +56,7 @@ impl AmirProto {
         // If last block have stmt.
         if last_block.stmts.len() != 0 {
             let ret = last_block.stmts.last().as_ref().unwrap().var;
-            blocks.push(BasicBlock {
+            blocks.push(ABasicBlock {
                 stmts: last_block.stmts,
                 terminator: Terminator::Return(ret),
             })
@@ -97,7 +97,7 @@ impl AmirProto {
 
     pub fn create_var(&mut self, ty: Type) -> VarId {
         let id = VarId(self.vars.len());
-        self.vars.push(Var {
+        self.vars.push(AVar {
             scope: self.current_scope_id(),
             ty,
         });
@@ -108,7 +108,7 @@ impl AmirProto {
         self.current_scope().named_vars.insert(ty, var);
     }
 
-    pub fn bind_stmt(&mut self, ty: Type, stmt: Stmt) -> VarId {
+    pub fn bind_stmt(&mut self, ty: Type, stmt: AStmt) -> VarId {
         let var = self.create_var(ty);
         let stmt_bind = StmtBind { var, stmt };
         self.block().push_stmt_bind(stmt_bind);
@@ -133,7 +133,7 @@ impl AmirProto {
 
     pub fn request_link(&mut self, ty: Type) -> LinkId {
         let id = LinkId(self.links.len());
-        self.links.push(Link { ty: ty.clone() });
+        self.links.push(ALink { ty: ty.clone() });
         self.links_map.entry(ty).or_insert(id).clone()
     }
 }

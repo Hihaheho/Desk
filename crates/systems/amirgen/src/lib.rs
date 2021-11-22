@@ -5,7 +5,7 @@ mod scope_proto;
 
 use amir::{
     amir::{Amir, AmirId},
-    stmt::{Const, FnRef, Stmt},
+    stmt::{Const, FnRef, AStmt},
     var::VarId,
 };
 use amir_proto::AmirProto;
@@ -47,10 +47,10 @@ impl AmirGen {
         let var_id = match expr {
             thir::Expr::Literal(literal) => {
                 let const_value = match literal {
-                    thir::Literal::Int(int) => Stmt::Const(Const::Int(*int)),
-                    thir::Literal::String(string) => Stmt::Const(Const::String(string.clone())),
-                    thir::Literal::Float(a) => Stmt::Const(Const::Float(*a)),
-                    thir::Literal::Rational(a, b) => Stmt::Const(Const::Rational(*a, *b)),
+                    thir::Literal::Int(int) => AStmt::Const(Const::Int(*int)),
+                    thir::Literal::String(string) => AStmt::Const(Const::String(string.clone())),
+                    thir::Literal::Float(a) => AStmt::Const(Const::Float(*a)),
+                    thir::Literal::Rational(a, b) => AStmt::Const(Const::Rational(*a, *b)),
                 };
                 self.amir().bind_stmt(ty.clone(), const_value)
             }
@@ -59,14 +59,14 @@ impl AmirGen {
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), Stmt::Array(values))
+                self.amir().bind_stmt(ty.clone(), AStmt::Array(values))
             }
             thir::Expr::Set(values) => {
                 let values = values
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), Stmt::Set(values))
+                self.amir().bind_stmt(ty.clone(), AStmt::Set(values))
             }
             thir::Expr::Let { definition, body } => {
                 self.amir().begin_scope();
@@ -82,7 +82,7 @@ impl AmirGen {
             }
             thir::Expr::Perform(input) => {
                 let var = self.gen_stmt(input)?;
-                self.amir().bind_stmt(ty.clone(), Stmt::Perform(var))
+                self.amir().bind_stmt(ty.clone(), AStmt::Perform(var))
             }
             thir::Expr::Handle {
                 input,
@@ -111,7 +111,7 @@ impl AmirGen {
                         .collect::<Result<Vec<_>, _>>()?;
                     self.amir().bind_stmt(
                         ty.clone(),
-                        Stmt::Op {
+                        AStmt::Op {
                             op: into_op::into_op(op),
                             operands: arguments,
                         },
@@ -125,7 +125,7 @@ impl AmirGen {
                 let function = self.amir().find_var(function).unwrap_or_else(|| {
                     let link = self.amir().request_link(function.clone());
                     self.amir()
-                        .bind_stmt(function.clone(), Stmt::Fn(FnRef::Link(link)))
+                        .bind_stmt(function.clone(), AStmt::Fn(FnRef::Link(link)))
                 });
                 let arguments = arguments
                     .iter()
@@ -133,7 +133,7 @@ impl AmirGen {
                     .collect::<Result<Vec<_>, _>>()?;
                 self.amir().bind_stmt(
                     ty.clone(),
-                    Stmt::Apply {
+                    AStmt::Apply {
                         function,
                         arguments,
                     },
@@ -144,7 +144,7 @@ impl AmirGen {
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), Stmt::Product(values))
+                self.amir().bind_stmt(ty.clone(), AStmt::Product(values))
             }
             thir::Expr::Function { parameters, body } => {
                 // Begin new mir
@@ -155,7 +155,7 @@ impl AmirGen {
 
                 //
                 self.amir()
-                    .bind_stmt(ty.clone(), Stmt::Fn(FnRef::Amir(amir_id)))
+                    .bind_stmt(ty.clone(), AStmt::Fn(FnRef::Amir(amir_id)))
             }
             thir::Expr::Match { input, cases } => todo!(),
         };
@@ -179,7 +179,7 @@ mod tests {
     use amir::{
         scope::{Scope, ScopeId},
         stmt::{StmtBind, Terminator},
-        var::Var,
+        var::AVar,
     };
 
     use super::*;
@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(gen.amirs[0].scopes, vec![Scope { super_scope: None }]);
         assert_eq!(
             gen.amirs[0].vars,
-            vec![Var {
+            vec![AVar {
                 ty: Type::Number,
                 scope: ScopeId(0)
             }]
@@ -209,7 +209,7 @@ mod tests {
             gen.amirs[0].blocks[0].stmts,
             vec![StmtBind {
                 var: VarId(0),
-                stmt: Stmt::Const(Const::Int(1)),
+                stmt: AStmt::Const(Const::Int(1)),
             }]
         );
         assert_eq!(
