@@ -73,6 +73,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-dson"
+version = "0.1.0"
+dependencies = [
+ "deskc-types",
+]
+
+[[package]]
 name = "deskc"
 version = "0.1.0"
 
