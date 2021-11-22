@@ -885,6 +885,7 @@ fn is_monotype(ty: &Type) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use file::FileId;
     use hir::meta::no_meta;
     use hirgen::HirGen;
     use pretty_assertions::assert_eq;
@@ -919,7 +920,8 @@ mod tests {
             ))
             .unwrap();
         let gen = hirgen::HirGen::default();
-        let expr = gen.gen(expr).unwrap();
+        gen.push_file_id(FileId(0));
+        let expr = gen.gen(&expr).unwrap();
         (gen, expr)
     }
 

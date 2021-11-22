@@ -137,6 +137,7 @@ impl TypedHirGen {
 
 #[cfg(test)]
 mod tests {
+    use file::FileId;
     use thir::BuiltinOp;
 
     use super::*;
@@ -157,7 +158,8 @@ mod tests {
             ))
             .unwrap();
         let gen = hirgen::HirGen::default();
-        gen.gen(expr).unwrap()
+        gen.push_file_id(FileId(0));
+        gen.gen(&expr).unwrap()
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {

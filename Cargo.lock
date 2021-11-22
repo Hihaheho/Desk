@@ -121,6 +121,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-file"
+version = "0.1.0"
+
+[[package]]
 name = "deskc-fmt"
 version = "0.1.0"
 
@@ -128,6 +132,7 @@ version = "0.1.0"
 name = "deskc-hir"
 version = "0.1.0"
 dependencies = [
+ "deskc-file",
  "uuid",
 ]
 
@@ -137,6 +142,7 @@ version = "0.1.0"
 dependencies = [
  "chumsky",
  "deskc-ast",
+ "deskc-file",
  "deskc-hir",
  "deskc-lexer",
  "deskc-parser",
@@ -196,6 +202,7 @@ name = "deskc-thirgen"
 version = "0.1.0"
 dependencies = [
  "chumsky",
+ "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-lexer",
@@ -219,6 +226,7 @@ name = "deskc-typeinfer"
 version = "0.1.0"
 dependencies = [
  "chumsky",
+ "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-lexer",

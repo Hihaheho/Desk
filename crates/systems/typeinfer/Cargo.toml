@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
+file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
 thiserror = "1.0.30"
 
 [dev-dependencies]

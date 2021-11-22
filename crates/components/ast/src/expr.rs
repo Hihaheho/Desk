@@ -48,7 +48,7 @@ pub enum Expr {
     },
     Array(Vec<Spanned<Self>>),
     Set(Vec<Spanned<Self>>),
-    Module(Box<Spanned<Self>>),
+    Include(String),
     Import {
         ty: Spanned<Type>,
         uuid: Option<Uuid>,

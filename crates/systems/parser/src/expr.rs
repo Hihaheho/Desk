@@ -124,6 +124,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 of: Box::new(of),
                 cases,
             });
+        let include = just(Token::Include)
+            .ignore_then(ident.clone())
+            .map(|ident| Expr::Include(ident));
         hole.or(literal)
             .or(let_in)
             .or(perform)
@@ -137,6 +140,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(attribute)
             .or(brand)
             .or(match_)
+            .or(include)
             .map_with_span(|token, span| (token, span))
     })
 }

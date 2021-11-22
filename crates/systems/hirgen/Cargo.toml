@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 ast = { path = "../../components/ast", version = "0.1.0", package = "deskc-ast" }
+file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
 hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
 pretty_assertions = "1.0.0"
 thiserror = "1.0.30"

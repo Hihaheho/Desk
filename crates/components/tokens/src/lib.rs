@@ -34,7 +34,7 @@ pub enum Token {
     Lambda,
     Arrow,
     EArrow,
-    Module,
+    Include,
     Import,
     Export,
     Brands,

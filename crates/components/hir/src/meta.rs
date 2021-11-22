@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use file::FileId;
+
 use crate::expr::Expr;
 
 pub type Id = usize;
@@ -8,6 +10,7 @@ pub type Id = usize;
 pub struct Meta {
     pub attrs: Vec<Expr>,
     pub id: Id,
+    pub file_id: FileId,
     pub span: Range<usize>,
 }
 

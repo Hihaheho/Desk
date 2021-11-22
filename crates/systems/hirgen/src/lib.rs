@@ -1,4 +1,6 @@
 mod error;
+mod extract_includes;
+pub use extract_includes::extract_includes;
 
 use std::{
     cell::RefCell,
@@ -7,6 +9,7 @@ use std::{
 
 use ast::span::{Span, Spanned};
 use error::HirGenError;
+use file::{FileId, InFile};
 use hir::{
     expr::{Expr, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
@@ -19,48 +22,22 @@ pub struct HirGen {
     next_span: RefCell<Vec<Span>>,
     pub variables: RefCell<HashMap<String, Id>>,
     pub attrs: RefCell<HashMap<Id, Vec<Expr>>>,
+    pub included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
     brands: RefCell<HashSet<String>>,
+    // current file id is the last item.
+    file_stack: RefCell<Vec<FileId>>,
 }
 
 impl HirGen {
-    pub fn get_id_of(&self, ident: String) -> usize {
-        *self
-            .variables
-            .borrow_mut()
-            .entry(ident)
-            .or_insert_with(|| self.next_id())
+    pub fn push_file_id(&self, file_id: FileId) {
+        self.file_stack.borrow_mut().push(file_id);
     }
-
-    pub fn next_id(&self) -> Id {
-        let id = *self.next_id.borrow();
-        *self.next_id.borrow_mut() += 1;
-        id
+    pub fn pop_file_id(&self) -> FileId {
+        self.file_stack.borrow_mut().pop().unwrap()
     }
-
-    pub fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
-        WithMeta {
-            meta: Some(Meta {
-                attrs: vec![],
-                id: self.next_id(),
-                span: self.pop_span().unwrap(),
-            }),
-            value,
-        }
-    }
-
-    fn effect(
-        &self,
-        ast::ty::Effect { input, output }: ast::ty::Effect,
-    ) -> Result<Effect, HirGenError> {
-        Ok(Effect {
-            input: self.gen_type(input)?,
-            output: self.gen_type(output)?,
-        })
-    }
-
-    pub fn gen_type(&self, ty: Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
+    pub fn gen_type(&self, ty: &Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
         let (ty, span) = ty;
-        self.push_span(span);
+        self.push_span(span.clone());
 
         let with_meta = match ty {
             ast::ty::Type::Number => self.with_meta(Type::Number),
@@ -72,7 +49,7 @@ impl HirGen {
                     .collect::<Result<_, _>>()?,
             )),
             ast::ty::Type::Effectful { ty, effects } => self.with_meta(Type::Effectful {
-                ty: Box::new(self.gen_type(*ty)?),
+                ty: Box::new(self.gen_type(ty)?),
                 effects: effects
                     .into_iter()
                     .map(|effect| self.effect(effect))
@@ -100,7 +77,7 @@ impl HirGen {
                     .map(|parameter| self.gen_type(parameter))
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
-                    .try_rfold(self.gen_type(*body)?, |body, parameter| {
+                    .try_rfold(self.gen_type(body)?, |body, parameter| {
                         self.push_span(span.clone());
                         Ok(self.with_meta(Type::Function {
                             parameter: Box::new(parameter),
@@ -108,37 +85,39 @@ impl HirGen {
                         }))
                     })?
             }
-            ast::ty::Type::Array(ty) => self.with_meta(Type::Array(Box::new(self.gen_type(*ty)?))),
-            ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(*ty)?))),
+            ast::ty::Type::Array(ty) => self.with_meta(Type::Array(Box::new(self.gen_type(ty)?))),
+            ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(ty)?))),
             ast::ty::Type::Let { definition, body } => self.with_meta(Type::Let {
-                definition: Box::new(self.gen_type(*definition)?),
-                body: Box::new(self.gen_type(*body)?),
+                definition: Box::new(self.gen_type(definition)?),
+                body: Box::new(self.gen_type(body)?),
             }),
-            ast::ty::Type::Variable(ident) => self.with_meta(Type::Variable(self.get_id_of(ident))),
+            ast::ty::Type::Variable(ident) => {
+                self.with_meta(Type::Variable(self.get_id_of(ident.clone())))
+            }
             ast::ty::Type::BoundedVariable { bound, identifier } => {
                 self.with_meta(Type::BoundedVariable {
-                    bound: Box::new(self.gen_type(*bound)?),
-                    identifier,
+                    bound: Box::new(self.gen_type(bound)?),
+                    identifier: identifier.clone(),
                 })
             }
             ast::ty::Type::Brand { brand, item } => {
-                if self.brands.borrow().contains(&brand) {
+                if self.brands.borrow().contains(brand) {
                     self.with_meta(Type::Brand {
-                        brand,
-                        item: Box::new(self.gen_type(*item)?),
+                        brand: brand.clone(),
+                        item: Box::new(self.gen_type(item)?),
                     })
                 } else {
                     self.with_meta(Type::Label {
-                        label: brand,
-                        item: Box::new(self.gen_type(*item)?),
+                        label: brand.clone(),
+                        item: Box::new(self.gen_type(item)?),
                     })
                 }
             }
             ast::ty::Type::Attribute { attr, ty } => {
                 self.pop_span();
-                let mut ret = self.gen_type(*ty)?;
+                let mut ret = self.gen_type(ty)?;
                 if let Some(meta) = &mut ret.meta {
-                    let attr = self.gen(*attr)?.value;
+                    let attr = self.gen(attr)?.value;
                     meta.attrs.push(attr);
                     self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
                 }
@@ -148,16 +127,16 @@ impl HirGen {
         Ok(with_meta)
     }
 
-    pub fn gen(&self, ast: Spanned<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
+    pub fn gen(&self, ast: &Spanned<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
         let (expr, span) = ast;
-        self.push_span(span);
+        self.push_span(span.clone());
 
         let with_meta = match expr {
             ast::expr::Expr::Literal(literal) => self.with_meta(Expr::Literal(match literal {
-                ast::expr::Literal::String(value) => Literal::String(value),
-                ast::expr::Literal::Int(value) => Literal::Int(value),
-                ast::expr::Literal::Rational(a, b) => Literal::Rational(a, b),
-                ast::expr::Literal::Float(value) => Literal::Float(value),
+                ast::expr::Literal::String(value) => Literal::String(value.clone()),
+                ast::expr::Literal::Int(value) => Literal::Int(*value),
+                ast::expr::Literal::Rational(a, b) => Literal::Rational(*a, *b),
+                ast::expr::Literal::Float(value) => Literal::Float(*value),
             })),
             ast::expr::Expr::Hole => self.with_meta(Expr::Literal(Literal::Hole)),
             ast::expr::Expr::Let {
@@ -166,11 +145,11 @@ impl HirGen {
                 expression,
             } => self.with_meta(Expr::Let {
                 ty: self.gen_type(variable)?,
-                definition: Box::new(self.gen(*definition)?),
-                expression: Box::new(self.gen(*expression)?),
+                definition: Box::new(self.gen(definition)?),
+                expression: Box::new(self.gen(expression)?),
             }),
             ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
-                input: Box::new(self.gen(*input)?),
+                input: Box::new(self.gen(input)?),
                 output: self.gen_type(output)?,
             }),
             ast::expr::Expr::Handle {
@@ -181,8 +160,8 @@ impl HirGen {
             } => self.with_meta(Expr::Handle {
                 input: self.gen_type(input)?,
                 output: self.gen_type(output)?,
-                handler: Box::new(self.gen(*handler)?),
-                expr: Box::new(self.gen(*expr)?),
+                handler: Box::new(self.gen(handler)?),
+                expr: Box::new(self.gen(expr)?),
             }),
             ast::expr::Expr::Apply {
                 function,
@@ -202,7 +181,7 @@ impl HirGen {
             )),
             ast::expr::Expr::Typed { ty, expr } => self.with_meta(Expr::Typed {
                 ty: self.gen_type(ty)?,
-                expr: Box::new(self.gen(*expr)?),
+                expr: Box::new(self.gen(expr)?),
             }),
             ast::expr::Expr::Function { parameters, body } => {
                 let span = self.pop_span().unwrap();
@@ -211,7 +190,7 @@ impl HirGen {
                     .map(|parameter| self.gen_type(parameter))
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
-                    .try_rfold(self.gen(*body)?, |body, parameter| {
+                    .try_rfold(self.gen(body)?, |body, parameter| {
                         self.push_span(span.clone());
                         Ok(self.with_meta(Expr::Function {
                             parameter,
@@ -231,14 +210,20 @@ impl HirGen {
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::expr::Expr::Module(_) => todo!(),
+            ast::expr::Expr::Include(file) => {
+                let InFile { id, expr } = self.included.get(file).unwrap();
+                self.push_file_id(*id);
+                let ret = self.gen(expr)?;
+                self.pop_file_id();
+                ret
+            }
             ast::expr::Expr::Import { ty, uuid } => todo!(),
             ast::expr::Expr::Export { ty } => todo!(),
             ast::expr::Expr::Attribute { attr, expr } => {
                 self.pop_span();
-                let mut ret = self.gen(*expr)?;
+                let mut ret = self.gen(expr)?;
                 if let Some(meta) = &mut ret.meta {
-                    let attr = self.gen(*attr)?.value;
+                    let attr = self.gen(attr)?.value;
                     meta.attrs.push(attr.clone());
                     self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
                 }
@@ -246,12 +231,12 @@ impl HirGen {
             }
             ast::expr::Expr::Brand { brands, expr } => {
                 brands.into_iter().for_each(|brand| {
-                    self.brands.borrow_mut().insert(brand);
+                    self.brands.borrow_mut().insert(brand.clone());
                 });
-                self.gen(*expr)?
+                self.gen(expr)?
             }
             ast::expr::Expr::Match { of, cases } => self.with_meta(Expr::Match {
-                of: Box::new(self.gen(*of)?),
+                of: Box::new(self.gen(of)?),
                 cases: cases
                     .into_iter()
                     .map(|ast::expr::MatchCase { ty, expr }| {
@@ -272,6 +257,42 @@ impl HirGen {
 
     pub(crate) fn pop_span(&self) -> Option<Span> {
         self.next_span.borrow_mut().pop()
+    }
+
+    fn get_id_of(&self, ident: String) -> usize {
+        *self
+            .variables
+            .borrow_mut()
+            .entry(ident)
+            .or_insert_with(|| self.next_id())
+    }
+
+    fn next_id(&self) -> Id {
+        let id = *self.next_id.borrow();
+        *self.next_id.borrow_mut() += 1;
+        id
+    }
+
+    fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
+        WithMeta {
+            meta: Some(Meta {
+                attrs: vec![],
+                id: self.next_id(),
+                file_id: self.file_stack.borrow().last().unwrap().clone(),
+                span: self.pop_span().unwrap(),
+            }),
+            value,
+        }
+    }
+
+    fn effect(
+        &self,
+        ast::ty::Effect { input, output }: &ast::ty::Effect,
+    ) -> Result<Effect, HirGenError> {
+        Ok(Effect {
+            input: self.gen_type(input)?,
+            output: self.gen_type(output)?,
+        })
     }
 }
 
@@ -412,8 +433,9 @@ mod tests {
     #[test]
     fn test() {
         let gen = HirGen::default();
+        gen.push_file_id(FileId(0));
         assert_eq!(
-            gen.gen((
+            gen.gen(&(
                 ast::expr::Expr::Apply {
                     function: (ast::ty::Type::Number, 3..10),
                     arguments: vec![(
@@ -442,6 +464,7 @@ mod tests {
                 meta: Some(Meta {
                     attrs: vec![],
                     id: 4,
+                    file_id: FileId(0),
                     span: 0..27
                 }),
                 value: Expr::Apply {
@@ -449,6 +472,7 @@ mod tests {
                         meta: Some(Meta {
                             attrs: vec![],
                             id: 0,
+                            file_id: FileId(0),
                             span: 3..10
                         }),
                         value: Type::Number
@@ -460,6 +484,7 @@ mod tests {
                                 Expr::Literal(Literal::Int(1))
                             ],
                             id: 1,
+                            file_id: FileId(0),
                             span: 26..27
                         }),
                         value: Expr::Literal(Literal::Hole)
@@ -489,8 +514,9 @@ mod tests {
         );
 
         let gen = HirGen::default();
+        gen.push_file_id(FileId(0));
         assert_eq!(
-            remove_meta(gen.gen(expr).unwrap()),
+            remove_meta(gen.gen(&expr).unwrap()),
             no_meta(Expr::Let {
                 ty: no_meta(Type::Infer),
                 definition: Box::new(no_meta(Expr::Apply {
