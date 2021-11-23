@@ -17,7 +17,7 @@ pub struct MirGenOptions {
     pub output: ConcType,
 }
 
-fn gen_mir(options: MirGenOptions, amir: &Amir) -> Mir {
+pub fn gen_mir(options: MirGenOptions, amir: &Amir) -> Mir {
     let Amir {
         parameters: _,
         output: _,

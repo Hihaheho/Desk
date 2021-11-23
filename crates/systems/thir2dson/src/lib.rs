@@ -1,7 +1,11 @@
 use dson::Dson;
 use thir::{Expr, Literal, TypedHir};
+use thiserror::Error;
+use types::Type;
 
+#[derive(Debug, Clone, PartialEq, Error)]
 pub enum HirToJsonError {
+    #[error("{0} not allowed")]
     NotAllowed(String),
 }
 
@@ -40,5 +44,39 @@ pub fn thir_to_json(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
         Expr::Reference => Err(HirToJsonError::NotAllowed("ref".into()))?,
         Expr::Op { .. } => Err(HirToJsonError::NotAllowed("op".into()))?,
     };
-    Ok(dson)
+    if let Type::Label { label, .. } | Type::Brand { brand: label, .. } = &thir.ty {
+        Ok(Dson::Labeled {
+            label: label.clone(),
+            expr: Box::new(dson),
+        })
+    } else {
+        Ok(dson)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use types::Type;
+
+    use super::*;
+
+    #[test]
+    fn test_labeled() {
+        let thir = TypedHir {
+            id: 0,
+            ty: Type::Label {
+                label: "label".into(),
+                item: Box::new(Type::Number),
+            },
+            expr: Expr::Literal(Literal::Int(1)),
+        };
+        let dson = thir_to_json(&thir).unwrap();
+        assert_eq!(
+            dson,
+            Dson::Labeled {
+                label: "label".into(),
+                expr: Box::new(Dson::Literal(dson::Literal::Int(1)))
+            }
+        );
+    }
 }

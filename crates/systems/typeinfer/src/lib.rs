@@ -26,6 +26,18 @@ use well_formed::WellFormed;
 
 use crate::utils::{sum_all, with_effects};
 
+pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
+    Ok(Ctx {
+        id_gen: Rc::new(RefCell::new(IdGen { next_id })),
+        ..Default::default()
+    }
+    .synth(expr)
+    .map(|(ctx, ty)| {
+        let ty = ctx.substitute_from_ctx(&ty);
+        (ctx, ty)
+    })?)
+}
+
 pub type Id = usize;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -893,12 +905,7 @@ mod tests {
     use super::*;
 
     fn synth(expr: WithMeta<Expr>) -> Result<Type, TypeError> {
-        let (ctx, ty) = Ctx {
-            id_gen: Rc::new(RefCell::new(IdGen { next: 100 })),
-            ..Default::default()
-        }
-        .synth(&expr)?;
-        Ok(ctx.substitute_from_ctx(&ty))
+        crate::synth(100, &expr).map(|(_, ty)| ty)
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
@@ -906,23 +913,9 @@ mod tests {
     }
 
     fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
-        use chumsky::prelude::end;
-        use chumsky::{Parser, Stream};
-        let expr = parser::expr::parser()
-            .then_ignore(end())
-            .parse(Stream::from_iter(
-                input.len()..input.len() + 1,
-                lexer::lexer()
-                    .then_ignore(end())
-                    .parse(input)
-                    .unwrap()
-                    .into_iter(),
-            ))
-            .unwrap();
-        let gen = hirgen::HirGen::default();
-        gen.push_file_id(FileId(0));
-        let expr = gen.gen(&expr).unwrap();
-        (gen, expr)
+        let tokens = lexer::scan(input).unwrap();
+        let ast = parser::parse(tokens).unwrap();
+        hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap()
     }
 
     fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {

@@ -77,13 +77,13 @@ impl Types {
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct IdGen {
-    pub next: Id,
+    pub next_id: Id,
 }
 
 impl IdGen {
     pub fn next_id(&mut self) -> Id {
-        let id = self.next;
-        self.next += 1;
+        let id = self.next_id;
+        self.next_id += 1;
         id
     }
 }

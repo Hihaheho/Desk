@@ -16,6 +16,19 @@ use hir::{
     ty::{Effect, Type},
 };
 
+pub fn gen_hir(
+    file_id: FileId,
+    src: &Spanned<ast::expr::Expr>,
+    included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
+) -> Result<(HirGen, WithMeta<Expr>), HirGenError> {
+    let hir = HirGen {
+        file_stack: RefCell::new(vec![file_id]),
+        included,
+        ..Default::default()
+    };
+    hir.gen(src).map(|expr| (hir, expr))
+}
+
 #[derive(Default)]
 pub struct HirGen {
     next_id: RefCell<Id>,
@@ -320,19 +333,7 @@ mod tests {
     use super::*;
 
     fn parse(input: &str) -> Spanned<ast::expr::Expr> {
-        use chumsky::prelude::end;
-        use chumsky::{Parser, Stream};
-        parser::expr::parser()
-            .then_ignore(end())
-            .parse(Stream::from_iter(
-                input.len()..input.len() + 1,
-                lexer::lexer()
-                    .then_ignore(end())
-                    .parse(input)
-                    .unwrap()
-                    .into_iter(),
-            ))
-            .unwrap()
+        parser::parse(lexer::scan(input).unwrap()).unwrap()
     }
     fn remove_meta_ty(ty: WithMeta<Type>) -> WithMeta<Type> {
         let value = match ty.value {

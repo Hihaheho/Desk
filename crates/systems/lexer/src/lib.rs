@@ -4,6 +4,10 @@ use chumsky::prelude::*;
 use tokens::Token;
 use uuid::Uuid;
 
+pub fn scan(input: &str) -> Result<Vec<(Token, Range<usize>)>, Vec<Simple<char>>> {
+    lexer().then_ignore(end()).parse(input)
+}
+
 pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<char>> {
     let comment = recursive(|comment| {
         none_of("()".chars())

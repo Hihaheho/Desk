@@ -105,7 +105,7 @@ name = "deskc-dson"
 version = "0.1.0"
 
 [[package]]
-name = "deskc-evalamir"
+name = "deskc-evalmir"
 version = "0.1.0"
 dependencies = [
  "chumsky",
@@ -188,6 +188,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-test-integration"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "deskc-amirgen",
+ "deskc-dson",
+ "deskc-evalmir",
+ "deskc-hirgen",
+ "deskc-lexer",
+ "deskc-mirgen",
+ "deskc-parser",
+ "deskc-thir",
+ "deskc-thir2dson",
+ "deskc-thirgen",
+ "deskc-typeinfer",
+ "deskc-types",
+ "pretty_assertions",
+]
+
+[[package]]
 name = "deskc-thir"
 version = "0.1.0"
 dependencies = [
@@ -200,6 +220,8 @@ version = "0.1.0"
 dependencies = [
  "deskc-dson",
  "deskc-thir",
+ "deskc-types",
+ "thiserror",
 ]
 
 [[package]]

@@ -5,13 +5,18 @@ mod scope_proto;
 
 use amir::{
     amir::{Amir, AmirId},
-    stmt::{Const, FnRef, AStmt},
+    stmt::{AStmt, Const, FnRef},
     var::VarId,
 };
 use amir_proto::AmirProto;
 use thir::TypedHir;
 use thiserror::Error;
 use types::Type;
+
+pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Vec<Amir>, GenAmirError> {
+    let mut gen = AmirGen::default();
+    gen.gen_amir(thir).map(|_id| gen.amirs)
+}
 
 pub struct AmirGen {
     amirs: Vec<Amir>,

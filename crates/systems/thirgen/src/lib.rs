@@ -11,6 +11,14 @@ use types::{IdGen, Type, Types};
 
 use crate::builtin::find_builtin;
 
+pub fn gen_typed_hir(next_id: usize, types: Types, expr: &WithMeta<Expr>) -> TypedHir {
+    TypedHirGen {
+        types,
+        _id_gen: RefCell::new(IdGen { next_id }),
+    }
+    .gen(expr)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct TypedHirGen {
     types: Types,
@@ -144,22 +152,11 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        use chumsky::prelude::end;
-        use chumsky::{Parser, Stream};
-        let expr = parser::expr::parser()
-            .then_ignore(end())
-            .parse(Stream::from_iter(
-                input.len()..input.len() + 1,
-                lexer::lexer()
-                    .then_ignore(end())
-                    .parse(input)
-                    .unwrap()
-                    .into_iter(),
-            ))
-            .unwrap();
-        let gen = hirgen::HirGen::default();
-        gen.push_file_id(FileId(0));
-        gen.gen(&expr).unwrap()
+        let tokens = lexer::scan(input).unwrap();
+        let ast = parser::parse(tokens).unwrap();
+        hirgen::gen_hir(FileId(0), &ast, Default::default())
+            .unwrap()
+            .1
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {
@@ -251,7 +248,7 @@ mod tests {
         let expr = parse(r#"<\'number, 'number -> @sum 'number>"#);
         let _gen = TypedHirGen {
             types: infer(&expr),
-            _id_gen: RefCell::new(IdGen { next: 100 }),
+            _id_gen: RefCell::new(IdGen { next_id: 100 }),
         };
         // TODO
         // assert_eq!(

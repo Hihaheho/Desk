@@ -162,16 +162,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 #[cfg(test)]
 mod tests {
     use ast::{expr::MatchCase, ty::Type};
-    use chumsky::Stream;
-    use lexer::lexer;
+    use lexer::scan;
 
     use super::*;
 
     fn parse(input: &str) -> Result<Spanned<Expr>, Vec<Simple<Token>>> {
-        parser().parse(Stream::from_iter(
-            input.len()..input.len() + 1,
-            dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
-        ))
+        crate::parse(dbg!(scan(input).unwrap()))
     }
 
     #[test]
@@ -198,7 +194,7 @@ mod tests {
     #[test]
     fn parse_let() {
         assert_eq!(
-            parse("$ 3: <'number> ~ ?.").unwrap().0,
+            parse("$ 3: <'number> ~ ?").unwrap().0,
             Expr::Let {
                 ty: (Type::Number, 6..13),
                 definition: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
