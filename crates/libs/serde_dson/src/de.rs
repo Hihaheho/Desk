@@ -22,7 +22,7 @@ impl Deserializer {
 }
 
 fn unwrap(dson: &mut Dson) {
-    while let Dson::Typed { expr, .. } | Dson::Attr { expr, .. } | Dson::Labeled { expr, .. } = dson
+    while let Dson::Attr { expr, .. } | Dson::Labeled { expr, .. } = dson
     {
         *dson = *expr.clone();
     }
@@ -41,6 +41,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             Dson::Literal(Literal::Float(float)) => visitor.visit_f64(*float),
             Dson::Literal(Literal::Rational(a, b)) => visitor.visit_f64(*a as f64 / *b as f64),
             Dson::Literal(Literal::String(string)) => visitor.visit_string(string.clone()),
+            Dson::Literal(Literal::Hole) => Err(Error::Message("Hole is not allowed".into())),
             Dson::Product(values) => {
                 if values.len() == 0 {
                     visitor.visit_unit()
@@ -50,9 +51,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             }
             Dson::Array(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
             Dson::Set(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
-            Dson::Hole => Err(Error::Message("Hole is not allowed".into())),
             Dson::Labeled { .. } => panic!(),
-            Dson::Typed { .. } => panic!(),
             Dson::Attr { .. } => panic!(),
         }
     }

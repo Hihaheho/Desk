@@ -103,9 +103,6 @@ dependencies = [
 [[package]]
 name = "deskc-dson"
 version = "0.1.0"
-dependencies = [
- "deskc-types",
-]
 
 [[package]]
 name = "deskc-evalamir"
@@ -195,6 +192,14 @@ name = "deskc-thir"
 version = "0.1.0"
 dependencies = [
  "deskc-types",
+]
+
+[[package]]
+name = "deskc-thir2dson"
+version = "0.1.0"
+dependencies = [
+ "deskc-dson",
+ "deskc-thir",
 ]
 
 [[package]]
