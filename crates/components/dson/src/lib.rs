@@ -9,7 +9,7 @@ pub enum Literal {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Expr {
+pub enum Dson {
     Literal(Literal),
     Product(Vec<Self>),
     Typed { ty: Type, expr: Box<Self> },
@@ -17,4 +17,5 @@ pub enum Expr {
     Array(Vec<Self>),
     Set(Vec<Self>),
     Attr { attr: Box<Self>, expr: Box<Self> },
+    Labeled { label: String, expr: Box<Self> },
 }

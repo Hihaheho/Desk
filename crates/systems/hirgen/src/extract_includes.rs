@@ -70,5 +70,6 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
         Expr::Import { ty: _, uuid: _ } => todo!(),
         Expr::Export { ty: _ } => todo!(),
         Expr::Literal(_) => {}
+        Expr::Label { label: _, expr } => visit(includes, &expr.0),
     };
 }

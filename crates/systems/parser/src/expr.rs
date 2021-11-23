@@ -127,6 +127,19 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let include = just(Token::Include)
             .ignore_then(ident.clone())
             .map(|ident| Expr::Include(ident));
+        let label = filter_map(|span, input| {
+            if let Token::Brand(ident) = input {
+                Ok(ident)
+            } else {
+                Err(Simple::custom(span, "Expected brand"))
+            }
+        })
+        .then(expr.clone())
+        .map(|(label, expr)| Expr::Label {
+            label,
+            expr: Box::new(expr),
+        });
+
         hole.or(literal)
             .or(let_in)
             .or(perform)
@@ -141,6 +154,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(brand)
             .or(match_)
             .or(include)
+            .or(label)
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -335,6 +349,17 @@ mod tests {
                         expr: (Expr::Literal(Literal::String("string".into())), 79..87),
                     },
                 ]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_label() {
+        assert_eq!(
+            parse("@true *").unwrap().0,
+            Expr::Label {
+                label: "true".into(),
+                expr: Box::new((Expr::Product(vec![]), 6..7)),
             }
         );
     }

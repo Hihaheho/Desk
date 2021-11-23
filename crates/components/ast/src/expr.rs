@@ -64,6 +64,10 @@ pub enum Expr {
         brands: Vec<String>,
         expr: Box<Spanned<Self>>,
     },
+    Label {
+        label: String,
+        expr: Box<Spanned<Self>>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

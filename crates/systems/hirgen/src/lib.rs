@@ -247,6 +247,19 @@ impl HirGen {
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             }),
+            ast::expr::Expr::Label { label, expr } => {
+                let ty = (
+                    ast::ty::Type::Brand {
+                        brand: label.clone(),
+                        item: Box::new((ast::ty::Type::Infer, 0..0)), // TODO
+                    },
+                    0..0, // TODO
+                );
+                self.with_meta(Expr::Typed {
+                    ty: self.gen_type(&ty)?,
+                    expr: Box::new(self.gen(expr)?),
+                })
+            }
         };
         Ok(with_meta)
     }
