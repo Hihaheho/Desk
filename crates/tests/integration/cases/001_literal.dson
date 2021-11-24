@@ -1,0 +1,11 @@
+* @files [
+    * @name "main.ds",
+      @content "
+        1
+      "
+  ],
+  @entrypoint "main.ds",
+  @assertions [
+    @RunSuccess *
+      @result @Int 1
+  ]

@@ -12,7 +12,7 @@ impl TypeVisitor for MonoType {
         self.is_monotype = false;
     }
     fn visit_infer(&mut self, _id: &Id) {
-        // TODO: this is too conservative, but we don't have a way to know
+        // TODO: this is too conservative, but we may not have a way to know in here
         self.is_monotype = false;
     }
     fn visit(&mut self, ty: &Type) {

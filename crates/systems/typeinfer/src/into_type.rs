@@ -54,9 +54,13 @@ pub(crate) fn into_type(ctx: &Ctx, ty: &Type) -> types::Type {
             label: label.clone(),
             item: Box::new(into_type(ctx, item)),
         },
-        Type::Existential(id) => {
-            into_type(ctx, ctx.types.borrow().get(id).expect("should be inferred"))
-        }
+        Type::Existential(id) => into_type(
+            ctx,
+            ctx.types
+                .borrow()
+                .get(id)
+                .expect(&format!("should be instansiated: {}", id)),
+        ),
         Type::Infer(id) => into_type(ctx, ctx.types.borrow().get(id).expect("should be inferred")),
     }
 }

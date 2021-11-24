@@ -6,9 +6,13 @@ use amir::{
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Const(Const),
-    Product(Vec<VarId>),
+    Tuple(Vec<VarId>),
     Array(Vec<VarId>),
     Set(Vec<VarId>),
+    Index {
+        tuple: VarId,
+        index: usize,
+    },
     Fn(FnRef),
     Perform(VarId),
     // TODO: Handle
@@ -20,6 +24,11 @@ pub enum Stmt {
         op: Op,
         operands: Vec<VarId>,
     },
+    Variant {
+        id: usize,
+        value: VarId,
+    },
+    Move(VarId),
     Ref(VarId),
     RefMut(VarId),
 }

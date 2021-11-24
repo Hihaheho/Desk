@@ -5,7 +5,7 @@ use amir::{
     block::{ABasicBlock, BlockId},
     link::{ALink, LinkId},
     scope::ScopeId,
-    stmt::{AStmt, StmtBind, Terminator},
+    stmt::{AStmt, StmtBind, ATerminator},
     var::{AVar, VarId},
 };
 use types::Type;
@@ -15,8 +15,8 @@ use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 pub struct AmirProto {
     parameters: Vec<Type>,
     scopes: Vec<ScopeProto>,
-    blocks_proto: Vec<BlockProto>,
-    blocks: Vec<ABasicBlock>,
+    blocks_proto: HashMap<BlockId, BlockProto>,
+    blocks: HashMap<BlockId, ABasicBlock>,
     vars: Vec<AVar>,
     links: Vec<ALink>,
     links_map: HashMap<Type, LinkId>,
@@ -34,14 +34,15 @@ impl Default for AmirProto {
             links: vec![],
             links_map: HashMap::default(),
             scopes: vec![ScopeProto::default()],
-            blocks_proto: vec![BlockProto::default()],
-            blocks: vec![],
+            blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
+            blocks: HashMap::default(),
         }
     }
 }
 
 impl AmirProto {
-    pub fn into_amir(self, output: Type) -> Amir {
+    pub fn into_amir(self, var: VarId, output: Type) -> Amir {
+        let current_block_id = self.current_block_id();
         let AmirProto {
             parameters,
             scopes,
@@ -52,15 +53,19 @@ impl AmirProto {
             ..
         } = self;
         assert!(blocks_proto.len() == 1);
-        let last_block = blocks_proto.pop().unwrap();
-        // If last block have stmt.
-        if last_block.stmts.len() != 0 {
-            let ret = last_block.stmts.last().as_ref().unwrap().var;
-            blocks.push(ABasicBlock {
+        let last_block = blocks_proto.remove(&current_block_id).unwrap();
+        blocks.insert(
+            current_block_id,
+            ABasicBlock {
                 stmts: last_block.stmts,
-                terminator: Terminator::Return(ret),
-            })
-        }
+                terminator: ATerminator::Return(var),
+            },
+        );
+        let mut blocks: Vec<_> = blocks.into_iter().collect();
+        blocks.sort_by(|a, b| a.0 .0.partial_cmp(&b.0 .0).unwrap());
+        assert_eq!(blocks[0].0, BlockId(0));
+        assert_eq!(blocks[blocks.len() - 1].0, BlockId(blocks.len() - 1));
+        let blocks = blocks.into_iter().map(|(_, b)| b).collect();
         Amir {
             parameters,
             output,
@@ -80,10 +85,12 @@ impl AmirProto {
         self.scopes.get_mut(id).unwrap()
     }
 
-    pub fn block(&mut self) -> &mut BlockProto {
-        self.blocks_proto
-            .get_mut(self.current_block.last().unwrap().0)
-            .unwrap()
+    pub fn current_block_id(&self) -> BlockId {
+        self.current_block.last().copied().unwrap()
+    }
+
+    pub fn block_proto(&mut self) -> &mut BlockProto {
+        self.blocks_proto.get_mut(&self.current_block_id()).unwrap()
     }
 
     pub fn find_var(&self, ty: &Type) -> Option<VarId> {
@@ -110,8 +117,12 @@ impl AmirProto {
 
     pub fn bind_stmt(&mut self, ty: Type, stmt: AStmt) -> VarId {
         let var = self.create_var(ty);
+        self.bind_to(var, stmt)
+    }
+
+    pub(crate) fn bind_to(&mut self, var: VarId, stmt: AStmt) -> VarId {
         let stmt_bind = StmtBind { var, stmt };
-        self.block().push_stmt_bind(stmt_bind);
+        self.block_proto().push_stmt_bind(stmt_bind);
         var
     }
 
@@ -129,6 +140,29 @@ impl AmirProto {
     pub fn end_scope<T>(&mut self, var: T) -> T {
         self.current_scope.pop();
         var
+    }
+
+    pub fn begin_block(&mut self) -> BlockId {
+        let id = BlockId(self.blocks.len() + self.blocks_proto.len());
+        self.current_block.push(id);
+        self.blocks_proto.insert(id, BlockProto::default());
+        id
+    }
+
+    // begin block handled the next time of current block
+    pub fn begin_block_defer(&mut self) -> BlockId {
+        let id = self.begin_block();
+        let len = self.current_block.len();
+        // defer
+        self.current_block.swap(len - 1, len - 2);
+        id
+    }
+
+    pub fn end_block(&mut self, terminator: ATerminator) -> BlockId {
+        let id = self.current_block.pop().unwrap();
+        let stmts = self.blocks_proto.remove(&id).unwrap().stmts;
+        self.blocks.insert(id, ABasicBlock { stmts, terminator });
+        id
     }
 
     pub fn request_link(&mut self, ty: Type) -> LinkId {

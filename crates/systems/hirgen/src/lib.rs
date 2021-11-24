@@ -261,17 +261,17 @@ impl HirGen {
                     .collect::<Result<Vec<_>, _>>()?,
             }),
             ast::expr::Expr::Label { label, expr } => {
-                let ty = (
-                    ast::ty::Type::Brand {
+                if self.brands.borrow().contains(label) {
+                    self.with_meta(Expr::Brand {
                         brand: label.clone(),
-                        item: Box::new((ast::ty::Type::Infer, 0..0)), // TODO
-                    },
-                    0..0, // TODO
-                );
-                self.with_meta(Expr::Typed {
-                    ty: self.gen_type(&ty)?,
-                    expr: Box::new(self.gen(expr)?),
-                })
+                        body: Box::new(self.gen(expr)?),
+                    })
+                } else {
+                    self.with_meta(Expr::Label {
+                        label: label.clone(),
+                        body: Box::new(self.gen(expr)?),
+                    })
+                }
             }
         };
         Ok(with_meta)
@@ -293,7 +293,7 @@ impl HirGen {
             .or_insert_with(|| self.next_id())
     }
 
-    fn next_id(&self) -> Id {
+    pub fn next_id(&self) -> Id {
         let id = *self.next_id.borrow();
         *self.next_id.borrow_mut() += 1;
         id
@@ -439,6 +439,14 @@ mod tests {
                         expr: remove_meta(expr),
                     })
                     .collect(),
+            },
+            Expr::Label { label, body } => Expr::Label {
+                label,
+                body: Box::new(remove_meta(*body)),
+            },
+            Expr::Brand { brand, body } => Expr::Brand {
+                brand,
+                body: Box::new(remove_meta(*body)),
             },
         };
         no_meta(value)

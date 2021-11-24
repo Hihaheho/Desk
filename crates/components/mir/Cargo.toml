@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 types = { path = "../types", version = "0.1.0", package = "deskc-types" }
 amir = { path = "../amir", version = "0.1.0", package = "deskc-amir" }
+serde = { version = "1.0", features = ["derive"], optional = true }

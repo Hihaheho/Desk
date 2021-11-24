@@ -71,6 +71,9 @@ impl CtxWithEffects {
 }
 
 impl Ctx {
+    pub fn next_id(&self) -> Id {
+        self.id_gen.borrow_mut().next_id()
+    }
     fn empty(&self) -> Self {
         Self {
             id_gen: self.id_gen.clone(),
@@ -92,6 +95,10 @@ impl Ctx {
     }
 
     fn store_type(&self, id: Id, ty: Type) {
+        if let Type::Infer(_) = ty {
+            // infer should not be registered
+            return;
+        }
         let mut types = self.types.borrow_mut();
         match types.get(&id) {
             None | Some(&Type::Existential(_)) => {
@@ -353,7 +360,7 @@ impl Ctx {
                     })?;
                 expr_effects.remove(position);
                 // remove continue effect
-                if let Some(position) = dbg!(&handler_effects)
+                if let Some(position) = (&handler_effects)
                     .iter()
                     .position(|effect| effect == &continue_effect)
                 {
@@ -425,8 +432,16 @@ impl Ctx {
                         })
                 }
             }
-            Expr::Array(_) => todo!(),
-            Expr::Set(_) => todo!(),
+            Expr::Array(values) => {
+                let var = self.fresh_existential();
+                values
+                    .iter()
+                    .try_fold(self.add(Log::Existential(var)), |ctx, value| {
+                        ctx.check(&value, &Type::Existential(var))
+                    })?
+                    .with_type(Type::Array(Box::new(Type::Existential(var))))
+            }
+            Expr::Set(values) => todo!(),
             Expr::Match { of, cases } => {
                 let (ty, out): (Vec<_>, Vec<_>) = cases
                     .iter()
@@ -434,9 +449,23 @@ impl Ctx {
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
                     .unzip();
-                let ty = dbg!(sum_all(self, ty));
-                let out = dbg!(sum_all(self, out));
+                let ty = sum_all(self, ty);
+                let out = sum_all(self, out);
                 self.check(&*of, &ty)?.with_type(out)
+            }
+            Expr::Label { label, body } => {
+                let (ctx, ty) = self.synth(body)?;
+                ctx.with_type(Type::Label {
+                    label: label.into(),
+                    item: Box::new(ty),
+                })
+            }
+            Expr::Brand { brand, body } => {
+                let (ctx, ty) = self.synth(body)?;
+                ctx.with_type(Type::Brand {
+                    brand: brand.into(),
+                    item: Box::new(ty),
+                })
             }
         };
         let effects = ctx.end_scope(scope);
@@ -521,9 +550,46 @@ impl Ctx {
         };
         let ctx = match (sub, ty) {
             (Type::Variable(id), Type::Variable(id2)) if id == id2 => self.clone(),
-            (Type::Existential(id), Type::Existential(id2)) if id == id2 => self.clone(),
             (Type::Number, Type::Number) => self.clone(),
             (Type::String, Type::String) => self.clone(),
+            (Type::Existential(id), Type::Existential(id2)) if id == id2 => self.clone(),
+            (Type::Existential(id), ty) => {
+                if occurs_in(id, ty) {
+                    Err(TypeError::CircularExistential {
+                        id: *id,
+                        ty: ty.clone(),
+                    })?
+                } else {
+                    self.instantiate_subtype(id, ty)?
+                }
+            }
+            (sub, Type::Existential(id)) => {
+                if occurs_in(id, sub) {
+                    Err(TypeError::CircularExistential {
+                        id: *id,
+                        ty: ty.clone(),
+                    })?
+                } else {
+                    self.instantiate_supertype(sub, id)?
+                }
+            }
+
+            // handling things must be under the instantiations of existential.
+            (Type::Product(sub_types), Type::Product(types)) => {
+                if sub_types.iter().all(|sub_ty| {
+                    types
+                        .iter()
+                        .find(|ty| self.subtype(sub_ty, ty).is_ok())
+                        .is_some()
+                }) {
+                    self.clone()
+                } else {
+                    Err(TypeError::NotSubtype {
+                        sub: sub.clone(),
+                        ty: ty.clone(),
+                    })?
+                }
+            }
             // TODO: return multi pass for error recovery?
             (Type::Product(sub_types), ty) => sub_types
                 .iter()
@@ -535,6 +601,21 @@ impl Ctx {
                     sub: sub.clone(),
                     ty: ty.clone(),
                 })?,
+            (Type::Sum(sub_types), Type::Sum(types)) => {
+                if types.iter().all(|ty| {
+                    sub_types
+                        .iter()
+                        .find(|sub_ty| self.subtype(sub_ty, ty).is_ok())
+                        .is_some()
+                }) {
+                    self.clone()
+                } else {
+                    Err(TypeError::NotSubtype {
+                        sub: sub.clone(),
+                        ty: ty.clone(),
+                    })?
+                }
+            }
             // TODO: return multi pass for error recovery?
             (sub, Type::Sum(types)) => types
                 .iter()
@@ -575,32 +656,11 @@ impl Ctx {
                 .subtype(sub, body)?
                 .truncate_from(&Log::Variable(*variable))
                 .recover_effects(),
-            (Type::Existential(id), ty) => {
-                if occurs_in(id, ty) {
-                    Err(TypeError::CircularExistential {
-                        id: *id,
-                        ty: ty.clone(),
-                    })?
-                } else {
-                    self.instantiate_subtype(id, ty)?
-                }
-            }
-            (sub, Type::Existential(id)) => {
-                if occurs_in(id, sub) {
-                    Err(TypeError::CircularExistential {
-                        id: *id,
-                        ty: ty.clone(),
-                    })?
-                } else {
-                    self.instantiate_supertype(sub, id)?
-                }
-            }
 
-            // handling labels must be under the instantiations
             (sub, Type::Label { item, label: _ }) => self.subtype(sub, item)?,
             (Type::Label { item, label: _ }, sup) => self.subtype(item, sup)?,
             (Type::Brand { item, brand: _ }, sup) => self.subtype(item, sup)?,
-
+            // one without brand is not subtype of other with brand
             (Type::Infer(id), sup) => {
                 self.store_type(*id, sup.clone());
                 self.clone()
@@ -646,6 +706,7 @@ impl Ctx {
     fn instantiate_subtype(&self, id: &Id, sup: &Type) -> Result<Ctx, TypeError> {
         // In here, we can assume the context contains the existential type.
         let ctx = if is_monotype(sup)
+            && self.has_existential(id)
             && self
                 .truncate_from(&Log::Existential(*id))
                 .recover_effects()
@@ -681,9 +742,9 @@ impl Ctx {
                     .instantiate_subtype(id, body)?
                     .truncate_from(&Log::Variable(*variable))
                     .recover_effects(),
-                Type::Existential(var) => self.insert_in_place(
-                    &Log::Existential(*var),
-                    vec![Log::Solved(*var, Type::Existential(*id))],
+                Type::Existential(b) => self.insert_in_place(
+                    &Log::Existential(*b),
+                    vec![Log::Solved(*b, Type::Existential(*id))],
                 ),
                 Type::Product(types) => self.instantiate_composite_type_vec(
                     *id,
@@ -718,6 +779,48 @@ impl Ctx {
                     )
                     .instantiate_subtype(&a, ty)?
                 }
+                Type::Label { item, label } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Label {
+                                    item: Box::new(Type::Existential(a)),
+                                    label: label.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_subtype(&a, item)?
+                }
+                Type::Brand { item, brand } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Brand {
+                                    item: Box::new(Type::Existential(a)),
+                                    brand: brand.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_subtype(&a, item)?
+                }
+                Type::Infer(infer) => {
+                    println!("{}", infer);
+                    self.store_type(*infer, Type::Existential(*id));
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![Log::Solved(*id, sup.clone())],
+                    )
+                }
                 ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
             }
         };
@@ -728,6 +831,7 @@ impl Ctx {
     fn instantiate_supertype(&self, sub: &Type, id: &Id) -> Result<Ctx, TypeError> {
         // In here, we can assume the context contains the existential type.
         let ctx = if is_monotype(sub)
+            && self.has_existential(id)
             && self
                 .truncate_from(&Log::Existential(*id))
                 .recover_effects()
@@ -771,9 +875,9 @@ impl Ctx {
                     )?
                     .truncate_from(&Log::Marker(*variable))
                     .recover_effects(),
-                Type::Existential(var) => self.insert_in_place(
-                    &Log::Existential(*var),
-                    vec![Log::Solved(*var, Type::Existential(*id))],
+                Type::Existential(a) => self.insert_in_place(
+                    &Log::Existential(*id),
+                    vec![Log::Solved(*id, Type::Existential(*a))],
                 ),
                 Type::Product(types) => self.instantiate_composite_type_vec(
                     *id,
@@ -807,6 +911,48 @@ impl Ctx {
                         ],
                     )
                     .instantiate_supertype(ty, &a)?
+                }
+                Type::Label { item, label } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Label {
+                                    item: Box::new(Type::Existential(a)),
+                                    label: label.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_supertype(item, &a)?
+                }
+                Type::Brand { item, brand } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Brand {
+                                    item: Box::new(Type::Existential(a)),
+                                    brand: brand.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_supertype(item, &a)?
+                }
+                Type::Infer(infer) => {
+                    println!("{}", infer);
+                    self.store_type(*infer, Type::Existential(*id));
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![Log::Solved(*id, sub.clone())],
+                    )
                 }
                 ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
             }

@@ -29,7 +29,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "chumsky"
 version = "0.5.0"
-source = "git+https://github.com/ryo33/chumsky#67e2db03308b0df4260561c121e09032fa9fe255"
+source = "git+https://github.com/ryo33/chumsky#4ed7ad911dfdf52a9195ca8bff3557ee42286227"
 dependencies = [
  "ahash",
 ]
@@ -101,6 +101,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-concretizer"
+version = "0.1.0"
+dependencies = [
+ "deskc-amir",
+ "deskc-mir",
+ "deskc-types",
+]
+
+[[package]]
 name = "deskc-dson"
 version = "0.1.0"
 
@@ -115,6 +124,7 @@ dependencies = [
  "deskc-parser",
  "deskc-typeinfer",
  "deskc-types",
+ "serde",
 ]
 
 [[package]]
@@ -166,15 +176,7 @@ version = "0.1.0"
 dependencies = [
  "deskc-amir",
  "deskc-types",
-]
-
-[[package]]
-name = "deskc-mirgen"
-version = "0.1.0"
-dependencies = [
- "deskc-amir",
- "deskc-mir",
- "deskc-types",
+ "serde",
 ]
 
 [[package]]
@@ -193,11 +195,13 @@ version = "0.1.0"
 dependencies = [
  "chumsky",
  "deskc-amirgen",
+ "deskc-concretizer",
  "deskc-dson",
  "deskc-evalmir",
+ "deskc-file",
+ "deskc-hir",
  "deskc-hirgen",
  "deskc-lexer",
- "deskc-mirgen",
  "deskc-parser",
  "deskc-thir",
  "deskc-thir2dson",
@@ -205,6 +209,8 @@ dependencies = [
  "deskc-typeinfer",
  "deskc-types",
  "pretty_assertions",
+ "serde",
+ "serde_dson",
 ]
 
 [[package]]
@@ -266,6 +272,9 @@ dependencies = [
 [[package]]
 name = "deskc-types"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "diff"

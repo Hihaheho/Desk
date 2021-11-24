@@ -16,6 +16,7 @@ pub enum AStmt {
     Set(Vec<VarId>),
     Fn(FnRef),
     Perform(VarId),
+    MatchResult(VarId),
     // TODO: Handle
     Apply {
         function: VarId,
@@ -25,6 +26,7 @@ pub enum AStmt {
         op: Op,
         operands: Vec<VarId>,
     },
+    Cast(VarId),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -74,10 +76,11 @@ pub struct MatchCase<T = Type> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Terminator<T = Type> {
+pub enum ATerminator<T = Type> {
     Return(VarId),
     Match {
         var: VarId,
         cases: Vec<MatchCase<T>>,
     },
+    Goto(BlockId),
 }

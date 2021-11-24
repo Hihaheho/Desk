@@ -46,6 +46,14 @@ pub enum Expr {
     },
     Array(Vec<WithMeta<Self>>),
     Set(Vec<WithMeta<Self>>),
+    Label {
+        label: String,
+        body: Box<WithMeta<Self>>,
+    },
+    Brand {
+        brand: String,
+        body: Box<WithMeta<Self>>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

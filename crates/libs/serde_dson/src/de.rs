@@ -128,7 +128,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             Dson::Labeled { label, expr } => {
                 visitor.visit_enum(EnumDeserializer(label.clone(), *expr.clone()))
             }
-            _ => Err(Error::Message("Expected product".into())),
+            _ => Err(Error::Message("Expected label".into())),
         }
     }
 

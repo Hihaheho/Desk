@@ -5,7 +5,8 @@ mod scope_proto;
 
 use amir::{
     amir::{Amir, AmirId},
-    stmt::{AStmt, Const, FnRef},
+    block::BlockId,
+    stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
     var::VarId,
 };
 use amir_proto::AmirProto;
@@ -44,8 +45,8 @@ impl AmirGen {
     }
     pub fn gen_amir(&mut self, thir: &TypedHir) -> Result<AmirId, GenAmirError> {
         self.start_amir();
-        self.gen_stmt(thir)?;
-        Ok(self.end_amir(thir.ty.clone()))
+        let var = self.gen_stmt(thir)?;
+        Ok(self.end_amir(var, thir.ty.clone()))
     }
     pub fn gen_stmt(&mut self, thir: &TypedHir) -> Result<VarId, GenAmirError> {
         let TypedHir { id: _, ty, expr } = thir;
@@ -155,14 +156,39 @@ impl AmirGen {
                 // Begin new mir
                 self.start_amir();
 
-                // Out of function
-                let amir_id = self.end_amir(body.ty.clone());
+                let var = self.gen_stmt(body)?;
 
-                //
+                // Out of function
+                let amir_id = self.end_amir(var, body.ty.clone());
+
                 self.amir()
                     .bind_stmt(ty.clone(), AStmt::Fn(FnRef::Amir(amir_id)))
             }
-            thir::Expr::Match { input, cases } => todo!(),
+            thir::Expr::Match { input, cases } => {
+                let sum_type = Type::Sum(cases.iter().map(|c| c.ty.clone()).collect());
+                let input = self.gen_stmt(input)?;
+                let input = self.amir().bind_stmt(sum_type, AStmt::Cast(input));
+                let goal_block_id = self.amir().begin_block_defer();
+                let match_result_var = self.amir().create_var(ty.clone());
+                let cases: Vec<_> = cases
+                    .iter()
+                    .map(|thir::MatchCase { ty, expr }| {
+                        self.amir().begin_block();
+                        let match_case_result = self.gen_stmt(expr)?;
+                        self.amir()
+                            .bind_to(match_result_var, AStmt::Cast(match_case_result));
+                        let case_block_id = self.amir().end_block(ATerminator::Goto(goal_block_id));
+                        Ok(MatchCase {
+                            ty: ty.clone(),
+                            next: case_block_id,
+                        })
+                    })
+                    .collect::<Result<_, _>>()?;
+                self.amir()
+                    .end_block(ATerminator::Match { var: input, cases });
+                match_result_var
+            }
+            thir::Expr::Label { label: _, expr } => self.gen_stmt(expr)?,
         };
         Ok(var_id)
     }
@@ -171,10 +197,10 @@ impl AmirGen {
         self.protos.push(AmirProto::default());
     }
 
-    fn end_amir(&mut self, ty: Type) -> AmirId {
+    fn end_amir(&mut self, var: VarId, ty: Type) -> AmirId {
         let proto = self.protos.pop().expect("amir must be started to end it");
         let id = AmirId(self.amirs.len());
-        self.amirs.push(proto.into_amir(ty));
+        self.amirs.push(proto.into_amir(var, ty));
         id
     }
 }
@@ -183,7 +209,7 @@ impl AmirGen {
 mod tests {
     use amir::{
         scope::{Scope, ScopeId},
-        stmt::{StmtBind, Terminator},
+        stmt::{ATerminator, StmtBind},
         var::AVar,
     };
 
@@ -219,7 +245,7 @@ mod tests {
         );
         assert_eq!(
             gen.amirs[0].blocks[0].terminator,
-            Terminator::Return(VarId(0))
+            ATerminator::Return(VarId(0))
         );
     }
 }

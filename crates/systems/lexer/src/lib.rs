@@ -27,10 +27,24 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .chain::<char, _, _>(text::int(10))
         .collect::<String>()
         .map(|s: String| Token::Int(s.parse().unwrap()));
+    let escape = just('\\').ignore_then(
+        just('\\')
+            .or(just('"'))
+            .or(just('n').to('\n'))
+            .or(just('r').to('\r'))
+            .or(just('t').to('\t')),
+    );
     let string = just('"')
-        .ignore_then(none_of(['"']).repeated())
+        .ignore_then(filter(|c| *c != '\\' && *c != '"').or(escape).repeated())
         .then_ignore(just('"'))
         .collect::<String>()
+        .map(|s| {
+            s.replace(r#"\\"#, r#"\"#)
+                .replace(r#"\""#, "\"")
+                .replace(r#"\n"#, "\n")
+                .replace(r#"\r"#, "\r")
+                .replace(r#"\t"#, "\t")
+        })
         .map(Token::Str);
     let symbol = just('$')
         .to(Token::Let)
@@ -212,6 +226,20 @@ mod tests {
         assert_eq!(
             lexer().parse("あ-　a0").unwrap(),
             vec![(Token::Ident("あ- a0".into()), 0..5)]
+        );
+    }
+
+    #[test]
+    fn string_with_escape() {
+        assert_eq!(
+            lexer()
+                .parse(
+                    r#"
+            "\\\n\""
+            "#
+                )
+                .unwrap(),
+            vec![(Token::Str("\\\n\"".into()), 13..21)]
         );
     }
 }

@@ -155,6 +155,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(match_)
             .or(include)
             .or(label)
+            .then_ignore(none_of([Token::Arrow]).to(()).or(end()).lookahead())
             .map_with_span(|token, span| (token, span))
     })
 }
@@ -335,6 +336,40 @@ mod tests {
             .0,
             Expr::Match {
                 of: Box::new((Expr::Hole, 15..16)),
+                cases: vec![
+                    MatchCase {
+                        ty: (Type::Number, 32..39),
+                        expr: (Expr::Literal(Literal::String("number".into())), 44..52),
+                    },
+                    MatchCase {
+                        ty: (Type::String, 67..74),
+                        expr: (Expr::Literal(Literal::String("string".into())), 79..87),
+                    },
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_match_without_in() {
+        assert_eq!(
+            parse(
+                r#"
+            + <x>
+            <'number> -> "number",
+            <'string> -> "string".
+            "#
+            )
+            .unwrap()
+            .0,
+            Expr::Match {
+                of: Box::new((
+                    Expr::Apply {
+                        function: (Type::Variable("x".into()), 16..17),
+                        arguments: vec![]
+                    },
+                    15..18
+                )),
                 cases: vec![
                     MatchCase {
                         ty: (Type::Number, 32..39),

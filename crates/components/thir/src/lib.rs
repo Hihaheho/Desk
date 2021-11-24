@@ -57,6 +57,10 @@ pub enum Expr {
     },
     Array(Vec<TypedHir>),
     Set(Vec<TypedHir>),
+    Label {
+        label: String,
+        expr: Box<TypedHir>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

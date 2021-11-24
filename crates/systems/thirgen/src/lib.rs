@@ -131,6 +131,13 @@ impl TypedHirGen {
                     })
                     .collect(),
             },
+            Expr::Label { label, body, .. }
+            | Expr::Brand {
+                brand: label, body, ..
+            } => thir::Expr::Label {
+                label: label.clone(),
+                expr: Box::new(self.gen(&*body)),
+            },
         };
         TypedHir { id: *id, ty, expr }
     }

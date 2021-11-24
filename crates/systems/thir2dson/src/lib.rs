@@ -1,7 +1,6 @@
 use dson::Dson;
 use thir::{Expr, Literal, TypedHir};
 use thiserror::Error;
-use types::Type;
 
 #[derive(Debug, Clone, PartialEq, Error)]
 pub enum HirToJsonError {
@@ -9,7 +8,7 @@ pub enum HirToJsonError {
     NotAllowed(String),
 }
 
-pub fn thir_to_json(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
+pub fn thir_to_dson(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
     let dson = match &thir.expr {
         Expr::Literal(Literal::Int(value)) => Dson::Literal(dson::Literal::Int(*value)),
         Expr::Literal(Literal::Rational(a, b)) => Dson::Literal(dson::Literal::Rational(*a, *b)),
@@ -20,19 +19,19 @@ pub fn thir_to_json(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
         Expr::Product(values) => Dson::Product(
             values
                 .iter()
-                .map(|v| thir_to_json(v))
+                .map(|v| thir_to_dson(v))
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Array(values) => Dson::Array(
             values
                 .iter()
-                .map(|v| thir_to_json(v))
+                .map(|v| thir_to_dson(v))
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Set(values) => Dson::Set(
             values
                 .iter()
-                .map(|v| thir_to_json(v))
+                .map(|v| thir_to_dson(v))
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Let { .. } => Err(HirToJsonError::NotAllowed("let".into()))?,
@@ -43,40 +42,13 @@ pub fn thir_to_json(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
         Expr::Function { .. } => Err(HirToJsonError::NotAllowed("function".into()))?,
         Expr::Reference => Err(HirToJsonError::NotAllowed("ref".into()))?,
         Expr::Op { .. } => Err(HirToJsonError::NotAllowed("op".into()))?,
-    };
-    if let Type::Label { label, .. } | Type::Brand { brand: label, .. } = &thir.ty {
-        Ok(Dson::Labeled {
+        Expr::Label { label, expr } => Dson::Labeled {
             label: label.clone(),
-            expr: Box::new(dson),
-        })
-    } else {
-        Ok(dson)
-    }
+            expr: Box::new(thir_to_dson(expr)?),
+        },
+    };
+    Ok(dson)
 }
 
 #[cfg(test)]
-mod tests {
-    use types::Type;
-
-    use super::*;
-
-    #[test]
-    fn test_labeled() {
-        let thir = TypedHir {
-            id: 0,
-            ty: Type::Label {
-                label: "label".into(),
-                item: Box::new(Type::Number),
-            },
-            expr: Expr::Literal(Literal::Int(1)),
-        };
-        let dson = thir_to_json(&thir).unwrap();
-        assert_eq!(
-            dson,
-            Dson::Labeled {
-                label: "label".into(),
-                expr: Box::new(Dson::Literal(dson::Literal::Int(1)))
-            }
-        );
-    }
-}
+mod tests {}
