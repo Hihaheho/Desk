@@ -2,23 +2,15 @@ mod block_concretizer;
 mod enumdef;
 mod type_concretizer;
 
-use amir::{
-    amir::Amir,
-    block::ABasicBlock,
-    link::ALink,
-    stmt::{AStmt, MatchCase, StmtBind},
-    var::AVar,
-};
+use amir::{amir::Amir, link::ALink, var::AVar};
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{BasicBlock, Link, Mir},
-    stmt::Stmt,
-    ty::{ConcEffect, ConcType},
+    mir::{Link, Mir},
+    ty::ConcType,
     Vars,
 };
 use type_concretizer::TypeConcretizer;
-use types::{Effect, Type};
 
 pub struct Concretizer {
     pub parameters: Vec<ConcType>,
@@ -49,6 +41,7 @@ impl Concretizer {
             scopes,
             blocks,
             links,
+            captured,
         } = amir;
         let mut type_conc = TypeConcretizer {};
 
@@ -76,8 +69,14 @@ impl Concretizer {
             })
             .collect();
 
+        let captured = captured
+            .iter()
+            .map(|ty| type_conc.to_conc_type(ty))
+            .collect();
+
         Mir {
             parameters: self.parameters.clone(),
+            captured,
             output: self.output.clone(),
             vars,
             scopes: scopes.clone(),

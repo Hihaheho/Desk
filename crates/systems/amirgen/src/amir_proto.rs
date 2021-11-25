@@ -5,12 +5,17 @@ use amir::{
     block::{ABasicBlock, BlockId},
     link::{ALink, LinkId},
     scope::ScopeId,
-    stmt::{AStmt, StmtBind, ATerminator},
+    stmt::{AStmt, ATerminator, StmtBind},
     var::{AVar, VarId},
 };
 use types::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
+
+pub struct CapturedValue {
+    var_id: VarId,
+    ty: Type,
+}
 
 pub struct AmirProto {
     parameters: Vec<Type>,
@@ -20,8 +25,12 @@ pub struct AmirProto {
     vars: Vec<AVar>,
     links: Vec<ALink>,
     links_map: HashMap<Type, LinkId>,
+    // Scope stack
     current_scope: Vec<ScopeId>,
+    // Block stack
     current_block: Vec<BlockId>,
+    // Values that referenced but not included in parameter
+    captured_values: HashMap<Type, VarId>,
 }
 
 impl Default for AmirProto {
@@ -36,6 +45,7 @@ impl Default for AmirProto {
             scopes: vec![ScopeProto::default()],
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
+            captured_values: HashMap::default(),
         }
     }
 }
@@ -44,14 +54,16 @@ impl AmirProto {
     pub fn into_amir(self, var: VarId, output: Type) -> Amir {
         let current_block_id = self.current_block_id();
         let AmirProto {
-            parameters,
+            mut parameters,
             scopes,
             mut blocks,
             mut blocks_proto,
             vars,
             links,
+            captured_values,
             ..
         } = self;
+        // Save the last block
         assert!(blocks_proto.len() == 1);
         let last_block = blocks_proto.remove(&current_block_id).unwrap();
         blocks.insert(
@@ -61,13 +73,25 @@ impl AmirProto {
                 terminator: ATerminator::Return(var),
             },
         );
+
+        // Sort the blocks by block_id
         let mut blocks: Vec<_> = blocks.into_iter().collect();
         blocks.sort_by(|a, b| a.0 .0.partial_cmp(&b.0 .0).unwrap());
+        // Block Id must be exhausive
         assert_eq!(blocks[0].0, BlockId(0));
-        assert_eq!(blocks[blocks.len() - 1].0, BlockId(blocks.len() - 1));
+        let last_block_id = blocks.len() - 1;
+        assert_eq!(blocks[last_block_id].0, BlockId(last_block_id));
         let blocks = blocks.into_iter().map(|(_, b)| b).collect();
+
+        // Handle captured variables, add to parameters
+        let captured = captured_values
+            .into_iter()
+            .map(|(ty, _var_id)| ty)
+            .collect();
+
         Amir {
             parameters,
+            captured,
             output,
             vars,
             scopes: scopes.into_iter().map(|s| s.into_scope()).collect(),
@@ -81,8 +105,11 @@ impl AmirProto {
     }
 
     pub fn current_scope(&mut self) -> &mut ScopeProto {
-        let id = self.current_scope_id().0;
-        self.scopes.get_mut(id).unwrap()
+        self.get_scope(&self.current_scope_id())
+    }
+
+    pub fn get_scope(&mut self, id: &ScopeId) -> &mut ScopeProto {
+        self.scopes.get_mut(id.0).unwrap()
     }
 
     pub fn current_block_id(&self) -> BlockId {
@@ -93,13 +120,20 @@ impl AmirProto {
         self.blocks_proto.get_mut(&self.current_block_id()).unwrap()
     }
 
-    pub fn find_var(&self, ty: &Type) -> Option<VarId> {
-        self.scopes
-            .iter()
-            .take(1 + self.current_scope_id().0)
-            .rev()
-            .find_map(|scope| scope.named_vars.get(ty))
-            .cloned()
+    pub fn find_var(&mut self, ty: &Type) -> VarId {
+        let mut next_scope_id = Some(self.current_scope_id());
+        while let Some(scope_id) = next_scope_id {
+            let scope = self.get_scope(&scope_id);
+            next_scope_id = scope.super_id;
+            if let Some(var_id) = scope.named_vars.get(ty) {
+                return *var_id;
+            }
+        }
+        self.captured_values.get(ty).cloned().unwrap_or_else(|| {
+            let var = self.create_var(ty.clone());
+            self.bind_to(var, AStmt::Parameter);
+            var
+        })
     }
 
     pub fn create_var(&mut self, ty: Type) -> VarId {
@@ -111,8 +145,13 @@ impl AmirProto {
         id
     }
 
-    pub fn create_named_var(&mut self, var: VarId, ty: Type) {
+    pub fn create_named_var(&mut self, var: VarId) {
+        let ty = self.get_var(&var).ty.clone();
         self.current_scope().named_vars.insert(ty, var);
+    }
+
+    pub fn get_var(&mut self, var_id: &VarId) -> &mut AVar {
+        &mut self.vars[var_id.0]
     }
 
     pub fn bind_stmt(&mut self, ty: Type, stmt: AStmt) -> VarId {

@@ -27,12 +27,15 @@ pub enum AStmt {
         operands: Vec<VarId>,
     },
     Cast(VarId),
+    Parameter,
+    Returned,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
     Amir(AmirId),
     Link(LinkId),
+    Clojure(AmirId, Vec<VarId>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

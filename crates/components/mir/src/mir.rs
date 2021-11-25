@@ -13,6 +13,7 @@ pub type Link = ALink<ConcType>;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mir {
     pub parameters: Vec<ConcType>,
+    pub captured: Vec<ConcType>,
     pub output: ConcType,
     pub vars: Vars<ConcType>,
     pub scopes: Vec<Scope>,

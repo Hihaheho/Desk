@@ -80,7 +80,7 @@ impl AmirGen {
                 // gen definition
                 let def_var = self.gen_stmt(definition)?;
                 // make it named
-                self.amir().create_named_var(def_var, definition.ty.clone());
+                self.amir().create_named_var(def_var);
                 // gen body
                 let var = self.gen_stmt(&**body)?;
 
@@ -96,10 +96,7 @@ impl AmirGen {
                 handler,
                 expr,
             } => todo!(),
-            thir::Expr::Reference => self
-                .amir()
-                .find_var(ty)
-                .ok_or(GenAmirError::ReferencesUnknownVar(ty.clone()))?,
+            thir::Expr::Reference => self.amir().find_var(ty),
             thir::Expr::Op {
                 op,
                 operands: arguments,
@@ -128,11 +125,7 @@ impl AmirGen {
                 function,
                 arguments,
             } => {
-                let function = self.amir().find_var(function).unwrap_or_else(|| {
-                    let link = self.amir().request_link(function.clone());
-                    self.amir()
-                        .bind_stmt(function.clone(), AStmt::Fn(FnRef::Link(link)))
-                });
+                let function = self.amir().find_var(function);
                 let arguments = arguments
                     .iter()
                     .map(|arg| self.gen_stmt(arg))
@@ -155,6 +148,13 @@ impl AmirGen {
             thir::Expr::Function { parameters, body } => {
                 // Begin new mir
                 self.start_amir();
+
+                // make parameters named
+                parameters.iter().for_each(|param| {
+                    let param_var = self.amir().create_var(param.clone());
+                    self.amir().bind_to(param_var, AStmt::Parameter);
+                    self.amir().create_named_var(param_var);
+                });
 
                 let var = self.gen_stmt(body)?;
 
@@ -205,10 +205,14 @@ impl AmirGen {
     }
 
     fn end_amir(&mut self, var: VarId, ty: Type) -> AmirId {
-        let proto = self.protos.pop().expect("amir must be started to end it");
+        let proto = self.protos.pop().expect("amir must be started");
         let id = AmirId(self.amirs.len());
         self.amirs.push(proto.into_amir(var, ty));
         id
+    }
+
+    fn get_amir(&mut self, amir_id: &AmirId) -> &mut Amir {
+        self.amirs.get_mut(amir_id.0).unwrap()
     }
 }
 

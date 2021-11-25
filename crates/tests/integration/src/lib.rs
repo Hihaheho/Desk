@@ -5,6 +5,8 @@ macro_rules! test {
     ($case:ident, $file_name:expr) => {
         #[test]
         fn $case() {
+            let passes =
+                |case: &str| println!("\n================ {} passes ================\n", case);
             use crate::test_case::TestCase;
             use assertion::Assertion;
             use file::FileId;
@@ -23,27 +25,9 @@ macro_rules! test {
             let ast = parser::parse(tokens).unwrap();
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
             let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &hir).unwrap();
-            let thir = dbg!(thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir));
-            let amirs = dbg!(amirgen::gen_abstract_mir(&thir).unwrap());
-            let mirs = dbg!(concretizer::concretize(&amirs));
-            let mut evalmir = evalmir::eval_mirs(mirs);
-            let value = loop {
-                match evalmir.eval_next() {
-                    evalmir::Output::Return(ret) => break ret,
-                    evalmir::Output::Perform {
-                        input: _,
-                        output: _,
-                    } => todo!(),
-                    evalmir::Output::Running => continue,
-                }
-            };
-            let passes = |case: &str| println!("\n================ {} passes ================\n", case);
-            for assertion in test_case.assertions {
+
+            for assertion in test_case.assertions.iter() {
                 match assertion {
-                    Assertion::RunSuccess { result } => {
-                        assert_eq!(value, result);
-                        passes("RunSuccess");
-                    },
                     Assertion::Typed(typings) => {
                         use std::collections::HashMap;
                         let attrs: HashMap<String, usize> = genhir
@@ -59,14 +43,43 @@ macro_rules! test {
                             let actual = attrs
                                 .get(&format!(
                                     "{:?}",
-                                    hir::expr::Expr::Literal(hir::expr::Literal::Int(id as i64))
+                                    hir::expr::Expr::Literal(hir::expr::Literal::Int(*id as i64))
                                 ))
                                 .and_then(|id| types.get(id).cloned())
                                 .unwrap();
-                            assert_eq!(actual, ty);
+                            assert_eq!(actual, *ty);
                         }
                         passes("Typed");
                     }
+                    _ => {}
+                }
+            }
+
+            let thir = dbg!(thirgen::gen_typed_hir(
+                ctx.next_id(),
+                ctx.get_types(),
+                &hir
+            ));
+            let amirs = dbg!(amirgen::gen_abstract_mir(&thir).unwrap());
+            let mirs = dbg!(concretizer::concretize(&amirs));
+            let mut evalmir = evalmir::eval_mirs(mirs);
+            let value = loop {
+                match evalmir.eval_next() {
+                    evalmir::Output::Return(ret) => break ret,
+                    evalmir::Output::Perform {
+                        input: _,
+                        output: _,
+                    } => todo!(),
+                    evalmir::Output::Running => continue,
+                }
+            };
+            for assertion in test_case.assertions.iter() {
+                match assertion {
+                    Assertion::RunSuccess { result } => {
+                        assert_eq!(value, *result);
+                        passes("RunSuccess");
+                    }
+                    _ => {}
                 }
             }
         }
@@ -76,3 +89,4 @@ macro_rules! test {
 test!(case001, "../cases/001_literal.dson");
 test!(case002, "../cases/002_addition.dson");
 test!(case003, "../cases/003_match.dson");
+test!(case004, "../cases/004_let_function.dson");

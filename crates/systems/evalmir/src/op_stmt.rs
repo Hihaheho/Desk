@@ -1,21 +1,21 @@
 mod add;
 use mir::{Op, VarId};
 
-use crate::{value::Value, EvalMir};
+use crate::{stack::StackItem, value::Value};
 
 pub enum OpResult {
     Return(Value),
     Perform(Value),
 }
 
-impl EvalMir {
+impl StackItem {
     pub fn eval_op(&self, op: &Op, operands: &Vec<VarId>) -> OpResult {
         match op {
             Op::Add => {
                 assert!(operands.len() == 2);
                 OpResult::Return(add::calc(
-                    &self.get_var(&operands[0]),
-                    &self.get_var(&operands[1]),
+                    &self.load_value(&operands[0]),
+                    &self.load_value(&operands[1]),
                 ))
             }
 

@@ -36,31 +36,14 @@ impl<'a> BlockConcretizer<'a> {
     ) -> ATerminator<usize> {
         for StmtBind { stmt, var } in stmts {
             let var_data = self.vars.get(var);
+            let mut bind = |stmt| self.stmts.push(StmtBind { var: *var, stmt });
             let stmt = match stmt {
-                AStmt::Const(value) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Const(value.clone()),
-                }),
-                AStmt::Product(values) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Tuple(values.iter().cloned().collect()),
-                }),
-                AStmt::Array(values) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Array(values.iter().cloned().collect()),
-                }),
-                AStmt::Set(values) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Set(values.iter().cloned().collect()),
-                }),
-                AStmt::Fn(fn_ref) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Fn(*fn_ref),
-                }),
-                AStmt::Perform(var) => self.stmts.push(StmtBind {
-                    var: *var,
-                    stmt: Stmt::Perform(*var),
-                }),
+                AStmt::Const(value) => bind(Stmt::Const(value.clone())),
+                AStmt::Product(values) => bind(Stmt::Tuple(values.iter().cloned().collect())),
+                AStmt::Array(values) => bind(Stmt::Array(values.iter().cloned().collect())),
+                AStmt::Set(values) => bind(Stmt::Set(values.iter().cloned().collect())),
+                AStmt::Fn(fn_ref) => bind(Stmt::Fn(fn_ref.clone())),
+                AStmt::Perform(var) => bind(Stmt::Perform(*var)),
                 AStmt::Apply {
                     function,
                     arguments,
@@ -80,6 +63,8 @@ impl<'a> BlockConcretizer<'a> {
                     });
                 }
                 AStmt::Cast(from) => self.cast_to(*var, *from),
+                AStmt::Parameter => bind(Stmt::Parameter),
+                AStmt::Returned => bind(Stmt::Returned),
             };
         }
         match terminator {
