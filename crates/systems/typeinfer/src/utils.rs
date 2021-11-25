@@ -16,19 +16,20 @@ pub(crate) fn with_effects(ty: Type, effects: Vec<Effect>) -> Type {
 
 // TODO: use subtyping before concat or push the type.
 pub(crate) fn sum_all(_ctx: &Ctx, types: Vec<Type>) -> Type {
-    types
+    let mut sum = types
         .into_iter()
-        .reduce(|a, b| match (a, b) {
-            (Type::Sum(a), Type::Sum(b)) => Type::Sum(a.into_iter().chain(b).collect()),
-            (Type::Sum(mut a), b) => {
-                a.push(b);
-                Type::Sum(a)
-            }
-            (a, Type::Sum(mut b)) => {
-                b.push(a);
-                Type::Sum(b)
-            }
-            (a, b) => Type::Sum(vec![a, b]),
+        .map(|ty| match ty {
+            Type::Sum(sum) => sum,
+            other => vec![other],
         })
-        .unwrap_or(Type::Sum(vec![]))
+        .reduce(|a, b| a.into_iter().chain(b).collect())
+        .unwrap_or(vec![]);
+
+    sum.sort();
+    sum.dedup();
+    if sum.len() == 1 {
+        sum.pop().unwrap()
+    } else {
+        Type::Sum(sum)
+    }
 }

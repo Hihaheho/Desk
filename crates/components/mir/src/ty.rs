@@ -37,15 +37,15 @@ pub enum ConcType {
     },
     Ref {
         region: RegionId,
-        inner: Box<Self>,
+        item: Box<Self>,
     },
     RefMut {
         region: RegionId,
-        inner: Box<Self>,
+        item: Box<Self>,
     },
     Label {
         // Just for distinguish types
         label: String,
-        inner: Box<Self>,
+        item: Box<Self>,
     },
 }

@@ -403,7 +403,7 @@ impl Ctx {
                 }
                 ctx.with_type(Type::Product(types))
             }
-            Expr::Typed { ty, expr } => {
+            Expr::Typed { ty, item: expr } => {
                 let ty = self.from_hir_type(ty);
                 self.check(&expr, &ty)?.with_type(ty)
             }
@@ -433,13 +433,15 @@ impl Ctx {
                 }
             }
             Expr::Array(values) => {
-                let var = self.fresh_existential();
+                let mut types = vec![];
                 values
                     .iter()
-                    .try_fold(self.add(Log::Existential(var)), |ctx, value| {
-                        ctx.check(&value, &Type::Existential(var))
+                    .try_fold(self.clone(), |ctx, value| {
+                        let (ctx, ty) = ctx.synth(&value)?;
+                        types.push(ty);
+                        Ok(ctx)
                     })?
-                    .with_type(Type::Array(Box::new(Type::Existential(var))))
+                    .with_type(Type::Array(Box::new(Type::Sum(types))))
             }
             Expr::Set(values) => todo!(),
             Expr::Match { of, cases } => {
@@ -453,14 +455,14 @@ impl Ctx {
                 let out = sum_all(self, out);
                 self.check(&*of, &ty)?.with_type(out)
             }
-            Expr::Label { label, body } => {
+            Expr::Label { label, item: body } => {
                 let (ctx, ty) = self.synth(body)?;
                 ctx.with_type(Type::Label {
                     label: label.into(),
                     item: Box::new(ty),
                 })
             }
-            Expr::Brand { brand, body } => {
+            Expr::Brand { brand, item: body } => {
                 let (ctx, ty) = self.synth(body)?;
                 ctx.with_type(Type::Brand {
                     brand: brand.into(),

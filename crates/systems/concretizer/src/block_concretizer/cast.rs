@@ -15,7 +15,7 @@ impl<'a> BlockConcretizer<'a> {
             (inner, mir::ty::ConcType::Enum(types)) if types.contains(inner) => {
                 let variant_id = self
                     .enum_defs
-                    .get_enum_def(to.ty.clone())
+                    .get_enum_def(dbg!(to.ty.clone()))
                     .get_variant_index(from.ty.clone());
                 self.stmts.push(StmtBind {
                     var: to_var_id,

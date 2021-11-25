@@ -39,7 +39,7 @@ pub enum Expr {
     },
     Typed {
         ty: Spanned<Type>,
-        expr: Box<Spanned<Self>>,
+        item: Box<Spanned<Self>>,
     },
     Hole,
     Function {
@@ -58,15 +58,15 @@ pub enum Expr {
     },
     Attribute {
         attr: Box<Spanned<Self>>,
-        expr: Box<Spanned<Self>>,
+        item: Box<Spanned<Self>>,
     },
     Brand {
         brands: Vec<String>,
-        expr: Box<Spanned<Self>>,
+        item: Box<Spanned<Self>>,
     },
     Label {
         label: String,
-        expr: Box<Spanned<Self>>,
+        item: Box<Spanned<Self>>,
     },
 }
 

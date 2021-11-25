@@ -85,11 +85,9 @@ impl<'a> BlockConcretizer<'a> {
         match terminator {
             ATerminator::Return(var) => ATerminator::Return(*var),
             ATerminator::Match { var, cases } => {
-                let def =
-                    self.enum_defs
-                        .get_enum_def(self.type_concretizer.to_conc_type(&Type::sum(
-                            cases.iter().map(|c| c.ty.clone()).collect(),
-                        )));
+                let def = self.enum_defs.get_enum_def(dbg!(self
+                    .type_concretizer
+                    .to_conc_type(&Type::sum(cases.iter().map(|c| c.ty.clone()).collect(),))));
                 ATerminator::<usize>::Match {
                     var: *var,
                     cases: cases

@@ -46,7 +46,7 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
                 visit(includes, &case.expr.0);
             }
         }
-        Expr::Typed { ty: _, expr } => visit(includes, &expr.0),
+        Expr::Typed { ty: _, item: expr } => visit(includes, &expr.0),
         Expr::Hole => {}
         Expr::Function {
             parameters: _,
@@ -62,14 +62,14 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
                 visit(includes, &expr.0);
             }
         }
-        Expr::Attribute { attr, expr } => {
+        Expr::Attribute { attr, item: expr } => {
             visit(includes, &attr.0);
             visit(includes, &expr.0);
         }
-        Expr::Brand { brands: _, expr } => visit(includes, &expr.0),
+        Expr::Brand { brands: _, item: expr } => visit(includes, &expr.0),
         Expr::Import { ty: _, uuid: _ } => todo!(),
         Expr::Export { ty: _ } => todo!(),
         Expr::Literal(_) => {}
-        Expr::Label { label: _, expr } => visit(includes, &expr.0),
+        Expr::Label { label: _, item: expr } => visit(includes, &expr.0),
     };
 }

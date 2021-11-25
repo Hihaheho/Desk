@@ -42,7 +42,7 @@ pub fn thir_to_dson(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
         Expr::Function { .. } => Err(HirToJsonError::NotAllowed("function".into()))?,
         Expr::Reference => Err(HirToJsonError::NotAllowed("ref".into()))?,
         Expr::Op { .. } => Err(HirToJsonError::NotAllowed("op".into()))?,
-        Expr::Label { label, expr } => Dson::Labeled {
+        Expr::Label { label, item: expr } => Dson::Labeled {
             label: label.clone(),
             expr: Box::new(thir_to_dson(expr)?),
         },

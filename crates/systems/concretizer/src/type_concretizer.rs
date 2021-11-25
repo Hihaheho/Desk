@@ -11,12 +11,9 @@ impl TypeConcretizer {
             Type::Product(types) => {
                 ConcType::Tuple(types.iter().map(|t| self.to_conc_type(t)).collect())
             }
-            Type::Sum(types) => ConcType::Enum(
-                types
-                    .iter()
-                    .map(|t| ConcType::Tuple(vec![ConcType::Number, self.to_conc_type(t)]))
-                    .collect(),
-            ),
+            Type::Sum(types) => {
+                ConcType::Enum(types.iter().map(|t| self.to_conc_type(t)).collect())
+            }
             Type::Function { parameters, body } => ConcType::Function {
                 parameters: parameters.iter().map(|t| self.to_conc_type(t)).collect(),
                 body: Box::new(self.to_conc_type(body)),
@@ -40,7 +37,7 @@ impl TypeConcretizer {
             },
             Type::Brand { brand: label, item } | Type::Label { label, item } => ConcType::Label {
                 label: label.clone(),
-                inner: Box::new(self.to_conc_type(item)),
+                item: Box::new(self.to_conc_type(item)),
             },
         }
     }

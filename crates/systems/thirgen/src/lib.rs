@@ -94,7 +94,7 @@ impl TypedHirGen {
                 thir::Expr::Product(values.iter().map(|value| self.gen(&*value)).collect())
             }
             // one ID disappeared here, but fine
-            Expr::Typed { ty: _, expr } => self.gen(expr).expr,
+            Expr::Typed { ty: _, item: expr } => self.gen(expr).expr,
             Expr::Function { parameter, body } => {
                 let parameter = self.get_type(parameter);
                 let inner = self.gen(&*body);
@@ -131,12 +131,12 @@ impl TypedHirGen {
                     })
                     .collect(),
             },
-            Expr::Label { label, body, .. }
+            Expr::Label { label, item: body, .. }
             | Expr::Brand {
-                brand: label, body, ..
+                brand: label, item: body, ..
             } => thir::Expr::Label {
                 label: label.clone(),
-                expr: Box::new(self.gen(&*body)),
+                item: Box::new(self.gen(&*body)),
             },
         };
         TypedHir { id: *id, ty, expr }

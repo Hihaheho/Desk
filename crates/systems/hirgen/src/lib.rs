@@ -192,9 +192,9 @@ impl HirGen {
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::expr::Expr::Typed { ty, expr } => self.with_meta(Expr::Typed {
+            ast::expr::Expr::Typed { ty, item: expr } => self.with_meta(Expr::Typed {
                 ty: self.gen_type(ty)?,
-                expr: Box::new(self.gen(expr)?),
+                item: Box::new(self.gen(expr)?),
             }),
             ast::expr::Expr::Function { parameters, body } => {
                 let span = self.pop_span().unwrap();
@@ -232,7 +232,7 @@ impl HirGen {
             }
             ast::expr::Expr::Import { ty, uuid } => todo!(),
             ast::expr::Expr::Export { ty } => todo!(),
-            ast::expr::Expr::Attribute { attr, expr } => {
+            ast::expr::Expr::Attribute { attr, item: expr } => {
                 self.pop_span();
                 let mut ret = self.gen(expr)?;
                 if let Some(meta) = &mut ret.meta {
@@ -242,7 +242,7 @@ impl HirGen {
                 }
                 ret
             }
-            ast::expr::Expr::Brand { brands, expr } => {
+            ast::expr::Expr::Brand { brands, item: expr } => {
                 brands.into_iter().for_each(|brand| {
                     self.brands.borrow_mut().insert(brand.clone());
                 });
@@ -260,16 +260,16 @@ impl HirGen {
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             }),
-            ast::expr::Expr::Label { label, expr } => {
+            ast::expr::Expr::Label { label, item: expr } => {
                 if self.brands.borrow().contains(label) {
                     self.with_meta(Expr::Brand {
                         brand: label.clone(),
-                        body: Box::new(self.gen(expr)?),
+                        item: Box::new(self.gen(expr)?),
                     })
                 } else {
                     self.with_meta(Expr::Label {
                         label: label.clone(),
-                        body: Box::new(self.gen(expr)?),
+                        item: Box::new(self.gen(expr)?),
                     })
                 }
             }
@@ -416,9 +416,9 @@ mod tests {
             Expr::Product(exprs) => {
                 Expr::Product(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
             }
-            Expr::Typed { ty, expr } => Expr::Typed {
+            Expr::Typed { ty, item: expr } => Expr::Typed {
                 ty: remove_meta_ty(ty),
-                expr: Box::new(remove_meta(*expr)),
+                item: Box::new(remove_meta(*expr)),
             },
             Expr::Function { parameter, body } => Expr::Function {
                 parameter: remove_meta_ty(parameter),
@@ -440,13 +440,13 @@ mod tests {
                     })
                     .collect(),
             },
-            Expr::Label { label, body } => Expr::Label {
+            Expr::Label { label, item: body } => Expr::Label {
                 label,
-                body: Box::new(remove_meta(*body)),
+                item: Box::new(remove_meta(*body)),
             },
-            Expr::Brand { brand, body } => Expr::Brand {
+            Expr::Brand { brand, item: body } => Expr::Brand {
                 brand,
-                body: Box::new(remove_meta(*body)),
+                item: Box::new(remove_meta(*body)),
             },
         };
         no_meta(value)
@@ -466,13 +466,13 @@ mod tests {
                                 ast::expr::Expr::Literal(ast::expr::Literal::Int(1)),
                                 24..25
                             )),
-                            expr: Box::new((
+                            item: Box::new((
                                 ast::expr::Expr::Attribute {
                                     attr: Box::new((
                                         ast::expr::Expr::Literal(ast::expr::Literal::Int(2)),
                                         24..25
                                     )),
-                                    expr: Box::new((ast::expr::Expr::Hole, 26..27)),
+                                    item: Box::new((ast::expr::Expr::Hole, 26..27)),
                                 },
                                 25..26
                             )),

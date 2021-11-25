@@ -23,9 +23,9 @@ macro_rules! test {
             let ast = parser::parse(tokens).unwrap();
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
             let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &hir).unwrap();
-            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir);
-            let amirs = amirgen::gen_abstract_mir(&thir).unwrap();
-            let mirs = concretizer::concretize(&amirs);
+            let thir = dbg!(thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir));
+            let amirs = dbg!(amirgen::gen_abstract_mir(&thir).unwrap());
+            let mirs = dbg!(concretizer::concretize(&amirs));
             let mut evalmir = evalmir::eval_mirs(mirs);
             let value = loop {
                 match evalmir.eval_next() {
@@ -37,9 +37,13 @@ macro_rules! test {
                     evalmir::Output::Running => continue,
                 }
             };
+            let passes = |case: &str| println!("\n================ {} passes ================\n", case);
             for assertion in test_case.assertions {
                 match assertion {
-                    Assertion::RunSuccess { result } => assert_eq!(value, result),
+                    Assertion::RunSuccess { result } => {
+                        assert_eq!(value, result);
+                        passes("RunSuccess");
+                    },
                     Assertion::Typed(typings) => {
                         use std::collections::HashMap;
                         let attrs: HashMap<String, usize> = genhir
@@ -61,6 +65,7 @@ macro_rules! test {
                                 .unwrap();
                             assert_eq!(actual, ty);
                         }
+                        passes("Typed");
                     }
                 }
             }

@@ -11,9 +11,9 @@
   @entrypoint "main.ds",
   @assertions [
     @Typed [
-      * 1, @Labeled
+      * 1, @Label
         * @label "false",
-          @value @Product [].,
+          @item @Product [].,
       * 2, @Number *
     ],
     @RunSuccess *

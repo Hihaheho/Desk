@@ -48,7 +48,12 @@ impl Type {
     }
     pub fn sum(mut types: Vec<Self>) -> Self {
         types.sort();
-        Type::Sum(types)
+        types.dedup();
+        if types.len() == 1 {
+            types.pop().unwrap()
+        } else {
+            Type::Sum(types)
+        }
     }
     pub fn function(mut parameters: Vec<Self>, body: Self) -> Self {
         parameters.sort();

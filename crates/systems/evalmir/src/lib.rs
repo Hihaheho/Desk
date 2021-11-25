@@ -80,7 +80,9 @@ impl EvalMir {
                 ),
                 mir::ATerminator::Match { var, cases } => {
                     let value = self.get_var(var);
+                    dbg!(&cases);
                     if let Value::Variant { id, value: _ } = value {
+                        dbg!(&id);
                         let case = cases.iter().find(|c| c.ty == *id).unwrap();
                         self.pc_block = case.next;
                         self.pc_stmt_idx = 0;
@@ -122,7 +124,8 @@ impl EvalMir {
                 mir::stmt::Stmt::Ref(_) => todo!(),
                 mir::stmt::Stmt::RefMut(_) => todo!(),
                 mir::stmt::Stmt::Index { tuple, index } => todo!(),
-                mir::stmt::Stmt::Move(_) => todo!(),
+                // TODO remove old one because move
+                mir::stmt::Stmt::Move(x) => self.registers.get(x).cloned().unwrap(),
                 mir::stmt::Stmt::Variant { id, value } => Value::Variant {
                     id: *id,
                     value: Box::new(self.registers.get(value).cloned().unwrap()),

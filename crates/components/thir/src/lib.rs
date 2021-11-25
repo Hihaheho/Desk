@@ -59,7 +59,7 @@ pub enum Expr {
     Set(Vec<TypedHir>),
     Label {
         label: String,
-        expr: Box<TypedHir>,
+        item: Box<TypedHir>,
     },
 }
 

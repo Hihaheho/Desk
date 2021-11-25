@@ -165,7 +165,7 @@ impl AmirGen {
                     .bind_stmt(ty.clone(), AStmt::Fn(FnRef::Amir(amir_id)))
             }
             thir::Expr::Match { input, cases } => {
-                let sum_type = Type::Sum(cases.iter().map(|c| c.ty.clone()).collect());
+                let sum_type = Type::sum(cases.iter().map(|c| c.ty.clone()).collect());
                 let input = self.gen_stmt(input)?;
                 let input = self.amir().bind_stmt(sum_type, AStmt::Cast(input));
                 let goal_block_id = self.amir().begin_block_defer();
@@ -188,7 +188,14 @@ impl AmirGen {
                     .end_block(ATerminator::Match { var: input, cases });
                 match_result_var
             }
-            thir::Expr::Label { label: _, expr } => self.gen_stmt(expr)?,
+            thir::Expr::Label { label, item: expr } => self.gen_stmt(&TypedHir {
+                id: expr.id,
+                ty: Type::Label {
+                    label: label.clone(),
+                    item: Box::new(expr.ty.clone()),
+                },
+                expr: expr.expr.clone(),
+            })?,
         };
         Ok(var_id)
     }

@@ -89,12 +89,12 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
         let typed = parse_typed(expr.clone(), type_.clone()).map(|(expr, ty)| Expr::Typed {
             ty,
-            expr: Box::new(expr),
+            item: Box::new(expr),
         });
         let attribute =
             parse_attr(expr.clone(), expr.clone()).map(|(attr, expr)| Expr::Attribute {
                 attr: Box::new(attr),
-                expr: Box::new(expr),
+                item: Box::new(expr),
             });
         let ident = filter_map(|span, token| match token {
             Token::Ident(ident) => Ok(ident),
@@ -106,7 +106,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .then(expr.clone())
             .map(|(brands, expr)| Expr::Brand {
                 brands,
-                expr: Box::new(expr),
+                item: Box::new(expr),
             });
         let match_ = just(Token::Sum)
             .ignore_then(expr.clone())
@@ -137,7 +137,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         .then(expr.clone())
         .map(|(label, expr)| Expr::Label {
             label,
-            expr: Box::new(expr),
+            item: Box::new(expr),
         });
 
         hole.or(literal)
@@ -294,7 +294,7 @@ mod tests {
         assert_eq!(
             parse("^?: <'number>").unwrap().0,
             Expr::Typed {
-                expr: Box::new((Expr::Hole, 1..2)),
+                item: Box::new((Expr::Hole, 1..2)),
                 ty: (Type::Number, 5..12),
             }
         );
@@ -306,7 +306,7 @@ mod tests {
             parse("# 3 ~ ?").unwrap().0,
             Expr::Attribute {
                 attr: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                expr: Box::new((Expr::Hole, 6..7)),
+                item: Box::new((Expr::Hole, 6..7)),
             }
         );
     }
@@ -317,7 +317,7 @@ mod tests {
             parse("'brand a, b. ~ ?").unwrap().0,
             Expr::Brand {
                 brands: vec!["a".into(), "b".into()],
-                expr: Box::new((Expr::Hole, 15..16)),
+                item: Box::new((Expr::Hole, 15..16)),
             }
         );
     }
@@ -390,7 +390,7 @@ mod tests {
             parse("@true *").unwrap().0,
             Expr::Label {
                 label: "true".into(),
-                expr: Box::new((Expr::Product(vec![]), 6..7)),
+                item: Box::new((Expr::Product(vec![]), 6..7)),
             }
         );
     }

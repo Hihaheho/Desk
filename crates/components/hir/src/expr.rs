@@ -38,7 +38,7 @@ pub enum Expr {
     },
     Typed {
         ty: WithMeta<Type>,
-        expr: Box<WithMeta<Self>>,
+        item: Box<WithMeta<Self>>,
     },
     Function {
         parameter: WithMeta<Type>,
@@ -48,11 +48,11 @@ pub enum Expr {
     Set(Vec<WithMeta<Self>>),
     Label {
         label: String,
-        body: Box<WithMeta<Self>>,
+        item: Box<WithMeta<Self>>,
     },
     Brand {
         brand: String,
-        body: Box<WithMeta<Self>>,
+        item: Box<WithMeta<Self>>,
     },
 }
 
