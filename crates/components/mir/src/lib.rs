@@ -10,6 +10,7 @@ pub use amir::scope::Scope;
 pub use amir::scope::ScopeId;
 pub use amir::stmt::ATerminator;
 pub use amir::stmt::Const;
+pub use amir::stmt::FnRef;
 pub use amir::stmt::Op;
 pub use amir::stmt::StmtBind;
 pub use amir::var::VarId;

@@ -32,5 +32,4 @@ pub enum Stmt {
     Ref(VarId),
     RefMut(VarId),
     Parameter,
-    Returned,
 }

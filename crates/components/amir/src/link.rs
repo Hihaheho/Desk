@@ -1,5 +1,6 @@
 use types::Type;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LinkId(pub usize);
 

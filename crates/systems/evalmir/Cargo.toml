@@ -5,7 +5,7 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-withserde = ["serde", "mir/serde", "types/serde"]
+withserde = ["serde", "mir/withserde", "types/serde"]
 
 [dependencies]
 mir = { path = "../../components/mir", version = "0.1.0", package = "deskc-mir" }

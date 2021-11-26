@@ -2,11 +2,15 @@ mod block_concretizer;
 mod enumdef;
 mod type_concretizer;
 
-use amir::{amir::Amir, link::ALink, var::AVar};
+use amir::{
+    amir::{Amir, Amirs},
+    link::ALink,
+    var::AVar,
+};
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{Link, Mir},
+    mir::{Link, Mir, Mirs},
     ty::ConcType,
     Vars,
 };
@@ -18,8 +22,9 @@ pub struct Concretizer {
     pub enum_defs: EnumDefs,
 }
 
-pub fn concretize(amirs: &Vec<Amir>) -> Vec<Mir> {
-    amirs
+pub fn concretize(amirs: &Amirs) -> Mirs {
+    let mirs = amirs
+        .amirs
         .iter()
         .map(|amir| {
             let mut concretizer = Concretizer {
@@ -29,7 +34,11 @@ pub fn concretize(amirs: &Vec<Amir>) -> Vec<Mir> {
             };
             concretizer.concretize_mir(amir)
         })
-        .collect()
+        .collect();
+    Mirs {
+        entrypoint: amirs.entrypoint,
+        mirs,
+    }
 }
 
 impl Concretizer {

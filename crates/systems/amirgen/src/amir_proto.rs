@@ -12,11 +12,6 @@ use types::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 
-pub struct CapturedValue {
-    var_id: VarId,
-    ty: Type,
-}
-
 pub struct AmirProto {
     parameters: Vec<Type>,
     scopes: Vec<ScopeProto>,
@@ -54,7 +49,7 @@ impl AmirProto {
     pub fn into_amir(self, var: VarId, output: Type) -> Amir {
         let current_block_id = self.current_block_id();
         let AmirProto {
-            mut parameters,
+            parameters,
             scopes,
             mut blocks,
             mut blocks_proto,

@@ -2,7 +2,7 @@
     * @name "main.ds",
       @content "
         $ #1 \\ <#2 x> ->
-          <\\'number, 'number -> @sum 'number> 1, <x> : <fun> ~
+          <\\'number, 'number -> @sum 'number> 1, <#3 x> : <fun> ~
         <fun> 2
       "
   ],
@@ -19,7 +19,8 @@
           .
         .
       ,
-      * 2, @Number *
+      * 2, @Number *,
+      * 3, @Number *
     ],
     @RunSuccess *
       @result @Int 3

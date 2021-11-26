@@ -4,8 +4,7 @@ mod into_op;
 mod scope_proto;
 
 use amir::{
-    amir::{Amir, AmirId},
-    block::BlockId,
+    amir::{Amir, AmirId, Amirs},
     stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
     var::VarId,
 };
@@ -14,9 +13,12 @@ use thir::TypedHir;
 use thiserror::Error;
 use types::Type;
 
-pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Vec<Amir>, GenAmirError> {
+pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amirs, GenAmirError> {
     let mut gen = AmirGen::default();
-    gen.gen_amir(thir).map(|_id| gen.amirs)
+    gen.gen_amir(thir).map(|entrypoint_amir_id| Amirs {
+        entrypoint: entrypoint_amir_id,
+        amirs: gen.amirs,
+    })
 }
 
 pub struct AmirGen {
@@ -209,10 +211,6 @@ impl AmirGen {
         let id = AmirId(self.amirs.len());
         self.amirs.push(proto.into_amir(var, ty));
         id
-    }
-
-    fn get_amir(&mut self, amir_id: &AmirId) -> &mut Amir {
-        self.amirs.get_mut(amir_id.0).unwrap()
     }
 }
 

@@ -28,7 +28,6 @@ pub enum AStmt {
     },
     Cast(VarId),
     Parameter,
-    Returned,
 }
 
 #[derive(Clone, Debug, PartialEq)]

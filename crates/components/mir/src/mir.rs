@@ -1,4 +1,5 @@
 use amir::{
+    amir::AmirId,
     link::ALink,
     scope::Scope,
     var::{AVar, Vars},
@@ -19,4 +20,10 @@ pub struct Mir {
     pub scopes: Vec<Scope>,
     pub blocks: Vec<BasicBlock>,
     pub links: Vec<Link>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Mirs {
+    pub entrypoint: AmirId,
+    pub mirs: Vec<Mir>,
 }

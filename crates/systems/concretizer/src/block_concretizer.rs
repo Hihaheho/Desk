@@ -4,7 +4,7 @@ use amir::{
     block::ABasicBlock,
     stmt::{AStmt, MatchCase},
 };
-use mir::{mir::BasicBlock, stmt::Stmt, ty::ConcType, ATerminator, Const, StmtBind, Vars};
+use mir::{mir::BasicBlock, stmt::Stmt, ty::ConcType, ATerminator, StmtBind, Vars};
 use types::Type;
 
 use crate::{enumdef::EnumDefs, type_concretizer::TypeConcretizer};
@@ -35,9 +35,8 @@ impl<'a> BlockConcretizer<'a> {
         ABasicBlock { stmts, terminator }: &ABasicBlock<AStmt, Type>,
     ) -> ATerminator<usize> {
         for StmtBind { stmt, var } in stmts {
-            let var_data = self.vars.get(var);
             let mut bind = |stmt| self.stmts.push(StmtBind { var: *var, stmt });
-            let stmt = match stmt {
+            match stmt {
                 AStmt::Const(value) => bind(Stmt::Const(value.clone())),
                 AStmt::Product(values) => bind(Stmt::Tuple(values.iter().cloned().collect())),
                 AStmt::Array(values) => bind(Stmt::Array(values.iter().cloned().collect())),
@@ -47,7 +46,10 @@ impl<'a> BlockConcretizer<'a> {
                 AStmt::Apply {
                     function,
                     arguments,
-                } => todo!(),
+                } => bind(Stmt::Apply {
+                    function: *function,
+                    arguments: arguments.iter().cloned().collect(),
+                }),
                 AStmt::Op { op, operands } => self.stmts.push(StmtBind {
                     var: *var,
                     stmt: Stmt::Op {
@@ -64,15 +66,16 @@ impl<'a> BlockConcretizer<'a> {
                 }
                 AStmt::Cast(from) => self.cast_to(*var, *from),
                 AStmt::Parameter => bind(Stmt::Parameter),
-                AStmt::Returned => bind(Stmt::Returned),
             };
         }
         match terminator {
             ATerminator::Return(var) => ATerminator::Return(*var),
             ATerminator::Match { var, cases } => {
-                let def = self.enum_defs.get_enum_def(dbg!(self
-                    .type_concretizer
-                    .to_conc_type(&Type::sum(cases.iter().map(|c| c.ty.clone()).collect(),))));
+                let def =
+                    self.enum_defs
+                        .get_enum_def(self.type_concretizer.to_conc_type(&Type::sum(
+                            cases.iter().map(|c| c.ty.clone()).collect(),
+                        )));
                 ATerminator::<usize>::Match {
                     var: *var,
                     cases: cases

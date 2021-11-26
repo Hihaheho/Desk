@@ -16,5 +16,12 @@ pub struct Amir {
     pub links: Vec<ALink>,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AmirId(pub usize);
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Amirs {
+    pub entrypoint: AmirId,
+    pub amirs: Vec<Amir>,
+}

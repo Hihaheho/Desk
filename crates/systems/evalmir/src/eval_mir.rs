@@ -1,130 +1,159 @@
+use std::collections::HashMap;
+
 use mir::mir::Mir;
+use mir::BlockId;
 
-use crate::{const_stmt, op_stmt, stack::StackItem};
+use crate::{const_stmt, op_stmt};
 
-use crate::value::Value;
-use mir::{ty::ConcType, MirId, StmtBind, VarId};
+use crate::value::{FnRef, Value};
+use mir::{ty::ConcType, StmtBind, VarId};
 
 #[derive(Debug, Clone)]
 pub struct EvalMir {
     pub mir: Mir,
-    pub stack: Vec<StackItem>,
-    // If value is returned, then the value should be used immediately.
-    pub return_value: Option<Value>,
+    pub registers: HashMap<VarId, Value>,
+    pub parameters: HashMap<ConcType, Value>,
+    pub pc_block: BlockId,
+    pub pc_stmt_idx: usize,
+    // Before handling apply stmt, save the var to here, and used when returned.
+    pub return_register: Option<VarId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InnerOutput {
     Return(Value),
-    Perform { input: Value, output: ConcType },
-    RunAnothor { mir: MirId, parameters: Vec<Value> },
+    Perform {
+        input: Value,
+        output: ConcType,
+    },
+    RunOther {
+        fn_ref: FnRef,
+        parameters: HashMap<ConcType, Value>,
+    },
     Running,
 }
 
 impl EvalMir {
     pub fn eval_next(&mut self) -> InnerOutput {
-        let block = &self.mir.blocks[self.stack().pc_block.0];
-        let is_top_level = self.stack.len() == 1;
-        let current_stack = self.stack.last_mut().unwrap();
-        let pc_stmt_idx = current_stack.pc_stmt_idx;
-        if block.stmts.len() == pc_stmt_idx {
-            // Reach to terminator
+        let block = &self.mir.blocks[self.pc_block.0];
+        // if reach to terminator
+        if block.stmts.len() == self.pc_stmt_idx {
             match &block.terminator {
-                mir::ATerminator::Return(var) => {
-                    if is_top_level {
-                        InnerOutput::Return(
-                            self.stack
-                                .last_mut()
-                                .unwrap()
-                                .registers
-                                .remove(&var)
-                                .expect("return value shoulbe exists"),
-                        )
-                    } else {
-                        self.return_value = Some(current_stack.load_value(&var).clone());
-                        InnerOutput::Running
-                    }
-                }
+                mir::ATerminator::Return(var) => InnerOutput::Return(
+                    (&mut self.registers)
+                        .remove(&var)
+                        .expect("return value should be exists"),
+                ),
                 mir::ATerminator::Match { var, cases } => {
-                    let value = current_stack.load_value(&var);
-                    dbg!(&cases);
+                    let value = self.load_value(&var);
                     if let Value::Variant { id, value: _ } = value {
-                        dbg!(&id);
                         let case = cases.iter().find(|c| c.ty == *id).unwrap();
-                        current_stack.pc_block = case.next;
-                        current_stack.pc_stmt_idx = 0;
+                        self.pc_block = case.next;
+                        self.pc_stmt_idx = 0;
                         InnerOutput::Running
                     } else {
                         panic!("should be variant")
                     }
                 }
                 mir::ATerminator::Goto(next) => {
-                    current_stack.pc_block = *next;
-                    current_stack.pc_stmt_idx = 0;
+                    self.pc_block = *next;
+                    self.pc_stmt_idx = 0;
                     InnerOutput::Running
                 }
             }
         } else {
-            let StmtBind { var, stmt } = &block.stmts[current_stack.pc_stmt_idx];
+            let StmtBind { var: bind_var, stmt } = &block.stmts[self.pc_stmt_idx];
             let value = match stmt {
                 mir::stmt::Stmt::Const(const_value) => const_stmt::eval(const_value),
                 mir::stmt::Stmt::Tuple(values) => Value::Tuple(
                     values
                         .iter()
-                        .map(|var| current_stack.load_value(var).clone())
+                        .map(|var| self.load_value(var).clone())
                         .collect(),
                 ),
                 mir::stmt::Stmt::Array(_) => todo!(),
                 mir::stmt::Stmt::Set(_) => todo!(),
-                mir::stmt::Stmt::Fn(_) => todo!(),
+                mir::stmt::Stmt::Fn(fn_ref) => {
+                    let fn_ref = match fn_ref {
+                        mir::FnRef::Amir(mir) => FnRef::Mir(*mir),
+                        mir::FnRef::Link(_) => todo!(),
+                        mir::FnRef::Clojure(_, _) => todo!(),
+                    };
+                    Value::FnRef(fn_ref)
+                }
                 mir::stmt::Stmt::Perform(_) => todo!(),
                 mir::stmt::Stmt::Apply {
                     function,
                     arguments,
-                } => todo!(),
-                mir::stmt::Stmt::Op { op, operands } => match current_stack.eval_op(op, operands) {
+                } => {
+                    if let Value::FnRef(fn_ref) = self.registers.get(function).cloned().unwrap() {
+                        let mut parameters = HashMap::new();
+                        arguments.iter().for_each(|arg| {
+                            let ty = self.mir.vars.get(arg).ty.clone();
+                            let value = self.registers.get(arg).cloned().unwrap();
+                            parameters.insert(ty, value);
+                        });
+                        // Save the return register.
+                        self.return_register = Some(*bind_var);
+                        // Increment pc before return output is important
+                        self.pc_stmt_idx += 1;
+                        return InnerOutput::RunOther { fn_ref, parameters };
+                    } else {
+                        panic!("fn_ref");
+                    }
+                }
+                mir::stmt::Stmt::Op { op, operands } => match self.eval_op(op, operands) {
                     op_stmt::OpResult::Return(value) => value,
                     op_stmt::OpResult::Perform(value) => {
+                        // Increment pc before return output is important
+                        self.pc_stmt_idx += 1;
                         return InnerOutput::Perform {
                             input: value,
-                            output: self.var_type(var),
-                        }
+                            output: self.var_type(bind_var),
+                        };
                     }
                 },
                 mir::stmt::Stmt::Ref(_) => todo!(),
                 mir::stmt::Stmt::RefMut(_) => todo!(),
                 mir::stmt::Stmt::Index { tuple, index } => todo!(),
                 // TODO remove old one because move
-                mir::stmt::Stmt::Move(x) => current_stack.load_value(x).clone(),
+                mir::stmt::Stmt::Move(x) => self.load_value(x).clone(),
                 mir::stmt::Stmt::Variant { id, value } => Value::Variant {
                     id: *id,
-                    value: Box::new(current_stack.load_value(value).clone()),
+                    value: Box::new(self.load_value(value).clone()),
                 },
-                mir::stmt::Stmt::Parameter => todo!(),
-                mir::stmt::Stmt::Returned => self.return_value.take().unwrap(),
+                mir::stmt::Stmt::Parameter => {
+                    let ty = &self.mir.vars.get(bind_var).ty;
+                    self.parameters
+                        .get(ty)
+                        .expect("parameter must be exist")
+                        .clone()
+                }
             };
-            current_stack.store_value(*var, value);
-            self.stack.last_mut().unwrap().pc_stmt_idx += 1;
+            let var = *bind_var;
+            self.store_value(var, value);
+            self.pc_stmt_idx += 1;
             InnerOutput::Running
         }
     }
 
-    pub fn stack(&self) -> &StackItem {
-        self.stack.last().unwrap()
-    }
-
-    pub fn stack_mut(&mut self) -> &mut StackItem {
-        self.stack.last_mut().unwrap()
-    }
-
     // After perform, continue with this function.
-    pub fn eval_continue(&mut self, output: Value) -> InnerOutput {
+    pub fn eval_continue(&mut self, output: Value) {
         todo!()
     }
 
     // After call another mir, continue with this function.
-    pub fn eval_return(&mut self, ret: Value) -> InnerOutput {
-        todo!()
+    pub fn return_value(&mut self, ret: Value) {
+        let var = self.return_register.take().expect("needs return register");
+        self.store_value(var, ret);
+    }
+
+    pub fn load_value(&self, var: &VarId) -> &Value {
+        self.registers.get(var).unwrap()
+    }
+
+    pub fn store_value(&mut self, var: VarId, value: Value) {
+        self.registers.insert(var, value);
     }
 
     fn var_type(&self, id: &VarId) -> ConcType {
@@ -167,13 +196,11 @@ mod tests {
 
         let mut eval = EvalMir {
             mir,
-            stack: vec![StackItem {
-                pc_block: BlockId(0),
-                pc_stmt_idx: 0,
-                registers: HashMap::new(),
-                parameters: HashMap::new(),
-            }],
-            return_value: None,
+            pc_block: BlockId(0),
+            pc_stmt_idx: 0,
+            registers: HashMap::new(),
+            parameters: HashMap::new(),
+            return_register: None,
         };
 
         assert_eq!(eval.eval_next(), InnerOutput::Running);

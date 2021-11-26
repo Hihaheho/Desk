@@ -95,24 +95,21 @@ impl TypedHirGen {
             }
             // one ID disappeared here, but fine
             Expr::Typed { ty: _, item: expr } => self.gen(expr).expr,
-            Expr::Function { parameter, body } => {
-                let parameter = self.get_type(parameter);
-                let inner = self.gen(&*body);
-                if let thir::Expr::Function {
-                    mut parameters,
-                    body,
-                } = inner.expr
+            Expr::Function { parameter: _, body } => {
+                // get type from whole function is more accurate than from parameter.
+                let function_ty = self.get_type(expr);
+                if let Type::Function {
+                    parameters,
+                    body: _,
+                } = function_ty
                 {
-                    parameters.insert(0, parameter);
+                    let inner = self.gen(&*body);
                     thir::Expr::Function {
                         parameters,
-                        body: body,
-                    }
-                } else {
-                    thir::Expr::Function {
-                        parameters: vec![parameter],
                         body: Box::new(inner),
                     }
+                } else {
+                    panic!("function is inferred to not function??");
                 }
             }
             Expr::Array(values) => {
@@ -131,9 +128,13 @@ impl TypedHirGen {
                     })
                     .collect(),
             },
-            Expr::Label { label, item: body, .. }
+            Expr::Label {
+                label, item: body, ..
+            }
             | Expr::Brand {
-                brand: label, item: body, ..
+                brand: label,
+                item: body,
+                ..
             } => thir::Expr::Label {
                 label: label.clone(),
                 item: Box::new(self.gen(&*body)),
