@@ -12,7 +12,9 @@
   @entrypoint "main.ds",
   @assertions [
     @Typed [
-      * 1, @Number *,
+      * 1, @Label *
+        @label "quotient",
+        @item @Number *;
       * 2, @Effectful *
         @ty @Label *
           @label "quotient",

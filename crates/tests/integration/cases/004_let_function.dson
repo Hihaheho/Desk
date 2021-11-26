@@ -15,7 +15,7 @@
           ],
           @body @Label *
             @label "sum",
-            @item @Number *.
+            @item @Number *
           .
         ;
       * 2, @Number *,

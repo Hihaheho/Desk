@@ -36,15 +36,12 @@ pub fn parser(
         let this = just(Token::This).to(Type::This);
         let number = just(Token::NumberType).to(Type::Number);
         let string = just(Token::StringType).to(Type::String);
-        let trait_ = just(Token::Trait)
-            .ignore_then(
-                type_
-                    .clone()
-                    .separated_by(just(Token::Comma))
-                    .at_least(1)
-                    .map(|types| Type::Trait(types)),
-            )
-            .dot();
+        let trait_ = just(Token::Trait).ignore_then(
+            type_
+                .clone()
+                .separated_by_comma_at_least_one()
+                .map(|types| Type::Trait(types)),
+        );
         let alias = just(Token::A).ignore_then(filter_map(|span, token| match token {
             Token::Ident(ident) => Ok(Type::Alias(ident)),
             _ => Err(Simple::custom(span, "Expected identifier")),
@@ -58,9 +55,7 @@ pub fn parser(
                     .then_ignore(just(Token::EArrow))
                     .then(type_.clone())
                     .map(|(input, output)| Effect { input, output })
-                    .separated_by(just(Token::Comma))
-                    .at_least(1)
-                    .dot(),
+                    .separated_by_comma_at_least_one(),
             )
             .map(|(ty, effects)| Type::Effectful {
                 ty: Box::new(ty),
@@ -196,13 +191,13 @@ mod tests {
     #[test]
     fn parse_product_and_sum() {
         assert_eq!(
-            parse("* + 'number, _., *.").unwrap().0,
+            parse("* + 'number, _., *").unwrap().0,
             Type::Product(vec![
                 (
                     Type::Sum(vec![(Type::Number, 4..11), (Type::Infer, 13..14)]),
                     2..15
                 ),
-                (Type::Product(vec![]), 17..19)
+                (Type::Product(vec![]), 17..18)
             ])
         );
     }

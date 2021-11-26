@@ -64,14 +64,14 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 handler: Box::new(handler),
                 expr: Box::new(expr),
             });
-        let apply = type_
-            .clone()
-            .then(expr.clone().separated_by(just(Token::Comma)))
-            .map(|(function, arguments)| Expr::Apply {
-                function,
-                arguments,
-            })
-            .dot();
+        let apply =
+            type_
+                .clone()
+                .then(expr.clone().separated_by_comma())
+                .map(|(function, arguments)| Expr::Apply {
+                    function,
+                    arguments,
+                });
         let product =
             parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
         let function = parse_function(
@@ -101,7 +101,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             _ => Err(Simple::custom(span, "expected identifier")),
         });
         let brand = just(Token::Brands)
-            .ignore_then(ident.separated_by(just(Token::Comma)).dot())
+            .ignore_then(ident.separated_by_comma())
             .in_()
             .then(expr.clone())
             .map(|(brands, expr)| Expr::Brand {
@@ -117,8 +117,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                     .then_ignore(just(Token::Arrow))
                     .then(expr.clone())
                     .map(|(ty, expr)| MatchCase { ty, expr })
-                    .separated_by(just(Token::Comma))
-                    .dot(),
+                    .separated_by_comma(),
             )
             .map(|(of, cases)| Expr::Match {
                 of: Box::new(of),
