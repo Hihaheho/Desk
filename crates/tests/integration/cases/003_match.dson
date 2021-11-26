@@ -13,7 +13,7 @@
     @Typed [
       * 1, @Label
         * @label "false",
-          @item @Product [].,
+          @item @Product [];
       * 2, @Number *
     ],
     @RunSuccess *

@@ -18,10 +18,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
             .map(|s| format!("({})", s))
     })
     .map(Token::Comment);
-    let identifier = ident()
-        .separated_by(text::whitespace())
-        .at_least(1)
-        .map(|ident: Vec<String>| Token::Ident(ident.join(" ")));
+    let identifier = ident().map(Token::Ident);
     let int = just('-')
         .or_not()
         .chain::<char, _, _>(text::int(10))
@@ -117,15 +114,22 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(special)
         .or(brand)
         .or(identifier);
+    let semicolon = just(';').to(()).map_with_span(|_, span: Range<usize>| {
+        vec![(Token::Dot, span.clone()), (Token::Comma, span)]
+    });
     token
         .map_with_span(|token, span| (token, span))
         .padded()
         .repeated()
+        .at_least(1)
+        .or(semicolon)
+        .repeated()
+        .flatten()
 }
 
 pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
     "a".contains("a");
-    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()'"#.chars())
+    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()"'1234567890"#.chars())
         .try_map(|c, span| {
             if c.is_whitespace() {
                 Err(Simple::custom(span, "invalid character"))
@@ -147,6 +151,9 @@ pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
                 .repeated(),
         )
         .collect()
+        .separated_by(text::whitespace())
+        .at_least(1)
+        .map(|ident: Vec<String>| ident.join(" "))
 }
 
 #[cfg(test)]
@@ -230,6 +237,14 @@ mod tests {
     }
 
     #[test]
+    fn brand_with_spaces() {
+        assert_eq!(
+            lexer().parse("@あ-　a0").unwrap(),
+            vec![(Token::Brand("あ- a0".into()), 0..6)]
+        );
+    }
+
+    #[test]
     fn string_with_escape() {
         assert_eq!(
             lexer()
@@ -240,6 +255,19 @@ mod tests {
                 )
                 .unwrap(),
             vec![(Token::Str("\\\n\"".into()), 13..21)]
+        );
+    }
+
+    #[test]
+    fn semicolon_to_comma_dot() {
+        assert_eq!(
+            lexer().then_ignore(end()).parse("?;?").unwrap(),
+            vec![
+                (Token::Hole, 0..1),
+                (Token::Dot, 1..2),
+                (Token::Comma, 1..2),
+                (Token::Hole, 2..3)
+            ]
         );
     }
 }

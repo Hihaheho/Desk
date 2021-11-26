@@ -45,6 +45,38 @@ pub(crate) fn find_builtin(ty: &Type) -> Option<(BuiltinOp, usize)> {
             ),
             (BuiltinOp::Div, 2),
         ),
+        (
+            Type::function(
+                vec![
+                    labeled("dividend", Type::Number),
+                    labeled("divisor", Type::Number),
+                ],
+                Type::Effectful {
+                    ty: Box::new(labeled("quotient", Type::Number)),
+                    effects: vec![Effect {
+                        input: labeled("division by zero", Type::Number),
+                        output: Type::Number,
+                    }],
+                },
+            ),
+            (BuiltinOp::Div, 2),
+        ),
+        (
+            Type::function(
+                vec![
+                    labeled("dividend", Type::Number),
+                    labeled("divisor", Type::Number),
+                ],
+                Type::Effectful {
+                    ty: Box::new(labeled("remainder", Type::Number)),
+                    effects: vec![Effect {
+                        input: labeled("division by zero", Type::Number),
+                        output: Type::Number,
+                    }],
+                },
+            ),
+            (BuiltinOp::Rem, 2),
+        ),
     ]
     .into_iter()
     .collect();

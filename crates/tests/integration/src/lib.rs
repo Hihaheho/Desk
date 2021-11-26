@@ -55,11 +55,7 @@ macro_rules! test {
                 }
             }
 
-            let thir = dbg!(thirgen::gen_typed_hir(
-                ctx.next_id(),
-                ctx.get_types(),
-                &hir
-            ));
+            let thir = dbg!(thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir));
             let amirs = dbg!(amirgen::gen_abstract_mir(&thir).unwrap());
             let mirs = dbg!(concretizer::concretize(&amirs));
             let mut evalmir = evalmir::eval_mirs(mirs);
@@ -90,3 +86,4 @@ test!(case001, "../cases/001_literal.dson");
 test!(case002, "../cases/002_addition.dson");
 test!(case003, "../cases/003_match.dson");
 test!(case004, "../cases/004_let_function.dson");
+test!(case005, "../cases/005_division_by_zero.dson");
