@@ -80,8 +80,8 @@ fn labeled(label: &str, item: Type) -> Type {
 
 fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: BuiltinOp) -> Expr {
     assert_eq!(args.len(), 2, "args for div must be 2");
-    let dividend = args[0].clone();
-    let divisor = args[1].clone();
+    let dividend = thirgen.gen(&args[0]);
+    let divisor = thirgen.gen(&args[1]);
     Expr::Match {
         // zero check
         input: Box::new(TypedHir {
@@ -93,7 +93,7 @@ fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: Buil
             expr: Expr::Op {
                 op: BuiltinOp::Eq,
                 operands: vec![
-                    thirgen.gen(&divisor),
+                    divisor.clone(),
                     TypedHir {
                         id: thirgen.next_id(),
                         ty: Type::Number,
@@ -118,7 +118,7 @@ fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: Buil
                     expr: Expr::Perform(Box::new(TypedHir {
                         id: thirgen.next_id(),
                         ty: Type::label("division by zero", Type::Number),
-                        expr: Expr::Product(vec![]),
+                        expr: dbg!(dividend.expr.clone()),
                     })),
                 },
             },
@@ -130,7 +130,7 @@ fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: Buil
                     ty: Type::label("quotient", Type::Number),
                     expr: Expr::Op {
                         op,
-                        operands: vec![thirgen.gen(&dividend), thirgen.gen(&divisor)],
+                        operands: vec![dividend, divisor],
                     },
                 },
             },

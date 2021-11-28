@@ -121,14 +121,22 @@ impl EvalMir {
                     Value::FnRef(fn_ref)
                 }
                 mir::stmt::Stmt::Perform(var) => {
-                    let effect = ConcEffect {
-                        input: self.get_var_ty(var).clone(),
-                        output: self.get_var_ty(bind_var).clone(),
-                    };
-                    return InnerOutput::Perform {
-                        input: self.load_value(&var).clone(),
-                        effect,
-                    };
+                    if let ConcType::Effectful {
+                        ty: output,
+                        effects: _,
+                    } = self.get_var_ty(bind_var)
+                    {
+                        let effect = ConcEffect {
+                            input: self.get_var_ty(var).clone(),
+                            output: *output.clone(),
+                        };
+                        return InnerOutput::Perform {
+                            input: self.load_value(&var).clone(),
+                            effect,
+                        };
+                    } else {
+                        panic!("type should be effectful")
+                    }
                 }
                 mir::stmt::Stmt::Apply {
                     function,

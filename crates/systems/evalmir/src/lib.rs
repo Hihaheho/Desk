@@ -13,7 +13,7 @@ use mir::{
 use value::Value;
 
 use crate::{
-    eval_mir::{EvalMir, InnerOutput},
+    eval_mir::{EvalMir, Handler, InnerOutput},
     value::Closure,
 };
 
@@ -61,10 +61,14 @@ impl EvalMirs {
                 }
             }
             InnerOutput::Perform { input, effect } => {
+                dbg!(&effect);
                 let mut continuation = VecDeque::new();
                 let handler = loop {
                     if let Some(eval_mir) = self.stack.pop() {
+                        dbg!(&eval_mir.handlers);
+                        // find handler
                         let handler = eval_mir.handlers.get(&effect).cloned();
+                        // push eval_mir to continuation
                         continuation.push_front(eval_mir);
                         if let Some(handler) = handler {
                             break handler;
@@ -78,10 +82,11 @@ impl EvalMirs {
                 match handler {
                     eval_mir::Handler::Handler(Closure {
                         mir,
-                        captured,
+                        mut captured,
                         // Really ignorable??
                         handlers: _,
                     }) => {
+                        captured.insert(dbg!(effect.input.clone()), dbg!(input));
                         let eval_mir = EvalMir {
                             mir: self.get_mir(&mir).clone(),
                             registers: Default::default(),
@@ -89,9 +94,13 @@ impl EvalMirs {
                             pc_block: BlockId(0),
                             pc_stmt_idx: 0,
                             return_register: None,
-                            handlers: [
-                                // TODO: assign continuation
-                            ]
+                            handlers: [dbg!((
+                                ConcEffect {
+                                    input: effect.output,
+                                    output: continuation[0].mir.output.clone(),
+                                },
+                                Handler::Continuation(continuation.into()),
+                            ))]
                             .into_iter()
                             .collect(),
                         };

@@ -37,7 +37,7 @@ pub enum AStmt {
 #[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
     Link(LinkId),
-    Clojure {
+    Closure {
         amir: AmirId,
         captured: Vec<VarId>,
         handlers: HashMap<Effect, VarId>,
