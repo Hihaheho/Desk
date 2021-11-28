@@ -1,4 +1,4 @@
-use types::Type;
+use types::{Effect, Type};
 
 pub type Id = usize;
 
@@ -36,8 +36,7 @@ pub enum Expr {
     },
     Perform(Box<TypedHir>),
     Handle {
-        input: Type,
-        output: Type,
+        effect: Effect,
         handler: Box<TypedHir>,
         expr: Box<TypedHir>,
     },

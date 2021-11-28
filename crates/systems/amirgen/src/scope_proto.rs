@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 
 use amir::{
+    amir::AmirId,
     scope::{Scope, ScopeId},
     var::VarId,
 };
-use types::Type;
+use types::{Effect, Type};
 
 #[derive(Debug, Default)]
 pub struct ScopeProto {
     pub super_id: Option<ScopeId>,
+    // Only used in amir generation
     pub named_vars: HashMap<Type, VarId>,
 }
 

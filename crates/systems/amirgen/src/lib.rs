@@ -3,6 +3,8 @@ mod block_proto;
 mod into_op;
 mod scope_proto;
 
+use std::collections::HashMap;
+
 use amir::{
     amir::{Amir, AmirId, Amirs},
     stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
@@ -11,7 +13,7 @@ use amir::{
 use amir_proto::AmirProto;
 use thir::TypedHir;
 use thiserror::Error;
-use types::Type;
+use types::{Effect, Type};
 
 pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amirs, GenAmirError> {
     let mut gen = AmirGen::default();
@@ -42,16 +44,20 @@ pub enum GenAmirError {
 }
 
 impl AmirGen {
-    pub fn amir(&mut self) -> &mut AmirProto {
+    pub fn amir_proto(&mut self) -> &mut AmirProto {
         self.protos.last_mut().unwrap()
     }
     pub fn gen_amir(&mut self, thir: &TypedHir) -> Result<AmirId, GenAmirError> {
-        self.start_amir();
+        self.begin_amir();
         let var = self.gen_stmt(thir)?;
         Ok(self.end_amir(var, thir.ty.clone()))
     }
     pub fn gen_stmt(&mut self, thir: &TypedHir) -> Result<VarId, GenAmirError> {
-        let TypedHir { id: _, ty, expr } = thir;
+        let TypedHir {
+            id: _,
+            ty: stmt_ty,
+            expr,
+        } = thir;
         let var_id = match expr {
             thir::Expr::Literal(literal) => {
                 let const_value = match literal {
@@ -60,45 +66,77 @@ impl AmirGen {
                     thir::Literal::Float(a) => AStmt::Const(Const::Float(*a)),
                     thir::Literal::Rational(a, b) => AStmt::Const(Const::Rational(*a, *b)),
                 };
-                self.amir().bind_stmt(ty.clone(), const_value)
+                self.amir_proto().bind_stmt(stmt_ty.clone(), const_value)
             }
             thir::Expr::Array(values) => {
                 let values = values
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), AStmt::Array(values))
+                self.amir_proto()
+                    .bind_stmt(stmt_ty.clone(), AStmt::Array(values))
             }
             thir::Expr::Set(values) => {
                 let values = values
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), AStmt::Set(values))
+                self.amir_proto()
+                    .bind_stmt(stmt_ty.clone(), AStmt::Set(values))
             }
             thir::Expr::Let { definition, body } => {
-                self.amir().begin_scope();
+                self.amir_proto().begin_scope();
 
                 // gen definition
                 let def_var = self.gen_stmt(definition)?;
                 // make it named
-                self.amir().create_named_var(def_var);
+                self.amir_proto().create_named_var(def_var);
                 // gen body
                 let var = self.gen_stmt(&**body)?;
 
-                self.amir().end_scope(var)
+                self.amir_proto().end_scope_then_return(var)
             }
             thir::Expr::Perform(input) => {
                 let var = self.gen_stmt(input)?;
-                self.amir().bind_stmt(ty.clone(), AStmt::Perform(var))
+                self.amir_proto()
+                    .bind_stmt(stmt_ty.clone(), AStmt::Perform(var))
             }
             thir::Expr::Handle {
-                input,
-                output,
+                effect,
                 handler,
                 expr,
-            } => todo!(),
-            thir::Expr::Reference => self.amir().find_var(ty),
+            } => {
+                // handler amir
+                self.begin_amir();
+                let handler_end = self.gen_stmt(handler)?;
+                let handler_amir = self.end_amir(handler_end, stmt_ty.clone());
+
+                // effectful amir
+                self.begin_amir();
+                self.amir_proto()
+                    .assign_handler(effect.clone(), handler_amir);
+                let effectful_end = self.gen_stmt(expr)?;
+                let effectful_amir = self.end_amir(effectful_end, stmt_ty.clone());
+                let effectful_type = self.get_amir(&effectful_amir).get_type();
+
+                // call effectful amir
+                let effectful_fun = self.amir_proto().bind_stmt(
+                    effectful_type,
+                    AStmt::Fn(FnRef::Clojure {
+                        amir: effectful_amir,
+                        captured: vec![],
+                        handlers: HashMap::new(),
+                    }),
+                );
+                self.amir_proto().bind_stmt(
+                    stmt_ty.clone(),
+                    AStmt::Apply {
+                        function: effectful_fun,
+                        arguments: vec![],
+                    },
+                )
+            }
+            thir::Expr::Reference => self.amir_proto().find_var(stmt_ty),
             thir::Expr::Op {
                 op,
                 operands: arguments,
@@ -114,8 +152,8 @@ impl AmirGen {
                         .iter()
                         .map(|arg| self.gen_stmt(arg))
                         .collect::<Result<Vec<_>, _>>()?;
-                    self.amir().bind_stmt(
-                        ty.clone(),
+                    self.amir_proto().bind_stmt(
+                        stmt_ty.clone(),
                         AStmt::Op {
                             op: into_op::into_op(op),
                             operands: arguments,
@@ -127,13 +165,13 @@ impl AmirGen {
                 function,
                 arguments,
             } => {
-                let function = self.amir().find_var(function);
+                let function = self.amir_proto().find_var(function);
                 let arguments = arguments
                     .iter()
                     .map(|arg| self.gen_stmt(arg))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(
-                    ty.clone(),
+                self.amir_proto().bind_stmt(
+                    stmt_ty.clone(),
                     AStmt::Apply {
                         function,
                         arguments,
@@ -145,17 +183,18 @@ impl AmirGen {
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.amir().bind_stmt(ty.clone(), AStmt::Product(values))
+                self.amir_proto()
+                    .bind_stmt(stmt_ty.clone(), AStmt::Product(values))
             }
             thir::Expr::Function { parameters, body } => {
                 // Begin new mir
-                self.start_amir();
+                self.begin_amir();
 
                 // make parameters named
                 parameters.iter().for_each(|param| {
-                    let param_var = self.amir().create_var(param.clone());
-                    self.amir().bind_to(param_var, AStmt::Parameter);
-                    self.amir().create_named_var(param_var);
+                    let param_var = self.amir_proto().create_var(param.clone());
+                    self.amir_proto().bind_to(param_var, AStmt::Parameter);
+                    self.amir_proto().create_named_var(param_var);
                 });
 
                 let var = self.gen_stmt(body)?;
@@ -163,30 +202,38 @@ impl AmirGen {
                 // Out of function
                 let amir_id = self.end_amir(var, body.ty.clone());
 
-                self.amir()
-                    .bind_stmt(ty.clone(), AStmt::Fn(FnRef::Amir(amir_id)))
+                self.amir_proto().bind_stmt(
+                    stmt_ty.clone(),
+                    AStmt::Fn(FnRef::Clojure {
+                        amir: amir_id,
+                        captured: vec![],
+                        handlers: HashMap::new(),
+                    }),
+                )
             }
             thir::Expr::Match { input, cases } => {
                 let sum_type = Type::sum(cases.iter().map(|c| c.ty.clone()).collect());
                 let input = self.gen_stmt(input)?;
-                let input = self.amir().bind_stmt(sum_type, AStmt::Cast(input));
-                let goal_block_id = self.amir().begin_block_defer();
-                let match_result_var = self.amir().create_var(ty.clone());
+                let input = self.amir_proto().bind_stmt(sum_type, AStmt::Cast(input));
+                let goal_block_id = self.amir_proto().begin_block_defer();
+                let match_result_var = self.amir_proto().create_var(stmt_ty.clone());
                 let cases: Vec<_> = cases
                     .iter()
                     .map(|thir::MatchCase { ty, expr }| {
-                        self.amir().begin_block();
+                        self.amir_proto().begin_block();
                         let match_case_result = self.gen_stmt(expr)?;
-                        self.amir()
+                        self.amir_proto()
                             .bind_to(match_result_var, AStmt::Cast(match_case_result));
-                        let case_block_id = self.amir().end_block(ATerminator::Goto(goal_block_id));
+                        let case_block_id = self
+                            .amir_proto()
+                            .end_block(ATerminator::Goto(goal_block_id));
                         Ok(MatchCase {
                             ty: ty.clone(),
                             next: case_block_id,
                         })
                     })
                     .collect::<Result<_, _>>()?;
-                self.amir()
+                self.amir_proto()
                     .end_block(ATerminator::Match { var: input, cases });
                 match_result_var
             }
@@ -202,7 +249,7 @@ impl AmirGen {
         Ok(var_id)
     }
 
-    fn start_amir(&mut self) {
+    fn begin_amir(&mut self) {
         self.protos.push(AmirProto::default());
     }
 
@@ -211,6 +258,10 @@ impl AmirGen {
         let id = AmirId(self.amirs.len());
         self.amirs.push(proto.into_amir(var, ty));
         id
+    }
+
+    fn get_amir(&self, id: &AmirId) -> &Amir {
+        &self.amirs[id.0]
     }
 }
 

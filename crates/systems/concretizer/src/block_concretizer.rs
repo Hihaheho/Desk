@@ -4,7 +4,12 @@ use amir::{
     block::ABasicBlock,
     stmt::{AStmt, MatchCase},
 };
-use mir::{mir::BasicBlock, stmt::Stmt, ty::ConcType, ATerminator, StmtBind, Vars};
+use mir::{
+    mir::BasicBlock,
+    stmt::{FnRef, Stmt},
+    ty::ConcType,
+    ATerminator, StmtBind, Vars,
+};
 use types::Type;
 
 use crate::{enumdef::EnumDefs, type_concretizer::TypeConcretizer};
@@ -41,7 +46,23 @@ impl<'a> BlockConcretizer<'a> {
                 AStmt::Product(values) => bind(Stmt::Tuple(values.iter().cloned().collect())),
                 AStmt::Array(values) => bind(Stmt::Array(values.iter().cloned().collect())),
                 AStmt::Set(values) => bind(Stmt::Set(values.iter().cloned().collect())),
-                AStmt::Fn(fn_ref) => bind(Stmt::Fn(fn_ref.clone())),
+                AStmt::Fn(fn_ref) => match fn_ref {
+                    amir::stmt::FnRef::Link(link) => bind(Stmt::Fn(FnRef::Link(link.clone()))),
+                    amir::stmt::FnRef::Clojure {
+                        amir,
+                        captured,
+                        handlers,
+                    } => bind(Stmt::Fn(FnRef::Clojure {
+                        amir: *amir,
+                        captured: captured.clone(),
+                        handlers: handlers
+                            .iter()
+                            .map(|(effect, handler)| {
+                                (self.type_concretizer.to_conc_effect(effect), *handler)
+                            })
+                            .collect(),
+                    })),
+                },
                 AStmt::Perform(var) => bind(Stmt::Perform(*var)),
                 AStmt::Apply {
                     function,

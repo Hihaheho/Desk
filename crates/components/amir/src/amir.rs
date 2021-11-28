@@ -25,3 +25,12 @@ pub struct Amirs {
     pub entrypoint: AmirId,
     pub amirs: Vec<Amir>,
 }
+
+impl Amir {
+    pub fn get_type(&self) -> Type {
+        Type::Function {
+            parameters: self.parameters.clone(),
+            body: Box::new(self.output.clone()),
+        }
+    }
+}

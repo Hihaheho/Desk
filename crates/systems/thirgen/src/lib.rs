@@ -7,14 +7,14 @@ use hir::{
     meta::{Meta, WithMeta},
 };
 use thir::TypedHir;
-use types::{IdGen, Type, Types};
+use types::{Effect, IdGen, Type, Types};
 
 use crate::builtin::find_builtin;
 
 pub fn gen_typed_hir(next_id: usize, types: Types, expr: &WithMeta<Expr>) -> TypedHir {
     TypedHirGen {
         types,
-        _id_gen: RefCell::new(IdGen { next_id }),
+        id_gen: RefCell::new(IdGen { next_id }),
     }
     .gen(expr)
 }
@@ -22,7 +22,7 @@ pub fn gen_typed_hir(next_id: usize, types: Types, expr: &WithMeta<Expr>) -> Typ
 #[derive(Debug, Default, Clone)]
 pub struct TypedHirGen {
     types: Types,
-    _id_gen: RefCell<IdGen>,
+    id_gen: RefCell<IdGen>,
 }
 
 impl TypedHirGen {
@@ -58,8 +58,10 @@ impl TypedHirGen {
                 handler,
                 expr,
             } => thir::Expr::Handle {
-                input: self.get_type(&input),
-                output: self.get_type(&output),
+                effect: Effect {
+                    input: self.get_type(&input),
+                    output: self.get_type(&output),
+                },
                 handler: Box::new(self.gen(&*handler)),
                 expr: Box::new(self.gen(&*expr)),
             },
@@ -68,16 +70,23 @@ impl TypedHirGen {
                 arguments,
             } => {
                 // TODO: lookup imported uuid to allow overwrite the builtin functions
-                if let Some((builtin, params)) = find_builtin(&self.get_type(&function)) {
-                    let op = thir::Expr::Op {
-                        op: builtin,
-                        operands: arguments.iter().map(|arg| self.gen(arg)).collect(),
-                    };
-                    if arguments.len() < params {
-                        // TODO wrap by function
-                        op
-                    } else {
-                        op
+                if let Some(builtin) = find_builtin(&self.get_type(&function)) {
+                    match builtin {
+                        builtin::Builtin::Normal { op, params } => {
+                            let op = thir::Expr::Op {
+                                op,
+                                operands: arguments.iter().map(|arg| self.gen(arg)).collect(),
+                            };
+                            if arguments.len() < params {
+                                // TODO wrap by function
+                                op
+                            } else {
+                                op
+                            }
+                        }
+                        builtin::Builtin::Custom(expr) => {
+                            expr(&self, &arguments)
+                        },
                     }
                 } else {
                     if arguments.is_empty() {
@@ -148,6 +157,10 @@ impl TypedHirGen {
             .get(&expr.meta.as_ref().expect("must have meta").id)
             .expect("must have type")
             .clone()
+    }
+
+    pub fn next_id(&self) -> usize {
+        self.id_gen.borrow_mut().next_id()
     }
 }
 
@@ -256,7 +269,7 @@ mod tests {
         let expr = parse(r#"<\'number, 'number -> @sum 'number>"#);
         let _gen = TypedHirGen {
             types: infer(&expr),
-            _id_gen: RefCell::new(IdGen { next_id: 100 }),
+            id_gen: RefCell::new(IdGen { next_id: 100 }),
         };
         // TODO
         // assert_eq!(

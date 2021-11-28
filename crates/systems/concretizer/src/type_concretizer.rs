@@ -29,16 +29,20 @@ impl TypeConcretizer {
                 ty: Box::new(self.to_conc_type(ty)),
                 effects: effects
                     .iter()
-                    .map(|Effect { input, output }| ConcEffect {
-                        input: self.to_conc_type(input),
-                        output: self.to_conc_type(output),
-                    })
+                    .map(|effect| self.to_conc_effect(effect))
                     .collect(),
             },
             Type::Brand { brand: label, item } | Type::Label { label, item } => ConcType::Label {
                 label: label.clone(),
                 item: Box::new(self.to_conc_type(item)),
             },
+        }
+    }
+
+    pub fn to_conc_effect(&mut self, Effect { input, output }: &Effect) -> ConcEffect {
+        ConcEffect {
+            input: self.to_conc_type(input),
+            output: self.to_conc_type(output),
         }
     }
 }

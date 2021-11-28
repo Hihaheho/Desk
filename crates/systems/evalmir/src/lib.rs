@@ -3,16 +3,19 @@ pub mod eval_mir;
 pub mod op_stmt;
 pub mod value;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use mir::{
     mir::{Mir, Mirs},
-    ty::ConcType,
+    ty::ConcEffect,
     BlockId, MirId,
 };
 use value::Value;
 
-use crate::eval_mir::{EvalMir, InnerOutput};
+use crate::{
+    eval_mir::{EvalMir, InnerOutput},
+    value::Closure,
+};
 
 pub fn eval_mirs<'a>(mirs: Mirs) -> EvalMirs {
     let mir = mirs.mirs.get(mirs.entrypoint.0).cloned().unwrap();
@@ -25,21 +28,29 @@ pub fn eval_mirs<'a>(mirs: Mirs) -> EvalMirs {
             pc_block: BlockId(0),
             pc_stmt_idx: 0,
             return_register: None,
+            handlers: HashMap::new(),
         }],
+        continuations: Vec::new(),
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Continuation {
+    continuation: Box<EvalMirs>,
+    continuation_effect: ConcEffect,
+}
+
+#[derive(Clone, Debug)]
 pub struct EvalMirs {
     mirs: Vec<Mir>,
     stack: Vec<EvalMir>,
+    continuations: Vec<Continuation>,
 }
 
 impl EvalMirs {
     pub fn eval_next(&mut self) -> Output {
         match self.stack().eval_next() {
             InnerOutput::Return(value) => {
-                println!("------------------");
-                println!("{}", self.stack.len());
                 // When top level
                 if self.stack.len() == 1 {
                     Output::Return(value)
@@ -49,22 +60,66 @@ impl EvalMirs {
                     Output::Running
                 }
             }
-            InnerOutput::Perform { input, output } => todo!(),
+            InnerOutput::Perform { input, effect } => {
+                let mut continuation = VecDeque::new();
+                let handler = loop {
+                    if let Some(eval_mir) = self.stack.pop() {
+                        let handler = eval_mir.handlers.get(&effect).cloned();
+                        continuation.push_front(eval_mir);
+                        if let Some(handler) = handler {
+                            break handler;
+                        }
+                    } else {
+                        // When handler are not found, push back to continuation stack and perform
+                        self.stack.extend(continuation);
+                        return Output::Perform { input, effect };
+                    }
+                };
+                match handler {
+                    eval_mir::Handler::Handler(Closure {
+                        mir,
+                        captured,
+                        // Really ignorable??
+                        handlers: _,
+                    }) => {
+                        let eval_mir = EvalMir {
+                            mir: self.get_mir(&mir).clone(),
+                            registers: Default::default(),
+                            parameters: captured,
+                            pc_block: BlockId(0),
+                            pc_stmt_idx: 0,
+                            return_register: None,
+                            handlers: [
+                                // TODO: assign continuation
+                            ]
+                            .into_iter()
+                            .collect(),
+                        };
+                        self.stack.push(eval_mir);
+                        Output::Running
+                    }
+                    eval_mir::Handler::Continuation(_) => todo!(),
+                }
+            }
             InnerOutput::RunOther { fn_ref, parameters } => match fn_ref {
-                value::FnRef::Mir(mir_id) => {
+                value::FnRef::Link(_) => todo!(),
+                value::FnRef::Closure(Closure {
+                    mir,
+                    captured,
+                    handlers,
+                }) => {
                     let eval_mir = EvalMir {
-                        mir: self.get_mir(&mir_id).clone(),
+                        mir: self.get_mir(&mir).clone(),
                         registers: Default::default(),
                         parameters,
                         pc_block: BlockId(0),
                         pc_stmt_idx: 0,
                         return_register: None,
+                        handlers,
                     };
                     self.stack.push(eval_mir);
                     Output::Running
                 }
-                value::FnRef::Link(_) => todo!(),
-                value::FnRef::Closure { mir, captured } => todo!(),
             },
             InnerOutput::Running => Output::Running,
         }
@@ -82,6 +137,6 @@ impl EvalMirs {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Output {
     Return(Value),
-    Perform { input: Value, output: ConcType },
+    Perform { input: Value, effect: ConcEffect },
     Running,
 }

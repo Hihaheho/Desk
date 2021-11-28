@@ -1,13 +1,17 @@
-use types::Type;
+use std::collections::HashMap;
+
+use types::{Effect, Type};
 
 use crate::{amir::AmirId, block::BlockId, link::LinkId, var::VarId};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct StmtBind<T = AStmt> {
     pub var: VarId,
     pub stmt: T,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum AStmt {
     Const(Const),
@@ -17,7 +21,6 @@ pub enum AStmt {
     Fn(FnRef),
     Perform(VarId),
     MatchResult(VarId),
-    // TODO: Handle
     Apply {
         function: VarId,
         arguments: Vec<VarId>,
@@ -30,13 +33,18 @@ pub enum AStmt {
     Parameter,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
-    Amir(AmirId),
     Link(LinkId),
-    Clojure(AmirId, Vec<VarId>),
+    Clojure {
+        amir: AmirId,
+        captured: Vec<VarId>,
+        handlers: HashMap<Effect, VarId>,
+    },
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Const {
     Int(i64),
@@ -45,6 +53,7 @@ pub enum Const {
     String(String),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Op {
     Add,
@@ -71,12 +80,14 @@ pub enum Op {
     BitNot,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchCase<T = Type> {
     pub ty: T,
     pub next: BlockId,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ATerminator<T = Type> {
     Return(VarId),

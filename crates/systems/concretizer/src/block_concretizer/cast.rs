@@ -7,7 +7,7 @@ impl<'a> BlockConcretizer<'a> {
         let from = &self.vars.get(&from_var_id);
         let to = &self.vars.get(&to_var_id);
         match (&from.ty, &to.ty) {
-            (x, y) if x == y => self.stmts.push(StmtBind {
+            (x, y) if !x.needs_cast_to(y) => self.stmts.push(StmtBind {
                 stmt: Stmt::Move(from_var_id),
                 var: to_var_id,
             }),

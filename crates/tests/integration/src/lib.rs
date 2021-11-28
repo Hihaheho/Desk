@@ -62,10 +62,7 @@ macro_rules! test {
             let value = loop {
                 match evalmir.eval_next() {
                     evalmir::Output::Return(ret) => break ret,
-                    evalmir::Output::Perform {
-                        input: _,
-                        output: _,
-                    } => todo!(),
+                    evalmir::Output::Perform { input, effect } => todo!(),
                     evalmir::Output::Running => continue,
                 }
             };

@@ -1,5 +1,7 @@
-* @files [
-    * @name "main.ds",
+{
+  @files [
+    {
+      @name "main.ds",
       @content "
         #1 <@division by zero 'number> => <'number>
           <\\'number, 'number -> @sum 'number>
@@ -8,24 +10,33 @@
           ! @quotient 'number ~ @division by zero 'number => 'number>
           @dividend 3, @divisor 0
       "
+    }
   ],
   @entrypoint "main.ds",
   @assertions [
     @Typed [
-      * 1, @Label *
+      * 1, @Label {
         @label "quotient",
-        @item @Number *;
-      * 2, @Effectful *
-        @ty @Label *
+        @item @Number *
+      },
+      * 2, @Effectful {
+        @ty @Label {
           @label "quotient",
-          @item @Number *;
+          @item @Number *
+        },
         @effects [
-          * @input @Label *
+          {
+            @input @Label {
               @label "division by zero",
-              @item @Number *;
-            @output @Number *.
+              @item @Number *
+            },
+            @output @Number *
+          }
         ]
+      }
     ],
-    @RunSuccess *
+    @RunSuccess {
       @result @Int 4
+    }
   ]
+}

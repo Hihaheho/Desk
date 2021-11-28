@@ -252,7 +252,7 @@ impl<'a> SerializeTupleStruct for SeqSerializer {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(Dson::Product(self.0))
+        Ok(Dson::Set(self.0))
     }
 }
 impl<'a> SerializeTupleVariant for VariantSerializer {
@@ -332,7 +332,7 @@ impl<'a> SerializeStruct for SeqSerializer {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(Dson::Product(self.0))
+        Ok(Dson::Set(self.0))
     }
 }
 
@@ -385,7 +385,7 @@ mod tests {
 
         assert_eq!(
             to_dson(&test).unwrap(),
-            Dson::Product(vec![
+            Dson::Set(vec![
                 Dson::Labeled {
                     label: "int".into(),
                     expr: Box::new(Dson::Literal(Literal::Int(1)))

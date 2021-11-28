@@ -11,6 +11,7 @@ pub type Var = AVar<ConcType>;
 pub type BasicBlock = amir::block::ABasicBlock<Stmt, usize>;
 pub type Link = ALink<ConcType>;
 
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mir {
     pub parameters: Vec<ConcType>,

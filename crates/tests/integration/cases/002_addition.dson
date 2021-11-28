@@ -1,11 +1,16 @@
-* @files [
-    * @name "main.ds",
+{
+  @files [
+    {
+      @name "main.ds",
       @content "
         <\\'number, 'number -> @sum 'number> 1, 2.
       "
+    }
   ],
   @entrypoint "main.ds",
   @assertions [
-    @RunSuccess *
+    @RunSuccess {
       @result @Int 3
+    }
   ]
+}

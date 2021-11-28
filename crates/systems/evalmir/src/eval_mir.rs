@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 
 use mir::mir::Mir;
+use mir::ty::ConcEffect;
 use mir::BlockId;
 
-use crate::{const_stmt, op_stmt};
+use crate::const_stmt;
 
-use crate::value::{FnRef, Value};
+use crate::value::{Closure, FnRef, Value};
 use mir::{ty::ConcType, StmtBind, VarId};
 
-#[derive(Debug, Clone)]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EvalMir {
     pub mir: Mir,
     pub registers: HashMap<VarId, Value>,
@@ -17,6 +19,14 @@ pub struct EvalMir {
     pub pc_stmt_idx: usize,
     // Before handling apply stmt, save the var to here, and used when returned.
     pub return_register: Option<VarId>,
+    pub handlers: HashMap<ConcEffect, Handler>,
+}
+
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub enum Handler {
+    Handler(Closure),
+    Continuation(Vec<EvalMir>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -24,7 +34,7 @@ pub enum InnerOutput {
     Return(Value),
     Perform {
         input: Value,
-        output: ConcType,
+        effect: ConcEffect,
     },
     RunOther {
         fn_ref: FnRef,
@@ -62,7 +72,10 @@ impl EvalMir {
                 }
             }
         } else {
-            let StmtBind { var: bind_var, stmt } = &block.stmts[self.pc_stmt_idx];
+            let StmtBind {
+                var: bind_var,
+                stmt,
+            } = &block.stmts[self.pc_stmt_idx];
             let value = match stmt {
                 mir::stmt::Stmt::Const(const_value) => const_stmt::eval(const_value),
                 mir::stmt::Stmt::Tuple(values) => Value::Tuple(
@@ -75,13 +88,48 @@ impl EvalMir {
                 mir::stmt::Stmt::Set(_) => todo!(),
                 mir::stmt::Stmt::Fn(fn_ref) => {
                     let fn_ref = match fn_ref {
-                        mir::FnRef::Amir(mir) => FnRef::Mir(*mir),
-                        mir::FnRef::Link(_) => todo!(),
-                        mir::FnRef::Clojure(_, _) => todo!(),
+                        mir::stmt::FnRef::Link(_) => todo!(),
+                        mir::stmt::FnRef::Clojure {
+                            amir,
+                            captured,
+                            handlers,
+                        } => FnRef::Closure(Closure {
+                            mir: *amir,
+                            captured: captured
+                                .iter()
+                                .map(|var| {
+                                    (self.get_var_ty(var).clone(), self.load_value(var).clone())
+                                })
+                                .collect(),
+                            handlers: handlers
+                                .iter()
+                                .map(|(effect, handler)| {
+                                    (
+                                        effect.clone(),
+                                        if let Value::FnRef(FnRef::Closure(closure)) =
+                                            self.load_value(handler).clone()
+                                        {
+                                            Handler::Handler(closure)
+                                        } else {
+                                            panic!("handler must be FnRef::Closure")
+                                        },
+                                    )
+                                })
+                                .collect(),
+                        }),
                     };
                     Value::FnRef(fn_ref)
                 }
-                mir::stmt::Stmt::Perform(_) => todo!(),
+                mir::stmt::Stmt::Perform(var) => {
+                    let effect = ConcEffect {
+                        input: self.get_var_ty(var).clone(),
+                        output: self.get_var_ty(bind_var).clone(),
+                    };
+                    return InnerOutput::Perform {
+                        input: self.load_value(&var).clone(),
+                        effect,
+                    };
+                }
                 mir::stmt::Stmt::Apply {
                     function,
                     arguments,
@@ -89,8 +137,8 @@ impl EvalMir {
                     if let Value::FnRef(fn_ref) = self.registers.get(function).cloned().unwrap() {
                         let mut parameters = HashMap::new();
                         arguments.iter().for_each(|arg| {
-                            let ty = self.mir.vars.get(arg).ty.clone();
-                            let value = self.registers.get(arg).cloned().unwrap();
+                            let ty = self.get_var_ty(arg).clone();
+                            let value = self.load_value(arg).clone();
                             parameters.insert(ty, value);
                         });
                         // Save the return register.
@@ -102,17 +150,7 @@ impl EvalMir {
                         panic!("fn_ref");
                     }
                 }
-                mir::stmt::Stmt::Op { op, operands } => match self.eval_op(op, operands) {
-                    op_stmt::OpResult::Return(value) => value,
-                    op_stmt::OpResult::Perform(value) => {
-                        // Increment pc before return output is important
-                        self.pc_stmt_idx += 1;
-                        return InnerOutput::Perform {
-                            input: value,
-                            output: self.var_type(bind_var),
-                        };
-                    }
-                },
+                mir::stmt::Stmt::Op { op, operands } => self.eval_op(op, operands),
                 mir::stmt::Stmt::Ref(_) => todo!(),
                 mir::stmt::Stmt::RefMut(_) => todo!(),
                 mir::stmt::Stmt::Index { tuple, index } => todo!(),
@@ -154,6 +192,10 @@ impl EvalMir {
 
     pub fn store_value(&mut self, var: VarId, value: Value) {
         self.registers.insert(var, value);
+    }
+
+    pub fn get_var_ty(&self, var: &VarId) -> &ConcType {
+        &self.mir.vars.get(var).ty
     }
 
     fn var_type(&self, id: &VarId) -> ConcType {
@@ -201,6 +243,7 @@ mod tests {
             registers: HashMap::new(),
             parameters: HashMap::new(),
             return_register: None,
+            handlers: HashMap::new(),
         };
 
         assert_eq!(eval.eval_next(), InnerOutput::Running);

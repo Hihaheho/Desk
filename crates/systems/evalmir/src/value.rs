@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use mir::{ty::ConcType, LinkId, MirId};
+use mir::{
+    ty::{ConcEffect, ConcType},
+    LinkId, MirId,
+};
+
+use crate::eval_mir::Handler;
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
@@ -17,10 +22,14 @@ pub enum Value {
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub enum FnRef {
-    Mir(MirId),
     Link(LinkId),
-    Closure {
-        mir: MirId,
-        captured: HashMap<ConcType, Value>,
-    },
+    Closure(Closure),
+}
+
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub struct Closure {
+    pub mir: MirId,
+    pub captured: HashMap<ConcType, Value>,
+    pub handlers: HashMap<ConcEffect, Handler>,
 }

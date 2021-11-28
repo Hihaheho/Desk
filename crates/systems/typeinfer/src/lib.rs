@@ -443,7 +443,17 @@ impl Ctx {
                     })?
                     .with_type(Type::Array(Box::new(Type::Sum(types))))
             }
-            Expr::Set(values) => todo!(),
+            Expr::Set(values) => {
+                let mut types = vec![];
+                values
+                    .iter()
+                    .try_fold(self.clone(), |ctx, value| {
+                        let (ctx, ty) = ctx.synth(&value)?;
+                        types.push(ty);
+                        Ok(ctx)
+                    })?
+                    .with_type(Type::Set(Box::new(Type::Sum(types))))
+            }
             Expr::Match { of, cases } => {
                 let (ty, out): (Vec<_>, Vec<_>) = cases
                     .iter()

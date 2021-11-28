@@ -22,8 +22,7 @@ impl Deserializer {
 }
 
 fn unwrap(dson: &mut Dson) {
-    while let Dson::Attr { expr, .. } | Dson::Labeled { expr, .. } = dson
-    {
+    while let Dson::Attr { expr, .. } | Dson::Labeled { expr, .. } = dson {
         *dson = *expr.clone();
     }
 }
@@ -161,8 +160,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         unwrap(&mut self.0);
         match &self.0 {
-            Dson::Product(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
-            _ => Err(Error::Message("Expected product".into())),
+            Dson::Set(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
+            _ => Err(Error::Message("Expected set".into())),
         }
     }
 
@@ -177,7 +176,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         unwrap(&mut self.0);
         match &self.0 {
-            Dson::Product(values) => {
+            Dson::Set(values) => {
                 let values = values
                     .iter()
                     .map(|dson| match dson {
@@ -189,7 +188,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                     .collect::<Result<Vec<_>>>()?;
                 visitor.visit_map(MapDeserializer::new(values))
             }
-            _ => Err(Error::Message("Expected product".into())),
+            _ => Err(Error::Message("Expected set".into())),
         }
     }
 }
@@ -308,7 +307,7 @@ mod tests {
             seq: Vec<String>,
         }
 
-        let dson = Dson::Product(vec![
+        let dson = Dson::Set(vec![
             Dson::Labeled {
                 label: "int".into(),
                 expr: Box::new(Dson::Literal(Literal::Int(1))),
@@ -364,7 +363,7 @@ mod tests {
 
         let dson = Dson::Labeled {
             label: "Struct".into(),
-            expr: Box::new(Dson::Product(vec![Dson::Labeled {
+            expr: Box::new(Dson::Set(vec![Dson::Labeled {
                 label: "a".into(),
                 expr: Box::new(Dson::Literal(Literal::Int(1))),
             }])),

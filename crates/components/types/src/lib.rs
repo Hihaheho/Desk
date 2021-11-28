@@ -42,6 +42,15 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn unit() -> Self {
+        Type::Product(vec![])
+    }
+    pub fn label(label: impl Into<String>, item: Self) -> Self {
+        Type::Label {
+            label: label.into(),
+            item: Box::new(item),
+        }
+    }
     pub fn product(mut types: Vec<Self>) -> Self {
         types.sort();
         Type::Product(types)

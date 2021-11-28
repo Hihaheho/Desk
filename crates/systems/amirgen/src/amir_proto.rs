@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use amir::{
-    amir::Amir,
+    amir::{Amir, AmirId},
     block::{ABasicBlock, BlockId},
     link::{ALink, LinkId},
     scope::ScopeId,
     stmt::{AStmt, ATerminator, StmtBind},
     var::{AVar, VarId},
 };
-use types::Type;
+use types::{Effect, Type};
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 
@@ -26,6 +26,7 @@ pub struct AmirProto {
     current_block: Vec<BlockId>,
     // Values that referenced but not included in parameter
     captured_values: HashMap<Type, VarId>,
+    handlers: HashMap<Effect, AmirId>,
 }
 
 impl Default for AmirProto {
@@ -41,6 +42,7 @@ impl Default for AmirProto {
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
             captured_values: HashMap::default(),
+            handlers: HashMap::default(),
         }
     }
 }
@@ -171,7 +173,7 @@ impl AmirProto {
         });
     }
 
-    pub fn end_scope<T>(&mut self, var: T) -> T {
+    pub fn end_scope_then_return<T>(&mut self, var: T) -> T {
         self.current_scope.pop();
         var
     }
@@ -203,5 +205,9 @@ impl AmirProto {
         let id = LinkId(self.links.len());
         self.links.push(ALink { ty: ty.clone() });
         self.links_map.entry(ty).or_insert(id).clone()
+    }
+
+    pub(crate) fn assign_handler(&mut self, effect: Effect, handler_amir: amir::amir::AmirId) {
+        self.handlers.insert(effect, handler_amir);
     }
 }
