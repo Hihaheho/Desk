@@ -68,6 +68,11 @@ pub enum Expr {
         label: String,
         item: Box<Spanned<Self>>,
     },
+    NewType {
+        ident: String,
+        ty: Spanned<Type>,
+        expr: Box<Spanned<Self>>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -66,10 +66,21 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             visit(includes, &attr.0);
             visit(includes, &expr.0);
         }
-        Expr::Brand { brands: _, item: expr } => visit(includes, &expr.0),
+        Expr::Brand {
+            brands: _,
+            item: expr,
+        } => visit(includes, &expr.0),
         Expr::Import { ty: _, uuid: _ } => todo!(),
         Expr::Export { ty: _ } => todo!(),
         Expr::Literal(_) => {}
-        Expr::Label { label: _, item: expr } => visit(includes, &expr.0),
+        Expr::Label {
+            label: _,
+            item: expr,
+        } => visit(includes, &expr.0),
+        Expr::NewType {
+            ident: _,
+            ty: _,
+            expr,
+        } => visit(includes, &expr.0),
     };
 }

@@ -36,6 +36,7 @@ pub struct HirGen {
     pub variables: RefCell<HashMap<String, Id>>,
     pub attrs: RefCell<HashMap<Id, Vec<Expr>>>,
     pub included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
+    pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
     // current file id is the last item.
     file_stack: RefCell<Vec<FileId>>,
@@ -70,7 +71,16 @@ impl HirGen {
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
-            ast::ty::Type::Alias(alias) => todo!(),
+            ast::ty::Type::Alias(alias) => self.with_meta(
+                self.type_aliases
+                    .borrow()
+                    .get(alias)
+                    .cloned()
+                    .ok_or_else(|| HirGenError::UnknownTypeAlias {
+                        alias: alias.clone(),
+                        span: self.pop_span().unwrap(),
+                    })?,
+            ),
             ast::ty::Type::Product(types) => self.with_meta(Type::Product(
                 types
                     .into_iter()
@@ -272,6 +282,12 @@ impl HirGen {
                         item: Box::new(self.gen(expr)?),
                     })
                 }
+            }
+            ast::expr::Expr::NewType { ident, ty, expr } => {
+                self.type_aliases
+                    .borrow_mut()
+                    .insert(ident.clone(), self.gen_type(ty)?.value);
+                self.gen(expr)?
             }
         };
         Ok(with_meta)
