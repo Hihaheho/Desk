@@ -100,7 +100,6 @@ pub fn parser(
             brand,
             item: Box::new(ty),
         });
-        let variable = identifier.clone().map(Type::Variable);
 
         infer
             .or(this)
@@ -115,7 +114,6 @@ pub fn parser(
             .or(set)
             .or(function)
             .or(brand)
-            .or(variable)
             .or(attribute)
             .map_with_span(|t, span| (t, span))
     });

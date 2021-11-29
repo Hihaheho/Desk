@@ -30,27 +30,3 @@ pub(crate) fn calc(lhs: &Value, rhs: &Value) -> Value {
         _ => panic!("adds not numbers"),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    pub fn rational() {
-        assert_eq!(
-            calc(&Value::Rational(1, 2), &Value::Rational(2, 3)),
-            Value::Rational(7, 6)
-        );
-        assert_eq!(
-            calc(&Value::Rational(2, 3), &Value::Rational(1, 3)),
-            Value::Int(1)
-        );
-        assert_eq!(
-            calc(&Value::Rational(1, 2), &Value::Int(3)),
-            Value::Rational(7, 2)
-        );
-        assert_eq!(
-            calc(&Value::Rational(1, 2), &Value::Float(3.0)),
-            Value::Float(3.5)
-        );
-    }
-}

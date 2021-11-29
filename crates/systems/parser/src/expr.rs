@@ -367,7 +367,7 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            + <x>
+            + 'a x
             <'number> -> "number",
             <'string> -> "string".
             "#
@@ -377,19 +377,19 @@ mod tests {
             Expr::Match {
                 of: Box::new((
                     Expr::Apply {
-                        function: (Type::Variable("x".into()), 16..17),
+                        function: (Type::Alias("x".into()), 15..19),
                         arguments: vec![]
                     },
-                    15..18
+                    15..19
                 )),
                 cases: vec![
                     MatchCase {
-                        ty: (Type::Number, 32..39),
-                        expr: (Expr::Literal(Literal::String("number".into())), 44..52),
+                        ty: (Type::Number, 33..40),
+                        expr: (Expr::Literal(Literal::String("number".into())), 45..53),
                     },
                     MatchCase {
-                        ty: (Type::String, 67..74),
-                        expr: (Expr::Literal(Literal::String("string".into())), 79..87),
+                        ty: (Type::String, 68..75),
+                        expr: (Expr::Literal(Literal::String("string".into())), 80..88),
                     },
                 ]
             }

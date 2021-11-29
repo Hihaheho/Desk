@@ -8,8 +8,8 @@
           'a add
             ! 1 => 'number,
             ! 2 => 'number
-        $ ! \"a\" => 'number: x ~
-        'a add <x>, x
+        $ ! \"a\" => 'number: 'a x ~
+        'a add 'a x, 'a x
       "
     }
   ],

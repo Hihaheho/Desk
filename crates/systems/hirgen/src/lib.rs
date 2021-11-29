@@ -76,10 +76,7 @@ impl HirGen {
                     .borrow()
                     .get(alias)
                     .cloned()
-                    .ok_or_else(|| HirGenError::UnknownTypeAlias {
-                        alias: alias.clone(),
-                        span: self.pop_span().unwrap(),
-                    })?,
+                    .unwrap_or(Type::Variable(self.get_id_of(alias.clone()))),
             ),
             ast::ty::Type::Product(types) => self.with_meta(Type::Product(
                 types

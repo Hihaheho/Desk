@@ -3,9 +3,9 @@
     {
       @name "main.ds",
       @content "
-        $ #1 @false *: <x> ~
+        $ #1 @false *: 'a x ~
         #2
-        + <x> ~
+        + 'a x ~
           <@true *> -> 1,
           <@false *> -> 2.
       "
