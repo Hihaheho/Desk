@@ -28,7 +28,9 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let literal = rational
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
             .or(string);
-        let type_ = super::ty::parser(expr.clone()).delimited_by(Token::TypeBegin, Token::TypeEnd);
+        let type_ = super::ty::parser(expr.clone())
+            .delimited_by(Token::TypeBegin, Token::TypeEnd)
+            .or(super::ty::parser(expr.clone()));
         let let_in = just(Token::Let)
             .ignore_then(expr.clone())
             // TODO: span for Type::Infer
@@ -157,13 +159,13 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(function)
             .or(array)
             .or(set)
-            .or(apply)
             .or(typed)
             .or(attribute)
             .or(brand)
             .or(match_)
             .or(include)
             .or(label)
+            .or(apply)
             .or(newtype)
             .then_ignore(none_of([Token::Arrow]).to(()).or(end()).lookahead())
             .map_with_span(|token, span| (token, span))
