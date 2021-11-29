@@ -144,6 +144,11 @@ impl AmirProto {
 
     pub fn create_named_var(&mut self, var: VarId) {
         let ty = self.get_var(&var).ty.clone();
+        // Remove effectful
+        let ty = match ty {
+            Type::Effectful { ty, effects: _ } => *ty,
+            ty => ty,
+        };
         self.current_scope().named_vars.insert(ty, var);
     }
 

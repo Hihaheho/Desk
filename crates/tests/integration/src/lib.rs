@@ -84,3 +84,4 @@ test!(case002, "../cases/002_addition.dson");
 test!(case003, "../cases/003_match.dson");
 test!(case004, "../cases/004_let_function.dson");
 test!(case005, "../cases/005_division_by_zero.dson");
+test!(case006, "../cases/006_continuation.dson");

@@ -56,26 +56,24 @@ impl EvalMirs {
                     Output::Return(value)
                 } else {
                     self.stack.pop().unwrap();
-                    self.stack().return_value(value);
+                    self.stack().return_or_continue_with_value(value);
                     Output::Running
                 }
             }
             InnerOutput::Perform { input, effect } => {
-                dbg!(&effect);
-                let mut continuation = VecDeque::new();
+                let mut continuation_from_handler = VecDeque::new();
                 let handler = loop {
                     if let Some(eval_mir) = self.stack.pop() {
-                        dbg!(&eval_mir.handlers);
                         // find handler
                         let handler = eval_mir.handlers.get(&effect).cloned();
                         // push eval_mir to continuation
-                        continuation.push_front(eval_mir);
+                        continuation_from_handler.push_front(eval_mir);
                         if let Some(handler) = handler {
                             break handler;
                         }
                     } else {
                         // When handler are not found, push back to continuation stack and perform
-                        self.stack.extend(continuation);
+                        self.stack.extend(continuation_from_handler);
                         return Output::Perform { input, effect };
                     }
                 };
@@ -86,7 +84,7 @@ impl EvalMirs {
                         // Really ignorable??
                         handlers: _,
                     }) => {
-                        captured.insert(dbg!(effect.input.clone()), dbg!(input));
+                        captured.insert(effect.input.clone(), input);
                         let eval_mir = EvalMir {
                             mir: self.get_mir(&mir).clone(),
                             registers: Default::default(),
@@ -94,20 +92,26 @@ impl EvalMirs {
                             pc_block: BlockId(0),
                             pc_stmt_idx: 0,
                             return_register: None,
-                            handlers: [dbg!((
+                            handlers: [(
                                 ConcEffect {
                                     input: effect.output,
-                                    output: continuation[0].mir.output.clone(),
+                                    output: continuation_from_handler[0].mir.output.clone(),
                                 },
-                                Handler::Continuation(continuation.into()),
-                            ))]
+                                Handler::Continuation(continuation_from_handler.into()),
+                            )]
                             .into_iter()
                             .collect(),
                         };
                         self.stack.push(eval_mir);
                         Output::Running
                     }
-                    eval_mir::Handler::Continuation(_) => todo!(),
+                    eval_mir::Handler::Continuation(continuation) => {
+                        self.stack.extend(continuation_from_handler);
+                        self.stack.extend(continuation);
+                        // path input to continuation
+                        self.stack().return_or_continue_with_value(input);
+                        Output::Running
+                    }
                 }
             }
             InnerOutput::RunOther { fn_ref, parameters } => match fn_ref {

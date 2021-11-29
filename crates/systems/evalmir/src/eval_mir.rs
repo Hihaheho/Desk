@@ -121,6 +121,8 @@ impl EvalMir {
                     Value::FnRef(fn_ref)
                 }
                 mir::stmt::Stmt::Perform(var) => {
+                    // Save the return register to get result from continuation.
+                    self.return_register = Some(*bind_var);
                     if let ConcType::Effectful {
                         ty: output,
                         effects: _,
@@ -130,6 +132,8 @@ impl EvalMir {
                             input: self.get_var_ty(var).clone(),
                             output: *output.clone(),
                         };
+                        // Increment pc before perform is important
+                        self.pc_stmt_idx += 1;
                         return InnerOutput::Perform {
                             input: self.load_value(&var).clone(),
                             effect,
@@ -172,7 +176,10 @@ impl EvalMir {
                     let ty = &self.mir.vars.get(bind_var).ty;
                     self.parameters
                         .get(ty)
-                        .expect("parameter must be exist")
+                        .expect(&format!(
+                            "parameter must be exist {:?} in {:?}",
+                            ty, self.parameters
+                        ))
                         .clone()
                 }
             };
@@ -189,7 +196,7 @@ impl EvalMir {
     }
 
     // After call another mir, continue with this function.
-    pub fn return_value(&mut self, ret: Value) {
+    pub fn return_or_continue_with_value(&mut self, ret: Value) {
         let var = self.return_register.take().expect("needs return register");
         self.store_value(var, ret);
     }
