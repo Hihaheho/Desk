@@ -432,13 +432,11 @@ impl Ctx {
                         body: Box::new(with_effects(Type::Existential(b), effects)),
                     })
                 } else {
-                    let a = self.fresh_existential();
-                    self.add(Log::Existential(a))
-                        .check(&body, &Type::Existential(a))?
-                        .with_type(Type::Function {
-                            parameter: Box::new(self.from_hir_type(parameter)),
-                            body: Box::new(Type::Existential(a)),
-                        })
+                    let (ctx, ty) = self.synth(&body)?;
+                    ctx.with_type(Type::Function {
+                        parameter: Box::new(self.from_hir_type(parameter)),
+                        body: Box::new(ty),
+                    })
                 }
             }
             Expr::Array(values) => {

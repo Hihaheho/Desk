@@ -111,16 +111,21 @@ impl TypedHirGen {
             Expr::Function { parameter: _, body } => {
                 // get type from whole function is more accurate than from parameter.
                 let function_ty = self.get_type(expr);
-                dbg!(expr_id);
                 if let Type::Function {
                     parameters,
                     body: _,
-                } = dbg!(function_ty)
+                } = function_ty
                 {
-                    let inner = self.gen(&*body);
-                    thir::Expr::Function {
-                        parameters,
-                        body: Box::new(inner),
+                    // Flatten the function
+                    match self.gen(&*body) {
+                        TypedHir {
+                            expr: thir::Expr::Function { body, .. },
+                            ..
+                        } => thir::Expr::Function { parameters, body },
+                        inner => thir::Expr::Function {
+                            parameters,
+                            body: Box::new(inner),
+                        },
                     }
                 } else {
                     panic!("function is inferred to not function??");
@@ -213,7 +218,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "maybe type infer of currying is broken"]
     fn function_and_reference() {
         let expr = dbg!(parse(r#"\ 'number, 'string -> <'number>"#));
         let gen = TypedHirGen {
