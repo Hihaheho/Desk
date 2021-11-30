@@ -28,9 +28,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         let literal = rational
             .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
             .or(string);
-        let type_ = super::ty::parser(expr.clone())
-            .delimited_by(Token::TypeBegin, Token::TypeEnd)
-            .or(super::ty::parser(expr.clone()));
+        let type_ = super::ty::parser(expr.clone());
         let let_in = just(Token::Let)
             .ignore_then(expr.clone())
             // TODO: span for Type::Infer
@@ -66,14 +64,14 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 handler: Box::new(handler),
                 expr: Box::new(expr),
             });
-        let apply =
-            type_
-                .clone()
-                .then(expr.clone().separated_by_comma())
-                .map(|(function, arguments)| Expr::Apply {
-                    function,
-                    arguments,
-                });
+        let apply = type_
+            .clone()
+            .delimited_by(Token::TypeBegin, Token::TypeEnd)
+            .then(expr.clone().separated_by_comma())
+            .map(|(function, arguments)| Expr::Apply {
+                function,
+                arguments,
+            });
         let product =
             parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
         let function = parse_function(
@@ -151,22 +149,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 expr: Box::new(expr),
             });
 
-        hole.or(literal)
-            .or(let_in)
-            .or(perform)
-            .or(handle)
-            .or(product)
-            .or(function)
-            .or(array)
-            .or(set)
-            .or(typed)
-            .or(attribute)
-            .or(brand)
-            .or(match_)
-            .or(include)
-            .or(label)
-            .or(apply)
-            .or(newtype)
+        hole.or(literal.labelled("literal"))
+            .or(let_in.labelled("let-in"))
+            .or(perform.labelled("perform"))
+            .or(product.labelled("product"))
+            .or(array.labelled("array"))
+            .or(set.labelled("set"))
+            .or(typed.labelled("typed"))
+            .or(attribute.labelled("attribute"))
+            .or(brand.labelled("brand"))
+            .or(match_.labelled("match"))
+            .or(include.labelled("include"))
+            .or(function.labelled("function"))
+            .or(apply.labelled("apply"))
+            .or(handle.labelled("handle"))
+            .or(label.labelled("label"))
+            .or(newtype.labelled("newtype"))
             .then_ignore(none_of([Token::Arrow]).to(()).or(end()).lookahead())
             .map_with_span(|token, span| (token, span))
     })
@@ -207,11 +205,11 @@ mod tests {
     #[test]
     fn parse_let() {
         assert_eq!(
-            parse("$ 3: <'number> ~ ?").unwrap().0,
+            parse("$ 3: 'number ~ ?").unwrap().0,
             Expr::Let {
-                ty: (Type::Number, 6..13),
+                ty: (Type::Number, 5..12),
                 definition: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                expression: Box::new((Expr::Hole, 17..18)),
+                expression: Box::new((Expr::Hole, 15..16)),
             }
         );
     }
@@ -219,24 +217,24 @@ mod tests {
     #[test]
     fn parse_perform() {
         assert_eq!(
-            parse("! ? => <'string>").unwrap().0,
+            parse("! ? => 'string").unwrap().0,
             Expr::Perform {
                 input: Box::new((Expr::Hole, 2..3)),
-                output: (Type::String, 8..15),
+                output: (Type::String, 7..14),
             }
         );
     }
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"<'number> => <'string> 3 ~ ?"#).unwrap().0;
+        let trait_ = parse(r#"'number => 'string 3 ~ ?"#).unwrap().0;
         assert_eq!(
             trait_,
             Expr::Handle {
-                input: (Type::Number, 1..8),
-                output: (Type::String, 14..21),
-                handler: Box::new((Expr::Literal(Literal::Int(3)), 23..24)),
-                expr: Box::new((Expr::Hole, 27..28)),
+                input: (Type::Number, 0..7),
+                output: (Type::String, 11..18),
+                handler: Box::new((Expr::Literal(Literal::Int(3)), 19..20)),
+                expr: Box::new((Expr::Hole, 23..24)),
             }
         );
     }
@@ -269,10 +267,10 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ <'number>, <_> -> ?"#).unwrap().0,
+            parse(r#"\ 'number, _ -> ?"#).unwrap().0,
             Expr::Function {
-                parameters: vec![(Type::Number, 3..10), (Type::Infer, 14..15)],
-                body: Box::new((Expr::Hole, 20..21)),
+                parameters: vec![(Type::Number, 2..9), (Type::Infer, 11..12)],
+                body: Box::new((Expr::Hole, 16..17)),
             },
         );
     }
@@ -304,10 +302,10 @@ mod tests {
     #[test]
     fn parse_type_annotation() {
         assert_eq!(
-            parse("^?: <'number>").unwrap().0,
+            parse("^?: 'number").unwrap().0,
             Expr::Typed {
                 item: Box::new((Expr::Hole, 1..2)),
-                ty: (Type::Number, 5..12),
+                ty: (Type::Number, 4..11),
             }
         );
     }
@@ -340,8 +338,8 @@ mod tests {
             parse(
                 r#"
             + ? ~
-            <'number> -> "number",
-            <'string> -> "string".
+            'number -> "number",
+            'string -> "string".
             "#
             )
             .unwrap()
@@ -350,12 +348,12 @@ mod tests {
                 of: Box::new((Expr::Hole, 15..16)),
                 cases: vec![
                     MatchCase {
-                        ty: (Type::Number, 32..39),
-                        expr: (Expr::Literal(Literal::String("number".into())), 44..52),
+                        ty: (Type::Number, 31..38),
+                        expr: (Expr::Literal(Literal::String("number".into())), 42..50),
                     },
                     MatchCase {
-                        ty: (Type::String, 67..74),
-                        expr: (Expr::Literal(Literal::String("string".into())), 79..87),
+                        ty: (Type::String, 64..71),
+                        expr: (Expr::Literal(Literal::String("string".into())), 75..83),
                     },
                 ]
             }
@@ -367,9 +365,9 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            + 'a x
-            <'number> -> "number",
-            <'string> -> "string".
+            + <'a x>
+            'number -> "number",
+            'string -> "string".
             "#
             )
             .unwrap()
@@ -377,19 +375,19 @@ mod tests {
             Expr::Match {
                 of: Box::new((
                     Expr::Apply {
-                        function: (Type::Alias("x".into()), 15..19),
+                        function: (Type::Alias("x".into()), 16..20),
                         arguments: vec![]
                     },
-                    15..19
+                    15..21
                 )),
                 cases: vec![
                     MatchCase {
-                        ty: (Type::Number, 33..40),
+                        ty: (Type::Number, 34..41),
                         expr: (Expr::Literal(Literal::String("number".into())), 45..53),
                     },
                     MatchCase {
-                        ty: (Type::String, 68..75),
-                        expr: (Expr::Literal(Literal::String("string".into())), 80..88),
+                        ty: (Type::String, 67..74),
+                        expr: (Expr::Literal(Literal::String("string".into())), 78..86),
                     },
                 ]
             }

@@ -27,8 +27,8 @@ pub struct TypedHirGen {
 
 impl TypedHirGen {
     pub fn gen(&self, expr: &WithMeta<Expr>) -> TypedHir {
-        let Meta { id, .. } = expr.meta.as_ref().expect("must have meta");
-        let ty = self.types.get(&id).expect("must have type").clone();
+        let Meta { id: expr_id, .. } = expr.meta.as_ref().expect("must have meta");
+        let ty = self.types.get(&expr_id).expect("must have type").clone();
         let expr = match &expr.value {
             Expr::Literal(Literal::Hole) => todo!(),
             Expr::Literal(Literal::Int(value)) => {
@@ -84,9 +84,7 @@ impl TypedHirGen {
                                 op
                             }
                         }
-                        builtin::Builtin::Custom(expr) => {
-                            expr(&self, &arguments)
-                        },
+                        builtin::Builtin::Custom(expr) => expr(&self, &arguments),
                     }
                 } else {
                     if arguments.is_empty() {
@@ -107,6 +105,7 @@ impl TypedHirGen {
             Expr::Function { parameter: _, body } => {
                 // get type from whole function is more accurate than from parameter.
                 let function_ty = self.get_type(expr);
+                dbg!(expr_id);
                 if let Type::Function {
                     parameters,
                     body: _,
@@ -149,7 +148,11 @@ impl TypedHirGen {
                 item: Box::new(self.gen(&*body)),
             },
         };
-        TypedHir { id: *id, ty, expr }
+        TypedHir {
+            id: *expr_id,
+            ty,
+            expr,
+        }
     }
 
     fn get_type<T>(&self, expr: &WithMeta<T>) -> Type {
@@ -174,7 +177,7 @@ mod tests {
 
     fn parse(input: &str) -> WithMeta<Expr> {
         let tokens = lexer::scan(input).unwrap();
-        let ast = parser::parse(tokens).unwrap();
+        let ast = dbg!(parser::parse(tokens).unwrap());
         hirgen::gen_hir(FileId(0), &ast, Default::default())
             .unwrap()
             .1
@@ -204,9 +207,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "investigate why fail later"]
+    #[ignore = "maybe type infer of currying is broken"]
     fn function_and_reference() {
-        let expr = parse(r#"\ <'number>, <'string> -> <'number>"#);
+        let expr = dbg!(parse(r#"\ 'number, 'string -> <'number>"#));
         let gen = TypedHirGen {
             types: dbg!(infer(&expr)),
             ..Default::default()
@@ -330,8 +333,8 @@ mod tests {
         let expr = parse(
             r#"
         + 3 ~
-            <'number> -> 1,
-            <'string> -> "2".
+          'number -> 1,
+          'string -> "2".
         "#,
         );
         let gen = TypedHirGen {

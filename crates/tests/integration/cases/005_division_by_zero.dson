@@ -3,8 +3,8 @@
     {
       @name "main.ds",
       @content "
-        'type add <\\'number, 'number -> @sum 'number>
-        #1 <@division by zero 'number> => <'number>
+        'type add \\'number, 'number -> @sum 'number
+        #1 @division by zero 'number => 'number
           <'a add>
             <@division by zero 'number>, 1 ~
         #2 <\\@dividend 'number, @divisor 'number ->

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct FileId(pub usize);
 
+#[derive(Clone, Debug)]
 pub struct InFile<T> {
     pub id: FileId,
     pub expr: T,

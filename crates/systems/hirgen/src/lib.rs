@@ -29,7 +29,7 @@ pub fn gen_hir(
     hir.gen(src).map(|expr| (hir, expr))
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct HirGen {
     next_id: RefCell<Id>,
     next_span: RefCell<Vec<Span>>,

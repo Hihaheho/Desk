@@ -5,9 +5,9 @@
       @content "
         $ #1 @false *: 'a x ~
         #2
-        + 'a x ~
-          <@true *> -> 1,
-          <@false *> -> 2.
+        + <'a x> ~
+          @true * -> 1,
+          @false * -> 2.
       "
     }
   ],

@@ -1072,7 +1072,7 @@ mod tests {
 
     fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
         let tokens = lexer::scan(input).unwrap();
-        let ast = parser::parse(tokens).unwrap();
+        let ast = dbg!(parser::parse(tokens).unwrap());
         hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap()
     }
 
@@ -1132,7 +1132,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ 1: 'a x ~ 'a x
+                    $ 1: 'a x ~ <'a x>
             "#
             )),
             Ok(Type::Number)
@@ -1144,7 +1144,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    \ 'a x -> 'a x
+                    \ 'a x -> <'a x>
             "#
             )),
             Ok(Type::Function {
@@ -1159,8 +1159,8 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ \ 'a x -> 'a x: 'a id ~
-                    'a id 1
+                    $ \ 'a x -> <'a x>: 'a id ~
+                    <'a id> 1
             "#
             )),
             Ok(Type::Number)
@@ -1171,9 +1171,9 @@ mod tests {
     fn typing_expressions() {
         let (hirgen, expr) = parse_inner(
             r#"
-            #1 $ #2 \ 'a x -> #3 'a x: 'a id ~
-            $ #4 'a id #5 1 ~
-            #6 'a id #7 "a"
+            #1 $ #2 \ 'a x -> #3 <'a x>: 'a id ~
+            $ #4 <'a id> #5 1 ~
+            #6 <'a id> #7 "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1203,8 +1203,8 @@ mod tests {
     fn subtyping_sum_in_product() {
         let (hirgen, expr) = parse_inner(
             r#"
-            $ #1 \ < + 'number, *. > -> 1: 'a fun ~
-            #3 'a fun #2 * 1, "a"
+            $ #1 \ + 'number, * -> 1: 'a fun ~
+            #3 <'a fun> #2 * 1, "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1230,8 +1230,8 @@ mod tests {
     fn perform() {
         let (hirgen, expr) = parse_inner(
             r#"
-            $ #3 \ 'a x -> #2 < \ 'number -> 'number > #1 ! 'a x => <'number>: 'a fun ~
-            #4 'a fun "a"
+            $ #3 \ 'a x -> #2 < \ 'number -> 'number > #1 ! <'a x> => 'number: 'a fun ~
+            #4 <'a fun> "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1290,16 +1290,15 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "investigate causes of fail later"]
     fn handle() {
         let (hirgen, expr) = parse_inner(
             r#"
-            \ 'a x, 'a y, 'a z ->
-              #3 'a x => 'a y
-                $ ! 1 => <'string> ~
-                #1 ! 'a y => 'a z ~
-              #2 <\'a y -> 'a z> ! 'a x => 'a y
-        "#,
+                    \ 'a x, 'a y, 'a z ->
+                      #3 'a x => 'a y
+                        $ ! 1 => 'string ~
+                        #1 ! <'a y> => 'a z ~
+                      #2 <\'a y -> 'a z> ! <'a x> => 'a y
+                "#,
         );
         let ctx = Ctx::default();
         let (ctx, _ty) = ctx.synth(&expr).unwrap();
@@ -1348,7 +1347,7 @@ mod tests {
     fn label() {
         let expr = parse(
             r#"
-            ^^^1: <@labeled 'number>: <'number>: <@labeled 'number>
+            ^^^1: @labeled 'number: 'number: @labeled 'number
         "#,
         );
         assert_eq!(
@@ -1364,7 +1363,7 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            \ 'a x -> ^'a x: <@labeled 'number>
+            \ 'a x -> ^<'a x>: @labeled 'number
         "#,
         );
         assert_eq!(
@@ -1387,7 +1386,7 @@ mod tests {
         let expr = parse(
             r#"
             'brand brand
-            ^1: <@brand 'number>
+            ^1: @brand 'number
         "#,
         );
         assert_eq!(
@@ -1407,7 +1406,7 @@ mod tests {
         let expr = parse(
             r#"
             'brand brand
-            ^<@brand 'number>: <'number>
+            ^<@brand 'number>: 'number
         "#,
         );
         assert_eq!(synth(expr), Ok(Type::Number));
@@ -1417,7 +1416,7 @@ mod tests {
     fn infer() {
         let (hirgen, expr) = parse_inner(
             r#"
-            ^<\ #1 _ -> #2 _> "a": <'number>
+            ^<\ #1 _ -> #2 _> "a": 'number
             "#,
         );
         let ctx = Ctx::default();
@@ -1435,9 +1434,9 @@ mod tests {
         let (hirgen, expr) = parse_inner(
             r#"
             \ 'a x ->
-              #2 + #1 'a x ~
-                <'number> -> ^1: <@a 'number>,
-                <'string> -> ^2: <@b 'number>.
+              #2 + #1 <'a x> ~
+               'number -> ^1: @a 'number,
+               'string -> ^2: @b 'number.
             "#,
         );
         let ctx = Ctx::default();
