@@ -31,6 +31,7 @@ pub enum Token {
     SetEnd,
     Hole,
     Infer,
+    Handle,
     Lambda,
     Arrow,
     EArrow,

@@ -13,7 +13,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use error::TypeError;
 use hir::{
-    expr::{Expr, Literal, MatchCase},
+    expr::{Expr, Handler, Literal, MatchCase},
     meta::WithMeta,
 };
 use mono_type::MonoType;
@@ -325,49 +325,58 @@ impl Ctx {
                 }))
                 .with_type(output)
             }
-            Expr::Handle {
-                input,
-                output,
-                handler,
-                expr,
-            } => {
+            Expr::Handle { expr, handlers } => {
                 // synth expr
                 let WithEffects((ctx, expr_ty), mut expr_effects) = self.synth_and_effects(expr)?;
                 expr_effects
                     .iter_mut()
                     .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));
+                let mut ctx = self.clone();
                 // check handler
-                let WithEffects(ctx, mut handler_effects) =
-                    self.check_and_effects(handler, &expr_ty)?;
-                handler_effects
-                    .iter_mut()
-                    .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));
-                // handled effect and continue effect
-                let handled_effect = self.substitute_from_context_effect(&Effect {
-                    input: self.from_hir_type(input),
-                    output: self.from_hir_type(output),
-                });
-                let continue_effect = self.substitute_from_context_effect(&Effect {
-                    input: handled_effect.output.clone(),
-                    output: expr_ty.clone(),
-                });
-                // remove handled effect
-                let position = (&expr_effects)
+                let (handled_effects, handler_effects): (Vec<_>, Vec<_>) = handlers
                     .iter()
-                    .position(|effect| effect == &handled_effect)
-                    .ok_or(TypeError::UnknownEffectHandled {
-                        effect: handled_effect,
-                    })?;
-                expr_effects.remove(position);
-                // remove continue effect
-                if let Some(position) = (&handler_effects)
-                    .iter()
-                    .position(|effect| effect == &continue_effect)
-                {
-                    handler_effects.remove(position);
-                }
+                    .map(
+                        |Handler {
+                             input,
+                             output,
+                             handler,
+                         }| {
+                            let (next_ctx, ty) = ctx.synth(&handler)?;
+                            ctx = next_ctx;
+                            let WithEffects(next_ctx, mut handler_effects) =
+                                ctx.check_and_effects(handler, &expr_ty)?;
+                            ctx = next_ctx;
+                            handler_effects.iter_mut().for_each(|effect| {
+                                *effect = ctx.substitute_from_context_effect(&effect)
+                            });
+                            // handled effect and continue effect
+                            let handled_effect = self.substitute_from_context_effect(&Effect {
+                                input: self.from_hir_type(input),
+                                output: self.from_hir_type(output),
+                            });
+                            let continue_effect = self.substitute_from_context_effect(&Effect {
+                                input: handled_effect.output.clone(),
+                                output: expr_ty.clone(),
+                            });
+                            // remove continue effect
+                            if let Some(position) = (&handler_effects)
+                                .iter()
+                                .position(|effect| effect == &continue_effect)
+                            {
+                                handler_effects.remove(position);
+                            }
+                            Ok((handled_effect, handler_effects))
+                        },
+                    )
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .unzip();
+                // remove handled effects
+                expr_effects.retain(|effect| !handled_effects.contains(effect));
                 // add remain effects to ctx
-                expr_effects.extend(handler_effects);
+                for handler_effects in handler_effects {
+                    expr_effects.extend(handler_effects);
+                }
                 self.with_effects(&expr_effects).with_type(expr_ty)
             }
             Expr::Apply {
@@ -1293,11 +1302,11 @@ mod tests {
     fn handle() {
         let (hirgen, expr) = parse_inner(
             r#"
-                    \ 'a x, 'a y, 'a z ->
-                      #3 'a x => 'a y
+                    \ x, y, z ->
+                      #3 | #2 <\y -> z> ! <x> => y ~
+                      x => y ->
                         $ ! 1 => 'string ~
-                        #1 ! <'a y> => 'a z ~
-                      #2 <\'a y -> 'a z> ! <'a x> => 'a y
+                        #1 ! <y> => z
                 "#,
         );
         let ctx = Ctx::default();

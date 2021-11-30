@@ -1,5 +1,5 @@
 use ast::{
-    expr::{Expr, Literal, MatchCase},
+    expr::{Expr, Handler, Literal, MatchCase},
     span::Spanned,
     ty::Type,
 };
@@ -53,16 +53,26 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 input: Box::new(effect),
                 output,
             });
-        let handle = type_
-            .clone()
-            .then_ignore(just(Token::EArrow))
-            .then(type_.clone())
-            .then(expr.clone().in_().then(expr.clone()))
-            .map(|((input, output), (handler, expr))| Expr::Handle {
-                input,
-                output,
-                handler: Box::new(handler),
+        let handle = just(Token::Handle)
+            .ignore_then(expr.clone())
+            .in_()
+            .then(
+                type_
+                    .clone()
+                    .then_ignore(just(Token::EArrow))
+                    .then(type_.clone())
+                    .then_ignore(just(Token::Arrow).or_not())
+                    .then(expr.clone())
+                    .map(|((input, output), handler)| Handler {
+                        input,
+                        output,
+                        handler,
+                    })
+                    .separated_by_comma_at_least_one(),
+            )
+            .map(|(expr, handlers)| Expr::Handle {
                 expr: Box::new(expr),
+                handlers,
             });
         let apply = type_
             .clone()
@@ -227,14 +237,16 @@ mod tests {
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"'number => 'string 3 ~ ?"#).unwrap().0;
+        let trait_ = parse(r#"| ? ~ 'number => 'string -> 3"#).unwrap().0;
         assert_eq!(
             trait_,
             Expr::Handle {
-                input: (Type::Number, 0..7),
-                output: (Type::String, 11..18),
-                handler: Box::new((Expr::Literal(Literal::Int(3)), 19..20)),
-                expr: Box::new((Expr::Hole, 23..24)),
+                expr: Box::new((Expr::Hole, 2..3)),
+                handlers: vec![Handler {
+                    input: (Type::Number, 6..13),
+                    output: (Type::String, 17..24),
+                    handler: (Expr::Literal(Literal::Int(3)), 28..29),
+                }],
             }
         );
     }

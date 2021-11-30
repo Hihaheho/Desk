@@ -11,6 +11,13 @@ pub enum Literal {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct Handler {
+    pub input: Spanned<Type>,
+    pub output: Spanned<Type>,
+    pub handler: Spanned<Expr>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Literal(Literal),
     Let {
@@ -23,10 +30,8 @@ pub enum Expr {
         output: Spanned<Type>,
     },
     Handle {
-        input: Spanned<Type>,
-        output: Spanned<Type>,
-        handler: Box<Spanned<Self>>,
         expr: Box<Spanned<Self>>,
+        handlers: Vec<Handler>,
     },
     Apply {
         function: Spanned<Type>,

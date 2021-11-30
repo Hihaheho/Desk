@@ -11,7 +11,7 @@ use ast::span::{Span, Spanned};
 use error::HirGenError;
 use file::{FileId, InFile};
 use hir::{
-    expr::{Expr, Literal, MatchCase},
+    expr::{Expr, Handler, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
     ty::{Effect, Type},
 };
@@ -71,7 +71,7 @@ impl HirGen {
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
-            ast::ty::Type::Alias(ident) | ast::ty::Type::Variable(ident)=> self.with_meta(
+            ast::ty::Type::Alias(ident) | ast::ty::Type::Variable(ident) => self.with_meta(
                 self.type_aliases
                     .borrow()
                     .get(ident)
@@ -169,15 +169,23 @@ impl HirGen {
                 input: Box::new(self.gen(input)?),
                 output: self.gen_type(output)?,
             }),
-            ast::expr::Expr::Handle {
-                input,
-                output,
-                handler,
-                expr,
-            } => self.with_meta(Expr::Handle {
-                input: self.gen_type(input)?,
-                output: self.gen_type(output)?,
-                handler: Box::new(self.gen(handler)?),
+            ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
+                handlers: handlers
+                    .iter()
+                    .map(
+                        |ast::expr::Handler {
+                             input,
+                             output,
+                             handler,
+                         }| {
+                            Ok(Handler {
+                                input: self.gen_type(input)?,
+                                output: self.gen_type(output)?,
+                                handler: self.gen(handler)?,
+                            })
+                        },
+                    )
+                    .collect::<Result<Vec<_>, _>>()?,
                 expr: Box::new(self.gen(expr)?),
             }),
             ast::expr::Expr::Apply {
@@ -402,15 +410,21 @@ mod tests {
                 input: Box::new(remove_meta(*input)),
                 output: remove_meta_ty(output),
             },
-            Expr::Handle {
-                input,
-                output,
-                handler,
-                expr,
-            } => Expr::Handle {
-                input: remove_meta_ty(input),
-                output: remove_meta_ty(output),
-                handler: Box::new(remove_meta(*handler)),
+            Expr::Handle { handlers, expr } => Expr::Handle {
+                handlers: handlers
+                    .into_iter()
+                    .map(
+                        |Handler {
+                             input,
+                             output,
+                             handler,
+                         }| Handler {
+                            input: remove_meta_ty(input),
+                            output: remove_meta_ty(output),
+                            handler: remove_meta(handler),
+                        },
+                    )
+                    .collect(),
                 expr: Box::new(remove_meta(*expr)),
             },
             Expr::Apply {

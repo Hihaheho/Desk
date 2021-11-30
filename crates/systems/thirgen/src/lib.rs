@@ -6,7 +6,7 @@ use hir::{
     expr::{Expr, Literal, MatchCase},
     meta::{Meta, WithMeta},
 };
-use thir::TypedHir;
+use thir::{Handler, TypedHir};
 use types::{Effect, IdGen, Type, Types};
 
 use crate::builtin::find_builtin;
@@ -52,17 +52,23 @@ impl TypedHirGen {
                 body: Box::new(self.gen(&*expression)),
             },
             Expr::Perform { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(&*input))),
-            Expr::Handle {
-                input,
-                output,
-                handler,
-                expr,
-            } => thir::Expr::Handle {
-                effect: Effect {
-                    input: self.get_type(&input),
-                    output: self.get_type(&output),
-                },
-                handler: Box::new(self.gen(&*handler)),
+            Expr::Handle { handlers, expr } => thir::Expr::Handle {
+                handlers: handlers
+                    .iter()
+                    .map(
+                        |hir::expr::Handler {
+                             input,
+                             output,
+                             handler,
+                         }| Handler {
+                            effect: Effect {
+                                input: self.get_type(&input),
+                                output: self.get_type(&output),
+                            },
+                            handler: self.gen(&*handler),
+                        },
+                    )
+                    .collect(),
                 expr: Box::new(self.gen(&*expr)),
             },
             Expr::Apply {

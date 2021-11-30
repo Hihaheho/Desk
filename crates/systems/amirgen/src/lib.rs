@@ -11,7 +11,7 @@ use amir::{
     var::VarId,
 };
 use amir_proto::AmirProto;
-use thir::TypedHir;
+use thir::{Handler, TypedHir};
 use thiserror::Error;
 use types::{Effect, Type};
 
@@ -101,40 +101,40 @@ impl AmirGen {
                 self.amir_proto()
                     .bind_stmt(stmt_ty.clone(), AStmt::Perform(var))
             }
-            thir::Expr::Handle {
-                effect,
-                handler,
-                expr,
-            } => {
+            thir::Expr::Handle { handlers, expr } => {
+                let handlers = handlers
+                    .iter()
+                    .map(|Handler { effect, handler }| {
+                        self.begin_amir();
+                        let handler_end = self.gen_stmt(handler)?;
+                        let handler_amir = self.end_amir(handler_end, stmt_ty.clone());
+                        let handler_type = self.get_amir(&handler_amir).get_type();
+                        // call effectful amir
+                        let handler_var = self.amir_proto().bind_stmt(
+                            handler_type,
+                            AStmt::Fn(FnRef::Closure {
+                                amir: handler_amir,
+                                captured: vec![], // TODO
+                                handlers: HashMap::new(),
+                            }),
+                        );
+                        Ok((effect.clone(), handler_var))
+                    })
+                    .collect::<Result<HashMap<_, _>, _>>()?;
                 // handler amir
-                self.begin_amir();
-                let handler_end = self.gen_stmt(handler)?;
-                let handler_amir = self.end_amir(handler_end, stmt_ty.clone());
-                let handler_type = self.get_amir(&handler_amir).get_type();
 
                 // effectful amir
                 self.begin_amir();
-                self.amir_proto()
-                    .assign_handler(effect.clone(), handler_amir);
                 let effectful_end = self.gen_stmt(expr)?;
                 let effectful_amir = self.end_amir(effectful_end, stmt_ty.clone());
                 let effectful_type = self.get_amir(&effectful_amir).get_type();
 
-                // call effectful amir
-                let handler_var = self.amir_proto().bind_stmt(
-                    handler_type,
-                    AStmt::Fn(FnRef::Closure {
-                        amir: handler_amir,
-                        captured: vec![], // TODO
-                        handlers: HashMap::new(),
-                    }),
-                );
                 let effectful_fun = self.amir_proto().bind_stmt(
                     effectful_type,
                     AStmt::Fn(FnRef::Closure {
                         amir: effectful_amir,
                         captured: vec![], // TODO
-                        handlers: [(effect.clone(), handler_var)].into_iter().collect(),
+                        handlers,
                     }),
                 );
                 self.amir_proto().bind_stmt(
@@ -246,7 +246,10 @@ impl AmirGen {
                     .end_block(ATerminator::Match { var: input, cases });
                 match_result_var
             }
-            thir::Expr::Label { label: _, item: expr } => self.gen_stmt(&TypedHir {
+            thir::Expr::Label {
+                label: _,
+                item: expr,
+            } => self.gen_stmt(&TypedHir {
                 id: expr.id,
                 ty: stmt_ty.clone(),
                 expr: expr.expr.clone(),

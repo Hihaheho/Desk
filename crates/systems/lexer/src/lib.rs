@@ -68,6 +68,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('?').to(Token::Hole))
         .or(just('_').to(Token::Infer))
         .or(just('\\').to(Token::Lambda))
+        .or(just('|').to(Token::Handle))
         .or(just('-').chain(just('>')).to(Token::Arrow))
         .or(just('=').chain(just('>')).to(Token::EArrow));
     let special = just('\'')

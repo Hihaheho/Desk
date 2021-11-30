@@ -1,4 +1,7 @@
-use ast::{expr::Expr, span::Spanned};
+use ast::{
+    expr::{Expr, Handler},
+    span::Spanned,
+};
 
 pub fn extract_includes(src: &Spanned<Expr>) -> Vec<String> {
     let mut includes = Vec::new();
@@ -18,14 +21,11 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             visit(includes, &expression.0);
         }
         Expr::Perform { input, output: _ } => visit(includes, &input.0),
-        Expr::Handle {
-            input: _,
-            output: _,
-            handler,
-            expr,
-        } => {
-            visit(includes, &handler.0);
+        Expr::Handle { handlers, expr } => {
             visit(includes, &expr.0);
+            handlers
+                .iter()
+                .for_each(|Handler { handler, .. }| visit(includes, &handler.0));
         }
         Expr::Apply {
             function: _,

@@ -24,6 +24,12 @@ pub struct TypedHir {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Handler {
+    pub effect: Effect,
+    pub handler: TypedHir,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Literal(Literal),
     Match {
@@ -36,8 +42,7 @@ pub enum Expr {
     },
     Perform(Box<TypedHir>),
     Handle {
-        effect: Effect,
-        handler: Box<TypedHir>,
+        handlers: Vec<Handler>,
         expr: Box<TypedHir>,
     },
     Reference,

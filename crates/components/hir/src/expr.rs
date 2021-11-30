@@ -10,6 +10,13 @@ pub enum Literal {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct Handler {
+    pub input: WithMeta<Type>,
+    pub output: WithMeta<Type>,
+    pub handler: WithMeta<Expr>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Literal(Literal),
     Let {
@@ -22,9 +29,7 @@ pub enum Expr {
         output: WithMeta<Type>,
     },
     Handle {
-        input: WithMeta<Type>,
-        output: WithMeta<Type>,
-        handler: Box<WithMeta<Self>>,
+        handlers: Vec<Handler>,
         expr: Box<WithMeta<Self>>,
     },
     Apply {

@@ -211,8 +211,4 @@ impl AmirProto {
         self.links.push(ALink { ty: ty.clone() });
         self.links_map.entry(ty).or_insert(id).clone()
     }
-
-    pub(crate) fn assign_handler(&mut self, effect: Effect, handler_amir: amir::amir::AmirId) {
-        self.handlers.insert(effect, handler_amir);
-    }
 }
