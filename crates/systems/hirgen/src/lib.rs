@@ -71,12 +71,12 @@ impl HirGen {
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
-            ast::ty::Type::Alias(alias) => self.with_meta(
+            ast::ty::Type::Alias(ident) | ast::ty::Type::Variable(ident)=> self.with_meta(
                 self.type_aliases
                     .borrow()
-                    .get(alias)
+                    .get(ident)
                     .cloned()
-                    .unwrap_or(Type::Variable(self.get_id_of(alias.clone()))),
+                    .unwrap_or(Type::Variable(self.get_id_of(ident.clone()))),
             ),
             ast::ty::Type::Product(types) => self.with_meta(Type::Product(
                 types
@@ -111,9 +111,6 @@ impl HirGen {
                 definition: Box::new(self.gen_type(definition)?),
                 body: Box::new(self.gen_type(body)?),
             }),
-            ast::ty::Type::Variable(ident) => {
-                self.with_meta(Type::Variable(self.get_id_of(ident.clone())))
-            }
             ast::ty::Type::BoundedVariable { bound, identifier } => {
                 self.with_meta(Type::BoundedVariable {
                     bound: Box::new(self.gen_type(bound)?),
