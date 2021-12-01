@@ -341,7 +341,7 @@ impl Ctx {
                              output,
                              handler,
                          }| {
-                            let (next_ctx, ty) = ctx.synth(&handler)?;
+                            let next_ctx = ctx.check(&handler, &expr_ty)?;
                             ctx = next_ctx;
                             let WithEffects(next_ctx, mut handler_effects) =
                                 ctx.check_and_effects(handler, &expr_ty)?;
