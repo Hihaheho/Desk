@@ -10,7 +10,7 @@ eyre = "0.6"
 protocol = { package = "desk-protocol", path = "../../components/protocol", version = "0.1.0" }
 serde_cbor = "0.11"
 tracing = "0.1"
-cross-websocket = { package = "cross-websocket", path = "../../libs/cross-websocket", version = "0.1.0" }
+cross-websocket = { package = "cross-websocket", path = "../../libs/cross-websocket", version = "0.1.1" }
 futures-lite = "1.12"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
