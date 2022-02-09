@@ -8,6 +8,8 @@ mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub use wasm::*;
 
+pub use eyre::{Report, Result};
+
 use thiserror::Error;
 
 pub struct WebSocketClient<Tx, Rx> {
