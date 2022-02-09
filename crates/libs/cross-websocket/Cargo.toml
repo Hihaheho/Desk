@@ -17,6 +17,7 @@ thiserror = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio-tungstenite = { version = "0.15", features = ["native-tls"] }
+tokio = "*"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 ws_stream_wasm = { version = "0.7" }
