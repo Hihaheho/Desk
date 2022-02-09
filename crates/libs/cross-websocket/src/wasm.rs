@@ -8,10 +8,10 @@ use eyre::Result;
 use futures::future::{ready, Ready};
 use futures::prelude::*;
 
-type Bytes = Vec<u8>;
+pub type Bytes = Vec<u8>;
 
-type Rx = Map<SplitStream<WsStream>, fn(WsMessage) -> Result<Bytes>>;
-type Tx = With<
+pub type Rx = Map<SplitStream<WsStream>, fn(WsMessage) -> Result<Bytes>>;
+pub type Tx = With<
     SinkMapErr<SplitSink<WsStream, WsMessage>, fn(WsErr) -> SinkError>,
     WsMessage,
     Bytes,
