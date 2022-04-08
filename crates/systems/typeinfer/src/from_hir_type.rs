@@ -21,7 +21,7 @@ pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
                 })
                 .collect(),
         },
-        Infer => Type::Infer(ty.meta.as_ref().expect("infer type should have meta").id),
+        Infer => Type::Infer(ty.meta.id),
         This => todo!(),
         Product(types) => {
             Type::Product(types.into_iter().map(|t| from_hir_type(ctx, &t)).collect())

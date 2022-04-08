@@ -133,11 +133,11 @@ impl HirGen {
             ast::ty::Type::Attribute { attr, ty } => {
                 self.pop_span();
                 let mut ret = self.gen_type(ty)?;
-                if let Some(meta) = &mut ret.meta {
-                    let attr = self.gen(attr)?.value;
-                    meta.attrs.push(attr);
-                    self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
-                }
+                let attr = self.gen(attr)?.value;
+                ret.meta.attrs.push(attr);
+                self.attrs
+                    .borrow_mut()
+                    .insert(ret.meta.id, ret.meta.attrs.clone());
                 ret
             }
         };
@@ -247,11 +247,11 @@ impl HirGen {
             ast::expr::Expr::Attribute { attr, item: expr } => {
                 self.pop_span();
                 let mut ret = self.gen(expr)?;
-                if let Some(meta) = &mut ret.meta {
-                    let attr = self.gen(attr)?.value;
-                    meta.attrs.push(attr.clone());
-                    self.attrs.borrow_mut().insert(meta.id, meta.attrs.clone());
-                }
+                let attr = self.gen(attr)?.value;
+                ret.meta.attrs.push(attr.clone());
+                self.attrs
+                    .borrow_mut()
+                    .insert(ret.meta.id, ret.meta.attrs.clone());
                 ret
             }
             ast::expr::Expr::Brand { brands, item: expr } => {
@@ -286,9 +286,8 @@ impl HirGen {
                 }
             }
             ast::expr::Expr::NewType { ident, ty, expr } => {
-                self.type_aliases
-                    .borrow_mut()
-                    .insert(ident.clone(), self.gen_type(ty)?.value);
+                let ty = self.gen_type(ty)?.value;
+                self.type_aliases.borrow_mut().insert(ident.clone(), ty);
                 self.gen(expr)?
             }
         };
@@ -319,12 +318,12 @@ impl HirGen {
 
     fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         WithMeta {
-            meta: Some(Meta {
+            meta: Meta {
                 attrs: vec![],
                 id: self.next_id(),
                 file_id: self.file_stack.borrow().last().unwrap().clone(),
                 span: self.pop_span().unwrap(),
-            }),
+            },
             value,
         }
     }
@@ -343,7 +342,7 @@ impl HirGen {
 #[cfg(test)]
 mod tests {
     use hir::{
-        meta::{no_meta, Meta},
+        meta::{dummy_meta, Meta},
         ty::Type,
     };
     use pretty_assertions::assert_eq;
@@ -392,7 +391,7 @@ mod tests {
                 item: Box::new(remove_meta_ty(*item)),
             },
         };
-        no_meta(value)
+        dummy_meta(value)
     }
     fn remove_meta(expr: WithMeta<Expr>) -> WithMeta<Expr> {
         let value = match expr.value {
@@ -473,7 +472,7 @@ mod tests {
                 item: Box::new(remove_meta(*body)),
             },
         };
-        no_meta(value)
+        dummy_meta(value)
     }
 
     #[test]
@@ -507,24 +506,24 @@ mod tests {
                 0..27
             ),),
             Ok(WithMeta {
-                meta: Some(Meta {
+                meta: Meta {
                     attrs: vec![],
                     id: 4,
                     file_id: FileId(0),
                     span: 0..27
-                }),
+                },
                 value: Expr::Apply {
                     function: WithMeta {
-                        meta: Some(Meta {
+                        meta: Meta {
                             attrs: vec![],
                             id: 0,
                             file_id: FileId(0),
                             span: 3..10
-                        }),
+                        },
                         value: Type::Number
                     },
                     arguments: vec![WithMeta {
-                        meta: Some(Meta {
+                        meta: Meta {
                             attrs: vec![
                                 Expr::Literal(Literal::Int(2)),
                                 Expr::Literal(Literal::Int(1))
@@ -532,7 +531,7 @@ mod tests {
                             id: 1,
                             file_id: FileId(0),
                             span: 26..27
-                        }),
+                        },
                         value: Expr::Literal(Literal::Hole)
                     }],
                 },
@@ -563,28 +562,28 @@ mod tests {
         gen.push_file_id(FileId(0));
         assert_eq!(
             remove_meta(gen.gen(&expr).unwrap()),
-            no_meta(Expr::Let {
-                ty: no_meta(Type::Infer),
-                definition: Box::new(no_meta(Expr::Apply {
-                    function: no_meta(Type::Label {
+            dummy_meta(Expr::Let {
+                ty: dummy_meta(Type::Infer),
+                definition: Box::new(dummy_meta(Expr::Apply {
+                    function: dummy_meta(Type::Label {
                         label: "brand".into(),
-                        item: Box::new(no_meta(Type::Number)),
+                        item: Box::new(dummy_meta(Type::Number)),
                     }),
                     arguments: vec![],
                 })),
-                expression: Box::new(no_meta(Expr::Let {
-                    ty: no_meta(Type::Infer),
-                    definition: Box::new(no_meta(Expr::Apply {
-                        function: no_meta(Type::Brand {
+                expression: Box::new(dummy_meta(Expr::Let {
+                    ty: dummy_meta(Type::Infer),
+                    definition: Box::new(dummy_meta(Expr::Apply {
+                        function: dummy_meta(Type::Brand {
                             brand: "brand".into(),
-                            item: Box::new(no_meta(Type::Number)),
+                            item: Box::new(dummy_meta(Type::Number)),
                         }),
                         arguments: vec![],
                     })),
-                    expression: Box::new(no_meta(Expr::Apply {
-                        function: no_meta(Type::Label {
+                    expression: Box::new(dummy_meta(Expr::Apply {
+                        function: dummy_meta(Type::Label {
                             label: "label".into(),
-                            item: Box::new(no_meta(Type::Number)),
+                            item: Box::new(dummy_meta(Type::Number)),
                         }),
                         arguments: vec![],
                     }))

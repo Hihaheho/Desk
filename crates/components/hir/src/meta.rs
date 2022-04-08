@@ -16,10 +16,18 @@ pub struct Meta {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WithMeta<T> {
-    pub meta: Option<Meta>,
+    pub meta: Meta,
     pub value: T,
 }
 
-pub fn no_meta<T>(value: T) -> WithMeta<T> {
-    WithMeta { meta: None, value }
+pub fn dummy_meta<T>(value: T) -> WithMeta<T> {
+    WithMeta {
+        meta: Meta {
+            attrs: vec![],
+            id: 0,
+            file_id: FileId(0),
+            span: 0..0,
+        },
+        value,
+    }
 }

@@ -27,7 +27,7 @@ pub struct TypedHirGen {
 
 impl TypedHirGen {
     pub fn gen(&self, expr: &WithMeta<Expr>) -> TypedHir {
-        let Meta { id: expr_id, .. } = expr.meta.as_ref().expect("must have meta");
+        let Meta { id: expr_id, .. } = &expr.meta;
         let ty = self.types.get(&expr_id).expect("must have type").clone();
         let expr = match &expr.value {
             Expr::Literal(Literal::Hole) => todo!(),
@@ -168,7 +168,7 @@ impl TypedHirGen {
 
     fn get_type<T>(&self, expr: &WithMeta<T>) -> Type {
         self.types
-            .get(&expr.meta.as_ref().expect("must have meta").id)
+            .get(&expr.meta.id)
             .expect("must have type")
             .clone()
     }

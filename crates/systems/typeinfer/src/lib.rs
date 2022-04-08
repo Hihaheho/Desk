@@ -89,9 +89,10 @@ impl Ctx {
     }
 
     fn store_type_and_effects<T>(&self, expr: &WithMeta<T>, ty: &Type, effects: Vec<Effect>) {
-        if let Some(meta) = &expr.meta {
-            self.store_type(meta.id, with_effects(self.substitute_from_ctx(ty), effects));
-        }
+        self.store_type(
+            expr.meta.id,
+            with_effects(self.substitute_from_ctx(ty), effects),
+        );
     }
 
     fn store_type(&self, id: Id, ty: Type) {
@@ -1063,7 +1064,7 @@ fn is_monotype(ty: &Type) -> bool {
 #[cfg(test)]
 mod tests {
     use file::FileId;
-    use hir::meta::no_meta;
+    use hir::meta::dummy_meta;
     use hirgen::HirGen;
     use pretty_assertions::assert_eq;
 
@@ -1103,7 +1104,7 @@ mod tests {
     #[test]
     fn number() {
         assert_eq!(
-            synth(no_meta(Expr::Literal(Literal::Int(1)))),
+            synth(dummy_meta(Expr::Literal(Literal::Int(1)))),
             Ok(Type::Number)
         );
     }
@@ -1111,12 +1112,12 @@ mod tests {
     #[test]
     fn function() {
         assert_eq!(
-            synth(no_meta(Expr::Apply {
-                function: no_meta(hir::ty::Type::Function {
-                    parameter: Box::new(no_meta(hir::ty::Type::Number)),
-                    body: Box::new(no_meta(hir::ty::Type::String)),
+            synth(dummy_meta(Expr::Apply {
+                function: dummy_meta(hir::ty::Type::Function {
+                    parameter: Box::new(dummy_meta(hir::ty::Type::Number)),
+                    body: Box::new(dummy_meta(hir::ty::Type::String)),
                 }),
-                arguments: vec![no_meta(Expr::Literal(Literal::Int(1))),]
+                arguments: vec![dummy_meta(Expr::Literal(Literal::Int(1))),]
             })),
             Ok(Type::String)
         );
