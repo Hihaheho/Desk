@@ -15,7 +15,7 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
         Expr::Let {
             ty: _,
             definition,
-            expression,
+            body: expression,
         } => {
             visit(includes, &definition.0);
             visit(includes, &expression.0);

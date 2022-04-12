@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use amir::{
-    amir::AmirId,
     scope::{Scope, ScopeId},
     var::VarId,
 };
-use types::{Effect, Type};
+use types::Type;
 
 #[derive(Debug, Default)]
 pub struct ScopeProto {

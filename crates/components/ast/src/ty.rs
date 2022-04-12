@@ -31,7 +31,7 @@ pub enum Type {
     Array(Box<Spanned<Self>>),
     Set(Box<Spanned<Self>>),
     Let {
-        definition: Box<Spanned<Self>>,
+        variable: String,
         body: Box<Spanned<Self>>,
     },
     Variable(String),

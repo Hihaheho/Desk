@@ -23,7 +23,7 @@ pub enum Expr {
     Let {
         ty: Spanned<Type>,
         definition: Box<Spanned<Self>>,
-        expression: Box<Spanned<Self>>,
+        body: Box<Spanned<Self>>,
     },
     Perform {
         input: Box<Spanned<Self>>,

@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use amir::{
-    amir::{Amir, AmirId},
+    amir::Amir,
     block::{ABasicBlock, BlockId},
     link::{ALink, LinkId},
     scope::ScopeId,
     stmt::{AStmt, ATerminator, StmtBind},
     var::{AVar, VarId},
 };
-use types::{Effect, Type};
+use types::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 
@@ -26,7 +26,6 @@ pub struct AmirProto {
     current_block: Vec<BlockId>,
     // Values that referenced but not included in parameter
     captured_values: HashMap<Type, VarId>,
-    handlers: HashMap<Effect, AmirId>,
 }
 
 impl Default for AmirProto {
@@ -42,7 +41,6 @@ impl Default for AmirProto {
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
             captured_values: HashMap::default(),
-            handlers: HashMap::default(),
         }
     }
 }

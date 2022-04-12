@@ -7,6 +7,13 @@ use chumsky::{
 };
 use tokens::Token;
 
+pub(crate) fn parse_ident() -> impl Parser<Token, String, Error = Simple<Token>> + Clone {
+    filter_map(|span, token| match token {
+        Token::Ident(ident) => Ok(ident),
+        _ => Err(Simple::custom(span, "expected identifier")),
+    })
+}
+
 pub(crate) fn parse_op<U, O>(
     op: impl Parser<Token, U, Error = Simple<Token>> + Clone,
     item: impl Parser<Token, Spanned<O>, Error = Simple<Token>> + Clone,

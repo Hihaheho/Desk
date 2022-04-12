@@ -87,6 +87,7 @@ impl<'a> BlockConcretizer<'a> {
                 }
                 AStmt::Cast(from) => self.cast_to(*var, *from),
                 AStmt::Parameter => bind(Stmt::Parameter),
+                AStmt::Nope => bind(Stmt::Nope),
             };
         }
         match terminator {

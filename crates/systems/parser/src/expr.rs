@@ -6,7 +6,7 @@ use ast::{
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::parse_attr;
+use crate::common::{parse_attr, parse_ident};
 
 use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
@@ -43,7 +43,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .map(|((definition, ty), expression)| Expr::Let {
                 ty,
                 definition: Box::new(definition),
-                expression: Box::new(expression),
+                body: Box::new(expression),
             });
         let perform = just(Token::Perform)
             .ignore_then(expr.clone())
@@ -106,12 +106,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 attr: Box::new(attr),
                 item: Box::new(expr),
             });
-        let ident = filter_map(|span, token| match token {
-            Token::Ident(ident) => Ok(ident),
-            _ => Err(Simple::custom(span, "expected identifier")),
-        });
         let brand = just(Token::Brands)
-            .ignore_then(ident.separated_by_comma())
+            .ignore_then(parse_ident().separated_by_comma())
             .in_()
             .then(expr.clone())
             .map(|(brands, expr)| Expr::Brand {
@@ -134,7 +130,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 cases,
             });
         let include = just(Token::Include)
-            .ignore_then(ident.clone())
+            .ignore_then(parse_ident())
             .map(|ident| Expr::Include(ident));
         let label = filter_map(|span, input| {
             if let Token::Brand(ident) = input {
@@ -149,7 +145,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             item: Box::new(expr),
         });
         let newtype = just(Token::Type)
-            .ignore_then(ident.clone())
+            .ignore_then(parse_ident())
             .then(type_.clone())
             .in_()
             .then(expr.clone())
@@ -219,7 +215,7 @@ mod tests {
             Expr::Let {
                 ty: (Type::Number, 5..12),
                 definition: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                expression: Box::new((Expr::Hole, 15..16)),
+                body: Box::new((Expr::Hole, 15..16)),
             }
         );
     }

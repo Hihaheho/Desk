@@ -7,13 +7,13 @@ use std::collections::HashMap;
 
 use amir::{
     amir::{Amir, AmirId, Amirs},
-    stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
+    stmt::{AStmt, ATerminator, Const, FnRef, MatchCase, StmtBind},
     var::VarId,
 };
 use amir_proto::AmirProto;
 use thir::{Handler, TypedHir};
 use thiserror::Error;
-use types::{Effect, Type};
+use types::Type;
 
 pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amirs, GenAmirError> {
     let mut gen = AmirGen::default();

@@ -24,7 +24,19 @@ macro_rules! test {
             let tokens = lexer::scan(input).unwrap();
             let ast = parser::parse(tokens).unwrap();
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
-            let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &hir).unwrap();
+            let ctx = match typeinfer::synth(genhir.next_id(), &hir) {
+                Ok((ctx, _ty)) => ctx,
+                Err(typeinfer::error::ExprTypeError { meta, error }) => {
+                    use ariadne::{Label, Report, ReportKind, Source};
+                    Report::build(ReportKind::Error, (), 0)
+                        .with_message("Incompatible types")
+                        .with_label(Label::new(meta.span).with_message(format!("{:?}", error)))
+                        .finish()
+                        .print(Source::from(input))
+                        .unwrap();
+                    panic!();
+                }
+            };
 
             for assertion in test_case.assertions.iter() {
                 match assertion {
@@ -62,7 +74,9 @@ macro_rules! test {
             let value = loop {
                 match evalmir.eval_next() {
                     evalmir::Output::Return(ret) => break ret,
-                    evalmir::Output::Perform { input, effect } => panic!("perform {:?} {:?}", input, effect),
+                    evalmir::Output::Perform { input, effect } => {
+                        panic!("perform {:?} {:?}", input, effect)
+                    }
                     evalmir::Output::Running => continue,
                 }
             };

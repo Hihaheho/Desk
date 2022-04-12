@@ -32,7 +32,8 @@ pub enum Type {
     Array(Box<WithMeta<Self>>),
     Set(Box<WithMeta<Self>>),
     Let {
-        definition: Box<WithMeta<Self>>,
+        variable: Id,
+        // definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
     Variable(Id),

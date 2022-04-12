@@ -107,8 +107,8 @@ impl HirGen {
             }
             ast::ty::Type::Array(ty) => self.with_meta(Type::Array(Box::new(self.gen_type(ty)?))),
             ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(ty)?))),
-            ast::ty::Type::Let { definition, body } => self.with_meta(Type::Let {
-                definition: Box::new(self.gen_type(definition)?),
+            ast::ty::Type::Let { variable, body } => self.with_meta(Type::Let {
+                variable: self.get_id_of(variable.clone()),
                 body: Box::new(self.gen_type(body)?),
             }),
             ast::ty::Type::BoundedVariable { bound, identifier } => {
@@ -159,7 +159,7 @@ impl HirGen {
             ast::expr::Expr::Let {
                 ty: variable,
                 definition,
-                expression,
+                body: expression,
             } => self.with_meta(Expr::Let {
                 ty: self.gen_type(variable)?,
                 definition: Box::new(self.gen(definition)?),
@@ -373,8 +373,8 @@ mod tests {
             },
             Type::Array(ty) => Type::Array(Box::new(remove_meta_ty(*ty))),
             Type::Set(ty) => Type::Set(Box::new(remove_meta_ty(*ty))),
-            Type::Let { definition, body } => Type::Let {
-                definition: Box::new(remove_meta_ty(*definition)),
+            Type::Let { variable, body } => Type::Let {
+                variable,
                 body: Box::new(remove_meta_ty(*body)),
             },
             Type::Variable(_) => ty.value,

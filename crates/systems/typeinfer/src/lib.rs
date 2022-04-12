@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 mod from_hir_type;
 mod into_type;
 mod mono_type;
@@ -11,7 +11,7 @@ mod well_formed;
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use error::TypeError;
+use error::{ExprTypeError, TypeError};
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::WithMeta,
@@ -26,7 +26,7 @@ use well_formed::WellFormed;
 
 use crate::utils::{sum_all, with_effects};
 
-pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
+pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
     Ok(Ctx {
         id_gen: Rc::new(RefCell::new(IdGen { next_id })),
         ..Default::default()
@@ -246,8 +246,9 @@ impl Ctx {
         &self,
         expr: &WithMeta<Expr>,
         ty: &Type,
-    ) -> Result<WithEffects<Ctx>, TypeError> {
+    ) -> Result<WithEffects<Ctx>, ExprTypeError> {
         let scope = self.begin_scope();
+        let mut effects = Vec::new();
         let ctx = match (&expr.value, ty) {
             (Expr::Literal(Literal::Int(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
@@ -263,14 +264,20 @@ impl Ctx {
                 todo!()
             }
             (_, Type::ForAll { variable, body }) => {
-                self.add(Log::Variable(*variable)).check(expr, &*body)?
+                let WithEffects(ctx, effs) = self
+                    .add(Log::Variable(*variable))
+                    .check(expr, &*body)?
+                    .truncate_from(&Log::Variable(*variable));
+                effects.extend(effs);
+                ctx
             }
             (_, ty) => {
                 let (ctx, synthed) = self.synth(expr)?;
                 ctx.subtype(
                     &ctx.substitute_from_ctx(&synthed),
                     &ctx.substitute_from_ctx(ty),
-                )?
+                )
+                .map_err(|error| to_expr_type_error(expr, error))?
             }
         };
         let effects = ctx.end_scope(scope);
@@ -278,7 +285,7 @@ impl Ctx {
         Ok(WithEffects(ctx, effects))
     }
 
-    fn check(&self, expr: &WithMeta<Expr>, ty: &Type) -> Result<Ctx, TypeError> {
+    fn check(&self, expr: &WithMeta<Expr>, ty: &Type) -> Result<Ctx, ExprTypeError> {
         self.check_and_effects(expr, ty)
             .map(|with_effects| with_effects.0)
     }
@@ -286,7 +293,7 @@ impl Ctx {
     pub fn synth_and_effects(
         &self,
         expr: &WithMeta<Expr>,
-    ) -> Result<WithEffects<(Ctx, Type)>, TypeError> {
+    ) -> Result<WithEffects<(Ctx, Type)>, ExprTypeError> {
         let scope = self.begin_scope();
         let (ctx, ty) = match &expr.value {
             Expr::Literal(Literal::Int(_)) => (self.clone(), Type::Number),
@@ -388,14 +395,19 @@ impl Ctx {
                     // Reference
                     let fun = self.from_hir_type(function);
                     if let Type::Variable(id) = fun {
-                        self.clone().with_type(self.get_typed_var(&id)?)
+                        self.clone().with_type(
+                            self.get_typed_var(&id)
+                                .map_err(|error| to_expr_type_error(expr, error))?,
+                        )
                     } else {
                         self.clone().with_type(fun)
                     }
                 } else {
                     // Normal application
                     let fun = match self.from_hir_type(function) {
-                        Type::Variable(var) => self.get_typed_var(&var)?,
+                        Type::Variable(var) => self
+                            .get_typed_var(&var)
+                            .map_err(|error| to_expr_type_error(expr, error))?,
                         ty => ty,
                     };
                     arguments
@@ -493,12 +505,12 @@ impl Ctx {
         Ok(WithEffects((ctx, ty), effects))
     }
 
-    pub fn synth(&self, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
+    pub fn synth(&self, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
         self.synth_and_effects(expr)
             .map(|with_effects| with_effects.0)
     }
 
-    fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), TypeError> {
+    fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
         let ret = match ty {
             Type::Label { label: _, item } => self.apply(item, expr)?,
             Type::Brand { brand: _, item } => self.apply(item, expr)?,
@@ -536,14 +548,18 @@ impl Ctx {
                     .check(expr, &Type::Existential(a1))?
                     .with_type(Type::Existential(a2))
             }
-            Type::ForAll { variable, body } => self.add(Log::Existential(*variable)).apply(
-                &substitute(&*body, variable, &Type::Existential(*variable)),
+            Type::ForAll { variable, body } => {
+                let a = self.fresh_existential();
+                self.add(Log::Existential(a))
+                    .apply(&substitute(&*body, variable, &Type::Existential(a)), expr)?
+            }
+            _ => Err(to_expr_type_error(
                 expr,
-            )?,
-            _ => Err(TypeError::NotApplicable {
-                ty: ty.clone(),
-                expr: expr.value.clone(),
-            })?,
+                TypeError::NotApplicable {
+                    ty: ty.clone(),
+                    expr: expr.value.clone(),
+                },
+            ))?,
         };
         Ok(ret)
     }
@@ -1061,6 +1077,13 @@ fn is_monotype(ty: &Type) -> bool {
     monotype.is_monotype
 }
 
+fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError {
+    ExprTypeError {
+        meta: expr.meta.clone(),
+        error,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use file::FileId;
@@ -1070,7 +1093,7 @@ mod tests {
 
     use super::*;
 
-    fn synth(expr: WithMeta<Expr>) -> Result<Type, TypeError> {
+    fn synth(expr: WithMeta<Expr>) -> Result<Type, ExprTypeError> {
         crate::synth(100, &expr).map(|(_, ty)| ty)
     }
 
@@ -1398,7 +1421,7 @@ mod tests {
         "#,
         );
         assert_eq!(
-            synth(expr),
+            synth(expr).map_err(|e| e.error),
             Err(TypeError::NotSubtype {
                 sub: Type::Number,
                 ty: Type::Brand {

@@ -1,6 +1,12 @@
 use crate::ty::{Effect, Id, Type};
-use hir::expr::Expr;
+use hir::{expr::Expr, meta::Meta};
 use thiserror::Error;
+
+#[derive(Debug, PartialEq)]
+pub struct ExprTypeError {
+    pub meta: Meta,
+    pub error: TypeError,
+}
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TypeError {

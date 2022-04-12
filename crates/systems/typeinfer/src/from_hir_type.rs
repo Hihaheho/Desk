@@ -33,7 +33,10 @@ pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
         },
         Array(ty) => Type::Array(Box::new(from_hir_type(ctx, &ty))),
         Set(ty) => Type::Set(Box::new(from_hir_type(ctx, &ty))),
-        Let { definition, body } => todo!(),
+        Let { variable, body } => Type::ForAll {
+            variable: *variable,
+            body: Box::new(from_hir_type(ctx, &body)),
+        },
         Variable(id) => Type::Variable(*id),
         BoundedVariable { bound, identifier } => todo!(),
         Brand { brand, item } => Type::Brand {

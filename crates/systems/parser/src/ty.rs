@@ -6,7 +6,7 @@ use ast::{
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::parse_attr;
+use crate::common::{parse_attr, parse_ident};
 
 use super::common::{parse_function, parse_op, ParserExt};
 
@@ -24,13 +24,6 @@ pub fn parser(
     // Needs this for parse attributes
     expr: impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + 'static,
 ) -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
-    let identifier = filter_map(|span, token| {
-        if let Token::Ident(ident) = token {
-            Ok(ident)
-        } else {
-            Err(Simple::custom(span, "Expected identifier"))
-        }
-    });
     let type_ = recursive(|type_| {
         let infer = just(Token::Infer).to(Type::Infer);
         let this = just(Token::This).to(Type::This);
@@ -42,10 +35,7 @@ pub fn parser(
                 .separated_by_comma_at_least_one()
                 .map(|types| Type::Trait(types)),
         );
-        let alias = just(Token::A).ignore_then(filter_map(|span, token| match token {
-            Token::Ident(ident) => Ok(Type::Alias(ident)),
-            _ => Err(Simple::custom(span, "Expected identifier")),
-        }));
+        let alias = just(Token::A).ignore_then(parse_ident().map(Type::Alias));
         let effectful = just(Token::Perform)
             .ignore_then(type_.clone())
             .in_()
@@ -100,7 +90,15 @@ pub fn parser(
             brand,
             item: Box::new(ty),
         });
-        let variable = identifier.clone().map(Type::Variable);
+        let variable = parse_ident().map(Type::Variable);
+        let let_in = just(Token::Let)
+            .ignore_then(parse_ident())
+            .in_()
+            .then(type_.clone())
+            .map(|(definition, expression)| Type::Let {
+                variable: definition,
+                body: Box::new(expression),
+            });
 
         infer
             .or(this)
@@ -117,10 +115,11 @@ pub fn parser(
             .or(brand)
             .or(attribute)
             .or(variable)
+            .or(let_in)
             .map_with_span(|t, span| (t, span))
     });
 
-    let bound = identifier
+    let bound = parse_ident()
         .then_ignore(just(Token::TypeAnnotation))
         .then(type_.clone())
         .map_with_span(|(identifier, bound), span| {
@@ -280,6 +279,17 @@ mod tests {
             Type::Attribute {
                 attr: Box::new((Expr::Literal(Literal::Int(1)), 1..2)),
                 ty: Box::new((Type::Number, 5..12)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_let() {
+        assert_eq!(
+            parse("$ x ~ x").unwrap().0,
+            Type::Let {
+                variable: "x".into(),
+                body: Box::new((Type::Variable("x".into()), 6..7))
             }
         );
     }
