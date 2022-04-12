@@ -182,7 +182,6 @@ impl EvalMir {
                         ))
                         .clone()
                 }
-                mir::stmt::Stmt::Nope => Value::Tuple(vec![]),
             };
             let var = *bind_var;
             self.store_value(var, value);
