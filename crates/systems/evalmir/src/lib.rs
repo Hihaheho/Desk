@@ -25,6 +25,7 @@ pub fn eval_mirs<'a>(mirs: Mirs) -> EvalMirs {
             mir,
             registers: HashMap::new(),
             parameters: HashMap::new(),
+            captured: HashMap::new(),
             pc_block: BlockId(0),
             pc_stmt_idx: 0,
             return_register: None,
@@ -88,7 +89,8 @@ impl EvalMirs {
                         let eval_mir = EvalMir {
                             mir: self.get_mir(&mir).clone(),
                             registers: Default::default(),
-                            parameters: captured,
+                            parameters: Default::default(),
+                            captured,
                             pc_block: BlockId(0),
                             pc_stmt_idx: 0,
                             return_register: None,
@@ -114,7 +116,10 @@ impl EvalMirs {
                     }
                 }
             }
-            InnerOutput::RunOther { fn_ref, parameters } => match fn_ref {
+            InnerOutput::RunOther {
+                fn_ref,
+                mut parameters,
+            } => match fn_ref {
                 value::FnRef::Link(_) => todo!(),
                 value::FnRef::Closure(Closure {
                     mir,
@@ -125,10 +130,25 @@ impl EvalMirs {
                         mir: self.get_mir(&mir).clone(),
                         registers: Default::default(),
                         parameters,
-                        pc_block: BlockId(0),
-                        pc_stmt_idx: 0,
+                        captured,
+                        pc_block: Default::default(),
+                        pc_stmt_idx: Default::default(),
                         return_register: None,
                         handlers,
+                    };
+                    self.stack.push(eval_mir);
+                    Output::Running
+                }
+                value::FnRef::Recursion => {
+                    let eval_mir = EvalMir {
+                        mir: self.stack().mir.clone(),
+                        registers: Default::default(),
+                        parameters,
+                        captured: self.stack().captured.clone(),
+                        pc_block: Default::default(),
+                        pc_stmt_idx: Default::default(),
+                        return_register: None,
+                        handlers: self.stack().handlers.clone(),
                     };
                     self.stack.push(eval_mir);
                     Output::Running

@@ -24,6 +24,8 @@ pub struct AmirProto {
     current_scope: Vec<ScopeId>,
     // Block stack
     current_block: Vec<BlockId>,
+    // Deferred block stack
+    deferred_block: Vec<BlockId>,
     // Values that referenced but not included in parameter
     captured_values: HashMap<Type, VarId>,
 }
@@ -34,6 +36,7 @@ impl Default for AmirProto {
             parameters: vec![],
             current_scope: vec![ScopeId(0)],
             current_block: vec![BlockId(0)],
+            deferred_block: vec![],
             vars: vec![],
             links: vec![],
             links_map: HashMap::default(),
@@ -56,8 +59,10 @@ impl AmirProto {
             vars,
             links,
             captured_values,
+            deferred_block,
             ..
         } = self;
+        assert!(deferred_block.is_empty());
         // Save the last block
         assert!(blocks_proto.len() == 1);
         let last_block = blocks_proto.remove(&current_block_id).unwrap();
@@ -126,6 +131,7 @@ impl AmirProto {
         }
         self.captured_values.get(ty).cloned().unwrap_or_else(|| {
             let var = self.create_var(ty.clone());
+            self.captured_values.insert(ty.clone(), var);
             self.bind_to(var, AStmt::Parameter);
             var
         })
@@ -188,13 +194,12 @@ impl AmirProto {
         id
     }
 
-    // begin block handled the next time of current block
-    pub fn begin_block_defer(&mut self) -> BlockId {
-        let id = self.begin_block();
-        let len = self.current_block.len();
-        // defer
-        self.current_block.swap(len - 1, len - 2);
-        id
+    pub fn defer_block(&mut self) {
+        self.deferred_block.push(self.current_block.pop().unwrap());
+    }
+
+    pub fn pop_deferred_block(&mut self) {
+        self.current_block.push(self.deferred_block.pop().unwrap());
     }
 
     pub fn end_block(&mut self, terminator: ATerminator) -> BlockId {

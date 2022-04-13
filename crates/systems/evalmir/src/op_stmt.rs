@@ -1,4 +1,5 @@
 mod add;
+mod sub;
 mod eq;
 use mir::{Op, VarId};
 
@@ -14,8 +15,13 @@ impl EvalMir {
                     &self.load_value(&operands[1]),
                 )
             }
-
-            Op::Sub => todo!(),
+            Op::Sub => {
+                assert!(operands.len() == 2);
+                sub::calc(
+                    &self.load_value(&operands[0]),
+                    &self.load_value(&operands[1]),
+                )
+            }
             Op::Mul => todo!(),
             Op::Div => todo!(),
             Op::Rem => todo!(),
@@ -27,7 +33,7 @@ impl EvalMir {
                     &self.load_value(&operands[0]),
                     &self.load_value(&operands[1]),
                 )
-            },
+            }
             Op::Neq => todo!(),
             Op::Lt => todo!(),
             Op::Le => todo!(),

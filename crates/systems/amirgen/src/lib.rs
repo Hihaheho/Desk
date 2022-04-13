@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use amir::{
     amir::{Amir, AmirId, Amirs},
-    stmt::{AStmt, ATerminator, Const, FnRef, MatchCase, StmtBind},
+    stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
     var::VarId,
 };
 use amir_proto::AmirProto;
@@ -43,9 +43,21 @@ pub enum GenAmirError {
     ReferencesUnknownVar(Type),
 }
 
+macro_rules! amir_proto {
+    ($ctx:expr) => {
+        $ctx.protos.last_mut().unwrap()
+    };
+}
+
+macro_rules! get_amir {
+    ($ctx:expr, $id:expr) => {
+        &$ctx.amirs[$id.0]
+    };
+}
+
 impl AmirGen {
     pub fn amir_proto(&mut self) -> &mut AmirProto {
-        self.protos.last_mut().unwrap()
+        amir_proto!(self)
     }
     pub fn gen_amir(&mut self, thir: &TypedHir) -> Result<AmirId, GenAmirError> {
         self.begin_amir();
@@ -88,7 +100,22 @@ impl AmirGen {
                 self.amir_proto().begin_scope();
 
                 // gen definition
-                let def_var = self.gen_stmt(definition)?;
+                let def_var = if let thir::Expr::Function { parameters, body } = &definition.expr {
+                    // prepare recursion
+                    let recursion_var = self
+                        .amir_proto()
+                        .bind_stmt(definition.ty.clone(), AStmt::Recursion);
+                    self.amir_proto().create_named_var(recursion_var);
+                    // gen definition
+                    let fn_ref = self.gen_closure(parameters, &*body)?;
+                    // finish recursion
+                    self.amir_proto()
+                        .bind_stmt(definition.ty.clone(), AStmt::Fn(fn_ref))
+                } else {
+                    // gen definition
+                    self.gen_stmt(definition)?
+                };
+
                 // make it named
                 self.amir_proto().create_named_var(def_var);
                 // gen body
@@ -196,45 +223,31 @@ impl AmirGen {
                     .bind_stmt(stmt_ty.clone(), AStmt::Product(values))
             }
             thir::Expr::Function { parameters, body } => {
-                // Begin new mir
-                self.begin_amir();
-
-                // make parameters named
-                parameters.iter().for_each(|param| {
-                    let param_var = self.amir_proto().create_var(param.clone());
-                    self.amir_proto().bind_to(param_var, AStmt::Parameter);
-                    self.amir_proto().create_named_var(param_var);
-                });
-
-                let var = self.gen_stmt(body)?;
-
-                // Out of function
-                let amir_id = self.end_amir(var, body.ty.clone());
-
-                self.amir_proto().bind_stmt(
-                    stmt_ty.clone(),
-                    AStmt::Fn(FnRef::Closure {
-                        amir: amir_id,
-                        captured: vec![],
-                        handlers: HashMap::new(),
-                    }),
-                )
+                let fn_ref = self.gen_closure(parameters, &*body)?;
+                self.amir_proto()
+                    .bind_stmt(stmt_ty.clone(), AStmt::Fn(fn_ref))
             }
             thir::Expr::Match { input, cases } => {
+                // gen input
                 let sum_type = Type::sum(cases.iter().map(|c| c.ty.clone()).collect());
                 let input = self.gen_stmt(input)?;
                 let input = self.amir_proto().bind_stmt(sum_type, AStmt::Cast(input));
-                let goal_block_id = self.amir_proto().begin_block_defer();
+
+                // begin and defer the goal block
+                let goal_block_id = self.amir_proto().begin_block();
+                self.amir_proto().defer_block();
+
                 let match_result_var = self.amir_proto().create_var(stmt_ty.clone());
                 let cases: Vec<_> = cases
                     .iter()
                     .map(|thir::MatchCase { ty, expr }| {
-                        self.amir_proto().begin_block();
+                        // gen the case block
+                        let case_block_id = self.amir_proto().begin_block();
                         let match_case_result = self.gen_stmt(expr)?;
                         self.amir_proto()
                             .bind_to(match_result_var, AStmt::Cast(match_case_result));
-                        let case_block_id = self
-                            .amir_proto()
+                        // close the last block with goto goal
+                        self.amir_proto()
                             .end_block(ATerminator::Goto(goal_block_id));
                         Ok(MatchCase {
                             ty: ty.clone(),
@@ -244,18 +257,66 @@ impl AmirGen {
                     .collect::<Result<_, _>>()?;
                 self.amir_proto()
                     .end_block(ATerminator::Match { var: input, cases });
+                // undefer the goal block
+                self.amir_proto().pop_deferred_block();
                 match_result_var
             }
             thir::Expr::Label {
                 label: _,
                 item: expr,
-            } => self.gen_stmt(&TypedHir {
-                id: expr.id,
-                ty: stmt_ty.clone(),
-                expr: expr.expr.clone(),
-            })?,
+            } => {
+                // TODO: simplify this.
+                if let thir::Expr::Reference = expr.expr {
+                    // Reference needs a correct type.
+                    self.gen_stmt(&TypedHir {
+                        id: expr.id,
+                        ty: expr.ty.clone(),
+                        expr: expr.expr.clone(),
+                    })?
+                } else {
+                    self.gen_stmt(&TypedHir {
+                        id: expr.id,
+                        ty: stmt_ty.clone(),
+                        expr: expr.expr.clone(),
+                    })?
+                }
+            }
         };
         Ok(var_id)
+    }
+
+    fn gen_closure(
+        &mut self,
+        parameters: &Vec<Type>,
+        body: &TypedHir,
+    ) -> Result<FnRef, GenAmirError> {
+        // Begin new mir
+        self.begin_amir();
+
+        // make parameters named
+        parameters.iter().for_each(|param| {
+            let param_var = self.amir_proto().create_var(param.clone());
+            self.amir_proto().bind_to(param_var, AStmt::Parameter);
+            self.amir_proto().create_named_var(param_var);
+        });
+
+        let var = self.gen_stmt(body)?;
+
+        // Out of function
+        let amir_id = self.end_amir(var, body.ty.clone());
+
+        let amir = get_amir!(self, amir_id);
+        let captured = amir
+            .captured
+            .iter()
+            .map(|ty| amir_proto!(self).find_var(ty))
+            .collect();
+
+        Ok(FnRef::Closure {
+            amir: amir_id,
+            captured,
+            handlers: Default::default(),
+        })
     }
 
     fn begin_amir(&mut self) {
@@ -270,7 +331,7 @@ impl AmirGen {
     }
 
     fn get_amir(&self, id: &AmirId) -> &Amir {
-        &self.amirs[id.0]
+        get_amir!(self, id)
     }
 }
 

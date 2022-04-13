@@ -39,6 +39,7 @@ pub enum Stmt {
     Ref(VarId),
     RefMut(VarId),
     Parameter,
+    Recursion,
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]

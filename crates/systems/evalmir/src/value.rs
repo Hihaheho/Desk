@@ -24,6 +24,7 @@ pub enum Value {
 pub enum FnRef {
     Link(LinkId),
     Closure(Closure),
+    Recursion,
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]

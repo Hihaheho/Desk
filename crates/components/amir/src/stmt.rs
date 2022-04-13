@@ -31,7 +31,7 @@ pub enum AStmt {
     },
     Cast(VarId),
     Parameter,
-    Nope,
+    Recursion,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -40,7 +40,9 @@ pub enum FnRef {
     Link(LinkId),
     Closure {
         amir: AmirId,
+        /// Caputerd variables
         captured: Vec<VarId>,
+        /// Used to create an effectful expression
         handlers: HashMap<Effect, VarId>,
     },
 }

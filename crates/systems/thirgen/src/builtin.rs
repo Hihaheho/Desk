@@ -65,6 +65,19 @@ pub(crate) fn find_builtin(ty: &Type) -> Option<Builtin> {
                 divide(thirgen, args, BuiltinOp::Div)
             }))),
         ),
+        (
+            Type::function(
+                vec![Type::Number, Type::Number],
+                Type::sum(vec![
+                    labeled("equal", Type::unit()),
+                    labeled("unequal", Type::unit()),
+                ]),
+            ),
+            Builtin::Normal {
+                op: BuiltinOp::Eq,
+                params: 2,
+            },
+        ),
     ]
     .into_iter()
     .collect();

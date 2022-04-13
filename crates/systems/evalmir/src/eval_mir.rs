@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use mir::mir::Mir;
+use mir::stmt::Stmt;
 use mir::ty::ConcEffect;
 use mir::BlockId;
 
@@ -15,6 +16,7 @@ pub struct EvalMir {
     pub mir: Mir,
     pub registers: HashMap<VarId, Value>,
     pub parameters: HashMap<ConcType, Value>,
+    pub captured: HashMap<ConcType, Value>,
     pub pc_block: BlockId,
     pub pc_stmt_idx: usize,
     // Before handling apply stmt, save the var to here, and used when returned.
@@ -77,16 +79,16 @@ impl EvalMir {
                 stmt,
             } = &block.stmts[self.pc_stmt_idx];
             let value = match stmt {
-                mir::stmt::Stmt::Const(const_value) => const_stmt::eval(const_value),
-                mir::stmt::Stmt::Tuple(values) => Value::Tuple(
+                Stmt::Const(const_value) => const_stmt::eval(const_value),
+                Stmt::Tuple(values) => Value::Tuple(
                     values
                         .iter()
                         .map(|var| self.load_value(var).clone())
                         .collect(),
                 ),
-                mir::stmt::Stmt::Array(_) => todo!(),
-                mir::stmt::Stmt::Set(_) => todo!(),
-                mir::stmt::Stmt::Fn(fn_ref) => {
+                Stmt::Array(_) => todo!(),
+                Stmt::Set(_) => todo!(),
+                Stmt::Fn(fn_ref) => {
                     let fn_ref = match fn_ref {
                         mir::stmt::FnRef::Link(_) => todo!(),
                         mir::stmt::FnRef::Clojure {
@@ -120,7 +122,7 @@ impl EvalMir {
                     };
                     Value::FnRef(fn_ref)
                 }
-                mir::stmt::Stmt::Perform(var) => {
+                Stmt::Perform(var) => {
                     // Save the return register to get result from continuation.
                     self.return_register = Some(*bind_var);
                     if let ConcType::Effectful {
@@ -142,7 +144,7 @@ impl EvalMir {
                         panic!("type should be effectful")
                     }
                 }
-                mir::stmt::Stmt::Apply {
+                Stmt::Apply {
                     function,
                     arguments,
                 } => {
@@ -162,26 +164,28 @@ impl EvalMir {
                         panic!("fn_ref");
                     }
                 }
-                mir::stmt::Stmt::Op { op, operands } => self.eval_op(op, operands),
-                mir::stmt::Stmt::Ref(_) => todo!(),
-                mir::stmt::Stmt::RefMut(_) => todo!(),
-                mir::stmt::Stmt::Index { tuple, index } => todo!(),
+                Stmt::Op { op, operands } => self.eval_op(op, operands),
+                Stmt::Ref(_) => todo!(),
+                Stmt::RefMut(_) => todo!(),
+                Stmt::Index { tuple, index } => todo!(),
                 // TODO remove old one because move
-                mir::stmt::Stmt::Move(x) => self.load_value(x).clone(),
-                mir::stmt::Stmt::Variant { id, value } => Value::Variant {
+                Stmt::Move(x) => self.load_value(x).clone(),
+                Stmt::Variant { id, value } => Value::Variant {
                     id: *id,
                     value: Box::new(self.load_value(value).clone()),
                 },
-                mir::stmt::Stmt::Parameter => {
+                Stmt::Parameter => {
                     let ty = &self.mir.vars.get(bind_var).ty;
                     self.parameters
                         .get(ty)
+                        .or_else(|| self.captured.get(ty))
                         .expect(&format!(
                             "parameter must be exist {:?} in {:?}",
                             ty, self.parameters
                         ))
                         .clone()
                 }
+                Stmt::Recursion => Value::FnRef(FnRef::Recursion),
             };
             let var = *bind_var;
             self.store_value(var, value);
@@ -257,6 +261,7 @@ mod tests {
             pc_stmt_idx: 0,
             registers: HashMap::new(),
             parameters: HashMap::new(),
+            captured: HashMap::new(),
             return_register: None,
             handlers: HashMap::new(),
         };
