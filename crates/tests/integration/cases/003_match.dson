@@ -5,7 +5,7 @@
       @content "
         $ #1 @false *: x ~
         #2
-        + >x ~
+        + &x ~
           @true * -> 1,
           @false * -> 2.
       "

@@ -25,6 +25,7 @@ pub enum Token {
     CommentEnd,
     Substitution,
     Apply,
+    Reference,
     ArrayBegin,
     ArrayEnd,
     SetBegin,

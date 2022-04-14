@@ -76,10 +76,17 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let apply = just(Token::Apply)
             .ignore_then(type_.clone())
-            .then(expr.clone().separated_by_comma())
+            .in_()
+            .then(expr.clone().separated_by_comma_at_least_one())
             .map(|(function, arguments)| Expr::Apply {
                 function,
                 arguments,
+            });
+        let reference = just(Token::Reference)
+            .ignore_then(type_.clone())
+            .map(|reference| Expr::Apply {
+                function: reference,
+                arguments: vec![],
             });
         let product =
             parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
@@ -167,6 +174,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(include.labelled("include"))
             .or(function.labelled("function"))
             .or(apply.labelled("apply"))
+            .or(reference.labelled("reference"))
             .or(handle.labelled("handle"))
             .or(label.labelled("label"))
             .or(newtype.labelled("newtype"))
@@ -232,15 +240,15 @@ mod tests {
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"& ? ~ 'number => 'string -> 3"#).unwrap().0;
+        let trait_ = parse(r#"'handle ? ~ 'number => 'string -> 3"#).unwrap().0;
         assert_eq!(
             trait_,
             Expr::Handle {
-                expr: Box::new((Expr::Hole, 2..3)),
+                expr: Box::new((Expr::Hole, 8..9)),
                 handlers: vec![Handler {
-                    input: (Type::Number, 6..13),
-                    output: (Type::String, 17..24),
-                    handler: (Expr::Literal(Literal::Int(3)), 28..29),
+                    input: (Type::Number, 12..19),
+                    output: (Type::String, 23..30),
+                    handler: (Expr::Literal(Literal::Int(3)), 34..35),
                 }],
             }
         );
@@ -249,13 +257,24 @@ mod tests {
     #[test]
     fn parse_call() {
         assert_eq!(
-            parse("> 'a add 1, 2.").unwrap().0,
+            parse("> 'a add ~ 1, 2.").unwrap().0,
             Expr::Apply {
                 function: (Type::Alias("add".into()), 2..8),
                 arguments: vec![
-                    (Expr::Literal(Literal::Int(1)), 9..10),
-                    (Expr::Literal(Literal::Int(2)), 12..13)
+                    (Expr::Literal(Literal::Int(1)), 11..12),
+                    (Expr::Literal(Literal::Int(2)), 14..15)
                 ],
+            }
+        );
+    }
+
+    #[test]
+    fn parse_reference() {
+        assert_eq!(
+            parse("& 'a x").unwrap().0,
+            Expr::Apply {
+                function: (Type::Alias("x".into()), 2..6),
+                arguments: vec![],
             }
         );
     }
@@ -372,7 +391,7 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            + > 'a x
+            + & 'a x
             'number -> "number",
             'string -> "string".
             "#

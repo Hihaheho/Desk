@@ -4,8 +4,8 @@
       @name "main.ds",
       @content "
         'type add \\'number, 'number -> @sum 'number
-        & $ ! \"a\" => 'number: x ~
-        >add >x, >x ~
+        'handle $ ! \"a\" => 'number: x ~
+        >add &x, &x ~
         'string => 'number ->
           >add
             ! 1 => 'number,
