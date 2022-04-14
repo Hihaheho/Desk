@@ -1151,7 +1151,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ 1 ~ <'number>
+                    $ 1 ~ >'number
             "#
             )),
             Ok(Type::Number)
@@ -1163,7 +1163,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ 1: 'a x ~ <'a x>
+                    $ 1: 'a x ~ >'a x
             "#
             )),
             Ok(Type::Number)
@@ -1175,7 +1175,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    \ 'a x -> <'a x>
+                    \ 'a x -> >'a x
             "#
             )),
             Ok(Type::Function {
@@ -1190,8 +1190,8 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ \ 'a x -> <'a x>: 'a id ~
-                    <'a id> 1
+                    $ \ 'a x -> >'a x: 'a id ~
+                    >'a id 1
             "#
             )),
             Ok(Type::Number)
@@ -1202,9 +1202,9 @@ mod tests {
     fn typing_expressions() {
         let (hirgen, expr) = parse_inner(
             r#"
-            #1 $ #2 \ 'a x -> #3 <'a x>: 'a id ~
-            $ #4 <'a id> #5 1 ~
-            #6 <'a id> #7 "a"
+            #1 $ #2 \ 'a x -> #3 >'a x: 'a id ~
+            $ #4 >'a id #5 1 ~
+            #6 >'a id #7 "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1235,7 +1235,7 @@ mod tests {
         let (hirgen, expr) = parse_inner(
             r#"
             $ #1 \ + 'number, * -> 1: 'a fun ~
-            #3 <'a fun> #2 * 1, "a"
+            #3 >'a fun #2 * 1, "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1261,8 +1261,8 @@ mod tests {
     fn perform() {
         let (hirgen, expr) = parse_inner(
             r#"
-            $ #3 \ 'a x -> #2 < \ 'number -> 'number > #1 ! <'a x> => 'number: 'a fun ~
-            #4 <'a fun> "a"
+            $ #3 \ 'a x -> #2 > \ 'number -> 'number #1 ! >'a x => 'number: 'a fun ~
+            #4 >'a fun "a"
         "#,
         );
         let ctx = Ctx::default();
@@ -1325,10 +1325,10 @@ mod tests {
         let (hirgen, expr) = parse_inner(
             r#"
                     \ x, y, z ->
-                      #3 | #2 <\y -> z> ! <x> => y ~
+                      #3 & #2 > \y -> z ! >x => y ~
                       x => y ->
                         $ ! 1 => 'string ~
-                        #1 ! <y> => z
+                        #1 ! >y => z
                 "#,
         );
         let ctx = Ctx::default();
@@ -1394,7 +1394,7 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            \ 'a x -> ^<'a x>: @labeled 'number
+            \ 'a x -> ^>'a x: @labeled 'number
         "#,
         );
         assert_eq!(
@@ -1437,7 +1437,7 @@ mod tests {
         let expr = parse(
             r#"
             'brand brand
-            ^<@brand 'number>: 'number
+            ^>@brand 'number: 'number
         "#,
         );
         assert_eq!(synth(expr), Ok(Type::Number));
@@ -1447,7 +1447,7 @@ mod tests {
     fn infer() {
         let (hirgen, expr) = parse_inner(
             r#"
-            ^<\ #1 _ -> #2 _> "a": 'number
+            ^> \ #1 _ -> #2 _ "a": 'number
             "#,
         );
         let ctx = Ctx::default();
@@ -1465,7 +1465,7 @@ mod tests {
         let (hirgen, expr) = parse_inner(
             r#"
             \ 'a x ->
-              #2 + #1 <'a x> ~
+              #2 + #1 >'a x ~
                'number -> ^1: @a 'number,
                'string -> ^2: @b 'number.
             "#,

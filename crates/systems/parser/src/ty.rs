@@ -150,7 +150,7 @@ mod tests {
             .then_ignore(end())
             .parse(Stream::from_iter(
                 input.len()..input.len() + 1,
-                dbg!(lexer().then_ignore(end()).parse(input).unwrap().into_iter()),
+                lexer().then_ignore(end()).parse(input).unwrap().into_iter(),
             ))
     }
 
@@ -183,8 +183,7 @@ mod tests {
     #[test]
     fn parse_single_token() {
         assert_eq!(parse("_").unwrap().0, Type::Infer);
-        assert_eq!(parse("_").unwrap().0, Type::Infer);
-        assert_eq!(parse("&").unwrap().0, Type::This);
+        assert_eq!(parse("'this").unwrap().0, Type::This);
     }
 
     #[test]

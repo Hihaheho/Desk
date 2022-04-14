@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn function_and_reference() {
-        let expr = dbg!(parse(r#"\ 'number, 'string -> <'number>"#));
+        let expr = dbg!(parse(r#"\ 'number, 'string -> >'number"#));
         let gen = TypedHirGen {
             types: dbg!(infer(&expr)),
             ..Default::default()
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn builtin() {
-        let expr = parse(r#"<\'number, 'number -> @sum 'number> 1, 2"#);
+        let expr = parse(r#"> \'number, 'number -> @sum 'number 1, 2"#);
         let gen = TypedHirGen {
             types: infer(&expr),
             ..Default::default()
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn builtin_curried() {
-        let expr = parse(r#"<\'number, 'number -> @sum 'number>"#);
+        let expr = parse(r#"> \'number, 'number -> @sum 'number"#);
         let _gen = TypedHirGen {
             types: infer(&expr),
             id_gen: RefCell::new(IdGen { next_id: 100 }),

@@ -551,10 +551,10 @@ mod tests {
     fn label_and_brand() {
         let expr = parse(
             r#"
-        $ <@brand 'number> ~
+        $ > @brand 'number ~
         'brand brand ~
-        $ <@brand 'number> ~
-        <@label 'number>
+        $ > @brand 'number ~
+        > @label 'number
         "#,
         );
 

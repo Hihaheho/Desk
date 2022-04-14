@@ -51,7 +51,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just(':').to(Token::TypeAnnotation))
         .or(just('%').to(Token::Trait))
         .or(just('#').to(Token::Attribute))
-        .or(just('&').to(Token::This))
         .or(just('^').to(Token::FromHere))
         .or(just('+').to(Token::Sum))
         .or(just('*').to(Token::Product))
@@ -59,8 +58,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('.').to(Token::Dot))
         .or(just('(').to(Token::CommentBegin))
         .or(just(')').to(Token::CommentEnd))
-        .or(just('<').to(Token::TypeBegin))
-        .or(just('>').to(Token::TypeEnd))
+        .or(just('<').to(Token::Substitution))
+        .or(just('>').to(Token::Apply))
         .or(just('[').to(Token::ArrayBegin))
         .or(just(']').to(Token::ArrayEnd))
         .or(just('{').to(Token::SetBegin))
@@ -68,7 +67,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('?').to(Token::Hole))
         .or(just('_').to(Token::Infer))
         .or(just('\\').to(Token::Lambda))
-        .or(just('|').to(Token::Handle))
+        .or(just('&').to(Token::Handle))
         .or(just('-').chain(just('>')).to(Token::Arrow))
         .or(just('=').chain(just('>')).to(Token::EArrow));
     let special = just('\'')
@@ -82,6 +81,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
             "alias" => Ok(Token::Alias),
             "brand" => Ok(Token::Brands),
             "type" => Ok(Token::Type),
+            "this" => Ok(Token::This),
             "a" => Ok(Token::A),
             _ => Err(Simple::custom(
                 span,
@@ -188,7 +188,7 @@ mod tests {
                 Ident("x".into()),
                 Arrow,
                 FromHere,
-                TypeBegin,
+                Substitution,
                 Lambda,
                 NumberType,
                 Comma,
@@ -196,25 +196,25 @@ mod tests {
                 Arrow,
                 Brand("added".into()),
                 NumberType,
-                TypeEnd,
+                Apply,
                 Int(1),
                 Comma,
                 Ident("x".into()),
                 Comment("(1 + x)".into()),
                 TypeAnnotation,
-                TypeBegin,
+                Substitution,
                 Brand("incremented".into()),
                 NumberType,
-                TypeEnd,
+                Apply,
                 In,
                 Comment("(increments a value which is padded later)".into()),
-                TypeBegin,
+                Substitution,
                 Lambda,
                 NumberType,
                 Arrow,
                 Brand("incremented".into()),
                 NumberType,
-                TypeEnd,
+                Apply,
                 Hole,
                 Dot,
             ]

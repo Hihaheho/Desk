@@ -4,8 +4,8 @@
       @name "main.ds",
       @content "
         $ #1 \\ #2 'a x ->
-          <\\'number, 'number -> @sum 'number> 1, <#3 'a x> : fun ~
-        <fun> 2
+          > \\'number, 'number -> @sum 'number 1, > #3 'a x : fun ~
+        >fun 2
       "
     }
   ],

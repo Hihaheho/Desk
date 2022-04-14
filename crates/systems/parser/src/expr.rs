@@ -74,9 +74,8 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 expr: Box::new(expr),
                 handlers,
             });
-        let apply = type_
-            .clone()
-            .delimited_by(Token::TypeBegin, Token::TypeEnd)
+        let apply = just(Token::Apply)
+            .ignore_then(type_.clone())
             .then(expr.clone().separated_by_comma())
             .map(|(function, arguments)| Expr::Apply {
                 function,
@@ -184,7 +183,7 @@ mod tests {
     use super::*;
 
     fn parse(input: &str) -> Result<Spanned<Expr>, Vec<Simple<Token>>> {
-        crate::parse(dbg!(scan(input).unwrap()))
+        crate::parse(scan(input).unwrap())
     }
 
     #[test]
@@ -233,7 +232,7 @@ mod tests {
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"| ? ~ 'number => 'string -> 3"#).unwrap().0;
+        let trait_ = parse(r#"& ? ~ 'number => 'string -> 3"#).unwrap().0;
         assert_eq!(
             trait_,
             Expr::Handle {
@@ -250,9 +249,9 @@ mod tests {
     #[test]
     fn parse_call() {
         assert_eq!(
-            parse("<'a add> 1, 2.").unwrap().0,
+            parse("> 'a add 1, 2.").unwrap().0,
             Expr::Apply {
-                function: (Type::Alias("add".into()), 1..7),
+                function: (Type::Alias("add".into()), 2..8),
                 arguments: vec![
                     (Expr::Literal(Literal::Int(1)), 9..10),
                     (Expr::Literal(Literal::Int(2)), 12..13)
@@ -373,7 +372,7 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            + <'a x>
+            + > 'a x
             'number -> "number",
             'string -> "string".
             "#
@@ -383,7 +382,7 @@ mod tests {
             Expr::Match {
                 of: Box::new((
                     Expr::Apply {
-                        function: (Type::Alias("x".into()), 16..20),
+                        function: (Type::Alias("x".into()), 17..21),
                         arguments: vec![]
                     },
                     15..21

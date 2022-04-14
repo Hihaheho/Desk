@@ -3,7 +3,7 @@
     {
       @name "main.ds",
       @content "
-        <\\'number, 'number -> @sum 'number> 1, 2.
+        > \\'number, 'number -> @sum 'number 1, 2.
       "
     }
   ],

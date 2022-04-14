@@ -7,22 +7,22 @@
       'type sub \\ @minuend 'number, @subtrahend 'number -> 'number ~
       'type eq \\ 'number, 'number -> + @equal *, @unequal * ~
       $ \\ 'number ->
-        + <eq> <'number>, 0 ~
+        + >eq >'number, 0 ~
           @equal * ->
             0,
           @unequal * ->
-            + <eq> <'number>, 1 ~
+            + >eq >'number, 1 ~
               @equal * ->
                 1,
               @unequal * ->
-                ^<add>
-                  <\\'number -> 'number>
-                    <sub> @minuend <'number>, 1. ;
-                  <\\'number -> 'number>
-                    <sub> @minuend <'number>, 2
+                ^>add
+                  > \\'number -> 'number
+                    >sub @minuend >'number, 1. ;
+                  > \\'number -> 'number
+                    >sub @minuend >'number, 2
                 : 'number
       ~
-      <\\'number -> 'number> 7
+      > \\'number -> 'number 7
       "
     }
   ],

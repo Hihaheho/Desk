@@ -4,12 +4,12 @@
       @name "main.ds",
       @content "
         'type add \\'number, 'number -> @sum 'number
-        #1 | #2 <\\@dividend 'number, @divisor 'number ->
-          ! @quotient 'number ~ @division by zero 'number => 'number>
+        #1 & #2 > \\@dividend 'number, @divisor 'number ->
+          ! @quotient 'number ~ @division by zero 'number => 'number
           @dividend 3, @divisor 0 ~
         @division by zero 'number => 'number ->
-          <add>
-            <@division by zero 'number>, 1
+          >add
+            > @division by zero 'number, 1
       "
     }
   ],
