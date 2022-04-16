@@ -6,14 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
-parser = { path = "../../systems/parser", version = "0.1.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/hirgen", version = "0.1.0", package = "deskc-hirgen" }
-thirgen = { path = "../../systems/thirgen", version = "0.1.0", package = "deskc-thirgen" }
-amirgen = { path = "../../systems/amirgen", version = "0.1.0", package = "deskc-amirgen" }
-concretizer = { path = "../../systems/concretizer", version = "0.1.0", package = "deskc-concretizer" }
+lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }
+parser = { path = "../../systems/02_parser", version = "0.1.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/03_hirgen", version = "0.1.0", package = "deskc-hirgen" }
+thirgen = { path = "../../systems/05_thirgen", version = "0.1.0", package = "deskc-thirgen" }
+amirgen = { path = "../../systems/06_amirgen", version = "0.1.0", package = "deskc-amirgen" }
+concretizer = { path = "../../systems/07_concretizer", version = "0.1.0", package = "deskc-concretizer" }
 evalmir = { path = "../../systems/evalmir", version = "0.1.0", package = "deskc-evalmir", features = ["withserde"] }
-typeinfer = { path = "../../systems/typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
+typeinfer = { path = "../../systems/04_typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
 thir2dson = { path = "../../systems/thir2dson", version = "0.1.0", package = "deskc-thir2dson" }
 hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
 thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thir" }

@@ -13,9 +13,9 @@ file = { path = "../../components/file", version = "0.1.0", package = "deskc-fil
 thiserror = "1.0.30"
 
 [dev-dependencies]
-lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
-parser = { path = "../../systems/parser", version = "0.1.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/hirgen", version = "0.1.0", package = "deskc-hirgen" }
-typeinfer = { path = "../../systems/typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
+lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }
+parser = { path = "../../systems/02_parser", version = "0.1.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/03_hirgen", version = "0.1.0", package = "deskc-hirgen" }
+typeinfer = { path = "../../systems/04_typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
 chumsky = { git = "https://github.com/ryo33/chumsky" }
 pretty_assertions = "1.0.0"

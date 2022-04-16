@@ -13,8 +13,8 @@ types = { path = "../../components/types", version = "0.1.0", package = "deskc-t
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-lexer = { path = "../../systems/lexer", version = "0.1.0", package = "deskc-lexer" }
-parser = { path = "../../systems/parser", version = "0.1.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/hirgen", version = "0.1.0", package = "deskc-hirgen" }
-typeinfer = { path = "../../systems/typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
+lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }
+parser = { path = "../../systems/02_parser", version = "0.1.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/03_hirgen", version = "0.1.0", package = "deskc-hirgen" }
+typeinfer = { path = "../../systems/04_typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
 chumsky = { git = "https://github.com/ryo33/chumsky" }
