@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use mir::{
     ty::{ConcEffect, ConcType},
-    LinkId, MirId,
+    MirId,
 };
 
 use crate::eval_mir::Handler;
@@ -22,7 +22,7 @@ pub enum Value {
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub enum FnRef {
-    Link(LinkId),
+    Link(ConcType),
     Closure(Closure),
     Recursion,
 }

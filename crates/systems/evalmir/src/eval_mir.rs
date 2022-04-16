@@ -216,10 +216,6 @@ impl EvalMir {
     pub fn get_var_ty(&self, var: &VarId) -> &ConcType {
         &self.mir.vars.get(var).ty
     }
-
-    fn var_type(&self, id: &VarId) -> ConcType {
-        self.mir.vars.get(id).ty.clone()
-    }
 }
 
 #[cfg(test)]
@@ -251,7 +247,6 @@ mod tests {
                 }],
                 terminator: ATerminator::Return(VarId(0)),
             }],
-            links: vec![],
             captured: vec![],
         };
 

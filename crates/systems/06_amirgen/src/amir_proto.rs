@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use amir::{
     amir::Amir,
     block::{ABasicBlock, BlockId},
-    link::{ALink, LinkId},
     scope::ScopeId,
     stmt::{AStmt, ATerminator, StmtBind},
     var::{AVar, VarId},
@@ -18,8 +17,6 @@ pub struct AmirProto {
     blocks_proto: HashMap<BlockId, BlockProto>,
     blocks: HashMap<BlockId, ABasicBlock>,
     vars: Vec<AVar>,
-    links: Vec<ALink>,
-    links_map: HashMap<Type, LinkId>,
     // Scope stack
     current_scope: Vec<ScopeId>,
     // Block stack
@@ -38,8 +35,6 @@ impl Default for AmirProto {
             current_block: vec![BlockId(0)],
             deferred_block: vec![],
             vars: vec![],
-            links: vec![],
-            links_map: HashMap::default(),
             scopes: vec![ScopeProto::default()],
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
@@ -57,7 +52,6 @@ impl AmirProto {
             mut blocks,
             mut blocks_proto,
             vars,
-            links,
             captured_values,
             deferred_block,
             ..
@@ -96,7 +90,6 @@ impl AmirProto {
             vars,
             scopes: scopes.into_iter().map(|s| s.into_scope()).collect(),
             blocks,
-            links,
         }
     }
 
@@ -207,11 +200,5 @@ impl AmirProto {
         let stmts = self.blocks_proto.remove(&id).unwrap().stmts;
         self.blocks.insert(id, ABasicBlock { stmts, terminator });
         id
-    }
-
-    pub fn request_link(&mut self, ty: Type) -> LinkId {
-        let id = LinkId(self.links.len());
-        self.links.push(ALink { ty: ty.clone() });
-        self.links_map.entry(ty).or_insert(id).clone()
     }
 }

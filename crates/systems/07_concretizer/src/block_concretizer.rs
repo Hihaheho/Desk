@@ -47,7 +47,9 @@ impl<'a> BlockConcretizer<'a> {
                 AStmt::Array(values) => bind(Stmt::Array(values.iter().cloned().collect())),
                 AStmt::Set(values) => bind(Stmt::Set(values.iter().cloned().collect())),
                 AStmt::Fn(fn_ref) => match fn_ref {
-                    amir::stmt::FnRef::Link(link) => bind(Stmt::Fn(FnRef::Link(link.clone()))),
+                    amir::stmt::FnRef::Link(link) => bind(Stmt::Fn(FnRef::Link(
+                        self.type_concretizer.to_conc_type(link),
+                    ))),
                     amir::stmt::FnRef::Closure {
                         amir,
                         captured,

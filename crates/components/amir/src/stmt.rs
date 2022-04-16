@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use types::{Effect, Type};
 
-use crate::{amir::AmirId, block::BlockId, link::LinkId, var::VarId};
+use crate::{amir::AmirId, block::BlockId, var::VarId};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
@@ -37,7 +37,7 @@ pub enum AStmt {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
-    Link(LinkId),
+    Link(Type),
     Closure {
         amir: AmirId,
         /// Caputerd variables

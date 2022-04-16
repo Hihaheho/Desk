@@ -1,6 +1,6 @@
 use types::Type;
 
-use crate::{block::ABasicBlock, link::ALink, scope::Scope, var::AVar};
+use crate::{block::ABasicBlock, scope::Scope, var::AVar};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Amir {
@@ -13,7 +13,6 @@ pub struct Amir {
     pub vars: Vec<AVar>,
     pub scopes: Vec<Scope>,
     pub blocks: Vec<ABasicBlock>,
-    pub links: Vec<ALink>,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

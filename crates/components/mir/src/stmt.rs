@@ -2,12 +2,11 @@ use std::collections::HashMap;
 
 use amir::{
     amir::AmirId,
-    link::LinkId,
     stmt::{Const, Op},
     var::VarId,
 };
 
-use crate::ty::ConcEffect;
+use crate::ty::{ConcEffect, ConcType};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
@@ -45,7 +44,7 @@ pub enum Stmt {
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
-    Link(LinkId),
+    Link(ConcType),
     Clojure {
         amir: AmirId,
         captured: Vec<VarId>,

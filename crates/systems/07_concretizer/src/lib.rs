@@ -4,13 +4,12 @@ mod type_concretizer;
 
 use amir::{
     amir::{Amir, Amirs},
-    link::ALink,
     var::AVar,
 };
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{Link, Mir, Mirs},
+    mir::{Mir, Mirs},
     ty::ConcType,
     Vars,
 };
@@ -49,7 +48,6 @@ impl Concretizer {
             vars,
             scopes,
             blocks,
-            links,
             captured,
         } = amir;
         let mut type_conc = TypeConcretizer {};
@@ -71,13 +69,6 @@ impl Concretizer {
         };
         let blocks = block_conc.concretize_blocks(blocks);
 
-        let links = links
-            .iter()
-            .map(|ALink { ty }| Link {
-                ty: type_conc.to_conc_type(ty),
-            })
-            .collect();
-
         let captured = captured
             .iter()
             .map(|ty| type_conc.to_conc_type(ty))
@@ -90,7 +81,6 @@ impl Concretizer {
             vars,
             scopes: scopes.clone(),
             blocks,
-            links,
         }
     }
 }
