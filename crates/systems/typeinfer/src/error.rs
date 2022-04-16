@@ -16,10 +16,14 @@ pub enum TypeError {
     NotSubtype { sub: Type, ty: Type },
     #[error("circular existential")]
     CircularExistential { id: Id, ty: Type },
-    #[error("not instantiable")]
-    NotInstantiable { ty: Type },
+    #[error("not instantiable subtype")]
+    NotInstantiableSubtype { ty: Type },
+    #[error("not instantiable supertype")]
+    NotInstantiableSupertype { ty: Type },
     #[error("variable not typed {id}")]
     VariableNotTyped { id: Id },
     #[error("unknown effect handled: {effect:?}")]
     UnknownEffectHandled { effect: Effect },
+    #[error("continue out of handle")]
+    ContinueOutOfHandle,
 }

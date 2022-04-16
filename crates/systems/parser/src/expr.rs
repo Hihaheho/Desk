@@ -53,6 +53,13 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 input: Box::new(effect),
                 output,
             });
+        let continue_ = just(Token::Continue)
+            .ignore_then(expr.clone())
+            .then(just(Token::EArrow).ignore_then(type_.clone()).or_not())
+            .map(|(expr, output)| Expr::Continue {
+                input: Box::new(expr),
+                output,
+            });
         let handle = just(Token::Handle)
             .ignore_then(expr.clone())
             .in_()
@@ -164,6 +171,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         hole.or(literal.labelled("literal"))
             .or(let_in.labelled("let-in"))
             .or(perform.labelled("perform"))
+            .or(continue_.labelled("continue"))
             .or(product.labelled("product"))
             .or(array.labelled("array"))
             .or(set.labelled("set"))

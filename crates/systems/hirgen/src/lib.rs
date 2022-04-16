@@ -169,6 +169,10 @@ impl HirGen {
                 input: Box::new(self.gen(input)?),
                 output: self.gen_type(output)?,
             }),
+            ast::expr::Expr::Continue { input, output } => self.with_meta(Expr::Continue {
+                input: Box::new(self.gen(input)?),
+                output: output.as_ref().map(|output| self.gen_type(output)).transpose()?,
+            }),
             ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
                 handlers: handlers
                     .iter()
@@ -408,6 +412,10 @@ mod tests {
             Expr::Perform { input, output } => Expr::Perform {
                 input: Box::new(remove_meta(*input)),
                 output: remove_meta_ty(output),
+            },
+            Expr::Continue { input, output } => Expr::Continue {
+                input: Box::new(remove_meta(*input)),
+                output: output.map(remove_meta_ty),
             },
             Expr::Handle { handlers, expr } => Expr::Handle {
                 handlers: handlers

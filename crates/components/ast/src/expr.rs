@@ -29,6 +29,10 @@ pub enum Expr {
         input: Box<Spanned<Self>>,
         output: Spanned<Type>,
     },
+    Continue {
+        input: Box<Spanned<Self>>,
+        output: Option<Spanned<Type>>,
+    },
     Handle {
         expr: Box<Spanned<Self>>,
         handlers: Vec<Handler>,

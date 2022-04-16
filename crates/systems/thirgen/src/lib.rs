@@ -52,6 +52,7 @@ impl TypedHirGen {
                 body: Box::new(self.gen(&*expression)),
             },
             Expr::Perform { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(&*input))),
+            Expr::Continue { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(&*input))),
             Expr::Handle { handlers, expr } => thir::Expr::Handle {
                 handlers: handlers
                     .iter()

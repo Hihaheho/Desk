@@ -21,6 +21,7 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             visit(includes, &expression.0);
         }
         Expr::Perform { input, output: _ } => visit(includes, &input.0),
+        Expr::Continue { input, output: _ } => visit(includes, &input.0),
         Expr::Handle { handlers, expr } => {
             visit(includes, &expr.0);
             handlers

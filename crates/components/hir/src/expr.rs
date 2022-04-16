@@ -28,6 +28,10 @@ pub enum Expr {
         input: Box<WithMeta<Self>>,
         output: WithMeta<Type>,
     },
+    Continue {
+        input: Box<WithMeta<Self>>,
+        output: Option<WithMeta<Type>>,
+    },
     Handle {
         handlers: Vec<Handler>,
         expr: Box<WithMeta<Self>>,

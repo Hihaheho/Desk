@@ -50,12 +50,17 @@ enum Log {
     Effect(Effect),
 }
 
+#[must_use]
 #[derive(Default, Debug, Clone)]
 pub struct Ctx {
     id_gen: Rc<RefCell<IdGen>>,
     logs: RefCell<Vec<Log>>,
     // Result of type inference
     types: Rc<RefCell<HashMap<Id, Type>>>,
+    // a stack; continue's input of current context
+    continue_input: RefCell<Vec<Type>>,
+    // a stack; continue's output of current context
+    continue_output: RefCell<Vec<Type>>,
 }
 
 pub struct WithEffects<T>(T, Vec<Effect>);
@@ -79,6 +84,8 @@ impl Ctx {
             id_gen: self.id_gen.clone(),
             logs: Default::default(),
             types: self.types.clone(),
+            continue_input: Default::default(),
+            continue_output: Default::default(),
         }
     }
 
@@ -333,13 +340,67 @@ impl Ctx {
                 }))
                 .with_type(output)
             }
+            Expr::Continue { input, output } => {
+                let (ctx, input_ty) = self.synth(&input)?;
+                let (ctx, output) = if let Some(output) = output {
+                    let output = ctx.from_hir_type(output);
+                    (
+                        ctx.subtype(
+                            ctx.continue_output
+                                .borrow()
+                                .last()
+                                .ok_or(TypeError::ContinueOutOfHandle)
+                                .map_err(|error| to_expr_type_error(expr, error))?,
+                            &output,
+                        )
+                        .map_err(|error| to_expr_type_error(expr, error))?,
+                        output,
+                    )
+                } else {
+                    let a = self.fresh_existential();
+                    let output = Type::Existential(a);
+                    (
+                        ctx.add(Log::Existential(a))
+                            .subtype(
+                                ctx.continue_output
+                                    .borrow()
+                                    .last()
+                                    .ok_or(TypeError::ContinueOutOfHandle)
+                                    .map_err(|error| to_expr_type_error(expr, error))?,
+                                &output,
+                            )
+                            .map_err(|error| to_expr_type_error(expr, error))?,
+                        output,
+                    )
+                };
+                // FIXME: why we need this redundant let?
+                let x = ctx
+                    .subtype(
+                        &input_ty,
+                        ctx.continue_input
+                            .borrow()
+                            .last()
+                            .ok_or(TypeError::ContinueOutOfHandle)
+                            .map_err(|error| to_expr_type_error(expr, error))?,
+                    )
+                    .map_err(|error| to_expr_type_error(expr, error))?
+                    .add(Log::Effect(Effect {
+                        input: input_ty,
+                        output: output.clone(),
+                    }))
+                    .with_type(output);
+                x
+            }
             Expr::Handle { expr, handlers } => {
                 // synth expr
-                let WithEffects((ctx, expr_ty), mut expr_effects) = self.synth_and_effects(expr)?;
+                let WithEffects((mut ctx, expr_ty), mut expr_effects) = self.synth_and_effects(expr)?;
                 expr_effects
                     .iter_mut()
                     .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));
-                let mut ctx = self.clone();
+
+                // push continue output type.
+                ctx.continue_output.borrow_mut().push(expr_ty.clone());
+
                 // check handler
                 let (handled_effects, handler_effects): (Vec<_>, Vec<_>) = handlers
                     .iter()
@@ -349,22 +410,28 @@ impl Ctx {
                              output,
                              handler,
                          }| {
-                            let next_ctx = ctx.check(&handler, &expr_ty)?;
-                            ctx = next_ctx;
+                            let output = self.from_hir_type(output);
+                            // push handler input type
+                            ctx.continue_input.borrow_mut().push(output.clone());
+
                             let WithEffects(next_ctx, mut handler_effects) =
                                 ctx.check_and_effects(handler, &expr_ty)?;
                             ctx = next_ctx;
+
+                            // pop handler input type
+                            ctx.continue_input.borrow_mut().pop();
+
                             handler_effects.iter_mut().for_each(|effect| {
                                 *effect = ctx.substitute_from_context_effect(&effect)
                             });
                             // handled effect and continue effect
                             let handled_effect = self.substitute_from_context_effect(&Effect {
-                                input: self.from_hir_type(input),
-                                output: self.from_hir_type(output),
+                                input: ctx.from_hir_type(input),
+                                output,
                             });
                             let continue_effect = self.substitute_from_context_effect(&Effect {
                                 input: handled_effect.output.clone(),
-                                output: expr_ty.clone(),
+                                output: ctx.substitute_from_ctx(&expr_ty),
                             });
                             // remove continue effect
                             if let Some(position) = (&handler_effects)
@@ -379,13 +446,19 @@ impl Ctx {
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
                     .unzip();
+                // push continue output type.
+                ctx.continue_output.borrow_mut().push(expr_ty.clone());
+
                 // remove handled effects
                 expr_effects.retain(|effect| !handled_effects.contains(effect));
+
                 // add remain effects to ctx
                 for handler_effects in handler_effects {
                     expr_effects.extend(handler_effects);
                 }
-                self.with_effects(&expr_effects).with_type(expr_ty)
+
+                self.with_effects(&expr_effects)
+                    .with_type(ctx.substitute_from_ctx(&expr_ty))
             }
             Expr::Apply {
                 function,
@@ -573,6 +646,7 @@ impl Ctx {
         well_formed.well_formed
     }
 
+    #[must_use]
     fn subtype(&self, sub: &Type, ty: &Type) -> Result<Ctx, TypeError> {
         let subtype_if = |pred: bool| {
             if pred {
@@ -850,14 +924,13 @@ impl Ctx {
                     .instantiate_subtype(&a, item)?
                 }
                 Type::Infer(infer) => {
-                    println!("{}", infer);
                     self.store_type(*infer, Type::Existential(*id));
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![Log::Solved(*id, sup.clone())],
                     )
                 }
-                ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
+                ty => Err(TypeError::NotInstantiableSubtype { ty: ty.clone() })?,
             }
         };
         self.store_type(*id, sup.clone());
@@ -983,14 +1056,13 @@ impl Ctx {
                     .instantiate_supertype(item, &a)?
                 }
                 Type::Infer(infer) => {
-                    println!("{}", infer);
                     self.store_type(*infer, Type::Existential(*id));
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![Log::Solved(*id, sub.clone())],
                     )
                 }
-                ty => Err(TypeError::NotInstantiable { ty: ty.clone() })?,
+                ty => Err(TypeError::NotInstantiableSupertype { ty: ty.clone() })?,
             }
         };
         self.store_type(*id, sub.clone());
@@ -1103,7 +1175,7 @@ mod tests {
 
     fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
         let tokens = lexer::scan(input).unwrap();
-        let ast = dbg!(parser::parse(tokens).unwrap());
+        let ast = parser::parse(tokens).unwrap();
         hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap()
     }
 
@@ -1268,8 +1340,6 @@ mod tests {
         let ctx = Ctx::default();
         let (ctx, _ty) = ctx.synth(&expr).unwrap();
 
-        dbg!(&ctx.logs);
-
         assert_eq!(
             get_types(&hirgen, &ctx),
             vec![
@@ -1334,8 +1404,6 @@ mod tests {
         let ctx = Ctx::default();
         let (ctx, _ty) = ctx.synth(&expr).unwrap();
 
-        dbg!(&ctx.logs);
-
         // x: 1, y: 5, z: 9
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -1371,6 +1439,88 @@ mod tests {
                     },
                 ),
             ],
+        );
+    }
+
+    #[test]
+    fn test_continue() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            \x, y ->
+              #3 'handle #2 > \'number -> 'string ! &x => 'number ~
+              x => 'number ->
+                #1 <! &y
+            "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+
+        assert_eq!(
+            get_types(&hirgen, &ctx),
+            vec![
+                (
+                    1,
+                    Type::Effectful {
+                        ty: Box::new(Type::String),
+                        effects: vec![Effect {
+                            input: Type::Number,
+                            output: Type::String,
+                        }],
+                    },
+                ),
+                (
+                    2,
+                    Type::Effectful {
+                        ty: Box::new(Type::String),
+                        effects: vec![Effect {
+                            input: Type::Existential(1),
+                            output: Type::Number,
+                        }],
+                    },
+                ),
+                (3, Type::String),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_continue_with_output() {
+        let (hirgen, expr) = parse_inner(
+            r#"
+            \x, y ->
+              #3 'handle #2 > \'number -> y ! &x => 'number ~
+              x => 'number ->
+                #1 <! 1 => 'string
+            "#,
+        );
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+
+        assert_eq!(
+            get_types(&hirgen, &ctx),
+            vec![
+                (
+                    1,
+                    Type::Effectful {
+                        ty: Box::new(Type::String),
+                        effects: vec![Effect {
+                            input: Type::Number,
+                            output: Type::String,
+                        }],
+                    },
+                ),
+                (
+                    2,
+                    Type::Effectful {
+                        ty: Box::new(Type::Existential(5)),
+                        effects: vec![Effect {
+                            input: Type::Existential(1),
+                            output: Type::Number,
+                        }],
+                    },
+                ),
+                (3, Type::String),
+            ]
         );
     }
 

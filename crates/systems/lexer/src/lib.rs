@@ -58,7 +58,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('.').to(Token::Dot))
         .or(just('(').to(Token::CommentBegin))
         .or(just(')').to(Token::CommentEnd))
-        .or(just('<').to(Token::Substitution))
         .or(just('>').to(Token::Apply))
         .or(just('[').to(Token::ArrayBegin))
         .or(just(']').to(Token::ArrayEnd))
@@ -68,6 +67,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('_').to(Token::Infer))
         .or(just('\\').to(Token::Lambda))
         .or(just('&').to(Token::Reference))
+        .or(just('<').chain(just('!')).to(Token::Continue))
         .or(just('-').chain(just('>')).to(Token::Arrow))
         .or(just('=').chain(just('>')).to(Token::EArrow));
     let special = just('\'')
@@ -168,10 +168,10 @@ mod tests {
             .parse(
                 r#"
             (defines < 'number -> @incremented 'number >)
-            $ \x -> ^ <\ 'number, 'number -> @added 'number >
-                1, x (1 + x): < @incremented 'number > ~
+            $ \x -> ^ \ 'number, 'number -> @added 'number >
+                1, x (1 + x): @incremented 'number > ~
             (increments a value which is padded later)
-            <\ 'number -> @incremented 'number > ?.
+            \ 'number -> @incremented 'number > ?.
             "#,
             )
             .unwrap()
@@ -189,7 +189,6 @@ mod tests {
                 Ident("x".into()),
                 Arrow,
                 FromHere,
-                Substitution,
                 Lambda,
                 NumberType,
                 Comma,
@@ -203,13 +202,11 @@ mod tests {
                 Ident("x".into()),
                 Comment("(1 + x)".into()),
                 TypeAnnotation,
-                Substitution,
                 Brand("incremented".into()),
                 NumberType,
                 Apply,
                 In,
                 Comment("(increments a value which is padded later)".into()),
-                Substitution,
                 Lambda,
                 NumberType,
                 Arrow,
