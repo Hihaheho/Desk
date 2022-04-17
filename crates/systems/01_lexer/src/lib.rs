@@ -10,12 +10,14 @@ pub fn scan(input: &str) -> Result<Vec<(Token, Range<usize>)>, Vec<Simple<char>>
 
 pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<char>> {
     let comment = recursive(|comment| {
-        none_of("()".chars())
+        none_of("()")
             .repeated()
+            .at_least(1)
             .collect::<String>()
             .or(comment)
-            .delimited_by('(', ')')
-            .map(|s| format!("({})", s))
+            .repeated()
+            .delimited_by(just('('), just(')'))
+            .map(|s| format!("({})", s.join("")))
     })
     .map(Token::Comment);
     let identifier = ident().map(Token::Ident);
@@ -56,8 +58,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('*').to(Token::Product))
         .or(just(',').to(Token::Comma))
         .or(just('.').to(Token::Dot))
-        .or(just('(').to(Token::CommentBegin))
-        .or(just(')').to(Token::CommentEnd))
         .or(just('>').to(Token::Apply))
         .or(just('[').to(Token::ArrayBegin))
         .or(just(']').to(Token::ArrayEnd))
@@ -92,10 +92,10 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
     let brand = just('@')
         .ignore_then(ident())
         .map(|ident: String| Token::Brand(ident.into()));
-    let uuid = seq("'uuid".chars())
-        .chain(text::whitespace())
+    let uuid = just("'uuid")
+        .then_ignore(text::whitespace())
         .ignore_then(
-            one_of("0123456789abcdefABCDEF".chars())
+            one_of("0123456789abcdefABCDEF")
                 .repeated()
                 .at_least(4)
                 .separated_by(just('-'))
@@ -131,8 +131,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
 
 pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
     "a".contains("a");
-    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()"'1234567890"#.chars())
-        .try_map(|c, span| {
+    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()"'1234567890"#)
+        .try_map(|c: char, span| {
             if c.is_whitespace() {
                 Err(Simple::custom(span, "invalid character"))
             } else {
@@ -142,8 +142,8 @@ pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
         .map(Some)
         .chain::<char, _, _>(
             // Does not have @, underscore, hyphen, and single quote.
-            none_of(r#"%/&$<>!#*^?\[]{}=;:~,.()"#.chars())
-                .try_map(|c, span| {
+            none_of(r#"%/&$<>!#*^?\[]{}=;:~,.()"#)
+                .try_map(|c: char, span| {
                     if c.is_whitespace() {
                         Err(Simple::custom(span, "invalid character"))
                     } else {

@@ -43,4 +43,15 @@ pub enum Type {
         attr: Box<Spanned<Expr>>,
         ty: Box<Spanned<Self>>,
     },
+    Comment {
+        position: CommentPosition,
+        text: String,
+        item: Box<Spanned<Self>>,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum CommentPosition {
+    Prefix,
+    Suffix,
 }

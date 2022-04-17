@@ -31,21 +31,13 @@ pub fn eval_mirs<'a>(mirs: Mirs) -> EvalMirs {
             return_register: None,
             handlers: HashMap::new(),
         }],
-        continuations: Vec::new(),
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct Continuation {
-    continuation: Box<EvalMirs>,
-    continuation_effect: ConcEffect,
 }
 
 #[derive(Clone, Debug)]
 pub struct EvalMirs {
     mirs: Vec<Mir>,
     stack: Vec<EvalMir>,
-    continuations: Vec<Continuation>,
 }
 
 impl EvalMirs {
@@ -116,10 +108,7 @@ impl EvalMirs {
                     }
                 }
             }
-            InnerOutput::RunOther {
-                fn_ref,
-                mut parameters,
-            } => match fn_ref {
+            InnerOutput::RunOther { fn_ref, parameters } => match fn_ref {
                 value::FnRef::Link(_) => todo!(),
                 value::FnRef::Closure(Closure {
                     mir,

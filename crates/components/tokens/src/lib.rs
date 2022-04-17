@@ -21,8 +21,6 @@ pub enum Token {
     Product,
     Comma,
     Dot,
-    CommentBegin,
-    CommentEnd,
     Apply,
     Reference,
     ArrayBegin,

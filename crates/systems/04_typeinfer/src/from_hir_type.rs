@@ -10,7 +10,7 @@ pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
     match &ty.value {
         Number => Type::Number,
         String => Type::String,
-        Trait(types) => todo!(),
+        Trait(_types) => todo!(),
         Effectful { ty, effects } => Type::Effectful {
             ty: Box::new(from_hir_type(ctx, ty)),
             effects: effects
@@ -38,7 +38,10 @@ pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
             body: Box::new(from_hir_type(ctx, &body)),
         },
         Variable(id) => Type::Variable(*id),
-        BoundedVariable { bound, identifier } => todo!(),
+        BoundedVariable {
+            bound: _,
+            identifier: _,
+        } => todo!(),
         Brand { brand, item } => Type::Brand {
             brand: brand.clone(),
             item: Box::new(from_hir_type(ctx, &item)),

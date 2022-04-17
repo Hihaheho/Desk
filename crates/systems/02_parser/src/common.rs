@@ -7,6 +7,13 @@ use chumsky::{
 };
 use tokens::Token;
 
+pub(crate) fn parse_comment() -> impl Parser<Token, String, Error = Simple<Token>> + Clone {
+    filter_map(|span, token| match token {
+        Token::Comment(text) => Ok(text),
+        _ => Err(Simple::custom(span, "expected comment")),
+    })
+}
+
 pub(crate) fn parse_ident() -> impl Parser<Token, String, Error = Simple<Token>> + Clone {
     filter_map(|span, token| match token {
         Token::Ident(ident) => Ok(ident),
@@ -38,7 +45,7 @@ pub(crate) fn parse_collection<T>(
     end: Token,
 ) -> impl Parser<Token, Vec<Spanned<T>>, Error = Simple<Token>> + Clone {
     item.separated_by(just(Token::Comma))
-        .delimited_by(begin, end)
+        .delimited_by(just(begin), just(end))
 }
 
 pub(crate) fn parse_typed<I, T>(
@@ -52,9 +59,9 @@ pub(crate) fn parse_typed<I, T>(
 }
 
 pub(crate) fn parse_attr<I, T>(
-    attr: impl Parser<Token, Spanned<I>, Error = Simple<Token>>,
-    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>>,
-) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> {
+    attr: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
+    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
     just(Token::Attribute).ignore_then(attr).in_().then(item)
 }
 
@@ -65,7 +72,7 @@ where
     fn in_(
         self,
     ) -> Map<
-        Then<Self, OrNot<Just<Token, Self::Error>>>,
+        Then<Self, OrNot<Just<Token, Token, Self::Error>>>,
         fn((O, Option<Token>)) -> O,
         (O, Option<Token>),
     >;
@@ -76,8 +83,8 @@ where
         OrNot<
             Map<
                 Then<
-                    SeparatedBy<Self, Just<Token, Self::Error>, Token>,
-                    OrNot<Just<Token, Self::Error>>,
+                    SeparatedBy<Self, Just<Token, Token, Self::Error>, Token>,
+                    OrNot<Just<Token, Token, Self::Error>>,
                 >,
                 fn((Vec<O>, Option<Token>)) -> Vec<O>,
                 (Vec<O>, Option<Token>),
@@ -90,7 +97,10 @@ where
     fn separated_by_comma_at_least_one(
         self,
     ) -> Map<
-        Then<SeparatedBy<Self, Just<Token, Self::Error>, Token>, OrNot<Just<Token, Self::Error>>>,
+        Then<
+            SeparatedBy<Self, Just<Token, Token, Self::Error>, Token>,
+            OrNot<Just<Token, Token, Self::Error>>,
+        >,
         fn((Vec<O>, Option<Token>)) -> Vec<O>,
         (Vec<O>, Option<Token>),
     >;
@@ -103,8 +113,8 @@ impl<T: Parser<Token, O, Error = E>, O, E: Error<Token>> ParserExt<O> for T {
         OrNot<
             Map<
                 Then<
-                    SeparatedBy<T, Just<Token, Self::Error>, Token>,
-                    OrNot<Just<Token, Self::Error>>,
+                    SeparatedBy<T, Just<Token, Token, Self::Error>, Token>,
+                    OrNot<Just<Token, Token, Self::Error>>,
                 >,
                 fn((Vec<O>, Option<Token>)) -> Vec<O>,
                 (Vec<O>, Option<Token>),
@@ -121,7 +131,10 @@ impl<T: Parser<Token, O, Error = E>, O, E: Error<Token>> ParserExt<O> for T {
     fn separated_by_comma_at_least_one(
         self,
     ) -> Map<
-        Then<SeparatedBy<T, Just<Token, Self::Error>, Token>, OrNot<Just<Token, Self::Error>>>,
+        Then<
+            SeparatedBy<T, Just<Token, Token, Self::Error>, Token>,
+            OrNot<Just<Token, Token, Self::Error>>,
+        >,
         fn((Vec<O>, Option<Token>)) -> Vec<O>,
         (Vec<O>, Option<Token>),
     > {
@@ -133,7 +146,7 @@ impl<T: Parser<Token, O, Error = E>, O, E: Error<Token>> ParserExt<O> for T {
     fn in_(
         self,
     ) -> Map<
-        Then<Self, OrNot<Just<Token, Self::Error>>>,
+        Then<Self, OrNot<Just<Token, Token, Self::Error>>>,
         fn((O, Option<Token>)) -> O,
         (O, Option<Token>),
     >

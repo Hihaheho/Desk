@@ -140,6 +140,7 @@ impl HirGen {
                     .insert(ret.meta.id, ret.meta.attrs.clone());
                 ret
             }
+            ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
         };
         Ok(with_meta)
     }
@@ -171,7 +172,10 @@ impl HirGen {
             }),
             ast::expr::Expr::Continue { input, output } => self.with_meta(Expr::Continue {
                 input: Box::new(self.gen(input)?),
-                output: output.as_ref().map(|output| self.gen_type(output)).transpose()?,
+                output: output
+                    .as_ref()
+                    .map(|output| self.gen_type(output))
+                    .transpose()?,
             }),
             ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
                 handlers: handlers
@@ -246,8 +250,8 @@ impl HirGen {
                 self.pop_file_id();
                 ret
             }
-            ast::expr::Expr::Import { ty, uuid } => todo!(),
-            ast::expr::Expr::Export { ty } => todo!(),
+            ast::expr::Expr::Import { ty: _, uuid: _ } => todo!(),
+            ast::expr::Expr::Export { ty: _ } => todo!(),
             ast::expr::Expr::Attribute { attr, item: expr } => {
                 self.pop_span();
                 let mut ret = self.gen(expr)?;
@@ -294,6 +298,7 @@ impl HirGen {
                 self.type_aliases.borrow_mut().insert(ident.clone(), ty);
                 self.gen(expr)?
             }
+            ast::expr::Expr::Comment { item, .. } => self.gen(item)?,
         };
         Ok(with_meta)
     }

@@ -262,10 +262,13 @@ impl Ctx {
             (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::String(_)), Type::String) => self.clone(),
             (
-                Expr::Function { parameter, body },
+                Expr::Function {
+                    parameter: _,
+                    body: _,
+                },
                 Type::Function {
-                    parameter: ty_parameter,
-                    body: ty_body,
+                    parameter: _ty_parameter,
+                    body: _ty_body,
                 },
             ) => {
                 todo!()
@@ -393,7 +396,8 @@ impl Ctx {
             }
             Expr::Handle { expr, handlers } => {
                 // synth expr
-                let WithEffects((mut ctx, expr_ty), mut expr_effects) = self.synth_and_effects(expr)?;
+                let WithEffects((mut ctx, expr_ty), mut expr_effects) =
+                    self.synth_and_effects(expr)?;
                 expr_effects
                     .iter_mut()
                     .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));

@@ -167,7 +167,7 @@ impl EvalMir {
                 Stmt::Op { op, operands } => self.eval_op(op, operands),
                 Stmt::Ref(_) => todo!(),
                 Stmt::RefMut(_) => todo!(),
-                Stmt::Index { tuple, index } => todo!(),
+                Stmt::Index { tuple: _, index: _ } => todo!(),
                 // TODO remove old one because move
                 Stmt::Move(x) => self.load_value(x).clone(),
                 Stmt::Variant { id, value } => Value::Variant {
@@ -195,7 +195,7 @@ impl EvalMir {
     }
 
     // After perform, continue with this function.
-    pub fn eval_continue(&mut self, output: Value) {
+    pub fn eval_continue(&mut self, _output: Value) {
         todo!()
     }
 

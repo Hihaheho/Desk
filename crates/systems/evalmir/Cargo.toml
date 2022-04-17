@@ -17,4 +17,4 @@ lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-l
 parser = { path = "../../systems/02_parser", version = "0.1.0", package = "deskc-parser" }
 hirgen = { path = "../../systems/03_hirgen", version = "0.1.0", package = "deskc-hirgen" }
 typeinfer = { path = "../../systems/04_typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
-chumsky = { git = "https://github.com/ryo33/chumsky" }
+chumsky = "0.8.0"

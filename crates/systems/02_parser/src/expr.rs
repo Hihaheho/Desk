@@ -1,12 +1,12 @@
 use ast::{
     expr::{Expr, Handler, Literal, MatchCase},
     span::Spanned,
-    ty::Type,
+    ty::{CommentPosition, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::{parse_attr, parse_ident};
+use crate::common::{parse_attr, parse_comment, parse_ident};
 
 use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
@@ -136,7 +136,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                     .then_ignore(just(Token::Arrow))
                     .then(expr.clone())
                     .map(|(ty, expr)| MatchCase { ty, expr })
-                    .separated_by_comma(),
+                    .separated_by_comma_at_least_one(),
             )
             .map(|(of, cases)| Expr::Match {
                 of: Box::new(of),
@@ -168,7 +168,16 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 expr: Box::new(expr),
             });
 
-        hole.or(literal.labelled("literal"))
+        let prefix_comment = parse_comment()
+            .then(expr.clone())
+            .map(|(text, expr)| Expr::Comment {
+                position: CommentPosition::Prefix,
+                text,
+                item: Box::new(expr),
+            });
+
+        hole.or(prefix_comment)
+            .or(literal.labelled("literal"))
             .or(let_in.labelled("let-in"))
             .or(perform.labelled("perform"))
             .or(continue_.labelled("continue"))
@@ -186,8 +195,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(handle.labelled("handle"))
             .or(label.labelled("label"))
             .or(newtype.labelled("newtype"))
-            .then_ignore(none_of([Token::Arrow]).to(()).or(end()).lookahead())
             .map_with_span(|token, span| (token, span))
+            .then(parse_comment().or_not())
+            .map_with_span(|(expr, comment), span| {
+                if let Some(comment) = comment {
+                    (
+                        Expr::Comment {
+                            position: CommentPosition::Suffix,
+                            text: comment,
+                            item: Box::new(expr),
+                        },
+                        span,
+                    )
+                } else {
+                    expr
+                }
+            })
     })
 }
 
@@ -435,6 +458,25 @@ mod tests {
             Expr::Label {
                 label: "true".into(),
                 item: Box::new((Expr::Product(vec![]), 6..7)),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_comment() {
+        assert_eq!(
+            parse("(a)*(b)").unwrap().0,
+            Expr::Comment {
+                position: CommentPosition::Prefix,
+                text: "(a)".into(),
+                item: Box::new((
+                    Expr::Comment {
+                        position: CommentPosition::Suffix,
+                        text: "(b)".into(),
+                        item: Box::new((Expr::Product(vec![]), 3..4)),
+                    },
+                    3..7
+                )),
             }
         );
     }

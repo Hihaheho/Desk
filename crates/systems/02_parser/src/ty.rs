@@ -1,12 +1,12 @@
 use ast::{
     expr::Expr,
     span::Spanned,
-    ty::{Effect, Type},
+    ty::{CommentPosition, Effect, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::{parse_attr, parse_ident};
+use crate::common::{parse_attr, parse_comment, parse_ident};
 
 use super::common::{parse_function, parse_op, ParserExt};
 
@@ -22,9 +22,9 @@ pub fn effect_parser(
 
 pub fn parser(
     // Needs this for parse attributes
-    expr: impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + 'static,
+    expr: impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone + 'static,
 ) -> impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone {
-    let type_ = recursive(|type_| {
+    recursive(|type_| {
         let infer = just(Token::Infer).to(Type::Infer);
         let this = just(Token::This).to(Type::This);
         let number = just(Token::NumberType).to(Type::Number);
@@ -56,12 +56,12 @@ pub fn parser(
         let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
         let array = type_
             .clone()
-            .delimited_by(Token::ArrayBegin, Token::ArrayEnd)
+            .delimited_by(just(Token::ArrayBegin), just(Token::ArrayEnd))
             .map(Box::new)
             .map(Type::Array);
         let set = type_
             .clone()
-            .delimited_by(Token::SetBegin, Token::SetEnd)
+            .delimited_by(just(Token::SetBegin), just(Token::SetEnd))
             .map(Box::new)
             .map(Type::Set);
         let function = parse_function(
@@ -91,6 +91,13 @@ pub fn parser(
             item: Box::new(ty),
         });
         let variable = parse_ident().map(Type::Variable);
+        let bound = parse_ident()
+            .then_ignore(just(Token::TypeAnnotation))
+            .then(type_.clone())
+            .map(|(identifier, bound)| Type::BoundedVariable {
+                bound: Box::new(bound),
+                identifier,
+            });
         let let_in = just(Token::Let)
             .ignore_then(parse_ident())
             .in_()
@@ -100,7 +107,17 @@ pub fn parser(
                 body: Box::new(expression),
             });
 
+        let prefix_comment =
+            parse_comment()
+                .then(type_.clone())
+                .map(|(text, item)| Type::Comment {
+                    position: CommentPosition::Prefix,
+                    text,
+                    item: Box::new(item),
+                });
+
         infer
+            .or(prefix_comment)
             .or(this)
             .or(number)
             .or(string)
@@ -114,25 +131,26 @@ pub fn parser(
             .or(function)
             .or(brand)
             .or(attribute)
+            .or(bound)
             .or(variable)
             .or(let_in)
             .map_with_span(|t, span| (t, span))
-    });
-
-    let bound = parse_ident()
-        .then_ignore(just(Token::TypeAnnotation))
-        .then(type_.clone())
-        .map_with_span(|(identifier, bound), span| {
-            (
-                Type::BoundedVariable {
-                    bound: Box::new(bound),
-                    identifier,
-                },
-                span,
-            )
-        });
-
-    bound.or(type_)
+            .then(parse_comment().or_not())
+            .map_with_span(|(ty, comment), span| {
+                if let Some(comment) = comment {
+                    (
+                        Type::Comment {
+                            position: CommentPosition::Suffix,
+                            text: comment,
+                            item: Box::new(ty),
+                        },
+                        span,
+                    )
+                } else {
+                    ty
+                }
+            })
+    })
 }
 
 #[cfg(test)]
@@ -289,6 +307,25 @@ mod tests {
             Type::Let {
                 variable: "x".into(),
                 body: Box::new((Type::Variable("x".into()), 6..7))
+            }
+        );
+    }
+
+    #[test]
+    fn parse_comment() {
+        assert_eq!(
+            parse("(a)*(b)").unwrap().0,
+            Type::Comment {
+                position: CommentPosition::Prefix,
+                text: "(a)".into(),
+                item: Box::new((
+                    Type::Comment {
+                        position: CommentPosition::Suffix,
+                        text: "(b)".into(),
+                        item: Box::new((Type::Product(vec![]), 3..4)),
+                    },
+                    3..7
+                )),
             }
         );
     }

@@ -21,20 +21,51 @@ macro_rules! test {
             let test_case: TestCase = from_dson(dson).unwrap();
             // compile sources
             let input = &test_case.files[0].content;
-            let tokens = lexer::scan(input).unwrap();
-            let ast = parser::parse(tokens).unwrap();
+            let print_errors = |title: &str, errors: Vec<(std::ops::Range<usize>, String)>| {
+                use ariadne::{Label, Report, ReportKind, Source};
+                let report = Report::build(ReportKind::Error, (), 0).with_message(title);
+                errors
+                    .into_iter()
+                    .fold(report, |report, (span, msg)| {
+                        report.with_label(Label::new(span).with_message(msg))
+                    })
+                    .finish()
+                    .print(Source::from(input))
+                    .unwrap();
+                panic!()
+            };
+            let tokens = match lexer::scan(input) {
+                Ok(tokens) => tokens,
+                Err(errors) => {
+                    print_errors(
+                        "parse error",
+                        errors
+                            .into_iter()
+                            .map(|error| (error.span(), format!("{:?}", error)))
+                            .collect(),
+                    );
+                    panic!()
+                }
+            };
+            let ast = match parser::parse(tokens) {
+                Ok(ast) => ast,
+                Err(errors) => {
+                    print_errors(
+                        "parse error",
+                        errors
+                            .into_iter()
+                            .map(|error| (error.span(), format!("{:?}", error)))
+                            .collect(),
+                    );
+                    panic!()
+                }
+            };
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
             let ctx = match typeinfer::synth(genhir.next_id(), &hir) {
                 Ok((ctx, _ty)) => ctx,
                 Err(typeinfer::error::ExprTypeError { meta, error }) => {
-                    use ariadne::{Label, Report, ReportKind, Source};
-                    Report::build(ReportKind::Error, (), 0)
-                        .with_message("Incompatible types")
-                        .with_label(Label::new(meta.span).with_message(format!("{:?}", error)))
-                        .finish()
-                        .print(Source::from(input))
-                        .unwrap();
-                    panic!();
+                    print_errors("Type Error", vec![(meta.span, format!("{:?}", error))]);
+                    panic!()
                 }
             };
 
@@ -97,6 +128,6 @@ test!(case001, "../cases/001_literal.dson");
 test!(case002, "../cases/002_addition.dson");
 test!(case003, "../cases/003_match.dson");
 test!(case004, "../cases/004_let_function.dson");
-test!(case005, "../cases/005_division_by_zero.dson");
+// test!(case005, "../cases/005_division_by_zero.dson");
 test!(case006, "../cases/006_continuation.dson");
 test!(case007, "../cases/007_fibonacci.dson");

@@ -1,6 +1,9 @@
 use uuid::Uuid;
 
-use crate::{span::Spanned, ty::Type};
+use crate::{
+    span::Spanned,
+    ty::{CommentPosition, Type},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -81,6 +84,11 @@ pub enum Expr {
         ident: String,
         ty: Spanned<Type>,
         expr: Box<Spanned<Self>>,
+    },
+    Comment {
+        position: CommentPosition,
+        text: String,
+        item: Box<Spanned<Self>>,
     },
 }
 

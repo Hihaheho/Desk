@@ -83,5 +83,6 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             ty: _,
             expr,
         } => visit(includes, &expr.0),
+        Expr::Comment { .. } => {}
     };
 }

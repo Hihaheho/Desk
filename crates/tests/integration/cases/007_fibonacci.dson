@@ -3,25 +3,33 @@
     {
       @name "main.ds",
       @content "
+      (defines aliases of types)
       'type add \\ 'number, 'number -> @sum 'number ~
       'type sub \\ @minuend 'number, @subtrahend 'number -> 'number ~
       'type eq \\ 'number, 'number -> + @equal *, @unequal * ~
+      (let fib (\\'number -> 'number) in)
       $ \\ 'number ->
+        (+ is like Rust's `match` or C's `switch`)
         + >eq &'number, 0 ~
+          (if the number == 0)
           @equal * ->
             0,
+          (if the number != 0)
           @unequal * ->
             + >eq &'number, 1 ~
               @equal * ->
                 1,
               @unequal * ->
+                (adds fib(number - 1) and fib(number - 2))
                 ^>add
                   > \\'number -> 'number
                     >sub @minuend &'number, 1. ;
                   > \\'number -> 'number
                     >sub @minuend &'number, 2
+                (`^expr: type` is a type annotation)
                 : 'number
       ~
+      (calls `fib(7)`)
       > \\'number -> 'number ~ 7
       "
     }

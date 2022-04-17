@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 tokens = { path = "../../components/tokens", version = "0.1.0", package = "deskc-tokens" }
-chumsky = { git = "https://github.com/ryo33/chumsky" }
+chumsky = "0.8.0"
 
 uuid = "*"
