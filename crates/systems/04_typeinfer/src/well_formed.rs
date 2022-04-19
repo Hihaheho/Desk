@@ -2,7 +2,7 @@ use types::Id;
 
 use crate::{
     ty::{Type, TypeVisitor},
-    Ctx,
+    ctx::Ctx,
 };
 
 pub(crate) struct WellFormed<'a> {

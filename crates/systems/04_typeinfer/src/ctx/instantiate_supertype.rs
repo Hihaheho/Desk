@@ -1,0 +1,141 @@
+use crate::{
+    ctx::{Ctx, Id, Log},
+    error::TypeError,
+    mono_type::is_monotype,
+    substitute::substitute,
+    ty::Type,
+};
+
+impl Ctx {
+    pub fn instantiate_supertype(&self, sub: &Type, id: &Id) -> Result<Ctx, TypeError> {
+        // In here, we can assume the context contains the existential type.
+        let ctx = if is_monotype(sub)
+            && self.has_existential(id)
+            && self
+                .truncate_from(&Log::Existential(*id))
+                .recover_effects()
+                .is_well_formed(sub)
+        {
+            self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sub.clone())])
+        } else {
+            match sub {
+                Type::Effectful { ty, effects } => effects
+                    .iter()
+                    .fold(self.instantiate_supertype(ty, id)?, |ctx, effect| {
+                        ctx.add(Log::Effect(effect.clone()))
+                    }),
+                Type::Function { parameter, body } => {
+                    let a1 = self.fresh_existential();
+                    let a2 = self.fresh_existential();
+                    let theta = self
+                        .insert_in_place(
+                            &Log::Existential(*id),
+                            vec![
+                                Log::Existential(a2),
+                                Log::Existential(a1),
+                                Log::Solved(
+                                    *id,
+                                    Type::Function {
+                                        parameter: Box::new(Type::Existential(a1)),
+                                        body: Box::new(Type::Existential(a2)),
+                                    },
+                                ),
+                            ],
+                        )
+                        .instantiate_subtype(&a1, parameter)?;
+                    theta.instantiate_supertype(&theta.substitute_from_ctx(&body), &a2)?
+                }
+                Type::ForAll { variable, body } => self
+                    .add(Log::Marker(*variable))
+                    .add(Log::Existential(*variable))
+                    .instantiate_supertype(
+                        &substitute(body, variable, &Type::Existential(*variable)),
+                        id,
+                    )?
+                    .truncate_from(&Log::Marker(*variable))
+                    .recover_effects(),
+                Type::Existential(a) => self.insert_in_place(
+                    &Log::Existential(*id),
+                    vec![Log::Solved(*id, Type::Existential(*a))],
+                ),
+                Type::Product(types) => self.instantiate_composite_type_vec(
+                    *id,
+                    types,
+                    Type::Product,
+                    |ctx, id, sub| ctx.instantiate_supertype(sub, id),
+                )?,
+                Type::Sum(types) => {
+                    self.instantiate_composite_type_vec(*id, types, Type::Sum, |ctx, id, sub| {
+                        ctx.instantiate_supertype(sub, id)
+                    })?
+                }
+                Type::Array(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
+                        ],
+                    )
+                    .instantiate_supertype(ty, &a)?
+                }
+                Type::Set(ty) => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
+                        ],
+                    )
+                    .instantiate_supertype(ty, &a)?
+                }
+                Type::Label { item, label } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Label {
+                                    item: Box::new(Type::Existential(a)),
+                                    label: label.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_supertype(item, &a)?
+                }
+                Type::Brand { item, brand } => {
+                    let a = self.fresh_existential();
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![
+                            Log::Existential(a),
+                            Log::Solved(
+                                *id,
+                                Type::Brand {
+                                    item: Box::new(Type::Existential(a)),
+                                    brand: brand.clone(),
+                                },
+                            ),
+                        ],
+                    )
+                    .instantiate_supertype(item, &a)?
+                }
+                Type::Infer(infer) => {
+                    self.store_type(*infer, Type::Existential(*id));
+                    self.insert_in_place(
+                        &Log::Existential(*id),
+                        vec![Log::Solved(*id, sub.clone())],
+                    )
+                }
+                ty => Err(TypeError::NotInstantiableSupertype { ty: ty.clone() })?,
+            }
+        };
+        self.store_type(*id, sub.clone());
+        Ok(ctx)
+    }
+}

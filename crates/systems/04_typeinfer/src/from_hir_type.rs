@@ -2,7 +2,7 @@ use hir::meta::WithMeta;
 
 use crate::{
     ty::{Effect, Type},
-    Ctx,
+    with_effects, ctx::Ctx,
 };
 
 pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
@@ -11,16 +11,16 @@ pub(crate) fn from_hir_type(ctx: &Ctx, ty: &WithMeta<hir::ty::Type>) -> Type {
         Number => Type::Number,
         String => Type::String,
         Trait(_types) => todo!(),
-        Effectful { ty, effects } => Type::Effectful {
-            ty: Box::new(from_hir_type(ctx, ty)),
-            effects: effects
+        Effectful { ty, effects } => with_effects(
+            from_hir_type(ctx, ty),
+            effects
                 .iter()
                 .map(|effect| Effect {
                     input: from_hir_type(ctx, &effect.input),
                     output: from_hir_type(ctx, &effect.output),
                 })
                 .collect(),
-        },
+        ),
         Infer => Type::Infer(ty.meta.id),
         This => todo!(),
         Product(types) => {

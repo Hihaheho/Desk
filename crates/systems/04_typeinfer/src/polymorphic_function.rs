@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
+    ctx::{Ctx, Id},
     ty::{Type, TypeVisitorMut},
-    Ctx, Id,
 };
 
 impl Ctx {

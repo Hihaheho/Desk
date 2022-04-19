@@ -1,7 +1,17 @@
 use crate::{
     ty::{Type, TypeVisitorMut},
-    Id,
+    ctx::Id,
 };
+
+pub fn substitute(to: &Type, id: &Id, by: &Type) -> Type {
+    let mut substitute = Substitute {
+        id: *id,
+        ty: by.clone(),
+    };
+    let mut to = to.clone();
+    substitute.visit(&mut to);
+    to
+}
 
 pub(crate) struct Substitute {
     pub id: Id,

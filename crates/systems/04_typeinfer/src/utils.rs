@@ -1,6 +1,6 @@
 use crate::{
+    ctx::Ctx,
     ty::{Effect, Type},
-    Ctx,
 };
 
 pub(crate) fn with_effects(ty: Type, effects: Vec<Effect>) -> Type {

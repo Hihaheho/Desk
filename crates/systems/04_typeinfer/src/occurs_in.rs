@@ -1,7 +1,17 @@
 use crate::{
     ty::{Type, TypeVisitor},
-    Id,
+    ctx::Id,
 };
+
+// existential type is occurs in the type
+pub fn occurs_in(id: &Id, ty: &Type) -> bool {
+    let mut occurs_in = OccursIn {
+        id: *id,
+        occurs_in: false,
+    };
+    occurs_in.visit(ty);
+    occurs_in.occurs_in
+}
 
 pub(crate) struct OccursIn {
     pub id: Id,

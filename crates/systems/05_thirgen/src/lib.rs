@@ -196,7 +196,7 @@ mod tests {
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {
-        let infer = typeinfer::Ctx::default();
+        let infer = typeinfer::ctx::Ctx::default();
         let _ = infer.synth(expr).unwrap();
         infer.get_types()
     }

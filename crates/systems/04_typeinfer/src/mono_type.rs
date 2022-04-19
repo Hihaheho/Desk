@@ -1,7 +1,13 @@
 use crate::{
     ty::{Type, TypeVisitor},
-    Id,
+    ctx::Id,
 };
+
+pub fn is_monotype(ty: &Type) -> bool {
+    let mut monotype = MonoType { is_monotype: true };
+    monotype.visit(ty);
+    monotype.is_monotype
+}
 
 pub(crate) struct MonoType {
     pub is_monotype: bool,
