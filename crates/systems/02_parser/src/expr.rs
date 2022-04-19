@@ -219,9 +219,11 @@ mod tests {
     use ast::{expr::MatchCase, ty::Type};
     use lexer::scan;
 
+    use crate::ParserError;
+
     use super::*;
 
-    fn parse(input: &str) -> Result<Spanned<Expr>, Vec<Simple<Token>>> {
+    fn parse(input: &str) -> Result<Spanned<Expr>, ParserError> {
         crate::parse(scan(input).unwrap())
     }
 

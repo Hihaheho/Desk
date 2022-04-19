@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 tokens = { path = "../../components/tokens", version = "0.1.0", package = "deskc-tokens" }
 ast = { path = "../../components/ast", version = "0.1.0", package = "deskc-ast" }
+textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.1.0", package = "deskc-textual-diagnostics" }
 chumsky = "0.8.0"
 
 [dev-dependencies]

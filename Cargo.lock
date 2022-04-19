@@ -177,6 +177,7 @@ name = "deskc-lexer"
 version = "0.1.0"
 dependencies = [
  "chumsky",
+ "deskc-textual-diagnostics",
  "deskc-tokens",
  "uuid",
 ]
@@ -197,6 +198,7 @@ dependencies = [
  "chumsky",
  "deskc-ast",
  "deskc-lexer",
+ "deskc-textual-diagnostics",
  "deskc-tokens",
 ]
 
@@ -215,6 +217,7 @@ dependencies = [
  "deskc-hirgen",
  "deskc-lexer",
  "deskc-parser",
+ "deskc-textual-diagnostics",
  "deskc-thir",
  "deskc-thir2dson",
  "deskc-thirgen",
@@ -224,6 +227,10 @@ dependencies = [
  "serde",
  "serde_dson",
 ]
+
+[[package]]
+name = "deskc-textual-diagnostics"
+version = "0.1.0"
 
 [[package]]
 name = "deskc-thir"
@@ -270,12 +277,14 @@ dependencies = [
 name = "deskc-typeinfer"
 version = "0.1.0"
 dependencies = [
+ "ariadne",
  "chumsky",
  "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-lexer",
  "deskc-parser",
+ "deskc-textual-diagnostics",
  "deskc-types",
  "pretty_assertions",
  "thiserror",

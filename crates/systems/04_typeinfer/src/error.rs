@@ -1,5 +1,6 @@
 use crate::ty::{Effect, Id, Type};
 use hir::{expr::Expr, meta::Meta};
+use textual_diagnostics::{Report, TextualDiagnostics};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
@@ -26,4 +27,16 @@ pub enum TypeError {
     UnknownEffectHandled { effect: Effect },
     #[error("continue out of handle")]
     ContinueOutOfHandle,
+}
+
+impl Into<TextualDiagnostics> for ExprTypeError {
+    fn into(self) -> TextualDiagnostics {
+        TextualDiagnostics {
+            title: "Typeinfer error".into(),
+            reports: vec![Report {
+                span: self.meta.span,
+                text: format!("{:?}", self.error),
+            }],
+        }
+    }
 }

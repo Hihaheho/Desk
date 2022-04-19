@@ -3,6 +3,7 @@ mod from_hir_type;
 mod into_type;
 mod mono_type;
 mod occurs_in;
+mod polymorphic_function;
 mod substitute;
 mod substitute_from_ctx;
 mod ty;
@@ -95,11 +96,9 @@ impl Ctx {
         id
     }
 
-    fn store_type_and_effects<T>(&self, expr: &WithMeta<T>, ty: &Type, effects: Vec<Effect>) {
-        self.store_type(
-            expr.meta.id,
-            with_effects(self.substitute_from_ctx(ty), effects),
-        );
+    // The type should be substituted with ctx.
+    fn store_type_and_effects<T>(&self, expr: &WithMeta<T>, ty: Type, effects: Vec<Effect>) {
+        self.store_type(expr.meta.id, with_effects(ty, effects));
     }
 
     fn store_type(&self, id: Id, ty: Type) {
@@ -120,7 +119,7 @@ impl Ctx {
     fn from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
         let ty = from_hir_type::from_hir_type(self, hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type_and_effects(&hir_ty, &ty, vec![]);
+        self.store_type_and_effects(&hir_ty, ty.clone(), vec![]);
         ty
     }
 
@@ -291,6 +290,7 @@ impl Ctx {
             }
         };
         let effects = ctx.end_scope(scope);
+        let ty = ctx.substitute_from_ctx(ty);
         ctx.store_type_and_effects(expr, ty, effects.clone());
         Ok(WithEffects(ctx, effects))
     }
@@ -321,17 +321,17 @@ impl Ctx {
                     meta: _,
                 } = &ty
                 {
-                    // TODO: support let rec
                     let (ctx, def_ty) = self.synth(&definition)?;
+                    let def_ty = ctx.make_polymorphic(def_ty);
                     let (ctx, ty) = ctx
                         .add(Log::TypedVariable(*var, def_ty.clone()))
                         .synth(&expression)?;
                     ctx.insert_in_place(&Log::TypedVariable(*var, def_ty), vec![])
                         .with_type(ty)
                 } else {
-                    let WithEffects((_ctx, _ty), effects) = self.synth_and_effects(&definition)?;
-                    let (ctx, ty) = self.synth(&expression)?;
-                    ctx.with_effects(&effects).with_type(ty)
+                    let (ctx, _def_ty) = self.synth(&definition)?;
+                    let (ctx, ty) = ctx.synth(&expression)?;
+                    ctx.with_type(ty)
                 }
             }
             Expr::Perform { input, output } => {
@@ -578,7 +578,8 @@ impl Ctx {
             }
         };
         let effects = ctx.end_scope(scope);
-        ctx.store_type_and_effects(expr, &ty, effects.clone());
+        let ty = ctx.substitute_from_ctx(&ty);
+        ctx.store_type_and_effects(expr, ty.clone(), effects.clone());
         Ok(WithEffects((ctx, ty), effects))
     }
 
@@ -1162,10 +1163,12 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 
 #[cfg(test)]
 mod tests {
+    use ariadne::{Label, Report, ReportKind, Source};
     use file::FileId;
     use hir::meta::dummy_meta;
     use hirgen::HirGen;
     use pretty_assertions::assert_eq;
+    use textual_diagnostics::TextualDiagnostics;
 
     use super::*;
 
@@ -1198,6 +1201,24 @@ mod tests {
                     .map(|ty| (i, ty))
             })
             .collect()
+    }
+
+    fn print_error<T>(input: &str, error: ExprTypeError) -> T {
+        let diagnostics: TextualDiagnostics = error.into();
+        let report = Report::build(ReportKind::Error, (), 0).with_message(diagnostics.title);
+        diagnostics
+            .reports
+            .into_iter()
+            .fold(
+                report,
+                |report, textual_diagnostics::Report { span, text }| {
+                    report.with_label(Label::new(span).with_message(text))
+                },
+            )
+            .finish()
+            .print(Source::from(input))
+            .unwrap();
+        panic!()
     }
 
     #[test]
@@ -1276,15 +1297,16 @@ mod tests {
 
     #[test]
     fn typing_expressions() {
-        let (hirgen, expr) = parse_inner(
-            r#"
+        let input = &r#"
             #1 $ #2 \ 'a x -> #3 &'a x: 'a id ~
             $ #4 >'a id #5 1 ~
             #6 >'a id #7 "a"
-        "#,
-        );
+        "#;
+        let (hirgen, expr) = parse_inner(input);
         let ctx = Ctx::default();
-        let (ctx, _ty) = ctx.synth(&expr).unwrap();
+        let (ctx, _ty) = ctx
+            .synth(&expr)
+            .unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -1524,6 +1546,75 @@ mod tests {
                     },
                 ),
                 (3, Type::String),
+            ]
+        );
+    }
+
+    #[test]
+    #[ignore = "todo"]
+    fn test_polymorphic_effects() {
+        let input = r#"
+            $ #1 \x, y ->
+              ^#3 'handle > x 1 ~
+              'number => 'string ->
+                > y 2
+              : 'number
+            : fun ~
+            #2 >fun
+              \ 'number ->
+                $ ! 1 => 'string ~
+                ! @a * => 'number,
+              \ 'number ->
+                $ ! "a" => 'number ~
+                ! @b * => 'number
+            "#;
+        let (hirgen, expr) = parse_inner(input);
+        let ctx = Ctx::default();
+        let (ctx, _ty) = ctx
+            .synth(&expr)
+            .unwrap_or_else(|error| print_error(input, error));
+
+        assert_eq!(
+            get_types(&hirgen, &ctx),
+            vec![
+                (
+                    1,
+                    Type::Function {
+                        parameter: Box::new(Type::Function {
+                            parameter: Box::new(Type::Number),
+                            body: Box::new(Type::Number)
+                        }),
+                        body: Box::new(Type::Function {
+                            parameter: Box::new(Type::Function {
+                                parameter: Box::new(Type::Number),
+                                body: Box::new(Type::Number)
+                            }),
+                            body: Box::new(Type::Number)
+                        })
+                    }
+                ),
+                (
+                    2,
+                    Type::Effectful {
+                        ty: Box::new(Type::Number),
+                        effects: vec![
+                            Effect {
+                                input: Type::Label {
+                                    label: "a".into(),
+                                    item: Box::new(Type::Product(vec![]))
+                                },
+                                output: Type::Number,
+                            },
+                            Effect {
+                                input: Type::Label {
+                                    label: "b".into(),
+                                    item: Box::new(Type::Product(vec![]))
+                                },
+                                output: Type::Number,
+                            }
+                        ],
+                    },
+                ),
             ]
         );
     }

@@ -20,6 +20,7 @@ thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thi
 dson = { path = "../../components/dson", version = "0.1.0", package = "deskc-dson" }
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
+textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.1.0", package = "deskc-textual-diagnostics" }
 serde_dson = { path = "../../libs/serde_dson", version = "0.1.0" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"

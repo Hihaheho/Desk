@@ -21,52 +21,40 @@ macro_rules! test {
             let test_case: TestCase = from_dson(dson).unwrap();
             // compile sources
             let input = &test_case.files[0].content;
-            let print_errors = |title: &str, errors: Vec<(std::ops::Range<usize>, String)>| {
+            fn print_errors<T>(
+                input: &str,
+                diagnostics: impl Into<textual_diagnostics::TextualDiagnostics>,
+            ) -> T {
                 use ariadne::{Label, Report, ReportKind, Source};
-                let report = Report::build(ReportKind::Error, (), 0).with_message(title);
-                errors
+                let diagnostics = diagnostics.into();
+                let report =
+                    Report::build(ReportKind::Error, (), 0).with_message(diagnostics.title);
+                diagnostics
+                    .reports
                     .into_iter()
-                    .fold(report, |report, (span, msg)| {
-                        report.with_label(Label::new(span).with_message(msg))
-                    })
+                    .fold(
+                        report,
+                        |report, textual_diagnostics::Report { span, text }| {
+                            report.with_label(Label::new(span).with_message(text))
+                        },
+                    )
                     .finish()
                     .print(Source::from(input))
                     .unwrap();
                 panic!()
-            };
+            }
             let tokens = match lexer::scan(input) {
                 Ok(tokens) => tokens,
-                Err(errors) => {
-                    print_errors(
-                        "parse error",
-                        errors
-                            .into_iter()
-                            .map(|error| (error.span(), format!("{:?}", error)))
-                            .collect(),
-                    );
-                    panic!()
-                }
+                Err(errors) => print_errors(input, errors),
             };
             let ast = match parser::parse(tokens) {
                 Ok(ast) => ast,
-                Err(errors) => {
-                    print_errors(
-                        "parse error",
-                        errors
-                            .into_iter()
-                            .map(|error| (error.span(), format!("{:?}", error)))
-                            .collect(),
-                    );
-                    panic!()
-                }
+                Err(errors) => print_errors(input, errors),
             };
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
             let ctx = match typeinfer::synth(genhir.next_id(), &hir) {
                 Ok((ctx, _ty)) => ctx,
-                Err(typeinfer::error::ExprTypeError { meta, error }) => {
-                    print_errors("Type Error", vec![(meta.span, format!("{:?}", error))]);
-                    panic!()
-                }
+                Err(error) => print_errors(input, error),
             };
 
             for assertion in test_case.assertions.iter() {
