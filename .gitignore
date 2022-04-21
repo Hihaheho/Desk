@@ -3,3 +3,4 @@
 !/Cargo.*
 !/.github
 !/.gitignore
+!/README.md
