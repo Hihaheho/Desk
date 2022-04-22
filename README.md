@@ -1,8 +1,8 @@
 # Desk
 
-![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=green)
-![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)
+[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=green)](https://github.com/sponsors/ryo33)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)](https://github.com/Hihaheho/Desk/blob/main/LICENSE)
 [![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=flat)](https://discord.gg/egTTeg7DRp)
 
 The application platform for your cyberpunk desk.
@@ -67,6 +67,6 @@ Yes.
 
 ## Join our community
 
-![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)
+[![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
 
 [![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
