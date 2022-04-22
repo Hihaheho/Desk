@@ -3,7 +3,7 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=green)
 ![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)
-![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=flat)
+[![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=flat)](https://discord.gg/egTTeg7DRp)
 
 The application platform for your cyberpunk desk.
 
@@ -69,4 +69,4 @@ Yes.
 
 ![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)
 
-![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=for-the-badge)
+[![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
