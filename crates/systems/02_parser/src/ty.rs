@@ -1,12 +1,12 @@
 use ast::{
     expr::Expr,
     span::Spanned,
-    ty::{CommentPosition, Effect, Type},
+    ty::{CommentPosition, Effect, EffectExpr, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::{parse_attr, parse_comment, parse_ident};
+use crate::common::{parse_attr, parse_collection, parse_comment, parse_ident};
 
 use super::common::{parse_function, parse_op, ParserExt};
 
@@ -38,15 +38,7 @@ pub fn parser(
         let alias = just(Token::A).ignore_then(parse_ident().map(Type::Alias));
         let effectful = just(Token::Perform)
             .ignore_then(type_.clone())
-            .in_()
-            .then(
-                type_
-                    .clone()
-                    .then_ignore(just(Token::EArrow))
-                    .then(type_.clone())
-                    .map(|(input, output)| Effect { input, output })
-                    .separated_by_comma_at_least_one(),
-            )
+            .then(parse_effects(type_.clone()))
             .map(|(ty, effects)| Type::Effectful {
                 ty: Box::new(ty),
                 effects,
@@ -150,6 +142,48 @@ pub fn parser(
                     ty
                 }
             })
+    })
+}
+
+fn parse_effects(
+    type_: impl Parser<Token, Spanned<Type>, Error = Simple<Token>> + Clone + 'static,
+) -> impl Parser<Token, Spanned<EffectExpr>, Error = Simple<Token>> + Clone {
+    recursive(|expr| {
+        let effects = parse_collection(
+            Token::SetBegin,
+            type_
+                .clone()
+                .then_ignore(just(Token::EArrow))
+                .then(type_.clone())
+                .map(|(input, output)| Effect { input, output })
+                .map_with_span(|expr, span| (expr, span)),
+            Token::SetEnd,
+        )
+        .map(EffectExpr::Effects);
+        let apply = just(Token::Apply)
+            .ignore_then(type_.clone())
+            .in_()
+            .then(type_.clone().separated_by_comma())
+            .map(|(func, arguments)| EffectExpr::Apply {
+                function: Box::new(func),
+                arguments,
+            });
+
+        let add = parse_op(just(Token::Sum), expr.clone()).map(|exprs| EffectExpr::Add(exprs));
+        let sub = just(Token::Minus)
+            .ignore_then(expr.clone())
+            .then_ignore(just(Token::Comma))
+            .then(expr.clone())
+            .map(|(minuend, subtrahend)| EffectExpr::Sub {
+                minuend: Box::new(minuend),
+                subtrahend: Box::new(subtrahend),
+            });
+        effects
+            .labelled("effects")
+            .or(apply.labelled("effects apply"))
+            .or(add.labelled("effects add"))
+            .or(sub.labelled("effects sub"))
+            .map_with_span(|expr, span| (expr, span))
     })
 }
 
@@ -259,21 +293,48 @@ mod tests {
     #[test]
     fn parse_effectful() {
         assert_eq!(
-            parse("! 'a result ~ 'number => 'string, 'string => 'number.")
+            parse("! result + {'number => 'string}, - >a _, {'string => 'number}")
                 .unwrap()
                 .0,
             Type::Effectful {
-                ty: Box::new((Type::Alias("result".into()), 2..11)),
-                effects: vec![
-                    Effect {
-                        input: (Type::Number, 14..21),
-                        output: (Type::String, 25..32),
-                    },
-                    Effect {
-                        input: (Type::String, 34..41),
-                        output: (Type::Number, 45..52),
-                    }
-                ]
+                ty: Box::new((Type::Variable("result".into()), 2..8)),
+                effects: (
+                    EffectExpr::Add(vec![
+                        (
+                            EffectExpr::Effects(vec![(
+                                Effect {
+                                    input: (Type::Number, 12..19),
+                                    output: (Type::String, 23..30),
+                                },
+                                12..30
+                            )]),
+                            11..31
+                        ),
+                        (
+                            EffectExpr::Sub {
+                                minuend: Box::new((
+                                    EffectExpr::Apply {
+                                        function: Box::new((Type::Variable("a".into()), 36..37)),
+                                        arguments: vec![(Type::Infer, 38..39)],
+                                    },
+                                    35..39
+                                )),
+                                subtrahend: Box::new((
+                                    EffectExpr::Effects(vec![(
+                                        Effect {
+                                            input: (Type::String, 42..49),
+                                            output: (Type::Number, 53..60),
+                                        },
+                                        42..60
+                                    ),],),
+                                    41..61
+                                ))
+                            },
+                            33..61
+                        ),
+                    ]),
+                    9..61
+                ),
             }
         );
     }

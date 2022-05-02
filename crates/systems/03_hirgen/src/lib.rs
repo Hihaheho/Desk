@@ -1,5 +1,6 @@
 mod error;
 mod extract_includes;
+mod gen_effect_expr;
 pub use extract_includes::extract_includes;
 
 use std::{
@@ -13,7 +14,7 @@ use file::{FileId, InFile};
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
-    ty::{Effect, Type},
+    ty::Type,
 };
 
 pub fn gen_hir(
@@ -64,10 +65,7 @@ impl HirGen {
             )),
             ast::ty::Type::Effectful { ty, effects } => self.with_meta(Type::Effectful {
                 ty: Box::new(self.gen_type(ty)?),
-                effects: effects
-                    .into_iter()
-                    .map(|effect| self.effect(effect))
-                    .collect::<Result<_, _>>()?,
+                effects: self.gen_effect_expr(effects)?,
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
@@ -335,16 +333,6 @@ impl HirGen {
             },
             value,
         }
-    }
-
-    fn effect(
-        &self,
-        ast::ty::Effect { input, output }: &ast::ty::Effect,
-    ) -> Result<Effect, HirGenError> {
-        Ok(Effect {
-            input: self.gen_type(input)?,
-            output: self.gen_type(output)?,
-        })
     }
 }
 

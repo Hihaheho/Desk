@@ -17,22 +17,17 @@ impl Ctx {
             Type::Function { parameter, body } => {
                 let delta = self.check(expr, &*parameter)?.recover_effects();
                 // if a type of expr is synthed, output can be substituded with the type.
-                let ty = self
+                delta
                     .synth(expr)
                     .ok()
                     .map(|with| with.recover_effects())
                     .and_then(|(ctx, ty)| {
-                        ctx.subtype(&ty, parameter)
-                            .ok()
-                            .map(|ctx| ctx.substitute_from_ctx(body))
+                        ctx.subtype(&ty, parameter).ok().map(|ctx| {
+                            let ty = ctx.substitute_from_ctx(body);
+                            (ctx, ty)
+                        })
                     })
-                    .unwrap_or(*body.clone());
-                // If output is effectful, add them to the ctx.
-                if let Type::Effectful { ty, effects } = &ty {
-                    delta.add_effects(effects).with_type(*ty.clone())
-                } else {
-                    (delta, ty)
-                }
+                    .unwrap_or((delta.clone(), *body.clone()))
             }
             Type::Existential(id) => {
                 let a1 = self.fresh_existential();

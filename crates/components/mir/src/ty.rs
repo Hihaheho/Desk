@@ -31,7 +31,7 @@ pub enum ConcType {
     },
     Effectful {
         ty: Box<Self>,
-        effects: Vec<ConcEffect>,
+        effects: ConcEffectExpr,
     },
     Ref {
         region: RegionId,
@@ -53,20 +53,12 @@ impl ConcType {
         match (self, other) {
             (x, y) if x == y => false,
             (
-                ConcType::Effectful { ty, effects },
+                ConcType::Effectful { ty, effects: _ },
                 ConcType::Effectful {
                     ty: ty2,
-                    effects: effects2,
+                    effects: _effects2,
                 },
-            ) if !ty.needs_cast_to(ty2) => {
-                effects
-                    .iter()
-                    .zip(effects2.iter())
-                    .any(|(effect, effect2)| {
-                        effect.input.needs_cast_to(&effect2.input)
-                            || effect.output.needs_cast_to(&effect2.output)
-                    })
-            }
+            ) if !ty.needs_cast_to(ty2) => false,
             (ConcType::Label { label: _, item }, x) if !item.needs_cast_to(x) => false,
             (x, ConcType::Label { label: _, item }) if !item.needs_cast_to(x) => false,
             (ConcType::Enum(types), ConcType::Enum(types2)) => types
@@ -81,4 +73,19 @@ impl ConcType {
             _ => true,
         }
     }
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ConcEffectExpr {
+    Effects(Vec<ConcEffect>),
+    Add(Vec<ConcEffectExpr>),
+    Sub {
+        minuend: Box<ConcEffectExpr>,
+        subtrahend: Box<ConcEffectExpr>,
+    },
+    Apply {
+        function: Box<ConcType>,
+        arguments: Vec<ConcType>,
+    },
 }

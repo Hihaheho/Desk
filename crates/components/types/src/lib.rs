@@ -29,7 +29,7 @@ pub enum Type {
     },
     Effectful {
         ty: Box<Self>,
-        effects: Vec<Effect>,
+        effects: EffectExpr,
     },
     Brand {
         brand: String,
@@ -38,6 +38,21 @@ pub enum Type {
     Label {
         label: String,
         item: Box<Self>,
+    },
+}
+
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum EffectExpr {
+    Effects(Vec<Effect>),
+    Add(Vec<EffectExpr>),
+    Sub {
+        minuend: Box<EffectExpr>,
+        subtrahend: Box<EffectExpr>,
+    },
+    Apply {
+        function: Box<Type>,
+        arguments: Vec<Type>,
     },
 }
 
@@ -69,13 +84,6 @@ impl Type {
         Type::Function {
             parameters,
             body: Box::new(body),
-        }
-    }
-    pub fn effectful(ty: Self, mut effects: Vec<Effect>) -> Self {
-        effects.sort();
-        Type::Effectful {
-            ty: Box::new(ty),
-            effects,
         }
     }
 }

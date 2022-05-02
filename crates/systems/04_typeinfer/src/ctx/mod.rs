@@ -1,7 +1,9 @@
 mod apply;
 mod check;
+mod from_hir_type;
 mod instantiate_subtype;
 mod instantiate_supertype;
+mod into_type;
 mod subtype;
 mod synth;
 
@@ -12,10 +14,11 @@ use types::{IdGen, Types};
 
 use crate::{
     error::TypeError,
-    from_hir_type, into_type,
     substitute_from_ctx::SubstituteFromCtx,
-    ty::{Effect, Type, TypeVisitor, TypeVisitorMut},
-    utils::with_effects,
+    ty::{
+        effect_expr::{simplify, simplify_effect_expr, EffectExpr},
+        Type, TypeVisitor, TypeVisitorMut,
+    },
     well_formed::WellFormed,
     with_effects::WithEffects,
 };
@@ -29,7 +32,7 @@ pub enum Log {
     Existential(Id),
     Solved(Id, Type),
     Marker(Id),
-    Effect(Effect),
+    Effect(EffectExpr),
 }
 
 #[must_use]
@@ -43,6 +46,7 @@ pub struct Ctx {
     pub(crate) continue_input: RefCell<Vec<Type>>,
     // a stack; continue's output of current context
     pub(crate) continue_output: RefCell<Vec<Type>>,
+    pub(crate) inferred_types: RefCell<HashMap<Id, Type>>,
 }
 
 impl Ctx {
@@ -56,33 +60,42 @@ impl Ctx {
             types: self.types.clone(),
             continue_input: Default::default(),
             continue_output: Default::default(),
+            inferred_types: Default::default(),
         }
     }
 
     // The type should be substituted with ctx.
-    fn store_type_and_effects<T>(&self, expr: &WithMeta<T>, ty: Type, effects: Vec<Effect>) {
-        self.store_type(expr.meta.id, with_effects(ty, effects));
+    fn store_type_and_effects(&self, id: Id, ty: Type, effects: EffectExpr) {
+        self.types
+            .borrow_mut()
+            .insert(id, self.with_effects(ty, effects));
     }
 
-    fn store_type(&self, id: Id, ty: Type) {
-        if let Type::Infer(_) = ty {
-            // infer should not be registered
-            return;
-        }
-        let mut types = self.types.borrow_mut();
-        match types.get(&id) {
-            None | Some(&Type::Existential(_)) => {
-                types.insert(id, ty);
-            }
-            // Keeps the generic one
-            _ => {}
-        }
+    fn store_inferred_type(&self, infer: Id, ty: Type) {
+        self.inferred_types.borrow_mut().insert(infer, ty);
     }
 
-    fn from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
-        let ty = from_hir_type::from_hir_type(self, hir_ty);
+    pub fn get_type(&self, id: &Id) -> Type {
+        self.finalize(
+            &self
+                .types
+                .borrow()
+                .get(id)
+                .cloned()
+                .expect("should be stored"),
+        )
+    }
+
+    pub(crate) fn finalize(&self, ty: &Type) -> Type {
+        let mut ty = self.substitute_from_ctx(ty);
+        simplify(&mut ty);
+        ty
+    }
+
+    fn save_from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
+        let ty = self.from_hir_type(hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type_and_effects(&hir_ty, ty.clone(), vec![]);
+        self.store_type_and_effects(hir_ty.meta.id, ty.clone(), EffectExpr::Effects(vec![]));
         ty
     }
 
@@ -101,29 +114,25 @@ impl Ctx {
         }
     }
 
-    pub fn into_type(&self, ty: &Type) -> types::Type {
-        into_type::into_type(self, ty)
-    }
-
     fn begin_scope(&self) -> Id {
         let id = self.fresh_existential();
         self.logs.borrow_mut().push(Log::Marker(id));
         id
     }
 
-    fn end_scope(&self, scope: Id) -> Vec<Effect> {
+    fn end_scope(&self, scope: Id) -> EffectExpr {
         let index = self.index(&Log::Marker(scope)).expect("scope should exist");
         let mut effects = Vec::new();
         let logs: Vec<_> = self.logs.borrow_mut().drain(index..).collect();
         for log in logs {
             match log {
-                Log::Effect(effect) => effects.push(self.substitute_from_context_effect(&effect)),
+                Log::Effect(effect) => effects.push(effect),
                 other => self.logs.borrow_mut().push(other),
             }
         }
         // Delete scope
         self.logs.borrow_mut().remove(index);
-        effects
+        EffectExpr::Add(effects)
     }
 
     fn index(&self, log: &Log) -> Option<usize> {
@@ -169,13 +178,11 @@ impl Ctx {
             .borrow_mut()
             .splice(index.., vec![])
             .for_each(|tail| match tail {
-                Log::Effect(effect) => {
-                    effects.push(tail_ctx.substitute_from_context_effect(&effect))
-                }
+                Log::Effect(effect) => effects.push(effect),
                 log => tail_ctx.logs.borrow_mut().push(log.clone()),
             });
 
-        WithEffects(cloned, effects)
+        WithEffects(cloned, EffectExpr::Add(effects))
     }
 
     pub(crate) fn has_variable(&self, id: &Id) -> bool {
@@ -266,17 +273,24 @@ impl Ctx {
         a
     }
 
-    pub fn substitute_from_context_effect(&self, Effect { input, output }: &Effect) -> Effect {
-        Effect {
-            input: self.substitute_from_ctx(input),
-            output: self.substitute_from_ctx(output),
-        }
+    pub fn substitute_from_ctx_effect_expr(&self, expr: &mut EffectExpr) {
+        SubstituteFromCtx { ctx: self }.visit_effect_expr(expr);
     }
 
-    pub fn add_effects<'a>(&self, effects: impl IntoIterator<Item = &'a Effect>) -> Ctx {
-        effects
-            .into_iter()
-            .map(|effect| self.substitute_from_context_effect(effect))
-            .fold(self.clone(), |ctx, effect| ctx.add(Log::Effect(effect)))
+    pub fn add_effects(&self, effects: &EffectExpr) -> Ctx {
+        self.add(Log::Effect(effects.clone()))
+    }
+
+    pub(crate) fn with_effects(&self, ty: Type, mut effects: EffectExpr) -> Type {
+        self.substitute_from_ctx_effect_expr(&mut effects);
+        simplify_effect_expr(&mut effects);
+        if effects.is_empty() {
+            ty
+        } else {
+            Type::Effectful {
+                ty: Box::new(ty),
+                effects,
+            }
+        }
     }
 }

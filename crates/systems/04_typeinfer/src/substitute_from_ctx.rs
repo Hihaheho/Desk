@@ -20,6 +20,11 @@ impl<'a> TypeVisitorMut for SubstituteFromCtx<'a> {
                     *ty = typed;
                 }
             }
+            Type::Infer(id) => {
+                if let Some(typed) = self.ctx.inferred_types.borrow().get(id).cloned() {
+                    *ty = typed;
+                }
+            }
             ty => self.visit_inner(ty),
         }
     }

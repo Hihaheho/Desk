@@ -19,7 +19,7 @@ pub enum Type {
     Trait(Vec<WithMeta<Self>>),
     Effectful {
         ty: Box<WithMeta<Self>>,
-        effects: Vec<Effect>,
+        effects: WithMeta<EffectExpr>,
     },
     Infer,
     This,
@@ -49,5 +49,19 @@ pub enum Type {
     Label {
         label: String,
         item: Box<WithMeta<Self>>,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum EffectExpr {
+    Effects(Vec<WithMeta<Effect>>),
+    Add(Vec<WithMeta<EffectExpr>>),
+    Sub {
+        minuend: Box<WithMeta<EffectExpr>>,
+        subtrahend: Box<WithMeta<EffectExpr>>,
+    },
+    Apply {
+        function: Box<WithMeta<Type>>,
+        arguments: Vec<WithMeta<Type>>,
     },
 }

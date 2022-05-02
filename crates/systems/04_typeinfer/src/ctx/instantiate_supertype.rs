@@ -3,7 +3,7 @@ use crate::{
     error::TypeError,
     mono_type::is_monotype,
     substitute::substitute,
-    ty::Type,
+    ty::{Type, effect_expr::EffectExpr},
 };
 
 impl Ctx {
@@ -19,11 +19,9 @@ impl Ctx {
             self.insert_in_place(&Log::Existential(*id), vec![Log::Solved(*id, sub.clone())])
         } else {
             match sub {
-                Type::Effectful { ty, effects } => effects
-                    .iter()
-                    .fold(self.instantiate_supertype(ty, id)?, |ctx, effect| {
-                        ctx.add(Log::Effect(effect.clone()))
-                    }),
+                Type::Effectful { ty, effects } => {
+                    self.instantiate_supertype(ty, id)?.add_effects(effects)
+                }
                 Type::Function { parameter, body } => {
                     let a1 = self.fresh_existential();
                     let a2 = self.fresh_existential();
@@ -126,7 +124,7 @@ impl Ctx {
                     .instantiate_supertype(item, &a)?
                 }
                 Type::Infer(infer) => {
-                    self.store_type(*infer, Type::Existential(*id));
+                    self.store_inferred_type(*infer, Type::Existential(*id));
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![Log::Solved(*id, sub.clone())],
@@ -135,7 +133,7 @@ impl Ctx {
                 ty => Err(TypeError::NotInstantiableSupertype { ty: ty.clone() })?,
             }
         };
-        self.store_type(*id, sub.clone());
+        self.store_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));
         Ok(ctx)
     }
 }

@@ -1,18 +1,4 @@
-use crate::{
-    ctx::Ctx,
-    ty::{Effect, Type},
-};
-
-pub(crate) fn with_effects(ty: Type, effects: Vec<Effect>) -> Type {
-    if effects.is_empty() {
-        ty
-    } else {
-        Type::Effectful {
-            ty: Box::new(ty),
-            effects,
-        }
-    }
-}
+use crate::{ctx::Ctx, ty::Type};
 
 // TODO: use subtyping before concat or push the type.
 pub(crate) fn sum_all(_ctx: &Ctx, types: Vec<Type>) -> Type {

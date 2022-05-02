@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use hir::meta::WithMeta;
 use thir::{BuiltinOp, Expr, Literal, TypedHir};
-use types::{Effect, Type};
+use types::{Effect, EffectExpr, Type};
 
 use crate::TypedHirGen;
 
@@ -55,10 +55,10 @@ pub(crate) fn find_builtin(ty: &Type) -> Option<Builtin> {
                 ],
                 Type::Effectful {
                     ty: Box::new(labeled("quotient", Type::Number)),
-                    effects: vec![Effect {
+                    effects: EffectExpr::Effects(vec![Effect {
                         input: labeled("division by zero", Type::Number),
                         output: Type::Number,
-                    }],
+                    }]),
                 },
             ),
             Builtin::Custom(Rc::new(Box::new(|thirgen, args| {
@@ -123,10 +123,10 @@ fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: Buil
                     id: thirgen.next_id(),
                     ty: Type::Effectful {
                         ty: Box::new(Type::Number),
-                        effects: vec![Effect {
+                        effects: EffectExpr::Effects(vec![Effect {
                             input: Type::label("division by zero", Type::Number),
                             output: Type::Number,
-                        }],
+                        }]),
                     },
                     expr: Expr::Perform(Box::new(TypedHir {
                         id: thirgen.next_id(),

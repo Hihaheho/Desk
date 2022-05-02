@@ -19,6 +19,7 @@ pub enum Token {
     Attribute,
     Sum,
     Product,
+    Minus,
     Comma,
     Dot,
     Apply,

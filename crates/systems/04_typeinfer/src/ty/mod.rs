@@ -1,4 +1,8 @@
+pub mod effect_expr;
+
 use std::collections::HashMap;
+
+use self::effect_expr::EffectExpr;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
@@ -35,7 +39,7 @@ pub enum Type {
     Infer(Id),
     Effectful {
         ty: Box<Self>,
-        effects: Vec<Effect>,
+        effects: EffectExpr,
     },
     Brand {
         brand: String,
@@ -72,11 +76,49 @@ pub(crate) trait TypeVisitorMut {
     }
     fn visit_existential(&mut self, _id: &mut Id) {}
     fn visit_infer(&mut self, _id: &mut Id) {}
-    fn visit_effectful(&mut self, ty: &mut Type, effects: &mut Vec<Effect>) {
+    fn visit_effectful(&mut self, ty: &mut Type, effects: &mut EffectExpr) {
         self.visit(ty);
+        self.visit_effect_expr(effects);
+    }
+    fn visit_effect_expr(&mut self, effects: &mut EffectExpr) {
+        match effects {
+            EffectExpr::Effects(effects) => {
+                self.visit_effect_expr_effects(effects);
+            }
+            EffectExpr::Add(effects) => {
+                self.visit_effect_expr_add(effects);
+            }
+            EffectExpr::Sub {
+                minuend,
+                subtrahend,
+            } => {
+                self.visit_effect_expr_sub(minuend, subtrahend);
+            }
+            EffectExpr::Apply {
+                function,
+                arguments,
+            } => {
+                self.visit_effect_expr_apply(function, arguments);
+            }
+        }
+    }
+    fn visit_effect_expr_effects(&mut self, effects: &mut Vec<Effect>) {
         effects
             .iter_mut()
             .for_each(|effect| self.visit_effect(effect))
+    }
+    fn visit_effect_expr_add(&mut self, exprs: &mut Vec<EffectExpr>) {
+        exprs
+            .iter_mut()
+            .for_each(|expr| self.visit_effect_expr(expr))
+    }
+    fn visit_effect_expr_sub(&mut self, minuend: &mut EffectExpr, subtrahend: &mut EffectExpr) {
+        self.visit_effect_expr(minuend);
+        self.visit_effect_expr(subtrahend);
+    }
+    fn visit_effect_expr_apply(&mut self, function: &mut Type, arguments: &mut Vec<Type>) {
+        self.visit(function);
+        arguments.iter_mut().for_each(|arg| self.visit(arg));
     }
     fn visit_effect(&mut self, effect: &mut Effect) {
         self.visit(&mut effect.input);
@@ -136,9 +178,45 @@ pub(crate) trait TypeVisitor {
     }
     fn visit_existential(&mut self, _id: &Id) {}
     fn visit_infer(&mut self, _id: &Id) {}
-    fn visit_effectful(&mut self, ty: &Type, effects: &Vec<Effect>) {
+    fn visit_effectful(&mut self, ty: &Type, effects: &EffectExpr) {
         self.visit(ty);
+        self.visit_effect_expr(effects);
+    }
+    fn visit_effect_expr(&mut self, effects: &EffectExpr) {
+        match effects {
+            EffectExpr::Effects(effects) => {
+                self.visit_effect_expr_effects(effects);
+            }
+            EffectExpr::Add(effects) => {
+                self.visit_effect_expr_add(effects);
+            }
+            EffectExpr::Sub {
+                minuend,
+                subtrahend,
+            } => {
+                self.visit_effect_expr_sub(minuend, subtrahend);
+            }
+            EffectExpr::Apply {
+                function,
+                arguments,
+            } => {
+                self.visit_effect_expr_apply(function, arguments);
+            }
+        }
+    }
+    fn visit_effect_expr_effects(&mut self, effects: &Vec<Effect>) {
         effects.iter().for_each(|effect| self.visit_effect(effect))
+    }
+    fn visit_effect_expr_add(&mut self, exprs: &Vec<EffectExpr>) {
+        exprs.iter().for_each(|expr| self.visit_effect_expr(expr))
+    }
+    fn visit_effect_expr_sub(&mut self, minuend: &EffectExpr, subtrahend: &EffectExpr) {
+        self.visit_effect_expr(minuend);
+        self.visit_effect_expr(subtrahend);
+    }
+    fn visit_effect_expr_apply(&mut self, function: &Type, arguments: &Vec<Type>) {
+        self.visit(function);
+        arguments.iter().for_each(|arg| self.visit(arg));
     }
     fn visit_effect(&mut self, effect: &Effect) {
         self.visit(&effect.input);
@@ -176,12 +254,4 @@ pub(crate) trait TypeVisitor {
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct ExprTypes {
     pub types: HashMap<Id, Type>,
-}
-
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
 }

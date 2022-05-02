@@ -17,7 +17,7 @@ pub enum Type {
     Trait(Vec<Spanned<Self>>),
     Effectful {
         ty: Box<Spanned<Self>>,
-        effects: Vec<Effect>,
+        effects: Spanned<EffectExpr>,
     },
     Infer,
     This,
@@ -54,4 +54,18 @@ pub enum Type {
 pub enum CommentPosition {
     Prefix,
     Suffix,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum EffectExpr {
+    Effects(Vec<Spanned<Effect>>),
+    Add(Vec<Spanned<EffectExpr>>),
+    Sub {
+        minuend: Box<Spanned<EffectExpr>>,
+        subtrahend: Box<Spanned<EffectExpr>>,
+    },
+    Apply {
+        function: Box<Spanned<Type>>,
+        arguments: Vec<Spanned<Type>>,
+    },
 }

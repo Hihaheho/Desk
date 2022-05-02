@@ -2,7 +2,7 @@ use crate::{
     ctx::{Ctx, Id, Log},
     error::TypeError,
     mono_type::is_monotype,
-    ty::Type,
+    ty::{effect_expr::EffectExpr, Type},
 };
 
 impl Ctx {
@@ -117,7 +117,7 @@ impl Ctx {
                     .instantiate_subtype(&a, item)?
                 }
                 Type::Infer(infer) => {
-                    self.store_type(*infer, Type::Existential(*id));
+                    self.store_inferred_type(*infer, Type::Existential(*id));
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![Log::Solved(*id, sup.clone())],
@@ -126,7 +126,7 @@ impl Ctx {
                 ty => Err(TypeError::NotInstantiableSubtype { ty: ty.clone() })?,
             }
         };
-        self.store_type(*id, sup.clone());
+        self.store_type_and_effects(*id, sup.clone(), EffectExpr::Effects(vec![]));
         Ok(ctx)
     }
 }

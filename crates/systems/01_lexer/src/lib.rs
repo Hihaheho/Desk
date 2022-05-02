@@ -72,7 +72,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
         .or(just('&').to(Token::Reference))
         .or(just('<').chain(just('!')).to(Token::Continue))
         .or(just('-').chain(just('>')).to(Token::Arrow))
-        .or(just('=').chain(just('>')).to(Token::EArrow));
+        .or(just('=').chain(just('>')).to(Token::EArrow))
+        .or(just('-').to(Token::Minus));
     let special = just('\'')
         .ignore_then(text::ident())
         .try_map(|ident: String, span| match ident.as_str() {
@@ -133,28 +134,20 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
 }
 
 pub fn ident() -> impl Parser<char, String, Error = Simple<char>> + Clone {
-    "a".contains("a");
-    none_of(r#"%@/&$<>!#*^?\[]{}_-=;:~,.()"'1234567890"#)
-        .try_map(|c: char, span| {
-            if c.is_whitespace() {
-                Err(Simple::custom(span, "invalid character"))
-            } else {
-                Ok(c)
-            }
-        })
-        .map(Some)
-        .chain::<char, _, _>(
-            // Does not have @, underscore, hyphen, and single quote.
-            none_of(r#"%/&$<>!#*^?\[]{}=;:~,.()"#)
-                .try_map(|c: char, span| {
-                    if c.is_whitespace() {
-                        Err(Simple::custom(span, "invalid character"))
-                    } else {
-                        Ok(c)
-                    }
-                })
-                .repeated(),
-        )
+    let assert_not_whitespace = |c: char, span| {
+        if c.is_whitespace() {
+            Err(Simple::custom(span, "invalid character"))
+        } else {
+            Ok(c)
+        }
+    };
+    let non_symbol =
+        none_of(r#"%@/&$<>!#*^?\[]{}_-+=;:~,.()"'1234567890"#).try_map(assert_not_whitespace);
+    // Does not have @, underscore, hyphen, and single quote.
+    let non_symbol_2 = none_of(r#"%/&$<>!#*^?\[]{}+=;:~,.()"#).try_map(assert_not_whitespace);
+
+    non_symbol
+        .chain::<char, _, _>(non_symbol_2.repeated())
         .collect()
         .separated_by(text::whitespace())
         .at_least(1)

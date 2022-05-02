@@ -1,5 +1,10 @@
 use crate::{
-    ctx::Ctx, error::TypeError, occurs_in::occurs_in, substitute::substitute, ty::Type, ctx::Log,
+    ctx::Ctx,
+    ctx::Log,
+    error::TypeError,
+    occurs_in::occurs_in,
+    substitute::substitute,
+    ty::{effect_expr::EffectExpr, Type},
 };
 
 impl Ctx {
@@ -129,11 +134,11 @@ impl Ctx {
             (Type::Brand { item, brand: _ }, sup) => self.subtype(item, sup)?,
             // one without brand is not subtype of other with brand
             (Type::Infer(id), sup) => {
-                self.store_type(*id, sup.clone());
+                self.store_inferred_type(*id, sup.clone());
                 self.clone()
             }
             (sub, Type::Infer(id)) => {
-                self.store_type(*id, sub.clone());
+                self.store_inferred_type(*id, sub.clone());
                 self.clone()
             }
 
@@ -145,17 +150,10 @@ impl Ctx {
                 },
             ) => {
                 let theta = self.subtype(ty, ty2)?;
-
-                // get effects of super type
-                let super_effects: Vec<_> = super_effects
-                    .iter()
-                    .map(|effect| theta.substitute_from_context_effect(effect))
-                    .collect();
-                // add effects to ctx that super type does not have
-                let effects = effects
-                    .into_iter()
-                    .filter(|effect| !super_effects.contains(&effect));
-                self.add_effects(effects)
+                theta.add_effects(&EffectExpr::Sub {
+                    minuend: Box::new(effects.clone()),
+                    subtrahend: Box::new(super_effects.clone()),
+                })
             }
             (Type::Effectful { ty, effects }, ty2) => {
                 let theta = self.subtype(ty, ty2)?;

@@ -1,7 +1,5 @@
 pub mod ctx;
 pub mod error;
-mod from_hir_type;
-mod into_type;
 mod mono_type;
 mod occurs_in;
 mod polymorphic_function;
@@ -21,8 +19,6 @@ use ty::Type;
 use types::IdGen;
 use with_effects::WithEffects;
 
-use crate::utils::with_effects;
-
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
     Ok(Ctx {
         id_gen: Rc::new(RefCell::new(IdGen { next_id })),
@@ -30,8 +26,11 @@ pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprT
     }
     .synth(expr)
     .map(|WithEffects((ctx, ty), effects)| {
+        assert!(ctx.continue_input.borrow().is_empty());
+        assert!(ctx.continue_output.borrow().is_empty());
         let ty = ctx.substitute_from_ctx(&ty);
-        (ctx, with_effects(ty, effects))
+        let with_effects = ctx.with_effects(ty, effects);
+        (ctx, with_effects)
     })?)
 }
 
@@ -44,8 +43,6 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use ariadne::{Label, Report, ReportKind, Source};
     use file::FileId;
     use hir::{expr::Literal, meta::dummy_meta};
@@ -53,7 +50,10 @@ mod tests {
     use pretty_assertions::assert_eq;
     use textual_diagnostics::TextualDiagnostics;
 
-    use crate::{ctx::{Ctx, Id}, ty::Effect};
+    use crate::{
+        ctx::Ctx,
+        ty::{effect_expr::EffectExpr, Effect},
+    };
 
     use super::*;
 
@@ -72,20 +72,21 @@ mod tests {
     }
 
     fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {
-        let attrs: HashMap<String, Id> = hirgen
+        let mut vec: Vec<_> = hirgen
             .attrs
             .borrow()
             .iter()
-            .flat_map(|(id, attrs)| attrs.iter().map(|attr| (format!("{:?}", attr), id.clone())))
-            .collect();
-        (1usize..)
-            .map_while(|i| {
-                attrs
-                    .get(&format!("{:?}", Expr::Literal(Literal::Int(i as i64))))
-                    .and_then(|id| ctx.types.borrow().get(id).cloned())
-                    .map(|ty| (i, ty))
+            .flat_map(|(id, attrs)| {
+                attrs.iter().map(|attr| match attr {
+                    Expr::Literal(Literal::Int(attr)) => (*attr as usize, *id),
+                    _ => todo!(),
+                })
             })
-            .collect()
+            .map(|(attr, id)| (attr, ctx.get_type(&id)))
+            .collect();
+
+        vec.sort_by_key(|(attr, _)| *attr);
+        vec
     }
 
     fn print_error<T>(input: &str, error: ExprTypeError) -> T {
@@ -188,7 +189,7 @@ mod tests {
             #6 >'a id #7 "a"
         "#;
         let (hirgen, expr) = parse_inner(input);
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap_or_else(|error| print_error(input, error));
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -197,11 +198,11 @@ mod tests {
                 (
                     2,
                     Type::Function {
-                        parameter: Box::new(Type::Existential(2)),
-                        body: Box::new(Type::Existential(2)),
+                        parameter: Box::new(Type::Existential(102)),
+                        body: Box::new(Type::Existential(102)),
                     },
                 ),
-                (3, Type::Existential(2)),
+                (3, Type::Existential(102)),
                 (4, Type::Number),
                 (5, Type::Number),
                 (6, Type::String),
@@ -218,7 +219,7 @@ mod tests {
             #3 >'a fun #2 * 1, "a"
         "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -240,11 +241,11 @@ mod tests {
     fn perform() {
         let (hirgen, expr) = parse_inner(
             r#"
-            $ #3 \ 'a x -> #2 > \ 'number -> 'number ~ #1 ! &'a x => 'number: 'a fun ~
-            #4 >'a fun "a"
+            $ #3 \ x -> #2 > \ 'number -> 'string ~ #1 ! &x => 'number: fun ~
+            #4 >fun "a"
         "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -253,43 +254,43 @@ mod tests {
                     1,
                     Type::Effectful {
                         ty: Box::new(Type::Number),
-                        effects: vec![Effect {
-                            input: Type::Existential(2),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(102),
                             output: Type::Number,
-                        }],
+                        }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Number),
-                        effects: vec![Effect {
-                            input: Type::Existential(2),
+                        ty: Box::new(Type::String),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(102),
                             output: Type::Number,
-                        }],
+                        }]),
                     },
                 ),
                 (
                     3,
                     Type::Function {
-                        parameter: Box::new(Type::Existential(2)),
+                        parameter: Box::new(Type::Existential(102)),
                         body: Box::new(Type::Effectful {
-                            ty: Box::new(Type::Number),
-                            effects: vec![Effect {
-                                input: Type::Existential(2),
+                            ty: Box::new(Type::String),
+                            effects: EffectExpr::Effects(vec![Effect {
+                                input: Type::Existential(102),
                                 output: Type::Number,
-                            }],
+                            }]),
                         }),
                     },
                 ),
                 (
                     4,
                     Type::Effectful {
-                        ty: Box::new(Type::Number),
-                        effects: vec![Effect {
+                        ty: Box::new(Type::String),
+                        effects: EffectExpr::Effects(vec![Effect {
                             input: Type::String,
                             output: Type::Number,
-                        }],
+                        }]),
                     }
                 ),
             ],
@@ -307,7 +308,7 @@ mod tests {
                         #1 ! &y => z
                 "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         // x: 1, y: 5, z: 9
         assert_eq!(
@@ -316,31 +317,31 @@ mod tests {
                 (
                     1,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(9)),
-                        effects: vec![Effect {
-                            input: Type::Existential(5),
-                            output: Type::Existential(9),
-                        }],
+                        ty: Box::new(Type::Existential(109)),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(105),
+                            output: Type::Existential(109),
+                        }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(9)),
-                        effects: vec![Effect {
-                            input: Type::Existential(1),
-                            output: Type::Existential(5),
-                        }],
+                        ty: Box::new(Type::Existential(109)),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(101),
+                            output: Type::Existential(105),
+                        }]),
                     },
                 ),
                 (
                     3,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(9)),
-                        effects: vec![Effect {
+                        ty: Box::new(Type::Existential(109)),
+                        effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Number,
                             output: Type::String,
-                        }],
+                        }]),
                     },
                 ),
             ],
@@ -357,7 +358,7 @@ mod tests {
                 #1 <! &y
             "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -366,20 +367,20 @@ mod tests {
                     1,
                     Type::Effectful {
                         ty: Box::new(Type::String),
-                        effects: vec![Effect {
+                        effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Number,
                             output: Type::String,
-                        }],
+                        }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
                         ty: Box::new(Type::String),
-                        effects: vec![Effect {
-                            input: Type::Existential(1),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(101),
                             output: Type::Number,
-                        }],
+                        }]),
                     },
                 ),
                 (3, Type::String),
@@ -397,7 +398,7 @@ mod tests {
                 #1 <! 1 => 'string
             "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
             get_types(&hirgen, &ctx),
@@ -406,20 +407,20 @@ mod tests {
                     1,
                     Type::Effectful {
                         ty: Box::new(Type::String),
-                        effects: vec![Effect {
+                        effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Number,
                             output: Type::String,
-                        }],
+                        }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(5)),
-                        effects: vec![Effect {
-                            input: Type::Existential(1),
+                        ty: Box::new(Type::Existential(105)),
+                        effects: EffectExpr::Effects(vec![Effect {
+                            input: Type::Existential(101),
                             output: Type::Number,
-                        }],
+                        }]),
                     },
                 ),
                 (3, Type::String),
@@ -428,16 +429,16 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "todo"]
-    fn test_polymorphic_effects() {
+    #[ignore = "not yet implemented"]
+    fn test_polymorphic_effectful() {
         let input = r#"
             $ #1 \x, y ->
-              ^#3 'handle > x 1 ~
+              ^#2 'handle > x 1 ~
               'number => 'string ->
                 > y 2
               : 'number
             : fun ~
-            #2 >fun
+            #3 >fun
               \ @x 'number ->
                 $ ! 1 => 'string ~
                 ! @a * => 'number,
@@ -445,25 +446,25 @@ mod tests {
                 $ ! "a" => 'number ~
                 ! @b * => 'number
             "#;
-        let (hirgen, expr) = parse_inner(input);
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap_or_else(|error| print_error(input, error));
+        let (hirgen, expr) = dbg!(parse_inner(input));
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&hirgen, dbg!(&ctx)),
             vec![
                 (
                     1,
                     Type::Function {
-                        parameter: Box::new(Type::Function {
-                            parameter: Box::new(Type::Number),
-                            body: Box::new(Type::Number)
-                        }),
+                        parameter: Box::new(Type::Existential(2)),
                         body: Box::new(Type::Function {
                             parameter: Box::new(Type::Function {
-                                parameter: Box::new(Type::Number),
+                                parameter: Box::new(Type::Existential(23)),
                                 body: Box::new(Type::Number)
                             }),
-                            body: Box::new(Type::Number)
+                            body: Box::new(Type::Effectful {
+                                ty: Box::new(Type::Number),
+                                effects: EffectExpr::Add(vec![])
+                            })
                         })
                     }
                 ),
@@ -471,7 +472,7 @@ mod tests {
                     2,
                     Type::Effectful {
                         ty: Box::new(Type::Number),
-                        effects: vec![
+                        effects: EffectExpr::Effects(vec![
                             Effect {
                                 input: Type::Label {
                                     label: "a".into(),
@@ -486,7 +487,7 @@ mod tests {
                                 },
                                 output: Type::Number,
                             }
-                        ],
+                        ]),
                     },
                 ),
             ]
@@ -564,18 +565,14 @@ mod tests {
 
     #[test]
     fn infer() {
-        let (hirgen, expr) = parse_inner(
+        let (_hirgen, expr) = parse_inner(
             r#"
-            ^> \ #1 _ -> #2 _ "a": 'number
+            ^> \ _ -> 'number "a": _
             "#,
         );
-        let (ctx, ty) = crate::synth(0, &expr).unwrap();
+        let (_ctx, ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(ty, Type::Number);
-        assert_eq!(
-            get_types(&hirgen, &ctx),
-            vec![(1, Type::String,), (2, Type::Number,)]
-        );
     }
 
     #[test]
@@ -588,7 +585,7 @@ mod tests {
                'string -> ^2: @b 'number.
             "#,
         );
-        let (ctx, _ty) = crate::synth(0, &expr).unwrap();
+        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
             get_types(&hirgen, &ctx),

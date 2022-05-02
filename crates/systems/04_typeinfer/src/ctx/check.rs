@@ -4,13 +4,18 @@ use hir::{
 };
 
 use crate::{
-    error::ExprTypeError, to_expr_type_error, ty::Type, with_effects::WithEffects, ctx::Ctx, ctx::Log,
+    ctx::Ctx, ctx::Log, error::ExprTypeError, to_expr_type_error, ty::Type,
+    with_effects::WithEffects,
 };
 
 impl Ctx {
-    pub fn check(&self, expr: &WithMeta<Expr>, ty: &Type) -> Result<WithEffects<Ctx>, ExprTypeError> {
+    pub fn check(
+        &self,
+        expr: &WithMeta<Expr>,
+        ty: &Type,
+    ) -> Result<WithEffects<Ctx>, ExprTypeError> {
         let scope = self.begin_scope();
-        let mut effects = Vec::new();
+        let mut synthed_ty = None;
         let ctx = match (&expr.value, ty) {
             (Expr::Literal(Literal::Int(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
@@ -28,17 +33,15 @@ impl Ctx {
             ) => {
                 todo!()
             }
-            (_, Type::ForAll { variable, body }) => {
-                let WithEffects(ctx, effs) = self
-                    .add(Log::Variable(*variable))
-                    .check(expr, &*body)?
-                    .recover_effects()
-                    .truncate_from(&Log::Variable(*variable));
-                effects.extend(effs);
-                ctx
-            }
-            (_, ty) => {
+            (_, Type::ForAll { variable, body }) => self
+                .add(Log::Variable(*variable))
+                .check(expr, &*body)?
+                .recover_effects()
+                .truncate_from(&Log::Variable(*variable))
+                .recover_effects(),
+            (_, _) => {
                 let (ctx, synthed) = self.synth(expr)?.recover_effects();
+                synthed_ty = Some(synthed.clone());
                 ctx.subtype(
                     &ctx.substitute_from_ctx(&synthed),
                     &ctx.substitute_from_ctx(ty),
@@ -47,8 +50,8 @@ impl Ctx {
             }
         };
         let effects = ctx.end_scope(scope);
-        let ty = ctx.substitute_from_ctx(ty);
-        ctx.store_type_and_effects(expr, ty, effects.clone());
+        let ty = synthed_ty.as_ref().unwrap_or(ty);
+        ctx.store_type_and_effects(expr.meta.id, ctx.substitute_from_ctx(ty), effects.clone());
         Ok(WithEffects(ctx, effects))
     }
 }

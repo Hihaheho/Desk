@@ -8,8 +8,8 @@ use crate::{
     ctx::Log,
     error::{ExprTypeError, TypeError},
     to_expr_type_error,
-    ty::{Effect, Type},
-    utils::{sum_all, with_effects},
+    ty::{effect_expr::EffectExpr, Effect, Type},
+    utils::sum_all,
     with_effects::WithEffects,
 };
 
@@ -48,17 +48,17 @@ impl Ctx {
             }
             Expr::Perform { input, output } => {
                 let (ctx, ty) = self.synth(&input)?.recover_effects();
-                let output = ctx.from_hir_type(output);
-                ctx.add(Log::Effect(Effect {
+                let output = ctx.save_from_hir_type(output);
+                ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
                     input: ty,
                     output: output.clone(),
-                }))
+                }])))
                 .with_type(output)
             }
             Expr::Continue { input, output } => {
                 let (ctx, input_ty) = self.synth(&input)?.recover_effects();
                 let (ctx, output) = if let Some(output) = output {
-                    let output = ctx.from_hir_type(output);
+                    let output = ctx.save_from_hir_type(output);
                     (
                         ctx.subtype(
                             ctx.continue_output
@@ -99,25 +99,25 @@ impl Ctx {
                             .map_err(|error| to_expr_type_error(expr, error))?,
                     )
                     .map_err(|error| to_expr_type_error(expr, error))?
-                    .add(Log::Effect(Effect {
+                    .add(Log::Effect(EffectExpr::Effects(vec![Effect {
                         input: input_ty,
                         output: output.clone(),
-                    }))
+                    }])))
                     .with_type(output);
                 x
             }
             Expr::Handle { expr, handlers } => {
                 // synth expr
                 let WithEffects((mut ctx, expr_ty), mut expr_effects) = self.synth(expr)?;
-                expr_effects
-                    .iter_mut()
-                    .for_each(|effect| *effect = ctx.substitute_from_context_effect(&effect));
 
                 // push continue output type.
                 ctx.continue_output.borrow_mut().push(expr_ty.clone());
 
+                let mut handler_types = Vec::with_capacity(handlers.len());
+                let mut handled_effects = Vec::with_capacity(handlers.len());
+                let mut handler_effects = Vec::with_capacity(handlers.len());
                 // check handler
-                let (handled_effects, handler_effects): (Vec<_>, Vec<_>) = handlers
+                handlers
                     .iter()
                     .map(
                         |Handler {
@@ -125,55 +125,64 @@ impl Ctx {
                              output,
                              handler,
                          }| {
-                            let output = self.from_hir_type(output);
+                            let output = self.save_from_hir_type(output);
                             // push handler input type
                             ctx.continue_input.borrow_mut().push(output.clone());
 
-                            let WithEffects(next_ctx, mut handler_effects) =
-                                ctx.check(handler, &expr_ty)?;
+                            let WithEffects((next_ctx, handler_type), effects) =
+                                ctx.synth(handler)?;
                             ctx = next_ctx;
 
                             // pop handler input type
                             ctx.continue_input.borrow_mut().pop();
 
-                            handler_effects.iter_mut().for_each(|effect| {
-                                *effect = ctx.substitute_from_context_effect(&effect)
-                            });
                             // handled effect and continue effect
-                            let handled_effect = self.substitute_from_context_effect(&Effect {
-                                input: ctx.from_hir_type(input),
+                            let handled_effect = Effect {
+                                input: ctx.save_from_hir_type(input),
                                 output,
-                            });
-                            let continue_effect = self.substitute_from_context_effect(&Effect {
+                            };
+                            let continue_effect = Effect {
                                 input: handled_effect.output.clone(),
                                 output: ctx.substitute_from_ctx(&expr_ty),
-                            });
-                            // remove continue effect
-                            if let Some(position) = (&handler_effects)
-                                .iter()
-                                .position(|effect| effect == &continue_effect)
-                            {
-                                handler_effects.remove(position);
-                            }
-                            Ok((handled_effect, handler_effects))
+                            };
+                            handler_types.push(handler_type);
+                            handled_effects.push(handled_effect);
+                            handler_effects.push(
+                                // remove continue effect
+                                EffectExpr::Sub {
+                                    minuend: Box::new(effects),
+                                    subtrahend: Box::new(EffectExpr::Effects(vec![
+                                        continue_effect,
+                                    ])),
+                                },
+                            );
+                            Ok(())
                         },
                     )
-                    .collect::<Result<Vec<_>, _>>()?
-                    .into_iter()
-                    .unzip();
-                // push continue output type.
-                ctx.continue_output.borrow_mut().push(expr_ty.clone());
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                // pop continue output type.
+                ctx.continue_output.borrow_mut().pop();
 
                 // remove handled effects
-                expr_effects.retain(|effect| !handled_effects.contains(effect));
+                expr_effects = EffectExpr::Sub {
+                    minuend: Box::new(expr_effects),
+                    subtrahend: Box::new(EffectExpr::Effects(handled_effects)),
+                };
 
                 // add remain effects to ctx
-                for handler_effects in handler_effects {
-                    expr_effects.extend(handler_effects);
-                }
+                handler_effects.push(expr_effects);
+                expr_effects = EffectExpr::Add(handler_effects);
+
+                // construct handler type
+                handler_types.push(ctx.substitute_from_ctx(&expr_ty));
+                let types = handler_types
+                    .into_iter()
+                    .map(|ty| ctx.substitute_from_ctx(&ty))
+                    .collect();
 
                 ctx.add_effects(&expr_effects)
-                    .with_type(ctx.substitute_from_ctx(&expr_ty))
+                    .with_type(sum_all(&ctx, types))
             }
             Expr::Apply {
                 function,
@@ -181,7 +190,7 @@ impl Ctx {
             } => {
                 if arguments.is_empty() {
                     // Reference
-                    let fun = self.from_hir_type(function);
+                    let fun = self.save_from_hir_type(function);
                     if let Type::Variable(id) = fun {
                         self.clone().with_type(
                             self.get_typed_var(&id)
@@ -192,15 +201,26 @@ impl Ctx {
                     }
                 } else {
                     // Normal application
-                    let fun = match self.from_hir_type(function) {
+                    let fun = match self.save_from_hir_type(function) {
                         Type::Variable(var) => self
                             .get_typed_var(&var)
                             .map_err(|error| to_expr_type_error(expr, error))?,
                         ty => ty,
                     };
-                    arguments
+                    let (ctx, ty) = arguments
                         .iter()
-                        .try_fold((self.clone(), fun), |(ctx, fun), arg| ctx.apply(&fun, &arg))?
+                        .try_fold((self.clone(), fun.clone()), |(ctx, fun), arg| {
+                            ctx.apply(&fun, &arg)
+                        })?;
+
+                    ctx.add_effects(&EffectExpr::Apply {
+                        function: Box::new(fun),
+                        arguments: arguments
+                            .iter()
+                            .map(|arg| self.get_type(&arg.meta.id))
+                            .collect(),
+                    })
+                    .with_type(ty)
                 }
             }
             Expr::Product(exprs) => {
@@ -214,11 +234,11 @@ impl Ctx {
                 ctx.with_type(Type::Product(types))
             }
             Expr::Typed { ty, item: expr } => {
-                let ty = self.from_hir_type(ty);
+                let ty = self.save_from_hir_type(ty);
                 self.check(&expr, &ty)?.recover_effects().with_type(ty)
             }
             Expr::Function { parameter, body } => {
-                if let Type::Variable(id) = self.from_hir_type(parameter) {
+                if let Type::Variable(id) = self.save_from_hir_type(parameter) {
                     let a = self.fresh_existential();
                     let b = self.fresh_existential();
                     let WithEffects(ctx, effects) = self
@@ -231,12 +251,12 @@ impl Ctx {
                     // Function captures effects in its body
                     ctx.with_type(Type::Function {
                         parameter: Box::new(Type::Existential(a)),
-                        body: Box::new(with_effects(Type::Existential(b), effects)),
+                        body: Box::new(self.with_effects(Type::Existential(b), effects)),
                     })
                 } else {
                     let (ctx, ty) = self.synth(&body)?.recover_effects();
                     ctx.with_type(Type::Function {
-                        parameter: Box::new(self.from_hir_type(parameter)),
+                        parameter: Box::new(self.save_from_hir_type(parameter)),
                         body: Box::new(ty),
                     })
                 }
@@ -268,7 +288,7 @@ impl Ctx {
                     .iter()
                     .map(|MatchCase { ty, expr }| {
                         Ok((
-                            self.from_hir_type(ty),
+                            self.save_from_hir_type(ty),
                             self.synth(expr)?.recover_effects().1,
                         ))
                     })
@@ -296,7 +316,7 @@ impl Ctx {
         };
         let effects = ctx.end_scope(scope);
         let ty = ctx.substitute_from_ctx(&ty);
-        ctx.store_type_and_effects(expr, ty.clone(), effects.clone());
+        ctx.store_type_and_effects(expr.meta.id, ty.clone(), effects.clone());
         Ok(WithEffects((ctx, ty), effects))
     }
 }

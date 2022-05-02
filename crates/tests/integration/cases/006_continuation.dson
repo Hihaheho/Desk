@@ -5,7 +5,7 @@
       @content "
         'type add \\'number, 'number -> @sum 'number
         'handle $ ! \"a\" => 'number: x ~
-        >add &x, &x ~
+          >add &x, &x ~
         'string => 'number ->
           >add
             ! 1 => 'number,

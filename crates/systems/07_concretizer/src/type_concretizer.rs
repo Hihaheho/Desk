@@ -1,5 +1,5 @@
-use mir::ty::{ConcEffect, ConcType};
-use types::{Effect, Type};
+use mir::ty::{ConcEffect, ConcEffectExpr, ConcType};
+use types::{Effect, EffectExpr, Type};
 
 pub struct TypeConcretizer {}
 
@@ -27,10 +27,7 @@ impl TypeConcretizer {
             },
             Type::Effectful { ty, effects } => ConcType::Effectful {
                 ty: Box::new(self.to_conc_type(ty)),
-                effects: effects
-                    .iter()
-                    .map(|effect| self.to_conc_effect(effect))
-                    .collect(),
+                effects: self.to_conc_effect_expr(effects),
             },
             Type::Brand { brand: label, item } | Type::Label { label, item } => ConcType::Label {
                 label: label.clone(),
@@ -43,6 +40,34 @@ impl TypeConcretizer {
         ConcEffect {
             input: self.to_conc_type(input),
             output: self.to_conc_type(output),
+        }
+    }
+
+    pub fn to_conc_effect_expr(&mut self, expr: &EffectExpr) -> ConcEffectExpr {
+        match expr {
+            EffectExpr::Effects(effects) => {
+                ConcEffectExpr::Effects(effects.iter().map(|e| self.to_conc_effect(e)).collect())
+            }
+            EffectExpr::Add(effects) => ConcEffectExpr::Add(
+                effects
+                    .iter()
+                    .map(|e| self.to_conc_effect_expr(e))
+                    .collect(),
+            ),
+            EffectExpr::Sub {
+                minuend,
+                subtrahend,
+            } => ConcEffectExpr::Sub {
+                minuend: Box::new(self.to_conc_effect_expr(minuend)),
+                subtrahend: Box::new(self.to_conc_effect_expr(subtrahend)),
+            },
+            EffectExpr::Apply {
+                function,
+                arguments,
+            } => ConcEffectExpr::Apply {
+                function: Box::new(self.to_conc_type(function)),
+                arguments: arguments.iter().map(|a| self.to_conc_type(a)).collect(),
+            },
         }
     }
 }
