@@ -29,13 +29,13 @@ pub enum TypeError {
     ContinueOutOfHandle,
 }
 
-impl Into<TextualDiagnostics> for ExprTypeError {
-    fn into(self) -> TextualDiagnostics {
+impl From<ExprTypeError> for TextualDiagnostics {
+    fn from(error: ExprTypeError) -> TextualDiagnostics {
         TextualDiagnostics {
             title: "Typeinfer error".into(),
             reports: vec![Report {
-                span: self.meta.span,
-                text: format!("{:?}", self.error),
+                span: error.meta.span,
+                text: format!("{:?}", error.error),
             }],
         }
     }

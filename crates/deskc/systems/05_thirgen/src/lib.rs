@@ -28,17 +28,15 @@ pub struct TypedHirGen {
 impl TypedHirGen {
     pub fn gen(&self, expr: &WithMeta<Expr>) -> TypedHir {
         let Meta { id: expr_id, .. } = &expr.meta;
-        let ty = self.types.get(&expr_id).expect("must have type").clone();
+        let ty = self.types.get(expr_id).expect("must have type").clone();
         let expr = match &expr.value {
             Expr::Literal(Literal::Hole) => todo!(),
-            Expr::Literal(Literal::Int(value)) => {
-                thir::Expr::Literal(thir::Literal::Int(value.clone()))
-            }
+            Expr::Literal(Literal::Int(value)) => thir::Expr::Literal(thir::Literal::Int(*value)),
             Expr::Literal(Literal::Float(value)) => {
-                thir::Expr::Literal(thir::Literal::Float(value.clone()))
+                thir::Expr::Literal(thir::Literal::Float(*value))
             }
             Expr::Literal(Literal::Rational(a, b)) => {
-                thir::Expr::Literal(thir::Literal::Rational(a.clone(), b.clone()))
+                thir::Expr::Literal(thir::Literal::Rational(*a, *b))
             }
             Expr::Literal(Literal::String(value)) => {
                 thir::Expr::Literal(thir::Literal::String(value.clone()))
@@ -63,8 +61,8 @@ impl TypedHirGen {
                              handler,
                          }| Handler {
                             effect: Effect {
-                                input: self.get_type(&input),
-                                output: self.get_type(&output),
+                                input: self.get_type(input),
+                                output: self.get_type(output),
                             },
                             handler: self.gen(&*handler),
                         },
@@ -78,25 +76,22 @@ impl TypedHirGen {
                 arguments,
             } => {
                 // TODO: lookup imported uuid to allow overwrite the builtin functions
-                if let Some(builtin) = find_builtin(&self.get_type(&function)) {
+                if let Some(builtin) = find_builtin(&self.get_type(function)) {
                     match builtin {
                         builtin::Builtin::Normal { op, params } => {
                             let op = thir::Expr::Op {
                                 op,
                                 operands: arguments.iter().map(|arg| self.gen(arg)).collect(),
                             };
-                            if arguments.len() < params {
-                                // TODO wrap by function
-                                op
-                            } else {
-                                op
-                            }
+                            // TODO wrap by function
+                            if arguments.len() < params {}
+                            op
                         }
-                        builtin::Builtin::Custom(expr) => expr(&self, &arguments),
+                        builtin::Builtin::Custom(expr) => expr(self, arguments),
                     }
                 } else {
                     thir::Expr::Apply {
-                        function: self.get_type(&function),
+                        function: self.get_type(function),
                         link_name: link_name.clone(),
                         arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
                     }
@@ -187,7 +182,7 @@ mod tests {
 
     fn parse(input: &str) -> WithMeta<Expr> {
         let tokens = lexer::scan(input).unwrap();
-        let ast = dbg!(parser::parse(tokens).unwrap());
+        let ast = parser::parse(tokens).unwrap();
         hirgen::gen_hir(FileId(0), &ast, Default::default())
             .unwrap()
             .1

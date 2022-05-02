@@ -22,11 +22,11 @@ pub fn parse(input: Vec<(Token, Span)>) -> Result<(Expr, Span), ParserError> {
 #[derive(Debug, PartialEq)]
 pub struct ParserError(pub Vec<Simple<Token>>);
 
-impl Into<TextualDiagnostics> for ParserError {
-    fn into(self) -> TextualDiagnostics {
+impl From<ParserError> for TextualDiagnostics {
+    fn from(error: ParserError) -> TextualDiagnostics {
         TextualDiagnostics {
             title: "Parser error".into(),
-            reports: self
+            reports: error
                 .0
                 .into_iter()
                 .map(|error| Report {

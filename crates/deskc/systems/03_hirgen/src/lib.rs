@@ -59,7 +59,7 @@ impl HirGen {
             ast::ty::Type::String => self.with_meta(Type::String),
             ast::ty::Type::Trait(types) => self.with_meta(Type::Trait(
                 types
-                    .into_iter()
+                    .iter()
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
@@ -74,24 +74,24 @@ impl HirGen {
                     .borrow()
                     .get(ident)
                     .cloned()
-                    .unwrap_or(Type::Variable(self.get_id_of(ident.clone()))),
+                    .unwrap_or_else(|| Type::Variable(self.get_id_of(ident.clone()))),
             ),
             ast::ty::Type::Product(types) => self.with_meta(Type::Product(
                 types
-                    .into_iter()
+                    .iter()
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
             ast::ty::Type::Sum(types) => self.with_meta(Type::Sum(
                 types
-                    .into_iter()
+                    .iter()
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
             ast::ty::Type::Function { parameters, body } => {
                 let span = self.pop_span().unwrap();
                 parameters
-                    .into_iter()
+                    .iter()
                     .map(|parameter| self.gen_type(parameter))
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
@@ -202,13 +202,13 @@ impl HirGen {
                 function: self.gen_type(function)?,
                 link_name: link_name.clone(),
                 arguments: arguments
-                    .into_iter()
+                    .iter()
                     .map(|argument| self.gen(argument))
                     .collect::<Result<Vec<_>, _>>()?,
             }),
             ast::expr::Expr::Product(items) => self.with_meta(Expr::Product(
                 items
-                    .into_iter()
+                    .iter()
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
@@ -219,7 +219,7 @@ impl HirGen {
             ast::expr::Expr::Function { parameters, body } => {
                 let span = self.pop_span().unwrap();
                 parameters
-                    .into_iter()
+                    .iter()
                     .map(|parameter| self.gen_type(parameter))
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
@@ -233,13 +233,13 @@ impl HirGen {
             }
             ast::expr::Expr::Array(items) => self.with_meta(Expr::Array(
                 items
-                    .into_iter()
+                    .iter()
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
             ast::expr::Expr::Set(items) => self.with_meta(Expr::Set(
                 items
-                    .into_iter()
+                    .iter()
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
@@ -256,14 +256,14 @@ impl HirGen {
                 self.pop_span();
                 let mut ret = self.gen(expr)?;
                 let attr = self.gen(attr)?.value;
-                ret.meta.attrs.push(attr.clone());
+                ret.meta.attrs.push(attr);
                 self.attrs
                     .borrow_mut()
                     .insert(ret.meta.id, ret.meta.attrs.clone());
                 ret
             }
             ast::expr::Expr::Brand { brands, item: expr } => {
-                brands.into_iter().for_each(|brand| {
+                brands.iter().for_each(|brand| {
                     self.brands.borrow_mut().insert(brand.clone());
                 });
                 self.gen(expr)?
@@ -271,7 +271,7 @@ impl HirGen {
             ast::expr::Expr::Match { of, cases } => self.with_meta(Expr::Match {
                 of: Box::new(self.gen(of)?),
                 cases: cases
-                    .into_iter()
+                    .iter()
                     .map(|ast::expr::MatchCase { ty, expr }| {
                         Ok(MatchCase {
                             ty: self.gen_type(ty)?,
@@ -299,9 +299,9 @@ impl HirGen {
                 self.gen(expr)?
             }
             ast::expr::Expr::Comment { item, .. } => self.gen(item)?,
-            ast::expr::Expr::Card { uuid, .. } => Err(HirGenError::UnexpectedCard {
-                ident: uuid.clone(),
-            })?,
+            ast::expr::Expr::Card { uuid, .. } => {
+                Err(HirGenError::UnexpectedCard { ident: *uuid })?
+            }
         };
         Ok(with_meta)
     }
@@ -333,7 +333,7 @@ impl HirGen {
             meta: Meta {
                 attrs: vec![],
                 id: self.next_id(),
-                file_id: self.file_stack.borrow().last().unwrap().clone(),
+                file_id: *self.file_stack.borrow().last().unwrap(),
                 span: self.pop_span().unwrap(),
             },
             value,
@@ -365,10 +365,8 @@ mod tests {
             },
             Type::Infer => ty.value,
             Type::This => ty.value,
-            Type::Product(types) => {
-                Type::Product(types.into_iter().map(|ty| remove_meta_ty(ty)).collect())
-            }
-            Type::Sum(types) => Type::Sum(types.into_iter().map(|ty| remove_meta_ty(ty)).collect()),
+            Type::Product(types) => Type::Product(types.into_iter().map(remove_meta_ty).collect()),
+            Type::Sum(types) => Type::Sum(types.into_iter().map(remove_meta_ty).collect()),
             Type::Function { parameter, body } => Type::Function {
                 parameter: Box::new(remove_meta_ty(*parameter)),
                 body: Box::new(remove_meta_ty(*body)),
@@ -439,14 +437,9 @@ mod tests {
             } => Expr::Apply {
                 function: remove_meta_ty(function),
                 link_name,
-                arguments: arguments
-                    .into_iter()
-                    .map(|argument| remove_meta(argument))
-                    .collect(),
+                arguments: arguments.into_iter().map(remove_meta).collect(),
             },
-            Expr::Product(exprs) => {
-                Expr::Product(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
-            }
+            Expr::Product(exprs) => Expr::Product(exprs.into_iter().map(remove_meta).collect()),
             Expr::Typed { ty, item: expr } => Expr::Typed {
                 ty: remove_meta_ty(ty),
                 item: Box::new(remove_meta(*expr)),
@@ -455,12 +448,8 @@ mod tests {
                 parameter: remove_meta_ty(parameter),
                 body: Box::new(remove_meta(*body)),
             },
-            Expr::Array(exprs) => {
-                Expr::Array(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
-            }
-            Expr::Set(exprs) => {
-                Expr::Set(exprs.into_iter().map(|expr| remove_meta(expr)).collect())
-            }
+            Expr::Array(exprs) => Expr::Array(exprs.into_iter().map(remove_meta).collect()),
+            Expr::Set(exprs) => Expr::Set(exprs.into_iter().map(remove_meta).collect()),
             Expr::Match { of, cases } => Expr::Match {
                 of: Box::new(remove_meta(*of)),
                 cases: cases

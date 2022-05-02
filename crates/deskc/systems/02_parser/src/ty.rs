@@ -33,7 +33,7 @@ pub fn parser(
             type_
                 .clone()
                 .separated_by_comma_at_least_one()
-                .map(|types| Type::Trait(types)),
+                .map(Type::Trait),
         );
         let alias = just(Token::A).ignore_then(parse_ident().map(Type::Alias));
         let effectful = just(Token::Perform)
@@ -43,9 +43,8 @@ pub fn parser(
                 ty: Box::new(ty),
                 effects,
             });
-        let product =
-            parse_op(just(Token::Product), type_.clone()).map(|types| Type::Product(types));
-        let sum = parse_op(just(Token::Sum), type_.clone()).map(|types| Type::Sum(types));
+        let product = parse_op(just(Token::Product), type_.clone()).map(Type::Product);
+        let sum = parse_op(just(Token::Sum), type_.clone()).map(Type::Sum);
         let array = type_
             .clone()
             .delimited_by(just(Token::ArrayBegin), just(Token::ArrayEnd))
@@ -169,7 +168,7 @@ fn parse_effects(
                 arguments,
             });
 
-        let add = parse_op(just(Token::Sum), expr.clone()).map(|exprs| EffectExpr::Add(exprs));
+        let add = parse_op(just(Token::Sum), expr.clone()).map(EffectExpr::Add);
         let sub = just(Token::Minus)
             .ignore_then(expr.clone())
             .then_ignore(just(Token::Comma))

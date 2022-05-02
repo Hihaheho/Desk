@@ -1,6 +1,6 @@
 mod add;
-mod sub;
 mod eq;
+mod sub;
 use mir::{Op, VarId};
 
 use crate::{eval_mir::EvalMir, value::Value};
@@ -10,17 +10,11 @@ impl EvalMir {
         match op {
             Op::Add => {
                 assert!(operands.len() == 2);
-                add::calc(
-                    &self.load_value(&operands[0]),
-                    &self.load_value(&operands[1]),
-                )
+                add::calc(self.load_value(&operands[0]), self.load_value(&operands[1]))
             }
             Op::Sub => {
                 assert!(operands.len() == 2);
-                sub::calc(
-                    &self.load_value(&operands[0]),
-                    &self.load_value(&operands[1]),
-                )
+                sub::calc(self.load_value(&operands[0]), self.load_value(&operands[1]))
             }
             Op::Mul => todo!(),
             Op::Div => todo!(),
@@ -29,10 +23,7 @@ impl EvalMir {
             Op::Pow => todo!(),
             Op::Eq => {
                 assert!(operands.len() == 2);
-                eq::calc(
-                    &self.load_value(&operands[0]),
-                    &self.load_value(&operands[1]),
-                )
+                eq::calc(self.load_value(&operands[0]), self.load_value(&operands[1]))
             }
             Op::Neq => todo!(),
             Op::Lt => todo!(),

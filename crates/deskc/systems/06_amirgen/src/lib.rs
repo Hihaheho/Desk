@@ -294,11 +294,7 @@ impl AmirGen {
         Ok(var_id)
     }
 
-    fn gen_closure(
-        &mut self,
-        parameters: &Vec<Type>,
-        body: &TypedHir,
-    ) -> Result<FnRef, GenAmirError> {
+    fn gen_closure(&mut self, parameters: &[Type], body: &TypedHir) -> Result<FnRef, GenAmirError> {
         // Begin new mir
         self.begin_amir();
 

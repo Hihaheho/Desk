@@ -19,19 +19,19 @@ pub fn thir_to_dson(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
         Expr::Product(values) => Dson::Product(
             values
                 .iter()
-                .map(|v| thir_to_dson(v))
+                .map(thir_to_dson)
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Array(values) => Dson::Array(
             values
                 .iter()
-                .map(|v| thir_to_dson(v))
+                .map(thir_to_dson)
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Set(values) => Dson::Set(
             values
                 .iter()
-                .map(|v| thir_to_dson(v))
+                .map(thir_to_dson)
                 .collect::<Result<Vec<_>, _>>()?,
         ),
         Expr::Let { .. } => Err(HirToJsonError::NotAllowed("let".into()))?,

@@ -1,6 +1,7 @@
 [package]
 name = "deskc-test-integration"
 version = "0.1.0"
+license = "MIT OR Apache-2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -21,7 +22,7 @@ dson = { path = "../../components/dson", version = "0.1.0", package = "deskc-dso
 types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
 file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
 textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.1.0", package = "deskc-textual-diagnostics" }
-serde_dson = { path = "../../libs/serde-dson", version = "0.1.0" }
+serde-dson = { path = "../../libs/serde-dson", version = "0.1.0" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }

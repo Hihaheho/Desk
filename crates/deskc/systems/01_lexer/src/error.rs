@@ -4,11 +4,11 @@ use textual_diagnostics::{Report, TextualDiagnostics};
 #[derive(Debug, PartialEq)]
 pub struct LexerError(pub Vec<Simple<char>>);
 
-impl Into<TextualDiagnostics> for LexerError {
-    fn into(self) -> TextualDiagnostics {
+impl From<LexerError> for TextualDiagnostics {
+    fn from(error: LexerError) -> TextualDiagnostics {
         TextualDiagnostics {
             title: "Lexer error".into(),
-            reports: self
+            reports: error
                 .0
                 .into_iter()
                 .map(|error| Report {

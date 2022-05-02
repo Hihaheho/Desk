@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          default: true
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v1
+
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        arguments: --all-features --config configs/deny.toml
+
+      - name: Check fmt
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
+
+      - name: Check
+        run: cargo check --all-features
+
+      - name: Compile test
+        run: cargo test --no-run --locked --all-features
+
+      - name: Run test
+        run: cargo test --all-features

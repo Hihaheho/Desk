@@ -57,7 +57,7 @@ impl Concretizer {
         let mut vars = Vars(
             vars.iter()
                 .map(|var| AVar {
-                    ty: type_conc.to_conc_type(&var.ty),
+                    ty: type_conc.gen_conc_type(&var.ty),
                     scope: var.scope,
                 })
                 .collect(),
@@ -73,13 +73,13 @@ impl Concretizer {
 
         let captured = captured
             .iter()
-            .map(|ty| type_conc.to_conc_type(ty))
+            .map(|ty| type_conc.gen_conc_type(ty))
             .collect();
 
         let links = links
             .iter()
             .map(|link| ALink {
-                ty: type_conc.to_conc_type(&link.ty),
+                ty: type_conc.gen_conc_type(&link.ty),
                 name: link.name.clone(),
             })
             .collect();

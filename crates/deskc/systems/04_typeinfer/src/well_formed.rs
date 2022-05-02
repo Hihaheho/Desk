@@ -1,8 +1,8 @@
 use types::Id;
 
 use crate::{
-    ty::{Type, TypeVisitor},
     ctx::Ctx,
+    ty::{Type, TypeVisitor},
 };
 
 pub(crate) struct WellFormed<'a> {
@@ -20,8 +20,8 @@ impl<'a> TypeVisitor for WellFormed<'a> {
     }
 
     fn visit(&mut self, ty: &Type) {
-		if self.well_formed {
-			self.visit_inner(ty);
-		}
-	}
+        if self.well_formed {
+            self.visit_inner(ty);
+        }
+    }
 }

@@ -9,7 +9,7 @@ pub(crate) fn sum_all(_ctx: &Ctx, types: Vec<Type>) -> Type {
             other => vec![other],
         })
         .reduce(|a, b| a.into_iter().chain(b).collect())
-        .unwrap_or(vec![]);
+        .unwrap_or_default();
 
     sum.sort();
     sum.dedup();

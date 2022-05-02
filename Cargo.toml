@@ -6,4 +6,8 @@ members = [
   "crates/deskc/systems/*",
   "crates/deskc/components/*",
   "crates/deskc/tests/*",
+  "crates/dkernel/systems/*",
+  "crates/dkernel/components/*",
+  "crates/dkernel/adapters/*",
+  "crates/desk-x/apps/*",
 ]

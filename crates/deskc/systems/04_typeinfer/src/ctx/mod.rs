@@ -93,7 +93,7 @@ impl Ctx {
     }
 
     fn save_from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
-        let ty = self.from_hir_type(hir_ty);
+        let ty = self.gen_from_hir_type(hir_ty);
         let ty = self.substitute_from_ctx(&ty);
         self.store_type_and_effects(hir_ty.meta.id, ty.clone(), EffectExpr::Effects(vec![]));
         ty
@@ -109,7 +109,7 @@ impl Ctx {
                 .types
                 .borrow()
                 .iter()
-                .map(|(id, ty)| (id.clone(), self.into_type(ty)))
+                .map(|(id, ty)| (*id, self.gen_type(ty)))
                 .collect(),
         }
     }
@@ -155,21 +155,25 @@ impl Ctx {
 
     fn insert_in_place(&self, log: &Log, logs: Vec<Log>) -> Ctx {
         let cloned = self.clone();
-        let index = cloned.index(log).expect(&format!(
-            "{:?}: log not found: {:?} to be replaced {:?}",
-            self.logs, log, logs
-        ));
+        let index = cloned.index(log).unwrap_or_else(|| {
+            panic!(
+                "{:?}: log not found: {:?} to be replaced {:?}",
+                self.logs, log, logs
+            )
+        });
         cloned.logs.borrow_mut().splice(index..=index, logs);
         cloned
     }
 
     fn truncate_from(&self, log: &Log) -> WithEffects<Ctx> {
         let cloned = self.clone();
-        let index = self.index(log).expect(&format!(
-            "{:?}: log not found: {:?} to be truncated",
-            self.logs.borrow(),
-            log
-        ));
+        let index = self.index(log).unwrap_or_else(|| {
+            panic!(
+                "{:?}: log not found: {:?} to be truncated",
+                self.logs.borrow(),
+                log
+            )
+        });
 
         let tail_ctx = self.empty();
         let mut effects = Vec::new();
@@ -179,7 +183,7 @@ impl Ctx {
             .splice(index.., vec![])
             .for_each(|tail| match tail {
                 Log::Effect(effect) => effects.push(effect),
-                log => tail_ctx.logs.borrow_mut().push(log.clone()),
+                log => tail_ctx.logs.borrow_mut().push(log),
             });
 
         WithEffects(cloned, EffectExpr::Add(effects))
@@ -237,7 +241,7 @@ impl Ctx {
     fn instantiate_composite_type_vec(
         &self,
         id: Id,
-        types: &Vec<Type>,
+        types: &[Type],
         f: fn(Vec<Type>) -> Type,
         instantiate: fn(&Ctx, &Id, &Type) -> Result<Ctx, TypeError>,
     ) -> Result<Ctx, TypeError> {
@@ -254,11 +258,7 @@ impl Ctx {
                     .map(|a| Log::Existential(*a))
                     .chain(vec![Log::Solved(
                         id,
-                        f(variables
-                            .iter()
-                            .cloned()
-                            .map(|a| Type::Existential(a))
-                            .collect()),
+                        f(variables.iter().cloned().map(Type::Existential).collect()),
                     )])
                     .collect(),
             ),

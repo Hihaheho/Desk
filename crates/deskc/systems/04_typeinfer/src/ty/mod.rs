@@ -156,10 +156,10 @@ pub(crate) trait TypeVisitorMut {
 pub(crate) trait TypeVisitor {
     fn visit_number(&mut self) {}
     fn visit_string(&mut self) {}
-    fn visit_product(&mut self, types: &Vec<Type>) {
+    fn visit_product(&mut self, types: &[Type]) {
         types.iter().for_each(|ty| self.visit(ty))
     }
-    fn visit_sum(&mut self, types: &Vec<Type>) {
+    fn visit_sum(&mut self, types: &[Type]) {
         types.iter().for_each(|ty| self.visit(ty))
     }
     fn visit_function(&mut self, parameter: &Type, body: &Type) {
@@ -204,17 +204,17 @@ pub(crate) trait TypeVisitor {
             }
         }
     }
-    fn visit_effect_expr_effects(&mut self, effects: &Vec<Effect>) {
+    fn visit_effect_expr_effects(&mut self, effects: &[Effect]) {
         effects.iter().for_each(|effect| self.visit_effect(effect))
     }
-    fn visit_effect_expr_add(&mut self, exprs: &Vec<EffectExpr>) {
+    fn visit_effect_expr_add(&mut self, exprs: &[EffectExpr]) {
         exprs.iter().for_each(|expr| self.visit_effect_expr(expr))
     }
     fn visit_effect_expr_sub(&mut self, minuend: &EffectExpr, subtrahend: &EffectExpr) {
         self.visit_effect_expr(minuend);
         self.visit_effect_expr(subtrahend);
     }
-    fn visit_effect_expr_apply(&mut self, function: &Type, arguments: &Vec<Type>) {
+    fn visit_effect_expr_apply(&mut self, function: &Type, arguments: &[Type]) {
         self.visit(function);
         arguments.iter().for_each(|arg| self.visit(arg));
     }
@@ -222,10 +222,10 @@ pub(crate) trait TypeVisitor {
         self.visit(&effect.input);
         self.visit(&effect.output);
     }
-    fn visit_brand(&mut self, _brand: &String, item: &Type) {
+    fn visit_brand(&mut self, _brand: &str, item: &Type) {
         self.visit(item);
     }
-    fn visit_label(&mut self, _label: &String, item: &Type) {
+    fn visit_label(&mut self, _label: &str, item: &Type) {
         self.visit(item);
     }
     fn visit(&mut self, ty: &Type) {

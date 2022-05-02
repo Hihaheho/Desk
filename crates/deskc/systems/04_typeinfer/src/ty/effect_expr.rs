@@ -30,17 +30,15 @@ impl TypeVisitorMut for EffectExprSimplifier {
     fn visit_effectful(&mut self, ty: &mut Type, effects: &mut EffectExpr) {
         self.visit(ty);
         self.visit_effect_expr(effects);
-        match ty {
-            Type::Effectful {
-                ty: inner_ty,
-                effects: inner_effects,
-            } => {
-                let mut added = EffectExpr::Add(vec![effects.clone(), inner_effects.clone()]);
-                self.visit_effect_expr(&mut added);
-                *ty = *inner_ty.clone();
-                *effects = added;
-            }
-            _ => (),
+        if let Type::Effectful {
+            ty: inner_ty,
+            effects: inner_effects,
+        } = ty
+        {
+            let mut added = EffectExpr::Add(vec![effects.clone(), inner_effects.clone()]);
+            self.visit_effect_expr(&mut added);
+            *ty = *inner_ty.clone();
+            *effects = added;
         }
     }
     fn visit_effect_expr_effects(&mut self, effects: &mut Vec<Effect>) {
@@ -72,12 +70,11 @@ impl TypeVisitorMut for EffectExprSimplifier {
     fn visit_effect_expr_sub(&mut self, minuend: &mut EffectExpr, subtrahend: &mut EffectExpr) {
         self.visit_effect_expr(minuend);
         self.visit_effect_expr(subtrahend);
-        match (minuend, subtrahend) {
-            (EffectExpr::Effects(minuend), EffectExpr::Effects(subtrahend)) => {
-                minuend.retain(|e| !subtrahend.contains(e));
-                subtrahend.truncate(0);
-            }
-            _ => {}
+        if let (EffectExpr::Effects(minuend), EffectExpr::Effects(subtrahend)) =
+            (minuend, subtrahend)
+        {
+            minuend.retain(|e| !subtrahend.contains(e));
+            subtrahend.truncate(0);
         }
     }
     fn visit_effect_expr_apply(&mut self, function: &mut Type, arguments: &mut Vec<Type>) {
@@ -85,7 +82,7 @@ impl TypeVisitorMut for EffectExprSimplifier {
         for argument in arguments.iter_mut() {
             self.visit(argument);
         }
-        if arguments.len() == 0 {
+        if arguments.is_empty() {
             return;
         }
         match function {
@@ -136,7 +133,7 @@ impl TypeVisitorMut for EffectExprSimplifier {
                 arguments,
             } => {
                 self.visit_effect_expr_apply(function, arguments);
-                if arguments.len() == 0 {
+                if arguments.is_empty() {
                     match &**function {
                         Type::Effectful {
                             ty: _,

@@ -6,10 +6,12 @@ use types::{Effect, EffectExpr, Type};
 
 use crate::TypedHirGen;
 
+type CustomBuiltin = Rc<Box<dyn Fn(&TypedHirGen, &Vec<WithMeta<hir::expr::Expr>>) -> Expr>>;
+
 #[derive(Clone)]
 pub(crate) enum Builtin {
     Normal { op: BuiltinOp, params: usize },
-    Custom(Rc<Box<dyn Fn(&TypedHirGen, &Vec<WithMeta<hir::expr::Expr>>) -> Expr>>),
+    Custom(CustomBuiltin),
 }
 
 pub(crate) fn find_builtin(ty: &Type) -> Option<Builtin> {
@@ -81,7 +83,7 @@ pub(crate) fn find_builtin(ty: &Type) -> Option<Builtin> {
     ]
     .into_iter()
     .collect();
-    map.get(&ty).cloned()
+    map.get(ty).cloned()
 }
 
 fn labeled(label: &str, item: Type) -> Type {
@@ -131,7 +133,7 @@ fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: Buil
                     expr: Expr::Perform(Box::new(TypedHir {
                         id: thirgen.next_id(),
                         ty: Type::label("division by zero", Type::Number),
-                        expr: dbg!(dividend.expr.clone()),
+                        expr: dividend.expr.clone(),
                     })),
                 },
             },

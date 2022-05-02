@@ -42,7 +42,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             Dson::Literal(Literal::String(string)) => visitor.visit_string(string.clone()),
             Dson::Literal(Literal::Hole) => Err(Error::Message("Hole is not allowed".into())),
             Dson::Product(values) => {
-                if values.len() == 0 {
+                if values.is_empty() {
                     visitor.visit_unit()
                 } else {
                     Err(Error::Message("Unexpected product".into()))
@@ -78,7 +78,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         match &self.0 {
-            Dson::Product(values) if values.len() == 0 => visitor.visit_none(),
+            Dson::Product(values) if values.is_empty() => visitor.visit_none(),
             _ => visitor.visit_some(self),
         }
     }
@@ -88,7 +88,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         match &self.0 {
-            Dson::Product(values) if values.len() == 0 => visitor.visit_unit(),
+            Dson::Product(values) if values.is_empty() => visitor.visit_unit(),
             _ => Err(Error::Message("Expected unit".into())),
         }
     }
@@ -100,7 +100,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         match &self.0 {
             Dson::Product(values) => {
                 let values = values
-                    .into_iter()
+                    .iter()
                     .map(|dson| match dson {
                         Dson::Labeled { label, expr } => {
                             Ok((Dson::Literal(Literal::String(label.clone())), *expr.clone()))
@@ -108,7 +108,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                         _ => Err(Error::Message("Expected labeled".into())),
                     })
                     .collect::<Result<Vec<_>>>()?;
-                visitor.visit_map(MapDeserializer::new(values.clone()))
+                visitor.visit_map(MapDeserializer::new(values))
             }
             _ => Err(Error::Message("Expected product".into())),
         }
@@ -208,11 +208,10 @@ impl<'de> SeqAccess<'de> for ValuesDeserializer {
     where
         T: de::DeserializeSeed<'de>,
     {
-        Ok(self
-            .0
+        self.0
             .pop()
             .map(|dson| seed.deserialize(&mut Deserializer::from_dson(dson)))
-            .transpose()?)
+            .transpose()
     }
 }
 

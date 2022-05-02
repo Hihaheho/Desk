@@ -27,7 +27,7 @@ impl Ctx {
                             (ctx, ty)
                         })
                     })
-                    .unwrap_or((delta.clone(), *body.clone()))
+                    .unwrap_or((delta, *body.clone()))
             }
             Type::Existential(id) => {
                 let a1 = self.fresh_existential();

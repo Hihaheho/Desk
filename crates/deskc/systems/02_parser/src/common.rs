@@ -44,7 +44,7 @@ pub(crate) fn parse_function<A, O, U>(
 ) -> impl Parser<Token, (Vec<Spanned<A>>, Spanned<O>), Error = Simple<Token>> + Clone {
     op.ignore_then(args.separated_by(just(Token::Comma)))
         .then_ignore(arrow)
-        .then(output.clone())
+        .then(output)
 }
 
 pub(crate) fn parse_collection<T>(
@@ -73,94 +73,55 @@ pub(crate) fn parse_attr<I, T>(
     just(Token::Attribute).ignore_then(attr).in_().then(item)
 }
 
+type In<T, E, O> =
+    Map<Then<T, OrNot<Just<Token, Token, E>>>, fn((O, Option<Token>)) -> O, (O, Option<Token>)>;
+
+type SeparatedByComma<T, E, O> = Map<
+    OrNot<
+        Map<
+            Then<SeparatedBy<T, Just<Token, Token, E>, Token>, OrNot<Just<Token, Token, E>>>,
+            fn((Vec<O>, Option<Token>)) -> Vec<O>,
+            (Vec<O>, Option<Token>),
+        >,
+    >,
+    fn(Option<Vec<O>>) -> Vec<O>,
+    Option<Vec<O>>,
+>;
+
+type SeparatedByCommaAtLeastOne<T, E, O> = Map<
+    Then<SeparatedBy<T, Just<Token, Token, E>, Token>, OrNot<Just<Token, Token, E>>>,
+    fn((Vec<O>, Option<Token>)) -> Vec<O>,
+    (Vec<O>, Option<Token>),
+>;
+
 pub(crate) trait ParserExt<O>
 where
     Self: Parser<Token, O> + Sized,
 {
-    fn in_(
-        self,
-    ) -> Map<
-        Then<Self, OrNot<Just<Token, Token, Self::Error>>>,
-        fn((O, Option<Token>)) -> O,
-        (O, Option<Token>),
-    >;
+    fn in_(self) -> In<Self, Self::Error, O>;
 
-    fn separated_by_comma(
-        self,
-    ) -> Map<
-        OrNot<
-            Map<
-                Then<
-                    SeparatedBy<Self, Just<Token, Token, Self::Error>, Token>,
-                    OrNot<Just<Token, Token, Self::Error>>,
-                >,
-                fn((Vec<O>, Option<Token>)) -> Vec<O>,
-                (Vec<O>, Option<Token>),
-            >,
-        >,
-        fn(Option<Vec<O>>) -> Vec<O>,
-        Option<Vec<O>>,
-    >;
+    fn separated_by_comma(self) -> SeparatedByComma<Self, Self::Error, O>;
 
-    fn separated_by_comma_at_least_one(
-        self,
-    ) -> Map<
-        Then<
-            SeparatedBy<Self, Just<Token, Token, Self::Error>, Token>,
-            OrNot<Just<Token, Token, Self::Error>>,
-        >,
-        fn((Vec<O>, Option<Token>)) -> Vec<O>,
-        (Vec<O>, Option<Token>),
-    >;
+    fn separated_by_comma_at_least_one(self) -> SeparatedByCommaAtLeastOne<Self, Self::Error, O>;
 }
 
 impl<T: Parser<Token, O, Error = E>, O, E: Error<Token>> ParserExt<O> for T {
-    fn separated_by_comma(
-        self,
-    ) -> Map<
-        OrNot<
-            Map<
-                Then<
-                    SeparatedBy<T, Just<Token, Token, Self::Error>, Token>,
-                    OrNot<Just<Token, Token, Self::Error>>,
-                >,
-                fn((Vec<O>, Option<Token>)) -> Vec<O>,
-                (Vec<O>, Option<Token>),
-            >,
-        >,
-        fn(Option<Vec<O>>) -> Vec<O>,
-        Option<Vec<O>>,
-    > {
-        self.separated_by_comma_at_least_one()
-            .or_not()
-            .map(|option| option.unwrap_or(vec![]))
-    }
-
-    fn separated_by_comma_at_least_one(
-        self,
-    ) -> Map<
-        Then<
-            SeparatedBy<T, Just<Token, Token, Self::Error>, Token>,
-            OrNot<Just<Token, Token, Self::Error>>,
-        >,
-        fn((Vec<O>, Option<Token>)) -> Vec<O>,
-        (Vec<O>, Option<Token>),
-    > {
-        self.separated_by(just(Token::Comma))
-            .at_least(1)
-            .then_ignore(just(Token::Dot).or_not())
-    }
-
-    fn in_(
-        self,
-    ) -> Map<
-        Then<Self, OrNot<Just<Token, Token, Self::Error>>>,
-        fn((O, Option<Token>)) -> O,
-        (O, Option<Token>),
-    >
+    fn in_(self) -> In<Self, Self::Error, O>
     where
         Self: Sized,
     {
         self.then_ignore(just(Token::In).or_not())
+    }
+
+    fn separated_by_comma(self) -> SeparatedByComma<Self, Self::Error, O> {
+        self.separated_by_comma_at_least_one()
+            .or_not()
+            .map(|option| option.unwrap_or_default())
+    }
+
+    fn separated_by_comma_at_least_one(self) -> SeparatedByCommaAtLeastOne<Self, Self::Error, O> {
+        self.separated_by(just(Token::Comma))
+            .at_least(1)
+            .then_ignore(just(Token::Dot).or_not())
     }
 }

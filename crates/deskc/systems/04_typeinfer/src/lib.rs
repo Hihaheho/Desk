@@ -20,7 +20,7 @@ use types::IdGen;
 use with_effects::WithEffects;
 
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
-    Ok(Ctx {
+    Ctx {
         id_gen: Rc::new(RefCell::new(IdGen { next_id })),
         ..Default::default()
     }
@@ -31,7 +31,7 @@ pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprT
         let ty = ctx.substitute_from_ctx(&ty);
         let with_effects = ctx.with_effects(ty, effects);
         (ctx, with_effects)
-    })?)
+    })
 }
 
 fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError {

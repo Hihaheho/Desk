@@ -3,7 +3,7 @@ use crate::{
     error::TypeError,
     mono_type::is_monotype,
     substitute::substitute,
-    ty::{Type, effect_expr::EffectExpr},
+    ty::{effect_expr::EffectExpr, Type},
 };
 
 impl Ctx {
@@ -41,7 +41,7 @@ impl Ctx {
                             ],
                         )
                         .instantiate_subtype(&a1, parameter)?;
-                    theta.instantiate_supertype(&theta.substitute_from_ctx(&body), &a2)?
+                    theta.instantiate_supertype(&theta.substitute_from_ctx(body), &a2)?
                 }
                 Type::ForAll { variable, body } => self
                     .add(Log::Marker(*variable))

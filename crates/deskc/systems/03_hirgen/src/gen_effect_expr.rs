@@ -44,7 +44,10 @@ impl HirGen {
                 arguments,
             } => self.with_meta(EffectExpr::Apply {
                 function: Box::new(self.gen_type(function)?),
-                arguments: arguments.iter().map(|a| self.gen_type(a)).collect::<Result<_, _>>()?,
+                arguments: arguments
+                    .iter()
+                    .map(|a| self.gen_type(a))
+                    .collect::<Result<_, _>>()?,
             }),
         };
         Ok(expr)

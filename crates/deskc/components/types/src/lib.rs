@@ -95,7 +95,7 @@ pub struct Types {
 
 impl Types {
     pub fn get(&self, id: &Id) -> Option<&Type> {
-        self.types.get(&id)
+        self.types.get(id)
     }
 }
 

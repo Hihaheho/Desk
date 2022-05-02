@@ -7,7 +7,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clone, Debug, PartialEq, Error)]
 pub enum Error {
-	#[error("{0}")]
+    #[error("{0}")]
     Message(String),
 }
 

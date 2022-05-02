@@ -94,9 +94,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
                 format!(r#"undefined special keyword: {}"#, ident),
             )),
         });
-    let brand = just('@')
-        .ignore_then(ident())
-        .map(|ident: String| Token::Brand(ident.into()));
+    let brand = just('@').ignore_then(ident()).map(Token::Brand);
     let uuid = just("'uuid")
         .then_ignore(text::whitespace())
         .ignore_then(

@@ -38,7 +38,7 @@ impl Ctx {
                             ],
                         )
                         .instantiate_supertype(parameter, &a1)?;
-                    theta.instantiate_subtype(&a2, &theta.substitute_from_ctx(&body))?
+                    theta.instantiate_subtype(&a2, &theta.substitute_from_ctx(body))?
                 }
                 Type::ForAll { variable, body } => self
                     .add(Log::Variable(*variable))

@@ -83,7 +83,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let card_uuid = just(Token::Card)
             .ignore_then(parse_uuid())
-            .map(|uuid| LinkName::Card(uuid));
+            .map(LinkName::Card);
         let apply = just(Token::Apply)
             .ignore_then(type_.clone())
             .then(card_uuid.clone().or_not())
@@ -102,8 +102,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 link_name: card,
                 arguments: vec![],
             });
-        let product =
-            parse_op(just(Token::Product), expr.clone()).map(|values| Expr::Product(values));
+        let product = parse_op(just(Token::Product), expr.clone()).map(Expr::Product);
         let function = parse_function(
             just(Token::Lambda),
             type_.clone(),
@@ -151,7 +150,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let include = just(Token::Include)
             .ignore_then(parse_ident())
-            .map(|ident| Expr::Include(ident));
+            .map(Expr::Include);
         let label = filter_map(|span, input| {
             if let Token::Brand(ident) = input {
                 Ok(ident)
@@ -189,7 +188,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .map(|((uuid, item), next)| Expr::Card {
                 uuid,
                 item: Box::new(item),
-                next: next.map(|next| Box::new(next)),
+                next: next.map(Box::new),
             });
 
         hole.or(prefix_comment)

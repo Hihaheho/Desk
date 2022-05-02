@@ -1,6 +1,7 @@
 [package]
 name = "deskc-parser"
 version = "0.1.0"
+license = "MIT OR Apache-2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,7 +11,7 @@ tokens = { path = "../../components/tokens", version = "0.1.0", package = "deskc
 ast = { path = "../../components/ast", version = "0.1.0", package = "deskc-ast" }
 textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.1.0", package = "deskc-textual-diagnostics" }
 chumsky = "0.8.0"
-uuid = "*"
+uuid = "0.8"
 
 [dev-dependencies]
 lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }

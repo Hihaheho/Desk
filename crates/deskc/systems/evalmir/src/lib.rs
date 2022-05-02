@@ -17,7 +17,7 @@ use crate::{
     value::Closure,
 };
 
-pub fn eval_mirs<'a>(mirs: Mirs) -> EvalMirs {
+pub fn eval_mirs(mirs: Mirs) -> EvalMirs {
     let mir = mirs.mirs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMirs {
         mirs: mirs.mirs,

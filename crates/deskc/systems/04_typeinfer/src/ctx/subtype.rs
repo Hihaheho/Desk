@@ -8,7 +8,6 @@ use crate::{
 };
 
 impl Ctx {
-    #[must_use]
     pub fn subtype(&self, sub: &Type, ty: &Type) -> Result<Ctx, TypeError> {
         let subtype_if = |pred: bool| {
             if pred {
@@ -48,12 +47,10 @@ impl Ctx {
 
             // handling things must be under the instantiations of existential.
             (Type::Product(sub_types), Type::Product(types)) => {
-                if sub_types.iter().all(|sub_ty| {
-                    types
-                        .iter()
-                        .find(|ty| self.subtype(sub_ty, ty).is_ok())
-                        .is_some()
-                }) {
+                if sub_types
+                    .iter()
+                    .all(|sub_ty| types.iter().any(|ty| self.subtype(sub_ty, ty).is_ok()))
+                {
                     self.clone()
                 } else {
                     Err(TypeError::NotSubtype {
@@ -77,8 +74,7 @@ impl Ctx {
                 if types.iter().all(|ty| {
                     sub_types
                         .iter()
-                        .find(|sub_ty| self.subtype(sub_ty, ty).is_ok())
-                        .is_some()
+                        .any(|sub_ty| self.subtype(sub_ty, ty).is_ok())
                 }) {
                     self.clone()
                 } else {

@@ -83,6 +83,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-x"
+version = "0.1.0"
+
+[[package]]
 name = "deskc"
 version = "0.1.0"
 
@@ -239,7 +243,7 @@ dependencies = [
  "deskc-types",
  "pretty_assertions",
  "serde",
- "serde_dson",
+ "serde-dson",
 ]
 
 [[package]]
@@ -319,6 +323,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
+name = "dkernel"
+version = "0.1.0"
+
+[[package]]
+name = "dkernel-firestore"
+version = "0.1.0"
+
+[[package]]
+name = "dkernel-in-memory"
+version = "0.1.0"
+
+[[package]]
+name = "dkernel-node"
+version = "0.1.0"
+
+[[package]]
 name = "getrandom"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -396,6 +416,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-dson"
+version = "0.1.0"
+dependencies = [
+ "deskc-dson",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -404,15 +433,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "serde_dson"
-version = "0.1.0"
-dependencies = [
- "deskc-dson",
- "serde",
- "thiserror",
 ]
 
 [[package]]

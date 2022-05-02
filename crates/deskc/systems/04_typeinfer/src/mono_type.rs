@@ -1,6 +1,6 @@
 use crate::{
-    ty::{Type, TypeVisitor},
     ctx::Id,
+    ty::{Type, TypeVisitor},
 };
 
 pub fn is_monotype(ty: &Type) -> bool {

@@ -32,22 +32,22 @@ impl Ctx {
                     meta: _,
                 } = &ty
                 {
-                    let (ctx, def_ty) = self.synth(&definition)?.recover_effects();
+                    let (ctx, def_ty) = self.synth(definition)?.recover_effects();
                     let def_ty = ctx.make_polymorphic(def_ty);
                     let (ctx, ty) = ctx
                         .add(Log::TypedVariable(*var, def_ty.clone()))
-                        .synth(&expression)?
+                        .synth(expression)?
                         .recover_effects();
                     ctx.insert_in_place(&Log::TypedVariable(*var, def_ty), vec![])
                         .with_type(ty)
                 } else {
-                    let (ctx, _def_ty) = self.synth(&definition)?.recover_effects();
-                    let (ctx, ty) = ctx.synth(&expression)?.recover_effects();
+                    let (ctx, _def_ty) = self.synth(definition)?.recover_effects();
+                    let (ctx, ty) = ctx.synth(expression)?.recover_effects();
                     ctx.with_type(ty)
                 }
             }
             Expr::Perform { input, output } => {
-                let (ctx, ty) = self.synth(&input)?.recover_effects();
+                let (ctx, ty) = self.synth(input)?.recover_effects();
                 let output = ctx.save_from_hir_type(output);
                 ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
                     input: ty,
@@ -56,7 +56,7 @@ impl Ctx {
                 .with_type(output)
             }
             Expr::Continue { input, output } => {
-                let (ctx, input_ty) = self.synth(&input)?.recover_effects();
+                let (ctx, input_ty) = self.synth(input)?.recover_effects();
                 let (ctx, output) = if let Some(output) = output {
                     let output = ctx.save_from_hir_type(output);
                     (
@@ -211,7 +211,7 @@ impl Ctx {
                     let (ctx, ty) = arguments
                         .iter()
                         .try_fold((self.clone(), fun.clone()), |(ctx, fun), arg| {
-                            ctx.apply(&fun, &arg)
+                            ctx.apply(&fun, arg)
                         })?;
 
                     ctx.add_effects(&EffectExpr::Apply {
@@ -236,7 +236,7 @@ impl Ctx {
             }
             Expr::Typed { ty, item: expr } => {
                 let ty = self.save_from_hir_type(ty);
-                self.check(&expr, &ty)?.recover_effects().with_type(ty)
+                self.check(expr, &ty)?.recover_effects().with_type(ty)
             }
             Expr::Function { parameter, body } => {
                 if let Type::Variable(id) = self.save_from_hir_type(parameter) {
@@ -246,7 +246,7 @@ impl Ctx {
                         .add(Log::Existential(a))
                         .add(Log::Existential(b))
                         .add(Log::TypedVariable(id, Type::Existential(a)))
-                        .check(&body, &Type::Existential(b))?
+                        .check(body, &Type::Existential(b))?
                         .recover_effects()
                         .truncate_from(&Log::TypedVariable(id, Type::Existential(a)));
                     // Function captures effects in its body
@@ -255,7 +255,7 @@ impl Ctx {
                         body: Box::new(self.with_effects(Type::Existential(b), effects)),
                     })
                 } else {
-                    let (ctx, ty) = self.synth(&body)?.recover_effects();
+                    let (ctx, ty) = self.synth(body)?.recover_effects();
                     ctx.with_type(Type::Function {
                         parameter: Box::new(self.save_from_hir_type(parameter)),
                         body: Box::new(ty),
@@ -267,7 +267,7 @@ impl Ctx {
                 values
                     .iter()
                     .try_fold(self.clone(), |ctx, value| {
-                        let (ctx, ty) = ctx.synth(&value)?.recover_effects();
+                        let (ctx, ty) = ctx.synth(value)?.recover_effects();
                         types.push(ty);
                         Ok(ctx)
                     })?
@@ -278,7 +278,7 @@ impl Ctx {
                 values
                     .iter()
                     .try_fold(self.clone(), |ctx, value| {
-                        let (ctx, ty) = ctx.synth(&value)?.recover_effects();
+                        let (ctx, ty) = ctx.synth(value)?.recover_effects();
                         types.push(ty);
                         Ok(ctx)
                     })?

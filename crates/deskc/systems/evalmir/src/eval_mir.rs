@@ -53,11 +53,11 @@ impl EvalMir {
             match &block.terminator {
                 mir::ATerminator::Return(var) => InnerOutput::Return(
                     (&mut self.registers)
-                        .remove(&var)
+                        .remove(var)
                         .expect("return value should be exists"),
                 ),
                 mir::ATerminator::Match { var, cases } => {
-                    let value = self.load_value(&var);
+                    let value = self.load_value(var);
                     if let Value::Variant { id, value: _ } = value {
                         let case = cases.iter().find(|c| c.ty == *id).unwrap();
                         self.pc_block = case.next;
@@ -137,7 +137,7 @@ impl EvalMir {
                         // Increment pc before perform is important
                         self.pc_stmt_idx += 1;
                         return InnerOutput::Perform {
-                            input: self.load_value(&var).clone(),
+                            input: self.load_value(var).clone(),
                             effect,
                         };
                     } else {
@@ -179,10 +179,9 @@ impl EvalMir {
                     self.parameters
                         .get(ty)
                         .or_else(|| self.captured.get(ty))
-                        .expect(&format!(
-                            "parameter must be exist {:?} in {:?}",
-                            ty, self.parameters
-                        ))
+                        .unwrap_or_else(|| {
+                            panic!("parameter must be exist {:?} in {:?}", ty, self.parameters)
+                        })
                         .clone()
                 }
                 Stmt::Recursion => Value::FnRef(FnRef::Recursion),
