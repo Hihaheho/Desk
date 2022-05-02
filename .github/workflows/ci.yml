@@ -25,7 +25,8 @@ jobs:
       - uses: Swatinem/rust-cache@v1
 
       - uses: EmbarkStudios/cargo-deny-action@v1
-        arguments: --all-features --config configs/deny.toml
+        with:
+          arguments: --all-features --config configs/deny.toml
 
       - name: Check fmt
         run: cargo fmt --all -- --check
