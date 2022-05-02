@@ -130,7 +130,7 @@ impl Ctx {
                         vec![Log::Solved(*id, sub.clone())],
                     )
                 }
-                ty => Err(TypeError::NotInstantiableSupertype { ty: ty.clone() })?,
+                ty => return Err(TypeError::NotInstantiableSupertype { ty: ty.clone() }),
             }
         };
         self.store_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));

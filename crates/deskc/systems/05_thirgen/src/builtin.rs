@@ -93,7 +93,7 @@ fn labeled(label: &str, item: Type) -> Type {
     }
 }
 
-fn divide(thirgen: &TypedHirGen, args: &Vec<WithMeta<hir::expr::Expr>>, op: BuiltinOp) -> Expr {
+fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: BuiltinOp) -> Expr {
     assert_eq!(args.len(), 2, "args for div must be 2");
     let dividend = thirgen.gen(&args[0]);
     let divisor = thirgen.gen(&args[1]);

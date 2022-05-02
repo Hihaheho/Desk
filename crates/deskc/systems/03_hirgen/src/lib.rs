@@ -300,7 +300,7 @@ impl HirGen {
             }
             ast::expr::Expr::Comment { item, .. } => self.gen(item)?,
             ast::expr::Expr::Card { uuid, .. } => {
-                Err(HirGenError::UnexpectedCard { ident: *uuid })?
+                return Err(HirGenError::UnexpectedCard { ident: *uuid });
             }
         };
         Ok(with_meta)

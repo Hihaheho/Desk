@@ -213,9 +213,9 @@ mod tests {
 
     #[test]
     fn function_and_reference() {
-        let expr = dbg!(parse(r#"\ 'number, 'string -> &'number"#));
+        let expr = parse(r#"\ 'number, 'string -> &'number"#);
         let gen = TypedHirGen {
-            types: dbg!(infer(&expr)),
+            types: infer(&expr),
             ..Default::default()
         };
         assert_eq!(

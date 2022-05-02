@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn parse_trait() {
-        let trait_ = dbg!(parse("% 'number, _.").unwrap().0);
+        let trait_ = parse("% 'number, _.").unwrap().0;
 
         if let Type::Trait(trait_) = trait_ {
             assert_eq!(trait_.len(), 2);

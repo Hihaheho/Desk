@@ -6,7 +6,7 @@ use mir::{Op, VarId};
 use crate::{eval_mir::EvalMir, value::Value};
 
 impl EvalMir {
-    pub fn eval_op(&self, op: &Op, operands: &Vec<VarId>) -> Value {
+    pub fn eval_op(&self, op: &Op, operands: &[VarId]) -> Value {
         match op {
             Op::Add => {
                 assert!(operands.len() == 2);

@@ -50,13 +50,15 @@ impl Ctx {
                 self.add(Log::Existential(a))
                     .apply(&substitute(&*body, variable, &Type::Existential(a)), expr)?
             }
-            _ => Err(to_expr_type_error(
-                expr,
-                TypeError::NotApplicable {
-                    ty: ty.clone(),
-                    expr: expr.value.clone(),
-                },
-            ))?,
+            _ => {
+                return Err(to_expr_type_error(
+                    expr,
+                    TypeError::NotApplicable {
+                        ty: ty.clone(),
+                        expr: expr.value.clone(),
+                    },
+                ))
+            }
         };
         Ok(ret)
     }

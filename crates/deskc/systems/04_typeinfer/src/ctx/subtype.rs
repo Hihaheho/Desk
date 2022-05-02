@@ -26,20 +26,20 @@ impl Ctx {
             (Type::Existential(id), Type::Existential(id2)) if id == id2 => self.clone(),
             (Type::Existential(id), ty) => {
                 if occurs_in(id, ty) {
-                    Err(TypeError::CircularExistential {
+                    return Err(TypeError::CircularExistential {
                         id: *id,
                         ty: ty.clone(),
-                    })?
+                    });
                 } else {
                     self.instantiate_subtype(id, ty)?
                 }
             }
             (sub, Type::Existential(id)) => {
                 if occurs_in(id, sub) {
-                    Err(TypeError::CircularExistential {
+                    return Err(TypeError::CircularExistential {
                         id: *id,
                         ty: ty.clone(),
-                    })?
+                    });
                 } else {
                     self.instantiate_supertype(sub, id)?
                 }
@@ -53,10 +53,10 @@ impl Ctx {
                 {
                     self.clone()
                 } else {
-                    Err(TypeError::NotSubtype {
+                    return Err(TypeError::NotSubtype {
                         sub: sub.clone(),
                         ty: ty.clone(),
-                    })?
+                    });
                 }
             }
             // TODO: return multi pass for error recovery?
@@ -78,10 +78,10 @@ impl Ctx {
                 }) {
                     self.clone()
                 } else {
-                    Err(TypeError::NotSubtype {
+                    return Err(TypeError::NotSubtype {
                         sub: sub.clone(),
                         ty: ty.clone(),
-                    })?
+                    });
                 }
             }
             // TODO: return multi pass for error recovery?
@@ -156,10 +156,12 @@ impl Ctx {
                 theta.add_effects(effects)
             }
             (sub, Type::Effectful { ty, effects: _ }) => self.subtype(sub, ty)?,
-            (_, _) => Err(TypeError::NotSubtype {
-                sub: sub.clone(),
-                ty: ty.clone(),
-            })?,
+            (_, _) => {
+                return Err(TypeError::NotSubtype {
+                    sub: sub.clone(),
+                    ty: ty.clone(),
+                })
+            }
         };
         Ok(ctx)
     }

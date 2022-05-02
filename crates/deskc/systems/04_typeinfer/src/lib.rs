@@ -447,11 +447,11 @@ mod tests {
                 $ ! "a" => 'number ~
                 ! @b * => 'number
             "#;
-        let (hirgen, expr) = dbg!(parse_inner(input));
+        let (hirgen, expr) = parse_inner(input);
         let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&hirgen, dbg!(&ctx)),
+            get_types(&hirgen, &ctx),
             vec![
                 (
                     1,
