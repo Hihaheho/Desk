@@ -28,10 +28,7 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
                 .iter()
                 .for_each(|Handler { handler, .. }| visit(includes, &handler.0));
         }
-        Expr::Apply {
-            function: _,
-            arguments,
-        } => {
+        Expr::Apply { arguments, .. } => {
             for arg in arguments {
                 visit(includes, &arg.0);
             }
@@ -84,5 +81,6 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             expr,
         } => visit(includes, &expr.0),
         Expr::Comment { .. } => {}
+        Expr::Card { item, .. } => visit(includes, &item.0),
     };
 }

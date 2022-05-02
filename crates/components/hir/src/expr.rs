@@ -1,3 +1,5 @@
+pub use link::LinkName;
+
 use crate::{meta::WithMeta, ty::Type};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,6 +40,7 @@ pub enum Expr {
     },
     Apply {
         function: WithMeta<Type>,
+        link_name: Option<LinkName>,
         arguments: Vec<WithMeta<Self>>,
     },
     Product(Vec<WithMeta<Self>>),

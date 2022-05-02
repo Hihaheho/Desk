@@ -123,6 +123,7 @@ mod tests {
                     parameter: Box::new(dummy_meta(hir::ty::Type::Number)),
                     body: Box::new(dummy_meta(hir::ty::Type::String)),
                 }),
+                link_name: Default::default(),
                 arguments: vec![dummy_meta(Expr::Literal(Literal::Int(1))),]
             })),
             Ok(Type::String)

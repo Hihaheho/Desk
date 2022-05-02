@@ -1,0 +1,43 @@
+{
+  @files [
+    {
+      @name "main.ds",
+      @content "
+        'type add \\ 'number, 'number -> @sum 'number ~
+        'type sub \\ @minuend 'number, @subtrahend 'number -> 'number ~
+        'type cmp \\ @self 'number, @other 'number -> + @greader *, @less *, @equal * ~
+
+        'card 'uuid 9883b420-f7be-468d-95f6-000000000000
+        > \\'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa ~ 10
+        ~
+        'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa
+        \\ 'number ->
+          ^> add
+            &'number,
+            + >cmp &'number, 3 ~
+              + @greater *, @equal * ->
+                > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-bbbbbbbbbbbb ~ &'number;
+              @less * ->
+                0
+          : 'number
+        ~
+        'card 'uuid 9883b420-f7be-468d-95f6-bbbbbbbbbbbb
+        \\ 'number ->
+          > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-cccccccccccc ~
+            >sub @minuend &'number, 1
+        ~
+        'card 'uuid 9883b420-f7be-468d-95f6-cccccccccccc
+        \\ 'number ->
+          > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa ~
+            >sub @minuend &'number, 2
+      "
+    }
+  ],
+  @entrypoint "main.ds",
+  @entrypoint_card "9883b420-f7be-468d-95f6-000000000000",
+  @assertions [
+    @RunSuccess {
+      @result @Int 22
+    }
+  ]
+}

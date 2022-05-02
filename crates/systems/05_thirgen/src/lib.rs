@@ -74,6 +74,7 @@ impl TypedHirGen {
             },
             Expr::Apply {
                 function,
+                link_name,
                 arguments,
             } => {
                 // TODO: lookup imported uuid to allow overwrite the builtin functions
@@ -94,13 +95,10 @@ impl TypedHirGen {
                         builtin::Builtin::Custom(expr) => expr(&self, &arguments),
                     }
                 } else {
-                    if arguments.is_empty() {
-                        thir::Expr::Reference
-                    } else {
-                        thir::Expr::Apply {
-                            function: self.get_type(&function),
-                            arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
-                        }
+                    thir::Expr::Apply {
+                        function: self.get_type(&function),
+                        link_name: link_name.clone(),
+                        arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
                     }
                 }
             }
@@ -238,7 +236,11 @@ mod tests {
                     body: Box::new(TypedHir {
                         id: 3,
                         ty: Type::Number,
-                        expr: thir::Expr::Reference,
+                        expr: thir::Expr::Apply {
+                            function: Type::Number,
+                            link_name: None,
+                            arguments: vec![]
+                        },
                     }),
                 },
             }

@@ -45,4 +45,5 @@ pub enum Token {
     Brand(String),
     Alias,
     A,
+    Card,
 }

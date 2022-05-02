@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 types = { path = "../types", version = "0.1.0", package = "deskc-types" }
+link = { path = "../link", version = "0.1.0", package = "deskc-link" }

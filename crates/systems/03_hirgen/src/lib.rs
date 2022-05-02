@@ -196,9 +196,11 @@ impl HirGen {
             }),
             ast::expr::Expr::Apply {
                 function,
+                link_name,
                 arguments,
             } => self.with_meta(Expr::Apply {
                 function: self.gen_type(function)?,
+                link_name: link_name.clone(),
                 arguments: arguments
                     .into_iter()
                     .map(|argument| self.gen(argument))
@@ -297,6 +299,9 @@ impl HirGen {
                 self.gen(expr)?
             }
             ast::expr::Expr::Comment { item, .. } => self.gen(item)?,
+            ast::expr::Expr::Card { uuid, .. } => Err(HirGenError::UnexpectedCard {
+                ident: uuid.clone(),
+            })?,
         };
         Ok(with_meta)
     }
@@ -429,9 +434,11 @@ mod tests {
             },
             Expr::Apply {
                 function,
+                link_name,
                 arguments,
             } => Expr::Apply {
                 function: remove_meta_ty(function),
+                link_name,
                 arguments: arguments
                     .into_iter()
                     .map(|argument| remove_meta(argument))
@@ -484,6 +491,7 @@ mod tests {
             gen.gen(&(
                 ast::expr::Expr::Apply {
                     function: (ast::ty::Type::Number, 3..10),
+                    link_name: None,
                     arguments: vec![(
                         ast::expr::Expr::Attribute {
                             attr: Box::new((
@@ -523,6 +531,7 @@ mod tests {
                         },
                         value: Type::Number
                     },
+                    link_name: Default::default(),
                     arguments: vec![WithMeta {
                         meta: Meta {
                             attrs: vec![
@@ -570,6 +579,7 @@ mod tests {
                         label: "brand".into(),
                         item: Box::new(dummy_meta(Type::Number)),
                     }),
+                    link_name: Default::default(),
                     arguments: vec![],
                 })),
                 expression: Box::new(dummy_meta(Expr::Let {
@@ -579,6 +589,7 @@ mod tests {
                             brand: "brand".into(),
                             item: Box::new(dummy_meta(Type::Number)),
                         }),
+                        link_name: Default::default(),
                         arguments: vec![],
                     })),
                     expression: Box::new(dummy_meta(Expr::Apply {
@@ -586,6 +597,7 @@ mod tests {
                             label: "label".into(),
                             item: Box::new(dummy_meta(Type::Number)),
                         }),
+                        link_name: Default::default(),
                         arguments: vec![],
                     }))
                 }))

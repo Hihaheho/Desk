@@ -119,3 +119,4 @@ test!(case004, "../cases/004_let_function.dson");
 // test!(case005, "../cases/005_division_by_zero.dson");
 test!(case006, "../cases/006_continuation.dson");
 test!(case007, "../cases/007_fibonacci.dson");
+// test!(case008, "../cases/008_cards.dson");

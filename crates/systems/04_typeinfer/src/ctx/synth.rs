@@ -186,6 +186,7 @@ impl Ctx {
             }
             Expr::Apply {
                 function,
+                link_name: _,
                 arguments,
             } => {
                 if arguments.is_empty() {

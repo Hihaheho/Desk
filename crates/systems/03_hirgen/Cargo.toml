@@ -11,6 +11,7 @@ file = { path = "../../components/file", version = "0.1.0", package = "deskc-fil
 hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
 pretty_assertions = "1.0.0"
 thiserror = "1.0.30"
+uuid = "*"
 
 [dev-dependencies]
 lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }

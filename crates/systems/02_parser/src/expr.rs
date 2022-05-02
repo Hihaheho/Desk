@@ -1,12 +1,12 @@
 use ast::{
-    expr::{Expr, Handler, Literal, MatchCase},
+    expr::{Expr, Handler, LinkName, Literal, MatchCase},
     span::Spanned,
     ty::{CommentPosition, Type},
 };
 use chumsky::prelude::*;
 use tokens::Token;
 
-use crate::common::{parse_attr, parse_comment, parse_ident};
+use crate::common::{parse_attr, parse_comment, parse_ident, parse_uuid};
 
 use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
@@ -81,18 +81,25 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 expr: Box::new(expr),
                 handlers,
             });
+        let card_uuid = just(Token::Card)
+            .ignore_then(parse_uuid())
+            .map(|uuid| LinkName::Card(uuid));
         let apply = just(Token::Apply)
             .ignore_then(type_.clone())
+            .then(card_uuid.clone().or_not())
             .in_()
             .then(expr.clone().separated_by_comma_at_least_one())
-            .map(|(function, arguments)| Expr::Apply {
+            .map(|((function, card), arguments)| Expr::Apply {
                 function,
+                link_name: card,
                 arguments,
             });
         let reference = just(Token::Reference)
             .ignore_then(type_.clone())
-            .map(|reference| Expr::Apply {
+            .then(card_uuid.or_not())
+            .map(|(reference, card)| Expr::Apply {
                 function: reference,
+                link_name: card,
                 arguments: vec![],
             });
         let product =
@@ -167,13 +174,22 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 ty,
                 expr: Box::new(expr),
             });
-
         let prefix_comment = parse_comment()
             .then(expr.clone())
             .map(|(text, expr)| Expr::Comment {
                 position: CommentPosition::Prefix,
                 text,
                 item: Box::new(expr),
+            });
+        let card = just(Token::Card)
+            .ignore_then(parse_uuid())
+            .then(expr.clone())
+            .in_()
+            .then(expr.clone().or_not())
+            .map(|((uuid, item), next)| Expr::Card {
+                uuid,
+                item: Box::new(item),
+                next: next.map(|next| Box::new(next)),
             });
 
         hole.or(prefix_comment)
@@ -195,6 +211,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(handle.labelled("handle"))
             .or(label.labelled("label"))
             .or(newtype.labelled("newtype"))
+            .or(card.labelled("card"))
             .map_with_span(|token, span| (token, span))
             .then(parse_comment().or_not())
             .map_with_span(|(expr, comment), span| {
@@ -293,6 +310,7 @@ mod tests {
             parse("> 'a add ~ 1, 2.").unwrap().0,
             Expr::Apply {
                 function: (Type::Alias("add".into()), 2..8),
+                link_name: None,
                 arguments: vec![
                     (Expr::Literal(Literal::Int(1)), 11..12),
                     (Expr::Literal(Literal::Int(2)), 14..15)
@@ -307,6 +325,7 @@ mod tests {
             parse("& 'a x").unwrap().0,
             Expr::Apply {
                 function: (Type::Alias("x".into()), 2..6),
+                link_name: None,
                 arguments: vec![],
             }
         );
@@ -435,6 +454,7 @@ mod tests {
                 of: Box::new((
                     Expr::Apply {
                         function: (Type::Alias("x".into()), 17..21),
+                        link_name: None,
                         arguments: vec![]
                     },
                     15..21

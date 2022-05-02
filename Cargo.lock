@@ -90,6 +90,7 @@ version = "0.1.0"
 name = "deskc-amir"
 version = "0.1.0"
 dependencies = [
+ "deskc-link",
  "deskc-types",
  "serde",
 ]
@@ -108,6 +109,7 @@ dependencies = [
 name = "deskc-ast"
 version = "0.1.0"
 dependencies = [
+ "deskc-link",
  "uuid",
 ]
 
@@ -151,6 +153,7 @@ name = "deskc-hir"
 version = "0.1.0"
 dependencies = [
  "deskc-file",
+ "deskc-link",
  "uuid",
 ]
 
@@ -166,6 +169,7 @@ dependencies = [
  "deskc-parser",
  "pretty_assertions",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -183,10 +187,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-link"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "deskc-mir"
 version = "0.1.0"
 dependencies = [
  "deskc-amir",
+ "deskc-link",
  "deskc-types",
  "serde",
 ]
@@ -200,6 +213,7 @@ dependencies = [
  "deskc-lexer",
  "deskc-textual-diagnostics",
  "deskc-tokens",
+ "uuid",
 ]
 
 [[package]]
@@ -236,6 +250,7 @@ version = "0.1.0"
 name = "deskc-thir"
 version = "0.1.0"
 dependencies = [
+ "deskc-link",
  "deskc-types",
 ]
 
@@ -451,6 +466,9 @@ name = "uuid"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "wasi"

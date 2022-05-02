@@ -1,3 +1,4 @@
+pub use link::LinkName;
 use types::{Effect, Type};
 
 pub type Id = usize;
@@ -45,13 +46,13 @@ pub enum Expr {
         handlers: Vec<Handler>,
         expr: Box<TypedHir>,
     },
-    Reference,
     Op {
         op: BuiltinOp,
         operands: Vec<TypedHir>,
     },
     Apply {
         function: Type,
+        link_name: Option<LinkName>,
         arguments: Vec<TypedHir>,
     },
     Product(Vec<TypedHir>),

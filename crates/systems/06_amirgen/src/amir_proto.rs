@@ -1,12 +1,13 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use amir::{
     amir::Amir,
     block::{ABasicBlock, BlockId},
     scope::ScopeId,
-    stmt::{AStmt, ATerminator, StmtBind},
+    stmt::{AStmt, ATerminator, ALink, StmtBind},
     var::{AVar, VarId},
 };
+use thir::LinkName;
 use types::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
@@ -25,6 +26,8 @@ pub struct AmirProto {
     deferred_block: Vec<BlockId>,
     // Values that referenced but not included in parameter
     captured_values: HashMap<Type, VarId>,
+    // Values that referenced with link name
+    links: HashSet<ALink>,
 }
 
 impl Default for AmirProto {
@@ -39,6 +42,7 @@ impl Default for AmirProto {
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
             captured_values: HashMap::default(),
+            links: Default::default(),
         }
     }
 }
@@ -54,6 +58,7 @@ impl AmirProto {
             vars,
             captured_values,
             deferred_block,
+            links,
             ..
         } = self;
         assert!(deferred_block.is_empty());
@@ -83,6 +88,8 @@ impl AmirProto {
             .map(|(ty, _var_id)| ty)
             .collect();
 
+        let links = links.into_iter().collect();
+
         Amir {
             parameters,
             captured,
@@ -90,6 +97,7 @@ impl AmirProto {
             vars,
             scopes: scopes.into_iter().map(|s| s.into_scope()).collect(),
             blocks,
+            links,
         }
     }
 
@@ -128,6 +136,14 @@ impl AmirProto {
             self.bind_to(var, AStmt::Parameter);
             var
         })
+    }
+
+    pub fn bind_link(&mut self, ty: Type, name: LinkName) -> VarId {
+        self.links.insert(ALink {
+            ty: ty.clone(),
+            name: name.clone(),
+        });
+        self.bind_stmt(ty, AStmt::Link(name))
     }
 
     pub fn create_var(&mut self, ty: Type) -> VarId {

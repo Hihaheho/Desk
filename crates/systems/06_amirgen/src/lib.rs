@@ -172,7 +172,6 @@ impl AmirGen {
                     },
                 )
             }
-            thir::Expr::Reference => self.amir_proto().find_var(stmt_ty),
             thir::Expr::Op {
                 op,
                 operands: arguments,
@@ -199,20 +198,30 @@ impl AmirGen {
             },
             thir::Expr::Apply {
                 function,
+                link_name,
                 arguments,
             } => {
-                let function = self.amir_proto().find_var(function);
-                let arguments = arguments
-                    .iter()
-                    .map(|arg| self.gen_stmt(arg))
-                    .collect::<Result<Vec<_>, _>>()?;
-                self.amir_proto().bind_stmt(
-                    stmt_ty.clone(),
-                    AStmt::Apply {
-                        function,
-                        arguments,
-                    },
-                )
+                let function = if let Some(link_name) = link_name {
+                    self.amir_proto()
+                        .bind_link(function.clone(), link_name.clone())
+                } else {
+                    self.amir_proto().find_var(function)
+                };
+                if arguments.is_empty() {
+                    function
+                } else {
+                    let arguments = arguments
+                        .iter()
+                        .map(|arg| self.gen_stmt(arg))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    self.amir_proto().bind_stmt(
+                        stmt_ty.clone(),
+                        AStmt::Apply {
+                            function,
+                            arguments,
+                        },
+                    )
+                }
             }
             thir::Expr::Product(values) => {
                 let values = values
@@ -266,7 +275,7 @@ impl AmirGen {
                 item: expr,
             } => {
                 // TODO: simplify this.
-                if let thir::Expr::Reference = expr.expr {
+                if let thir::Expr::Apply { .. } = expr.expr {
                     // Reference needs a correct type.
                     self.gen_stmt(&TypedHir {
                         id: expr.id,

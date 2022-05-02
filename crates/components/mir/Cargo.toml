@@ -5,9 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-withserde = ["serde", "amir/serde"]
+withserde = ["serde", "amir/withserde"]
 
 [dependencies]
 types = { path = "../types", version = "0.1.0", package = "deskc-types" }
 amir = { path = "../amir", version = "0.1.0", package = "deskc-amir" }
+link = { path = "../link", version = "0.1.0", package = "deskc-link" }
 serde = { version = "1.0", features = ["derive"], optional = true }

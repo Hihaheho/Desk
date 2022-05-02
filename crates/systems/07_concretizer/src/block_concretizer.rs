@@ -90,6 +90,7 @@ impl<'a> BlockConcretizer<'a> {
                 AStmt::Cast(from) => self.cast_to(*var, *from),
                 AStmt::Parameter => bind(Stmt::Parameter),
                 AStmt::Recursion => bind(Stmt::Recursion),
+                AStmt::Link(name) => bind(Stmt::Link(name.clone())),
             };
         }
         match terminator {

@@ -1,17 +1,18 @@
 use std::collections::HashMap;
 
+use link::LinkName;
 use types::{Effect, Type};
 
 use crate::{amir::AmirId, block::BlockId, var::VarId};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct StmtBind<T = AStmt> {
     pub var: VarId,
     pub stmt: T,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum AStmt {
     Const(Const),
@@ -32,9 +33,10 @@ pub enum AStmt {
     Cast(VarId),
     Parameter,
     Recursion,
+    Link(LinkName),
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FnRef {
     Link(Type),
@@ -47,7 +49,7 @@ pub enum FnRef {
     },
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Const {
     Int(i64),
@@ -56,7 +58,7 @@ pub enum Const {
     String(String),
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Op {
     Add,
@@ -83,14 +85,14 @@ pub enum Op {
     BitNot,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchCase<T = Type> {
     pub ty: T,
     pub next: BlockId,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ATerminator<T = Type> {
     Return(VarId),
@@ -99,4 +101,11 @@ pub enum ATerminator<T = Type> {
         cases: Vec<MatchCase<T>>,
     },
     Goto(BlockId),
+}
+
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+pub struct ALink<T = Type> {
+    pub name: LinkName,
+    pub ty: T,
 }

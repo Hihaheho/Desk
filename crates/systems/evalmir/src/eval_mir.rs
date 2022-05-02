@@ -186,6 +186,9 @@ impl EvalMir {
                         .clone()
                 }
                 Stmt::Recursion => Value::FnRef(FnRef::Recursion),
+                Stmt::Link(_link) => {
+                    todo!()
+                }
             };
             let var = *bind_var;
             self.store_value(var, value);
@@ -248,6 +251,7 @@ mod tests {
                 terminator: ATerminator::Return(VarId(0)),
             }],
             captured: vec![],
+            links: vec![],
         };
 
         let mut eval = EvalMir {

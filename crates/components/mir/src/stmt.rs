@@ -5,6 +5,7 @@ use amir::{
     stmt::{Const, Op},
     var::VarId,
 };
+use link::LinkName;
 
 use crate::ty::{ConcEffect, ConcType};
 
@@ -39,6 +40,7 @@ pub enum Stmt {
     RefMut(VarId),
     Parameter,
     Recursion,
+    Link(LinkName),
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]

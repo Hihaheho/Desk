@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
-uuid = "0.8.2"
+file = { path = "../file", version = "0.1.0", package = "deskc-file" }
+link = { path = "../link", version = "0.1.0", package = "deskc-link" }
+uuid = "0.8"

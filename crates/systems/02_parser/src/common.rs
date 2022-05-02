@@ -6,6 +6,7 @@ use chumsky::{
     Error,
 };
 use tokens::Token;
+use uuid::Uuid;
 
 pub(crate) fn parse_comment() -> impl Parser<Token, String, Error = Simple<Token>> + Clone {
     filter_map(|span, token| match token {
@@ -18,6 +19,13 @@ pub(crate) fn parse_ident() -> impl Parser<Token, String, Error = Simple<Token>>
     filter_map(|span, token| match token {
         Token::Ident(ident) => Ok(ident),
         _ => Err(Simple::custom(span, "expected identifier")),
+    })
+}
+
+pub(crate) fn parse_uuid() -> impl Parser<Token, Uuid, Error = Simple<Token>> + Clone {
+    filter_map(|span, token| match token {
+        Token::Uuid(ident) => Ok(ident),
+        _ => Err(Simple::custom(span, "expected uuid")),
     })
 }
 
