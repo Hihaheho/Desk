@@ -1,3 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["crates/libs/*", "crates/apps/*", "crates/systems/*", "crates/components/*", "crates/tests/*"]
+members = [
+  "crates/deskc/libs/*",
+  "crates/deskc/apps/*",
+  "crates/deskc/systems/*",
+  "crates/deskc/components/*",
+  "crates/deskc/tests/*",
+]
