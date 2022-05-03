@@ -1,13 +1,17 @@
 [package]
 name = "deskc-thir2dson"
-version = "0.1.0"
+version = "0.0.0"
 license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../../README.md"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thir" }
-dson = { path = "../../components/dson", version = "0.1.0", package = "deskc-dson" }
-types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
+thir = { path = "../../components/thir", version = "0.0.0", package = "deskc-thir" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "deskc-dson" }
+types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
 thiserror = "1.0.30"

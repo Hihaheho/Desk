@@ -1,22 +1,26 @@
 [package]
 name = "deskc-thirgen"
-version = "0.1.0"
+version = "0.0.0"
 license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../../README.md"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hir = { path = "../../components/hir", version = "0.1.0", package = "deskc-hir" }
-thir = { path = "../../components/thir", version = "0.1.0", package = "deskc-thir" }
-types = { path = "../../components/types", version = "0.1.0", package = "deskc-types" }
-file = { path = "../../components/file", version = "0.1.0", package = "deskc-file" }
+hir = { path = "../../components/hir", version = "0.0.0", package = "deskc-hir" }
+thir = { path = "../../components/thir", version = "0.0.0", package = "deskc-thir" }
+types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
+file = { path = "../../components/file", version = "0.0.0", package = "deskc-file" }
 thiserror = "1.0.30"
 
 [dev-dependencies]
-lexer = { path = "../../systems/01_lexer", version = "0.1.0", package = "deskc-lexer" }
-parser = { path = "../../systems/02_parser", version = "0.1.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/03_hirgen", version = "0.1.0", package = "deskc-hirgen" }
-typeinfer = { path = "../../systems/04_typeinfer", version = "0.1.0", package = "deskc-typeinfer" }
+lexer = { path = "../../systems/01_lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/02_parser", version = "0.0.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/03_hirgen", version = "0.0.0", package = "deskc-hirgen" }
+typeinfer = { path = "../../systems/04_typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"

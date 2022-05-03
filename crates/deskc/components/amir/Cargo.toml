@@ -1,13 +1,17 @@
 [package]
 name = "deskc-amir"
-version = "0.1.0"
+version = "0.0.0"
 license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../../README.md"
 edition = "2021"
 
 [features]
 withserde = ["serde", "link/withserde"]
 
 [dependencies]
-types = { path = "../types", version = "0.1.0", package = "deskc-types" }
-link = { path = "../link", version = "0.1.0", package = "deskc-link" }
+types = { path = "../types", version = "0.0.0", package = "deskc-types" }
+link = { path = "../link", version = "0.0.0", package = "deskc-link" }
 serde = { version = "1.0", features = ["derive"], optional = true }

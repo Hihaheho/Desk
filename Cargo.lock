@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "desk-x"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bevy",
  "desk-x-egui-plugin",
@@ -1402,7 +1402,7 @@ dependencies = [
 
 [[package]]
 name = "desk-x-egui-plugin"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
@@ -1413,7 +1413,7 @@ dependencies = [
 
 [[package]]
 name = "desk-x-theme"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bevy",
  "serde",
@@ -1421,11 +1421,11 @@ dependencies = [
 
 [[package]]
 name = "deskc"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-amir"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-link",
  "deskc-types",
@@ -1434,7 +1434,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-amirgen"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-amir",
  "deskc-thir",
@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-ast"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-link",
  "uuid",
@@ -1452,7 +1452,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-concretizer"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-amir",
  "deskc-mir",
@@ -1461,11 +1461,11 @@ dependencies = [
 
 [[package]]
 name = "deskc-dson"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-evalmir"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "chumsky",
  "deskc-hirgen",
@@ -1479,15 +1479,15 @@ dependencies = [
 
 [[package]]
 name = "deskc-file"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-fmt"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-hir"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-file",
  "deskc-link",
@@ -1496,7 +1496,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-hirgen"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "chumsky",
  "deskc-ast",
@@ -1511,11 +1511,11 @@ dependencies = [
 
 [[package]]
 name = "deskc-language-server"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-lexer"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "chumsky",
  "deskc-textual-diagnostics",
@@ -1525,7 +1525,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-link"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "serde",
  "uuid",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-mir"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-amir",
  "deskc-link",
@@ -1543,7 +1543,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-parser"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "chumsky",
  "deskc-ast",
@@ -1555,7 +1555,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-test-integration"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "ariadne",
  "chumsky",
@@ -1581,11 +1581,11 @@ dependencies = [
 
 [[package]]
 name = "deskc-textual-diagnostics"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-thir"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-link",
  "deskc-types",
@@ -1593,7 +1593,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-thir2dson"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-dson",
  "deskc-thir",
@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-thirgen"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "chumsky",
  "deskc-file",
@@ -1620,14 +1620,14 @@ dependencies = [
 
 [[package]]
 name = "deskc-tokens"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "uuid",
 ]
 
 [[package]]
 name = "deskc-typeinfer"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "ariadne",
  "chumsky",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "deskc-types"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "serde",
 ]
@@ -1669,23 +1669,23 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 
 [[package]]
 name = "dkernel"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "dkernel-diff"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "dkernel-firestore"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "dkernel-in-memory"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "dkernel-node"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-types",
  "uuid",
@@ -3248,7 +3248,7 @@ dependencies = [
 
 [[package]]
 name = "serde-dson"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "deskc-dson",
  "serde",
