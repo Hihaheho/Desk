@@ -10,4 +10,5 @@ members = [
   "crates/dkernel/components/*",
   "crates/dkernel/adapters/*",
   "crates/desk-x/apps/*",
+  "crates/desk-x/components/*",
 ]

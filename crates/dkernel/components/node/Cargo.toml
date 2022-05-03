@@ -7,3 +7,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+types = { path = "../../../deskc/components/types", version = "0.1.0", package = "deskc-types" }
+
+uuid = "0.8"
