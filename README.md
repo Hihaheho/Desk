@@ -32,6 +32,8 @@ Desk programming language (Desk-lang) is a programming language which has:
 - Embeddable interpreter
 - 🚧 Compiler for performant binary
 
+🚧 not yet implemented
+
 Any data and programs on Desk apps are finally evaluated as snippets of Desk-lang.
 
 ### Desk Kernel
@@ -48,6 +50,8 @@ Desk kernel provides these features:
 - 🚧 Version control system
 - 🚧 Permission management system
 - 🚧 3D/2D rendering with meshes
+
+🚧 not yet implemented
 
 ## Philosophy
 
