@@ -3,16 +3,12 @@ use bevy_egui::{
     egui::{self, Color32},
     EguiContext,
 };
-#[cfg(feature = "inspector")]
-use bevy_inspector_egui::WorldInspectorPlugin;
 use theme::Theme;
 
 pub struct EguiPlugin;
 
 impl Plugin for EguiPlugin {
     fn build(&self, app: &mut App) {
-        #[cfg(feature = "inspector")]
-        app.add_plugin(WorldInspectorPlugin::new());
         app.add_plugin(bevy_egui::EguiPlugin)
             .register_type::<Theme>()
             .add_startup_system(add_theme)
@@ -22,11 +18,9 @@ impl Plugin for EguiPlugin {
 }
 
 fn ui_example(mut egui_context: ResMut<EguiContext>) {
-    egui::Window::new("Hello")
-        .current_pos((100.0, 100.0))
-        .show(egui_context.ctx_mut(), |ui| {
-            ui.label("world");
-        });
+    egui::Window::new("Hello").show(egui_context.ctx_mut(), |ui| {
+        ui.label("world");
+    });
 }
 
 fn add_theme(mut commands: Commands) {
@@ -46,7 +40,7 @@ fn color(color: &Color) -> Color32 {
 
 fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Changed<Theme>>) {
     if let Ok(theme) = theme.get_single() {
-        #[cfg(not(target = "wasm32"))]
+        #[cfg(not(target_arch = "wasm32"))]
         {
             let theme_ron = ron::ser::to_string_pretty(&*theme, Default::default()).unwrap();
             std::fs::write("configs/theme.ron", theme_ron).unwrap();

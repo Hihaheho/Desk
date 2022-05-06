@@ -8,9 +8,11 @@ repository = "https://github.com/Hihaheho/Desk"
 readme = "../../../README.md"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+inspector = ["bevy-inspector-egui"]
 
 [dependencies]
 egui-plugin = { path = "../../plugins/desk-x-egui", version = "0.0.0", package = "desk-x-egui-plugin" }
 
 bevy = "0.7"
+bevy-inspector-egui = { version = "0.10.0", optional = true }

@@ -53,16 +53,16 @@
     ),
     noninteractive: (
         background: Rgba(
-            red: 0.73593986,
-            green: 0.6891497,
-            blue: 0.73383534,
+            red: 0.68696123,
+            green: 0.68696123,
+            blue: 0.68696123,
             alpha: 1,
         ),
         border: (
             color: Rgba(
-                red: 0.4199295,
-                green: 0.054948162,
-                blue: 0.4696365,
+                red: 0.22143145,
+                green: 0.22143145,
+                blue: 0.22143145,
                 alpha: 1,
             ),
             size: 2,

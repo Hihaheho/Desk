@@ -1,6 +1,7 @@
-# ignore all but allows all directories
+# ignore all but allows all directories except /target
 *
 !*/
+/target
 
 # rust files
 !/crates/**/*.rs
@@ -13,8 +14,13 @@
 !/configs/**/*.ron
 !/tools/**/*.sh
 
+# desk-x
+!/crates/apps/desk-x/public/index.html
+
 # top level files
 !/.gitattributes
-!/.gitignore
 !/README.md
 !/LICENSE
+
+# global allow
+!.gitignore
