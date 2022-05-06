@@ -1,2 +1,2 @@
-mod card_queries;
+mod card;
 mod query_result;

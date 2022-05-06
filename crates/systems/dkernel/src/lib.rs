@@ -5,8 +5,10 @@ mod snapshot;
 
 use log::LogRepository;
 use queries::KernelStorage;
+use snapshot::Snapshot;
 
 pub struct Kernel {
+    pub snapshot: Snapshot,
     pub log_repository: Box<dyn LogRepository>,
     pub db: KernelDatabase,
 }

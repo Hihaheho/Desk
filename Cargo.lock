@@ -1424,13 +1424,13 @@ name = "deskc"
 version = "0.1.0"
 dependencies = [
  "deskc-amir",
- "deskc-ast",
  "deskc-hir",
  "deskc-ids",
  "deskc-mir",
  "deskc-thir",
  "deskc-types",
  "salsa",
+ "uuid",
 ]
 
 [[package]]
@@ -1682,13 +1682,9 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 name = "dkernel"
 version = "0.0.0"
 dependencies = [
- "deskc-amir",
  "deskc-ast",
  "deskc-hir",
  "deskc-ids",
- "deskc-mir",
- "deskc-thir",
- "deskc-types",
  "dkernel-card",
  "salsa",
  "uuid",

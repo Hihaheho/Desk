@@ -23,6 +23,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: delete cache
 
       - uses: ryo33/cargo-deny-action@7778bea17b9517fa2c89f5b59615131467e7f79b
         with:
