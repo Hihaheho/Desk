@@ -7,9 +7,12 @@ use dkernel_card::{
     node::{Node, NodeId},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Snapshot {
-    pub asts: HashMap<NodeId, FlatNode>,
+    pub nodes: HashMap<NodeId, FlatNode>,
     pub files: HashMap<FileId, File>,
-    pub references: HashMap<NodeId, HashSet<NodeId>>,
+    references: HashMap<NodeId, HashSet<NodeId>>,
+    pub cards: HashSet<CardId>,
 }
+
+impl Snapshot {}

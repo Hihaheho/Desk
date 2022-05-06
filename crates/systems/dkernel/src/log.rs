@@ -1,4 +1,5 @@
 use dkernel_card::{
+    content::Content,
     node::NodeId,
     patch::{AttributePatch, ChildrenPatch, ContentPatch},
 };
@@ -19,15 +20,16 @@ pub struct LogEntry {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Log {
-    ContentPatch {
+    AddNode(Content),
+    PatchContent {
         node_id: NodeId,
         patch: ContentPatch,
     },
-    ChildrenPatch {
+    PatchChildren {
         node_id: NodeId,
         patch: ChildrenPatch,
     },
-    AttributePatch {
+    PatchAttribute {
         node_id: NodeId,
         patch: AttributePatch,
     },

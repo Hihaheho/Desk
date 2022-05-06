@@ -1,5 +1,6 @@
 mod string_diff;
 use hir::expr::Expr;
+use types::Type;
 
 use crate::{content::Content, flat_node::NodeRef};
 
@@ -25,6 +26,6 @@ pub enum ChildrenPatch {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttributePatch {
-    pub key: String,
+    pub key: Type,
     pub value: Expr,
 }
