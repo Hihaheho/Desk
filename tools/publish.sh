@@ -23,6 +23,7 @@ crates=(
     deskc-fmt
     deskc-thir2dson
     deskc
+    deskc-cli
     deskc-language-server
     serde-dson
     dkernel-card
@@ -37,5 +38,5 @@ crates=(
 for crate in "${crates[@]}"
 do
     echo "Publishing ${crate}"
-    cargo publish -p ${crate} --no-verify && sleep 10
+    cargo publish -p ${crate} --no-verify && sleep 20
 done

@@ -1421,7 +1421,7 @@ dependencies = [
 
 [[package]]
 name = "deskc"
-version = "0.0.0"
+version = "0.1.0"
 
 [[package]]
 name = "deskc-amir"
@@ -1449,6 +1449,10 @@ dependencies = [
  "deskc-ids",
  "uuid",
 ]
+
+[[package]]
+name = "deskc-cli"
+version = "0.0.0"
 
 [[package]]
 name = "deskc-concretizer"
