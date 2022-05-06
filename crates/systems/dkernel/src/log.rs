@@ -4,9 +4,11 @@ use dkernel_card::{
     patch::{AttributePatch, ChildrenPatch, ContentPatch},
 };
 
+use crate::snapshot::Snapshot;
+
 pub trait LogRepository {
     fn poll(&mut self) -> Vec<LogEntry>;
-    fn commit(&mut self, log: Vec<Log>);
+    fn commit(&mut self, log: Log);
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -14,6 +16,7 @@ pub struct UserId(String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LogEntry {
+    pub index: usize,
     pub user_id: UserId,
     pub log: Log,
 }
@@ -21,6 +24,7 @@ pub struct LogEntry {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Log {
     AddNode(Content),
+    RemoveNode(NodeId),
     PatchContent {
         node_id: NodeId,
         patch: ContentPatch,
@@ -32,5 +36,9 @@ pub enum Log {
     PatchAttribute {
         node_id: NodeId,
         patch: AttributePatch,
+    },
+    AddSnapshot {
+        index: usize,
+        snapshot: Snapshot,
     },
 }

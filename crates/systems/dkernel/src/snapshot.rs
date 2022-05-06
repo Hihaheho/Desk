@@ -14,5 +14,3 @@ pub struct Snapshot {
     references: HashMap<NodeId, HashSet<NodeId>>,
     pub cards: HashSet<CardId>,
 }
-
-impl Snapshot {}

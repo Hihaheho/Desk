@@ -1,10 +1,19 @@
-/*
-!/crates/
-!/Cargo.*
-!/.github
+# ignore all but allows all directories
+*
+!*/
+
+# rust files
+!/crates/**/*.rs
+!/crates/**/Cargo.*
+
+# other files
+!/.github/**/*.yml
+!/docs/**/*.md
+!/configs/**/*.toml
+!/configs/**/*.ron
+!/tools/**/*.sh
+
+# top level files
 !/.gitignore
 !/README.md
 !/LICENSE
-!/docs/
-!/configs/
-!/tools/
