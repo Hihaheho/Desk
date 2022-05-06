@@ -125,8 +125,8 @@ impl TypedHirGen {
                     panic!("function is inferred to not function??");
                 }
             }
-            Expr::Array(values) => {
-                thir::Expr::Array(values.iter().map(|value| self.gen(&*value)).collect())
+            Expr::Vector(values) => {
+                thir::Expr::Vector(values.iter().map(|value| self.gen(&*value)).collect())
             }
             Expr::Set(values) => {
                 thir::Expr::Set(values.iter().map(|value| self.gen(&*value)).collect())

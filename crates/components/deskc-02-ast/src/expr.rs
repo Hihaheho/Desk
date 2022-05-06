@@ -63,7 +63,7 @@ pub enum Expr {
         parameters: Vec<Spanned<Type>>,
         body: Box<Spanned<Self>>,
     },
-    Array(Vec<Spanned<Self>>),
+    Vector(Vec<Spanned<Self>>),
     Set(Vec<Spanned<Self>>),
     Include(String),
     Import {

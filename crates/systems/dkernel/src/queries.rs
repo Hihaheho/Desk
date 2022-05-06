@@ -22,13 +22,13 @@ use execution_context::execution_context;
 use hir::hir;
 use mir::mir;
 use thir::thir;
-// use typed_amir::typed_amir;
 
 use dkernel_card::{
     content::Content,
     flat_node::{Attributes, NodeRef},
-    node::NodeId,
+    node::{Node, NodeId},
 };
+use uuid::Uuid;
 
 #[salsa::query_group(KernelStorage)]
 pub trait KernelQueries {
@@ -38,9 +38,11 @@ pub trait KernelQueries {
     fn children(&self, id: NodeId) -> Vec<NodeRef>;
     #[salsa::input]
     fn attributes(&self, id: NodeId) -> Attributes;
-    #[salsa::input]
-    fn textual_card(&self, id: CardId) -> Option<Arc<String>>;
-    fn build_ast(&self, id: NodeId) -> KernelResult<Spanned<deskc_ast::expr::Expr>>;
+    // #[salsa::input]
+    // fn definition(&self, id: CardId, uuid: Uuid) -> KernelResult<Amirs>;
+    // #[salsa::input]
+    // fn latest_definition(&self, id: CardId) -> Uuid;
+    fn build_ast(&self, id: NodeId) -> KernelResult<Node>;
     fn ast(&self, id: CardId) -> KernelResult<Spanned<deskc_ast::expr::Expr>>;
     fn hir(&self, id: CardId) -> KernelResult<WithMeta<deskc_hir::expr::Expr>>;
     fn thir(&self, id: CardId) -> KernelResult<TypedHir>;
@@ -56,8 +58,9 @@ pub struct KernelError(pub Arc<Box<dyn std::error::Error + Send + Sync + 'static
 
 impl PartialEq for KernelError {
     fn eq(&self, _other: &Self) -> bool {
-        // always returns true to avoid recomputation on error
-        true
+        // FIXME: this is not a good solution: we need Eq object safe
+        // always returns false to occur recomputation always on error
+        false
     }
 }
 impl Eq for KernelError {}

@@ -240,7 +240,7 @@ impl HirGen {
                         }))
                     })?
             }
-            ast::expr::Expr::Array(items) => self.with_meta(Expr::Array(
+            ast::expr::Expr::Vector(items) => self.with_meta(Expr::Vector(
                 items
                     .iter()
                     .map(|item| self.gen(item))
@@ -462,7 +462,7 @@ mod tests {
                 parameter: remove_meta_ty(parameter),
                 body: Box::new(remove_meta(*body)),
             },
-            Expr::Array(exprs) => Expr::Array(exprs.into_iter().map(remove_meta).collect()),
+            Expr::Vector(exprs) => Expr::Vector(exprs.into_iter().map(remove_meta).collect()),
             Expr::Set(exprs) => Expr::Set(exprs.into_iter().map(remove_meta).collect()),
             Expr::Match { of, cases } => Expr::Match {
                 of: Box::new(remove_meta(*of)),

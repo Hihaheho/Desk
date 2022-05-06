@@ -2,6 +2,7 @@ use types::Type;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Content {
+    Source(String),
     String(String),
     Integer(u64),
     Rational(u64, u64),

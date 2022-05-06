@@ -63,7 +63,7 @@ pub enum Expr {
         parameters: Vec<Type>,
         body: Box<TypedHir>,
     },
-    Array(Vec<TypedHir>),
+    Vector(Vec<TypedHir>),
     Set(Vec<TypedHir>),
     Label {
         label: String,

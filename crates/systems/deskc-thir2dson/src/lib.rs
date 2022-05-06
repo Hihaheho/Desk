@@ -22,7 +22,7 @@ pub fn thir_to_dson(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
                 .map(thir_to_dson)
                 .collect::<Result<Vec<_>, _>>()?,
         ),
-        Expr::Array(values) => Dson::Array(
+        Expr::Vector(values) => Dson::Array(
             values
                 .iter()
                 .map(thir_to_dson)

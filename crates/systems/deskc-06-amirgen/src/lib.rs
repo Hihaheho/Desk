@@ -80,13 +80,13 @@ impl AmirGen {
                 };
                 self.amir_proto().bind_stmt(stmt_ty.clone(), const_value)
             }
-            thir::Expr::Array(values) => {
+            thir::Expr::Vector(values) => {
                 let values = values
                     .iter()
                     .map(|value| self.gen_stmt(value))
                     .collect::<Result<Vec<_>, _>>()?;
                 self.amir_proto()
-                    .bind_stmt(stmt_ty.clone(), AStmt::Array(values))
+                    .bind_stmt(stmt_ty.clone(), AStmt::Vector(values))
             }
             thir::Expr::Set(values) => {
                 let values = values

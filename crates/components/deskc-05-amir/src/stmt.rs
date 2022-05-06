@@ -17,7 +17,7 @@ pub struct StmtBind<T = AStmt> {
 pub enum AStmt {
     Const(Const),
     Product(Vec<VarId>),
-    Array(Vec<VarId>),
+    Vector(Vec<VarId>),
     Set(Vec<VarId>),
     Fn(FnRef),
     Perform(VarId),

@@ -59,7 +59,7 @@ pub enum Expr {
         parameter: WithMeta<Type>,
         body: Box<WithMeta<Self>>,
     },
-    Array(Vec<WithMeta<Self>>),
+    Vector(Vec<WithMeta<Self>>),
     Set(Vec<WithMeta<Self>>),
     Label {
         label: String,

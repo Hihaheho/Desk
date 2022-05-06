@@ -44,7 +44,7 @@ impl<'a> BlockConcretizer<'a> {
             match stmt {
                 AStmt::Const(value) => bind(Stmt::Const(value.clone())),
                 AStmt::Product(values) => bind(Stmt::Tuple(values.to_vec())),
-                AStmt::Array(values) => bind(Stmt::Array(values.to_vec())),
+                AStmt::Vector(values) => bind(Stmt::Array(values.to_vec())),
                 AStmt::Set(values) => bind(Stmt::Set(values.to_vec())),
                 AStmt::Fn(fn_ref) => match fn_ref {
                     amir::stmt::FnRef::Link(link) => bind(Stmt::Fn(FnRef::Link(

@@ -116,7 +116,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             body: Box::new(body),
         });
         let array =
-            parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Array);
+            parse_collection(Token::ArrayBegin, expr.clone(), Token::ArrayEnd).map(Expr::Vector);
         let set = parse_collection(Token::SetBegin, expr.clone(), Token::SetEnd).map(Expr::Set);
         let typed = parse_typed(expr.clone(), type_.clone()).map(|(expr, ty)| Expr::Typed {
             ty,
@@ -358,7 +358,7 @@ mod tests {
     fn parse_array() {
         assert_eq!(
             parse("[1, ?, ?]").unwrap().0,
-            Expr::Array(vec![
+            Expr::Vector(vec![
                 (Expr::Literal(Literal::Int(1)), 1..2),
                 (Expr::Hole, 4..5),
                 (Expr::Hole, 7..8),

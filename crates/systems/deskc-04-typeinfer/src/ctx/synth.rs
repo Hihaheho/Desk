@@ -262,7 +262,7 @@ impl Ctx {
                     })
                 }
             }
-            Expr::Array(values) => {
+            Expr::Vector(values) => {
                 let mut types = vec![];
                 values
                     .iter()

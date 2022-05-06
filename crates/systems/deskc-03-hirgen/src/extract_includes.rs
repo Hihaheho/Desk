@@ -50,7 +50,7 @@ fn visit(includes: &mut Vec<String>, expr: &Expr) {
             parameters: _,
             body,
         } => visit(includes, &body.0),
-        Expr::Array(exprs) => {
+        Expr::Vector(exprs) => {
             for expr in exprs {
                 visit(includes, &expr.0);
             }

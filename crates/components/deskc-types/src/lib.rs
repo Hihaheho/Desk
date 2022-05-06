@@ -20,7 +20,7 @@ pub enum Type {
         parameters: Vec<Self>,
         body: Box<Self>,
     },
-    Array(Box<Self>),
+    Vector(Box<Self>),
     Set(Box<Self>),
     Variable(Id),
     ForAll {

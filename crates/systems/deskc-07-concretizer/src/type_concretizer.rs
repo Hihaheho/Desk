@@ -18,7 +18,7 @@ impl TypeConcretizer {
                 parameters: parameters.iter().map(|t| self.gen_conc_type(t)).collect(),
                 body: Box::new(self.gen_conc_type(body)),
             },
-            Type::Array(ty) => ConcType::Array(Box::new(self.gen_conc_type(ty))),
+            Type::Vector(ty) => ConcType::Array(Box::new(self.gen_conc_type(ty))),
             Type::Set(ty) => ConcType::Set(Box::new(self.gen_conc_type(ty))),
             Type::Variable(id) => ConcType::Variable(*id),
             Type::ForAll { variable, body } => ConcType::ForAll {
