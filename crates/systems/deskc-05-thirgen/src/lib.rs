@@ -186,6 +186,8 @@ mod tests {
         hirgen::gen_hir(FileId(0), &ast, Default::default())
             .unwrap()
             .1
+            .entrypoint
+            .unwrap()
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {

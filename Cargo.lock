@@ -1498,6 +1498,7 @@ dependencies = [
  "deskc-ast",
  "deskc-file",
  "deskc-hir",
+ "deskc-ids",
  "deskc-lexer",
  "deskc-parser",
  "pretty_assertions",

@@ -2,6 +2,7 @@ mod error;
 mod extract_includes;
 mod gen_effect_expr;
 pub use extract_includes::extract_includes;
+use ids::CardId;
 
 use std::{
     cell::RefCell,
@@ -15,19 +16,25 @@ use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
     ty::Type,
+    Hir,
 };
 
 pub fn gen_hir(
     file_id: FileId,
     src: &Spanned<ast::expr::Expr>,
     included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
-) -> Result<(HirGen, WithMeta<Expr>), HirGenError> {
-    let hir = HirGen {
+) -> Result<(HirGen, Hir), HirGenError> {
+    let mut hirgen = HirGen {
         file_stack: RefCell::new(vec![file_id]),
         included,
         ..Default::default()
     };
-    hir.gen(src).map(|expr| (hir, expr))
+    hirgen.gen_hir(src)?;
+    let hir = Hir {
+        entrypoint: hirgen.entrypoint.take(),
+        cards: hirgen.cards.drain(..).collect(),
+    };
+    Ok((hirgen, hir))
 }
 
 #[derive(Default, Debug)]
@@ -41,6 +48,8 @@ pub struct HirGen {
     brands: RefCell<HashSet<String>>,
     // current file id is the last item.
     file_stack: RefCell<Vec<FileId>>,
+    cards: Vec<(CardId, WithMeta<Expr>)>,
+    entrypoint: Option<WithMeta<Expr>>,
 }
 
 impl HirGen {
@@ -304,6 +313,11 @@ impl HirGen {
             }
         };
         Ok(with_meta)
+    }
+
+    pub fn gen_hir(&mut self, ast: &Spanned<ast::expr::Expr>) -> Result<(), HirGenError> {
+        self.entrypoint = Some(self.gen(ast)?);
+        Ok(())
     }
 
     pub(crate) fn push_span(&self, span: Span) {
@@ -592,5 +606,20 @@ mod tests {
                 }))
             })
         )
+    }
+
+    #[test]
+    fn gen_entrypoint() {
+        let expr = parse(
+            r#"
+        1
+        "#,
+        );
+        let (_, hir) = gen_hir(FileId(0), &expr, Default::default()).unwrap();
+        assert!(hir.cards.is_empty());
+        assert_eq!(
+            remove_meta(hir.entrypoint.unwrap()),
+            dummy_meta(Expr::Literal(Literal::Int(1)))
+        );
     }
 }

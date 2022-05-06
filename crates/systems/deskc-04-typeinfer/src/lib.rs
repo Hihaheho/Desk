@@ -68,7 +68,8 @@ mod tests {
     fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
         let tokens = lexer::scan(input).unwrap();
         let ast = parser::parse(tokens).unwrap();
-        hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap()
+        let (hirgen, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
+        (hirgen, hir.entrypoint.unwrap())
     }
 
     fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {

@@ -15,8 +15,9 @@ macro_rules! test {
             let tokens = lexer::scan(input).unwrap();
             let ast = parser::parse(tokens).unwrap();
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
-            let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &hir).unwrap();
-            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir);
+            let entrypoint = hir.entrypoint.unwrap();
+            let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &entrypoint).unwrap();
+            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
             let dson = thir2dson::thir_to_dson(&thir).unwrap();
             let test_case: TestCase = from_dson(dson).unwrap();
             // compile sources
@@ -52,7 +53,8 @@ macro_rules! test {
                 Err(errors) => print_errors(input, errors),
             };
             let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
-            let ctx = match typeinfer::synth(genhir.next_id(), &hir) {
+            let entrypoint = hir.entrypoint.unwrap();
+            let ctx = match typeinfer::synth(genhir.next_id(), &entrypoint) {
                 Ok((ctx, _ty)) => ctx,
                 Err(error) => print_errors(input, error),
             };
@@ -86,7 +88,7 @@ macro_rules! test {
                 }
             }
 
-            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir);
+            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
             let amirs = amirgen::gen_abstract_mir(&thir).unwrap();
             let mirs = concretizer::concretize(&amirs);
             let mut evalmir = evalmir::eval_mirs(mirs);
