@@ -1,8 +1,10 @@
 use deskc_ast::{expr::Expr, span::Spanned};
 use deskc_ids::CardId;
 
-use super::{KernelQueries, KernelResult};
+use crate::query_result::QueryResult;
 
-pub(super) fn ast(db: &dyn KernelQueries, id: CardId) -> KernelResult<Spanned<Expr>> {
+use super::KernelQueries;
+
+pub(super) fn ast(db: &dyn KernelQueries, id: CardId) -> QueryResult<Spanned<Expr>> {
     todo!()
 }

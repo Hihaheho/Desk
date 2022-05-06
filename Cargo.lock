@@ -1422,6 +1422,16 @@ dependencies = [
 [[package]]
 name = "deskc"
 version = "0.1.0"
+dependencies = [
+ "deskc-amir",
+ "deskc-ast",
+ "deskc-hir",
+ "deskc-ids",
+ "deskc-mir",
+ "deskc-thir",
+ "deskc-types",
+ "salsa",
+]
 
 [[package]]
 name = "deskc-amir"

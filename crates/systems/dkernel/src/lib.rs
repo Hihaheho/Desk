@@ -1,5 +1,6 @@
 mod log;
 mod queries;
+mod query_result;
 mod snapshot;
 
 use log::LogRepository;
