@@ -4,13 +4,12 @@ mod type_concretizer;
 
 use amir::{
     amir::{Amir, Amirs},
-    stmt::ALink,
     var::AVar,
 };
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{Mir, Mirs},
+    mir::{Mir, Mirs, LinkId},
     ty::ConcType,
     Vars,
 };
@@ -78,7 +77,7 @@ impl Concretizer {
 
         let links = links
             .iter()
-            .map(|link| ALink {
+            .map(|link| LinkId {
                 ty: type_conc.gen_conc_type(&link.ty),
                 name: link.name.clone(),
             })

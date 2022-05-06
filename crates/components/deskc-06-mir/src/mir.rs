@@ -1,15 +1,13 @@
+use crate::{stmt::Stmt, ty::ConcType};
 use amir::{
     amir::AmirId,
     scope::Scope,
-    stmt::ALink,
     var::{AVar, Vars},
 };
 
-use crate::{stmt::Stmt, ty::ConcType};
-
 pub type Var = AVar<ConcType>;
 pub type BasicBlock = amir::block::ABasicBlock<Stmt, usize>;
-pub type Link = ALink<ConcType>;
+pub type LinkId = ids::LinkId<ConcType>;
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,7 +18,7 @@ pub struct Mir {
     pub vars: Vars<ConcType>,
     pub scopes: Vec<Scope>,
     pub blocks: Vec<BasicBlock>,
-    pub links: Vec<Link>,
+    pub links: Vec<LinkId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

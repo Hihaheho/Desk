@@ -55,7 +55,7 @@ pub enum Expr {
     },
     Apply {
         function: Type,
-        link_name: Option<LinkName>,
+        link_name: LinkName,
         arguments: Vec<TypedHir>,
     },
     Product(Vec<TypedHir>),

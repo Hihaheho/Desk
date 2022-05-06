@@ -46,7 +46,7 @@ pub enum Expr {
     },
     Apply {
         function: Spanned<Type>,
-        link_name: Option<LinkName>,
+        link_name: LinkName,
         arguments: Vec<Spanned<Self>>,
     },
     Product(Vec<Spanned<Self>>),

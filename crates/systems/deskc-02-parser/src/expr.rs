@@ -83,23 +83,25 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         let card_uuid = just(Token::Card)
             .ignore_then(parse_uuid())
-            .map(LinkName::Card);
+            .map(LinkName::Card)
+            .or_not()
+            .map(|name| name.unwrap_or(LinkName::None));
         let apply = just(Token::Apply)
             .ignore_then(type_.clone())
-            .then(card_uuid.clone().or_not())
+            .then(card_uuid.clone())
             .in_()
             .then(expr.clone().separated_by_comma_at_least_one())
-            .map(|((function, card), arguments)| Expr::Apply {
+            .map(|((function, link_name), arguments)| Expr::Apply {
                 function,
-                link_name: card,
+                link_name,
                 arguments,
             });
         let reference = just(Token::Reference)
             .ignore_then(type_.clone())
-            .then(card_uuid.or_not())
-            .map(|(reference, card)| Expr::Apply {
+            .then(card_uuid)
+            .map(|(reference, link_name)| Expr::Apply {
                 function: reference,
-                link_name: card,
+                link_name,
                 arguments: vec![],
             });
         let product = parse_op(just(Token::Product), expr.clone()).map(Expr::Product);
@@ -309,7 +311,7 @@ mod tests {
             parse("> 'a add ~ 1, 2.").unwrap().0,
             Expr::Apply {
                 function: (Type::Alias("add".into()), 2..8),
-                link_name: None,
+                link_name: LinkName::None,
                 arguments: vec![
                     (Expr::Literal(Literal::Int(1)), 11..12),
                     (Expr::Literal(Literal::Int(2)), 14..15)
@@ -324,7 +326,7 @@ mod tests {
             parse("& 'a x").unwrap().0,
             Expr::Apply {
                 function: (Type::Alias("x".into()), 2..6),
-                link_name: None,
+                link_name: LinkName::None,
                 arguments: vec![],
             }
         );
@@ -453,7 +455,7 @@ mod tests {
                 of: Box::new((
                     Expr::Apply {
                         function: (Type::Alias("x".into()), 17..21),
-                        link_name: None,
+                        link_name: LinkName::None,
                         arguments: vec![]
                     },
                     15..21

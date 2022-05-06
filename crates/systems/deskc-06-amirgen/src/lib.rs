@@ -11,7 +11,7 @@ use amir::{
     var::VarId,
 };
 use amir_proto::AmirProto;
-use thir::{Handler, TypedHir};
+use thir::{Handler, LinkName, TypedHir};
 use thiserror::Error;
 use types::Type;
 
@@ -201,7 +201,7 @@ impl AmirGen {
                 link_name,
                 arguments,
             } => {
-                let function = if let Some(link_name) = link_name {
+                let function = if link_name != &LinkName::None {
                     self.amir_proto()
                         .bind_link(function.clone(), link_name.clone())
                 } else {

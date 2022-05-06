@@ -233,7 +233,7 @@ mod tests {
                         ty: Type::Number,
                         expr: thir::Expr::Apply {
                             function: Type::Number,
-                            link_name: None,
+                            link_name: Default::default(),
                             arguments: vec![]
                         },
                     }),

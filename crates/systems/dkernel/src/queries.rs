@@ -3,7 +3,6 @@ mod ast;
 mod build_ast;
 mod execution_context;
 mod hir;
-mod is_root;
 mod mir;
 mod thir;
 mod typed_amir;
@@ -13,15 +12,16 @@ use std::sync::Arc;
 use amir::amir;
 use ast::ast;
 use build_ast::build_ast;
+use deskc_amir::amir::Amirs;
 use deskc_ast::span::Spanned;
 use deskc_hir::meta::WithMeta;
 use deskc_ids::CardId;
+use deskc_mir::{environment::Environment, mir::Mirs};
+use deskc_thir::TypedHir;
+use execution_context::execution_context;
 use hir::hir;
-use is_root::is_root;
 use mir::mir;
 use thir::thir;
-// use execution_context::execution_context;
-// use textual_card::textual_card;
 // use typed_amir::typed_amir;
 
 use dkernel_card::{
@@ -33,8 +33,6 @@ use dkernel_card::{
 #[salsa::query_group(KernelStorage)]
 pub trait KernelQueries {
     #[salsa::input]
-    fn references(&self, id: NodeId) -> Vec<NodeId>;
-    #[salsa::input]
     fn content(&self, id: NodeId) -> Content;
     #[salsa::input]
     fn children(&self, id: NodeId) -> Vec<NodeRef>;
@@ -42,13 +40,13 @@ pub trait KernelQueries {
     fn attributes(&self, id: NodeId) -> Attributes;
     #[salsa::input]
     fn textual_card(&self, id: CardId) -> Option<Arc<String>>;
-    fn is_root(&self, id: NodeId) -> bool;
     fn build_ast(&self, id: NodeId) -> KernelResult<Spanned<deskc_ast::expr::Expr>>;
     fn ast(&self, id: CardId) -> KernelResult<Spanned<deskc_ast::expr::Expr>>;
     fn hir(&self, id: CardId) -> KernelResult<WithMeta<deskc_hir::expr::Expr>>;
-    fn thir(&self, id: CardId) -> KernelResult<deskc_thir::TypedHir>;
-    fn amir(&self, id: CardId) -> KernelResult<deskc_amir::amir::Amirs>;
-    fn mir(&self, id: CardId) -> KernelResult<deskc_mir::mir::Mirs>;
+    fn thir(&self, id: CardId) -> KernelResult<TypedHir>;
+    fn amir(&self, id: CardId) -> KernelResult<Amirs>;
+    fn mir(&self, id: CardId) -> KernelResult<Mirs>;
+    fn execution_context(&self, id: CardId) -> KernelResult<Environment>;
 }
 
 pub type KernelResult<T> = Result<Arc<T>, KernelError>;

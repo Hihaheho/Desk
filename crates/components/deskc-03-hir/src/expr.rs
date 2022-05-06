@@ -43,7 +43,7 @@ pub enum Expr {
     },
     Apply {
         function: WithMeta<Type>,
-        link_name: Option<LinkName>,
+        link_name: LinkName,
         arguments: Vec<WithMeta<Self>>,
     },
     Product(Vec<WithMeta<Self>>),

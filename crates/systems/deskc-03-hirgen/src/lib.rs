@@ -480,7 +480,7 @@ mod tests {
             gen.gen(&(
                 ast::expr::Expr::Apply {
                     function: (ast::ty::Type::Number, 3..10),
-                    link_name: None,
+                    link_name: Default::default(),
                     arguments: vec![(
                         ast::expr::Expr::Attribute {
                             attr: Box::new((

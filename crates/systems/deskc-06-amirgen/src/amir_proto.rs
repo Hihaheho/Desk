@@ -4,7 +4,7 @@ use amir::{
     amir::Amir,
     block::{ABasicBlock, BlockId},
     scope::ScopeId,
-    stmt::{ALink, AStmt, ATerminator, StmtBind},
+    stmt::{LinkId, AStmt, ATerminator, StmtBind},
     var::{AVar, VarId},
 };
 use thir::LinkName;
@@ -27,7 +27,7 @@ pub struct AmirProto {
     // Values that referenced but not included in parameter
     captured_values: HashMap<Type, VarId>,
     // Values that referenced with link name
-    links: HashSet<ALink>,
+    links: HashSet<LinkId>,
 }
 
 impl Default for AmirProto {
@@ -139,7 +139,7 @@ impl AmirProto {
     }
 
     pub fn bind_link(&mut self, ty: Type, name: LinkName) -> VarId {
-        self.links.insert(ALink {
+        self.links.insert(LinkId {
             ty: ty.clone(),
             name: name.clone(),
         });

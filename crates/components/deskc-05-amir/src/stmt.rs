@@ -106,9 +106,4 @@ pub enum ATerminator<T = Type> {
     Goto(BlockId),
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq)]
-pub struct ALink<T = Type> {
-    pub name: LinkName,
-    pub ty: T,
-}
+pub type LinkId = ids::LinkId<Type>;
