@@ -11,16 +11,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hir = { path = "../../components/hir", version = "0.0.0", package = "deskc-hir" }
-types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
-file = { path = "../../components/file", version = "0.0.0", package = "deskc-file" }
-textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+file = { path = "../../components/deskc-file", version = "0.0.0", package = "deskc-file" }
+textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
 thiserror = "1.0.30"
 
 [dev-dependencies]
-lexer = { path = "../../systems/01_lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/02_parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/03_hirgen", version = "0.0.0", package = "deskc-hirgen" }
+lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 chumsky = "0.8.0"
 ariadne = "0.1"
 pretty_assertions = "1.0.0"

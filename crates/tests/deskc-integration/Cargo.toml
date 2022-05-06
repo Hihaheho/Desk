@@ -11,21 +11,21 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lexer = { path = "../../systems/01_lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/02_parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/03_hirgen", version = "0.0.0", package = "deskc-hirgen" }
-thirgen = { path = "../../systems/05_thirgen", version = "0.0.0", package = "deskc-thirgen" }
-amirgen = { path = "../../systems/06_amirgen", version = "0.0.0", package = "deskc-amirgen" }
-concretizer = { path = "../../systems/07_concretizer", version = "0.0.0", package = "deskc-concretizer" }
-evalmir = { path = "../../systems/evalmir", version = "0.0.0", package = "deskc-evalmir", features = ["withserde"] }
-typeinfer = { path = "../../systems/04_typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
-thir2dson = { path = "../../systems/thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
-hir = { path = "../../components/hir", version = "0.0.0", package = "deskc-hir" }
-thir = { path = "../../components/thir", version = "0.0.0", package = "deskc-thir" }
-dson = { path = "../../components/dson", version = "0.0.0", package = "deskc-dson" }
-types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
-file = { path = "../../components/file", version = "0.0.0", package = "deskc-file" }
-textual-diagnostics = { path = "../../components/textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
+thirgen = { path = "../../systems/deskc-05-thirgen", version = "0.0.0", package = "deskc-thirgen" }
+amirgen = { path = "../../systems/deskc-06-amirgen", version = "0.0.0", package = "deskc-amirgen" }
+concretizer = { path = "../../systems/deskc-07-concretizer", version = "0.0.0", package = "deskc-concretizer" }
+evalmir = { path = "../../systems/deskc-evalmir", version = "0.0.0", package = "deskc-evalmir", features = ["withserde"] }
+typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
+thir2dson = { path = "../../systems/deskc-thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
+hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+file = { path = "../../components/deskc-file", version = "0.0.0", package = "deskc-file" }
+textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
 serde-dson = { path = "../../libs/serde-dson", version = "0.0.0" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"

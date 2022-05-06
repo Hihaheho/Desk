@@ -12,7 +12,7 @@ edition = "2021"
 inspector = ["bevy-inspector-egui"]
 
 [dependencies]
-theme = { path = "../../components/theme", version = "0.0.0", package = "desk-x-theme" }
+theme = { path = "../../components/desk-x-theme", version = "0.0.0", package = "desk-x-theme" }
 
 bevy = "0.7.0"
 ron = "0.7"

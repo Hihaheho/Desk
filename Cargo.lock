@@ -1460,10 +1460,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-dson"
-version = "0.0.0"
-
-[[package]]
 name = "deskc-evalmir"
 version = "0.0.0"
 dependencies = [
@@ -1561,7 +1557,6 @@ dependencies = [
  "chumsky",
  "deskc-amirgen",
  "deskc-concretizer",
- "deskc-dson",
  "deskc-evalmir",
  "deskc-file",
  "deskc-hir",
@@ -1574,6 +1569,7 @@ dependencies = [
  "deskc-thirgen",
  "deskc-typeinfer",
  "deskc-types",
+ "dson",
  "pretty_assertions",
  "serde",
  "serde-dson",
@@ -1595,9 +1591,9 @@ dependencies = [
 name = "deskc-thir2dson"
 version = "0.0.0"
 dependencies = [
- "deskc-dson",
  "deskc-thir",
  "deskc-types",
+ "dson",
  "thiserror",
 ]
 
@@ -1679,7 +1675,6 @@ dependencies = [
  "deskc-thir",
  "deskc-types",
  "dkernel-card",
- "dkernel-file",
  "salsa",
  "uuid",
 ]
@@ -1694,10 +1689,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dkernel-file"
-version = "0.0.0"
-
-[[package]]
 name = "dkernel-firestore"
 version = "0.0.0"
 
@@ -1710,6 +1701,10 @@ name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
+
+[[package]]
+name = "dson"
+version = "0.0.0"
 
 [[package]]
 name = "egui"
@@ -3308,7 +3303,7 @@ dependencies = [
 name = "serde-dson"
 version = "0.0.0"
 dependencies = [
- "deskc-dson",
+ "dson",
  "serde",
  "thiserror",
 ]

@@ -11,7 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dson = { path = "../../components/dson", version = "0.0.0", package = "deskc-dson" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 serde = "1.0"
 thiserror = "1.0"
 

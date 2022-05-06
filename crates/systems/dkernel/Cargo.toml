@@ -11,15 +11,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dkernel-card = { path = "../../components/card", version = "0.0.0", package = "dkernel-card" }
-dkernel-file = { path = "../../components/file", version = "0.0.0", package = "dkernel-file" }
-deskc-ids = { path = "../../../deskc/components/ids", version = "0.0.0", package = "deskc-ids" }
-deskc-ast = { path = "../../../deskc/components/ast", version = "0.0.0", package = "deskc-ast" }
-deskc-hir = { path = "../../../deskc/components/hir", version = "0.0.0", package = "deskc-hir" }
-deskc-thir = { path = "../../../deskc/components/thir", version = "0.0.0", package = "deskc-thir" }
-deskc-amir = { path = "../../../deskc/components/amir", version = "0.0.0", package = "deskc-amir" }
-deskc-mir = { path = "../../../deskc/components/mir", version = "0.0.0", package = "deskc-mir" }
-deskc-types = { path = "../../../deskc/components/types", version = "0.0.0", package = "deskc-types" }
+dkernel-card = { path = "../../components/dkernel-card", version = "0.0.0", package = "dkernel-card" }
+deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+deskc-ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
+deskc-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+deskc-thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
+deskc-amir = { path = "../../components/deskc-05-amir", version = "0.0.0", package = "deskc-amir" }
+deskc-mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
+deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 
 uuid = "0.8"
 salsa = "0.16.1"

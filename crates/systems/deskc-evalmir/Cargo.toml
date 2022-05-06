@@ -13,13 +13,13 @@ edition = "2021"
 withserde = ["serde", "mir/withserde", "types/withserde"]
 
 [dependencies]
-mir = { path = "../../components/mir", version = "0.0.0", package = "deskc-mir" }
-types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
+mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-lexer = { path = "../../systems/01_lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/02_parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/03_hirgen", version = "0.0.0", package = "deskc-hirgen" }
-typeinfer = { path = "../../systems/04_typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
+lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
+typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 chumsky = "0.8.0"

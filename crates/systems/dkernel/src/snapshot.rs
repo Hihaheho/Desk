@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use deskc_ids::{CardId, FileId};
-use dkernel_card::node::{Node, NodeId};
-use dkernel_file::File;
+use dkernel_card::{
+    file::File,
+    node::{Node, NodeId},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Snapshot {

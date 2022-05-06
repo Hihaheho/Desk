@@ -1,14 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/deskc/libs/*",
-  "crates/deskc/apps/*",
-  "crates/deskc/systems/*",
-  "crates/deskc/components/*",
-  "crates/deskc/tests/*",
-  "crates/dkernel/systems/*",
-  "crates/dkernel/components/*",
-  "crates/dkernel/adapters/*",
-  "crates/desk-x/apps/*",
-  "crates/desk-x/components/*",
+  "crates/libs/*",
+  "crates/apps/*",
+  "crates/plugins/*",
+  "crates/systems/*",
+  "crates/components/*",
+  "crates/adapters/*",
+  "crates/tests/*",
 ]

@@ -11,7 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-amir = { path = "../../components/amir", version = "0.0.0", package = "deskc-amir" }
-thir = { path = "../../components/thir", version = "0.0.0", package = "deskc-thir" }
+amir = { path = "../../components/deskc-05-amir", version = "0.0.0", package = "deskc-amir" }
+thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 thiserror = "1.0.30"
-types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }

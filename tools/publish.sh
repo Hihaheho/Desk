@@ -1,7 +1,7 @@
 #! /bin/bash
 
 crates=(
-    deskc-dson
+    dson
     deskc-file
     deskc-ids
     deskc-types

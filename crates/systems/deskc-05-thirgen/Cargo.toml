@@ -11,16 +11,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hir = { path = "../../components/hir", version = "0.0.0", package = "deskc-hir" }
-thir = { path = "../../components/thir", version = "0.0.0", package = "deskc-thir" }
-types = { path = "../../components/types", version = "0.0.0", package = "deskc-types" }
-file = { path = "../../components/file", version = "0.0.0", package = "deskc-file" }
+hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+file = { path = "../../components/deskc-file", version = "0.0.0", package = "deskc-file" }
 thiserror = "1.0.30"
 
 [dev-dependencies]
-lexer = { path = "../../systems/01_lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/02_parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/03_hirgen", version = "0.0.0", package = "deskc-hirgen" }
-typeinfer = { path = "../../systems/04_typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
+lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
+typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"
