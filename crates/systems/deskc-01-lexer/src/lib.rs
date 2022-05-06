@@ -77,7 +77,6 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
     let special = just('\'')
         .ignore_then(text::ident())
         .try_map(|ident: String, span| match ident.as_str() {
-            "module" => Ok(Token::Include),
             "import" => Ok(Token::Import),
             "export" => Ok(Token::Export),
             "number" => Ok(Token::NumberType),

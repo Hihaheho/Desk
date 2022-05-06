@@ -35,7 +35,6 @@ pub enum Token {
     Lambda,
     Arrow,
     EArrow,
-    Include,
     Import,
     Export,
     Brands,

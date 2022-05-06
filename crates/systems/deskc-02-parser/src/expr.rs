@@ -150,9 +150,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 of: Box::new(of),
                 cases,
             });
-        let include = just(Token::Include)
-            .ignore_then(parse_ident())
-            .map(Expr::Include);
         let label = filter_map(|span, input| {
             if let Token::Brand(ident) = input {
                 Ok(ident)
@@ -205,7 +202,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(attribute.labelled("attribute"))
             .or(brand.labelled("brand"))
             .or(match_.labelled("match"))
-            .or(include.labelled("include"))
             .or(function.labelled("function"))
             .or(apply.labelled("apply"))
             .or(reference.labelled("reference"))

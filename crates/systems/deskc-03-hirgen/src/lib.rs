@@ -1,7 +1,5 @@
 mod error;
-mod extract_includes;
 mod gen_effect_expr;
-pub use extract_includes::extract_includes;
 use ids::CardId;
 
 use std::{
@@ -252,13 +250,6 @@ impl HirGen {
                     .map(|item| self.gen(item))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::expr::Expr::Include(file) => {
-                let InFile { id, expr } = self.included.get(file).unwrap();
-                self.push_file_id(*id);
-                let ret = self.gen(expr)?;
-                self.pop_file_id();
-                ret
-            }
             ast::expr::Expr::Import { ty: _, uuid: _ } => todo!(),
             ast::expr::Expr::Export { ty: _ } => todo!(),
             ast::expr::Expr::Attribute { attr, item: expr } => {
