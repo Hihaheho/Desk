@@ -1678,14 +1678,14 @@ dependencies = [
  "deskc-mir",
  "deskc-thir",
  "deskc-types",
- "dkernel-ast",
+ "dkernel-card",
  "dkernel-file",
  "salsa",
  "uuid",
 ]
 
 [[package]]
-name = "dkernel-ast"
+name = "dkernel-card"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",

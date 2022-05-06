@@ -10,3 +10,7 @@ pub enum LinkName {
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Hash, Eq)]
 pub struct CardId(pub Uuid);
+
+#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+pub struct FileId(pub Uuid);

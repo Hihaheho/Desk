@@ -24,10 +24,10 @@ use thir::thir;
 // use textual_card::textual_card;
 // use typed_amir::typed_amir;
 
-use dkernel_ast::{
+use dkernel_card::{
     content::Content,
     flat_node::{Attributes, NodeRef},
-    NodeId,
+    node::NodeId,
 };
 
 #[salsa::query_group(KernelStorage)]

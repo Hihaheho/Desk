@@ -25,7 +25,7 @@ crates=(
     deskc
     deskc-language-server
     serde-dson
-    dkernel-ast
+    dkernel-card
     dkernel-file
     dkernel
     dkernel-firestore

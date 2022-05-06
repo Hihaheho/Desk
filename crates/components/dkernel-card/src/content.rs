@@ -8,3 +8,6 @@ pub enum Content {
     Float(f64),
     Apply(Type),
 }
+
+// Content::Float should not be NaN
+impl Eq for Content {}

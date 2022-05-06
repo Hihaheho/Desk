@@ -1,4 +1,4 @@
-use dkernel_ast::patch::{AttributePatch, ChildrenPatch, ContentPatch};
+use dkernel_card::patch::{AttributePatch, ChildrenPatch, ContentPatch};
 use dkernel_file::UserId;
 
 pub trait LogRepository {

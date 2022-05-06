@@ -11,7 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dkernel-ast = { path = "../../components/ast", version = "0.0.0", package = "dkernel-ast" }
+dkernel-card = { path = "../../components/card", version = "0.0.0", package = "dkernel-card" }
 dkernel-file = { path = "../../components/file", version = "0.0.0", package = "dkernel-file" }
 deskc-ids = { path = "../../../deskc/components/ids", version = "0.0.0", package = "deskc-ids" }
 deskc-ast = { path = "../../../deskc/components/ast", version = "0.0.0", package = "deskc-ast" }

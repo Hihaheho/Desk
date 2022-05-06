@@ -1,4 +1,4 @@
-use dkernel_ast::NodeId;
+use dkernel_card::node::NodeId;
 
 use super::KernelQueries;
 
