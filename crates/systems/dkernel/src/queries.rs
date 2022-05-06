@@ -62,8 +62,11 @@ impl PartialEq for KernelError {
 }
 impl Eq for KernelError {}
 
-impl From<Box<dyn std::error::Error + Send + Sync + 'static>> for KernelError {
-    fn from(e: Box<dyn std::error::Error + Send + Sync + 'static>) -> Self {
-        KernelError(Arc::new(e))
+impl<T> From<T> for KernelError
+where
+    T: std::error::Error + Send + Sync + 'static,
+{
+    fn from(error: T) -> Self {
+        KernelError(Arc::new(Box::new(error)))
     }
 }
