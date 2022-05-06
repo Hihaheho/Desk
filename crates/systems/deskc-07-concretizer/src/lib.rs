@@ -9,7 +9,7 @@ use amir::{
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{Mir, Mirs, LinkId},
+    mir::{LinkId, Mir, Mirs},
     ty::ConcType,
     Vars,
 };

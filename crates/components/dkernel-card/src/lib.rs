@@ -1,9 +1,9 @@
+pub mod card;
 pub mod content;
+pub mod file;
 pub mod flat_node;
 pub mod node;
 pub mod patch;
-pub mod file;
-pub mod card;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AttributeKey {

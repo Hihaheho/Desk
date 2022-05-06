@@ -4,7 +4,7 @@ use amir::{
     amir::Amir,
     block::{ABasicBlock, BlockId},
     scope::ScopeId,
-    stmt::{LinkId, AStmt, ATerminator, StmtBind},
+    stmt::{AStmt, ATerminator, LinkId, StmtBind},
     var::{AVar, VarId},
 };
 use thir::LinkName;
