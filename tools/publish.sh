@@ -3,7 +3,7 @@
 crates=(
     deskc-dson
     deskc-file
-    deskc-link
+    deskc-ids
     deskc-types
     deskc-tokens
     deskc-ast
@@ -25,8 +25,8 @@ crates=(
     deskc
     deskc-language-server
     serde-dson
-    dkernel-node
-    dkernel-diff
+    dkernel-ast
+    dkernel-file
     dkernel
     dkernel-firestore
     dkernel-in-memory
@@ -38,6 +38,5 @@ crates=(
 for crate in "${crates[@]}"
 do
     echo "Publishing ${crate}"
-    cargo publish -p ${crate} --no-verify
-    sleep 10
+    cargo publish -p ${crate} --no-verify && sleep 10
 done

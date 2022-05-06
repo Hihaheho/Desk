@@ -1,5 +1,5 @@
 [package]
-name = "deskc-link"
+name = "dkernel-file"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -9,9 +9,5 @@ readme = "../../../../README.md"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[features]
-withserde = ["serde", "uuid/serde"]
 
 [dependencies]
-uuid = "0.8"
-serde = { version = "1.0", features = ["derive"], optional = true }

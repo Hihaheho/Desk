@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
-use link::LinkName;
+use ids::LinkName;
 use types::{Effect, Type};
 
 use crate::{amir::AmirId, block::BlockId, var::VarId};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StmtBind<T = AStmt> {
     pub var: VarId,
     pub stmt: T,
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AStmt {
     Const(Const),
     Product(Vec<VarId>),
@@ -37,7 +37,7 @@ pub enum AStmt {
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FnRef {
     Link(Type),
     Closure {
@@ -58,8 +58,11 @@ pub enum Const {
     String(String),
 }
 
+// Const::Float should not be NaN
+impl Eq for Const {}
+
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Add,
     Sub,
@@ -86,14 +89,14 @@ pub enum Op {
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MatchCase<T = Type> {
     pub ty: T,
     pub next: BlockId,
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ATerminator<T = Type> {
     Return(VarId),
     Match {

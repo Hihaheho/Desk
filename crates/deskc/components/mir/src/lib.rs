@@ -2,6 +2,7 @@ pub mod mir;
 pub mod region;
 pub mod stmt;
 pub mod ty;
+pub mod environment;
 
 pub use amir::amir::AmirId as MirId;
 pub use amir::block::BlockId;

@@ -9,9 +9,9 @@ readme = "../../../../README.md"
 edition = "2021"
 
 [features]
-withserde = ["serde", "link/withserde"]
+withserde = ["serde", "ids/withserde"]
 
 [dependencies]
 types = { path = "../types", version = "0.0.0", package = "deskc-types" }
-link = { path = "../link", version = "0.0.0", package = "deskc-link" }
+ids = { path = "../ids", version = "0.0.0", package = "deskc-ids" }
 serde = { version = "1.0", features = ["derive"], optional = true }

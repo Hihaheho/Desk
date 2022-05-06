@@ -1,12 +1,12 @@
 use crate::{expr::Expr, span::Spanned};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Effect {
     pub input: Spanned<Type>,
     pub output: Spanned<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Brand {
         brand: String,
@@ -50,13 +50,13 @@ pub enum Type {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CommentPosition {
     Prefix,
     Suffix,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum EffectExpr {
     Effects(Vec<Spanned<Effect>>),
     Add(Vec<Spanned<EffectExpr>>),

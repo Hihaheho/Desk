@@ -6,13 +6,13 @@ pub struct Handler {
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Effect {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Number,
     String,
@@ -52,7 +52,7 @@ pub enum Type {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum EffectExpr {
     Effects(Vec<WithMeta<Effect>>),
     Add(Vec<WithMeta<EffectExpr>>),

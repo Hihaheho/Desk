@@ -12,5 +12,5 @@ edition = "2021"
 
 [dependencies]
 file = { path = "../file", version = "0.0.0", package = "deskc-file" }
-link = { path = "../link", version = "0.0.0", package = "deskc-link" }
+ids = { path = "../ids", version = "0.0.0", package = "deskc-ids" }
 uuid = "0.8"

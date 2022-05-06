@@ -1,4 +1,4 @@
-pub use link::LinkName;
+pub use ids::LinkName;
 use uuid::Uuid;
 
 use crate::{
@@ -14,14 +14,17 @@ pub enum Literal {
     Float(f64),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+// Literal::Float should not be NaN
+impl Eq for Literal {}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
     pub input: Spanned<Type>,
     pub output: Spanned<Type>,
     pub handler: Spanned<Expr>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
     Let {
@@ -99,7 +102,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MatchCase {
     pub ty: Spanned<Type>,
     pub expr: Spanned<Expr>,

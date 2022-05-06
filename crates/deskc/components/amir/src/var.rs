@@ -7,14 +7,14 @@ use crate::scope::ScopeId;
 pub struct VarId(pub usize);
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AVar<T = Type> {
     pub ty: T,
     pub scope: ScopeId,
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Vars<T = Type>(pub Vec<AVar<T>>);
 
 impl<T> Vars<T> {

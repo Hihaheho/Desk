@@ -1,4 +1,4 @@
-pub use link::LinkName;
+pub use ids::LinkName;
 use types::{Effect, Type};
 
 pub type Id = usize;
@@ -11,26 +11,29 @@ pub enum Literal {
     Rational(i64, i64),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+// Literal::Float should not be NaN
+impl Eq for Literal {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchCase {
     pub ty: Type,
     pub expr: TypedHir,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypedHir {
     pub id: Id,
     pub ty: Type,
     pub expr: Expr,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Handler {
     pub effect: Effect,
     pub handler: TypedHir,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
     Match {
@@ -68,7 +71,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BuiltinOp {
     Add,
     Sub,

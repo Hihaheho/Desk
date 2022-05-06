@@ -1427,7 +1427,7 @@ version = "0.0.0"
 name = "deskc-amir"
 version = "0.0.0"
 dependencies = [
- "deskc-link",
+ "deskc-ids",
  "deskc-types",
  "serde",
 ]
@@ -1446,7 +1446,7 @@ dependencies = [
 name = "deskc-ast"
 version = "0.0.0"
 dependencies = [
- "deskc-link",
+ "deskc-ids",
  "uuid",
 ]
 
@@ -1490,7 +1490,7 @@ name = "deskc-hir"
 version = "0.0.0"
 dependencies = [
  "deskc-file",
- "deskc-link",
+ "deskc-ids",
  "uuid",
 ]
 
@@ -1510,6 +1510,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "deskc-ids"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "deskc-language-server"
 version = "0.0.0"
 
@@ -1524,19 +1532,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-link"
-version = "0.0.0"
-dependencies = [
- "serde",
- "uuid",
-]
-
-[[package]]
 name = "deskc-mir"
 version = "0.0.0"
 dependencies = [
  "deskc-amir",
- "deskc-link",
+ "deskc-ids",
  "deskc-types",
  "serde",
 ]
@@ -1587,7 +1587,7 @@ version = "0.0.0"
 name = "deskc-thir"
 version = "0.0.0"
 dependencies = [
- "deskc-link",
+ "deskc-ids",
  "deskc-types",
 ]
 
@@ -1670,9 +1670,31 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "dkernel"
 version = "0.0.0"
+dependencies = [
+ "deskc-amir",
+ "deskc-ast",
+ "deskc-hir",
+ "deskc-ids",
+ "deskc-mir",
+ "deskc-thir",
+ "deskc-types",
+ "dkernel-ast",
+ "dkernel-file",
+ "salsa",
+ "uuid",
+]
 
 [[package]]
-name = "dkernel-diff"
+name = "dkernel-ast"
+version = "0.0.0"
+dependencies = [
+ "deskc-hir",
+ "deskc-types",
+ "uuid",
+]
+
+[[package]]
+name = "dkernel-file"
 version = "0.0.0"
 
 [[package]]
@@ -1682,14 +1704,6 @@ version = "0.0.0"
 [[package]]
 name = "dkernel-in-memory"
 version = "0.0.0"
-
-[[package]]
-name = "dkernel-node"
-version = "0.0.0"
-dependencies = [
- "deskc-types",
- "uuid",
-]
 
 [[package]]
 name = "downcast-rs"
@@ -2102,6 +2116,15 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 dependencies = [
  "ahash 0.7.6",
  "serde",
+]
+
+[[package]]
+name = "heck"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
+dependencies = [
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -2866,6 +2889,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
 
 [[package]]
+name = "oorandom"
+version = "11.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
+
+[[package]]
 name = "output_vt100"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3200,6 +3229,35 @@ name = "ryu"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
+
+[[package]]
+name = "salsa"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b84d9f96071f3f3be0dc818eae3327625d8ebc95b58da37d6850724f31d3403"
+dependencies = [
+ "crossbeam-utils",
+ "indexmap",
+ "lock_api",
+ "log",
+ "oorandom",
+ "parking_lot 0.11.2",
+ "rustc-hash",
+ "salsa-macros",
+ "smallvec",
+]
+
+[[package]]
+name = "salsa-macros"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd3904a4ba0a9d0211816177fd34b04c7095443f8cdacd11175064fe541c8fe2"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "same-file"
@@ -3613,6 +3671,12 @@ checksum = "d54590932941a9e9266f0832deed84ebe1bf2e4c9e4a3554d393d18f5e854bf9"
 dependencies = [
  "tinyvec",
 ]
+
+[[package]]
+name = "unicode-segmentation"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e8820f5d777f6224dc4be3632222971ac30164d4a258d595640799554ebfd99"
 
 [[package]]
 name = "unicode-width"

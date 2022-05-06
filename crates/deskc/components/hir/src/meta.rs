@@ -6,7 +6,7 @@ use crate::expr::Expr;
 
 pub type Id = usize;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Meta {
     pub attrs: Vec<Expr>,
     pub id: Id,
@@ -14,7 +14,7 @@ pub struct Meta {
     pub span: Range<usize>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WithMeta<T> {
     pub meta: Meta,
     pub value: T,

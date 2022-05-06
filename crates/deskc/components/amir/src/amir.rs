@@ -2,7 +2,7 @@ use types::Type;
 
 use crate::{block::ABasicBlock, scope::Scope, stmt::ALink, var::AVar};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Amir {
     // function parameters
     pub parameters: Vec<Type>,
@@ -20,7 +20,7 @@ pub struct Amir {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AmirId(pub usize);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Amirs {
     pub entrypoint: AmirId,
     pub amirs: Vec<Amir>,

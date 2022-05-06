@@ -3,7 +3,7 @@ use types::Type;
 use crate::stmt::{AStmt, ATerminator, StmtBind};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ABasicBlock<S = AStmt, T = Type> {
     pub stmts: Vec<StmtBind<S>>,
     pub terminator: ATerminator<T>,

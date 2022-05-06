@@ -12,7 +12,7 @@ pub type BasicBlock = amir::block::ABasicBlock<Stmt, usize>;
 pub type Link = ALink<ConcType>;
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mir {
     pub parameters: Vec<ConcType>,
     pub captured: Vec<ConcType>,
@@ -23,7 +23,7 @@ pub struct Mir {
     pub links: Vec<Link>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mirs {
     pub entrypoint: AmirId,
     pub mirs: Vec<Mir>,

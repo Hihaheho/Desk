@@ -3,7 +3,7 @@
 pub struct ScopeId(pub usize);
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default, Eq)]
 pub struct Scope {
     pub super_scope: Option<ScopeId>,
 }

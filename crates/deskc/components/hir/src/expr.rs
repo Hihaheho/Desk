@@ -1,4 +1,4 @@
-pub use link::LinkName;
+pub use ids::LinkName;
 
 use crate::{meta::WithMeta, ty::Type};
 
@@ -11,14 +11,17 @@ pub enum Literal {
     Hole,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+// Literal::Float should not be NaN
+impl Eq for Literal {}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
     pub handler: WithMeta<Expr>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
     Let {
@@ -68,7 +71,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MatchCase {
     pub ty: WithMeta<Type>,
     pub expr: WithMeta<Expr>,
