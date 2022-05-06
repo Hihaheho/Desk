@@ -14,6 +14,7 @@
 !/tools/**/*.sh
 
 # top level files
+!/.gitattributes
 !/.gitignore
 !/README.md
 !/LICENSE
