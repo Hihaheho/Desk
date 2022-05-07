@@ -1433,7 +1433,9 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "console_error_panic_hook",
  "desk-x-egui-plugin",
+ "web-sys",
 ]
 
 [[package]]
@@ -1766,8 +1768,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb095a8b9feb9b7ff8f00b6776dffcef059538a3f4a91238e03c900e9c9ad9a2"
+source = "git+https://github.com/emilk/egui.git?rev=b30224471c7df8ad0217756dfd5094bd5355b9f6#b30224471c7df8ad0217756dfd5094bd5355b9f6"
 dependencies = [
  "ahash 0.7.6",
  "epaint 0.18.1",
@@ -1786,8 +1787,7 @@ dependencies = [
 [[package]]
 name = "emath"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c223f58c7e38abe1770f367b969f1b3fbd4704b67666bcb65dbb1adb0980ba72"
+source = "git+https://github.com/emilk/egui.git?rev=b30224471c7df8ad0217756dfd5094bd5355b9f6#b30224471c7df8ad0217756dfd5094bd5355b9f6"
 dependencies = [
  "bytemuck",
 ]
@@ -1819,8 +1819,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c29567088888e8ac3e8f61bbb2ddc820207ebb8d69eefde5bcefa06d65e4e89"
+source = "git+https://github.com/emilk/egui.git?rev=b30224471c7df8ad0217756dfd5094bd5355b9f6#b30224471c7df8ad0217756dfd5094bd5355b9f6"
 dependencies = [
  "ab_glyph",
  "ahash 0.7.6",

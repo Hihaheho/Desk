@@ -11,6 +11,6 @@ edition = "2021"
 [dependencies]
 theme = { path = "../../components/desk-x-theme", version = "0.0.0", package = "desk-x-theme" }
 
-bevy = "0.7.0"
+bevy = "0.7"
 ron = "0.7"
 bevy_egui = "0.14"

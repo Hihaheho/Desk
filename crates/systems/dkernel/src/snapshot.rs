@@ -4,7 +4,7 @@ use deskc_ids::{CardId, FileId};
 use dkernel_card::{
     file::File,
     flat_node::FlatNode,
-    node::{Node, NodeId},
+    node::{NodeId},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

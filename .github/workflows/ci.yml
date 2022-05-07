@@ -27,11 +27,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      # Why this fails???????
-      # - uses: ryo33/cargo-deny-action@7778bea17b9517fa2c89f5b59615131467e7f79b
-      #   with:
-      #     arguments: --all-features
-      #     command-arguments: --config configs/deny.toml
+      - uses: ryo33/cargo-deny-action@7778bea17b9517fa2c89f5b59615131467e7f79b
+        with:
+          arguments: --all-features
+          command-arguments: --config configs/deny.toml
 
       - name: Check fmt
         run: cargo fmt --all -- --check
