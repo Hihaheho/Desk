@@ -1,11 +1,23 @@
 # Desk
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=green)](https://github.com/sponsors/ryo33)
+[![Demo](https://img.shields.io/badge/Desk--X-Wasm+WebGL2-black?labelColor=b236a6)](https://desk-x.com)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)  
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)](https://github.com/Hihaheho/Desk/blob/main/LICENSE)
-[![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=flat)](https://discord.gg/egTTeg7DRp)
+[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)  
+[![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=flat)](https://discord.gg/egTTeg7DRp)  
+----
 
-The application platform for your cyberpunk desk.
+### 🔮 The application platform for your cyberpunk desk. 🔮
+
+## Goal and philosophy
+
+🎯 **We want to make top boards of people's desks into touch panel displays that run Desk.**
+
+- 🎮 **Intuitive** like games
+- 🥼 **Pragmatic** like professional tools
+- 🗺️️ **Versatile** like spreadsheet
+- 💗 **Accessible** to everyone
+- 🛹 **Minimalist** design
 
 ## Why Desk?
 
@@ -19,7 +31,7 @@ Desk apps (applications built on Desk) are inherently:
 
 ## How does it work?
 
-Desk is powered by **Desk Programming Language** and **Desk Kernel**.
+Desk is powered by *Desk Programming Language* and *Desk Kernel*.
 
 ### Desk Programming Language
 
@@ -53,24 +65,22 @@ Desk kernel provides these features:
 
 🚧 not yet implemented
 
-## Philosophy
-
-- 🎮 Intuitive like games
-- 🥼 Pragmatic like professional tools
-- 🗺️️ Versatile like spreadsheet
-- 💗 Accessible to everyone
-- 🛹 Minimalistic design
-
-## Goal
-
-We want to make top boards of people's desks into touch panel displays that run Desk.
-
 ## Is it any good?
 
 Yes.
 
+## Resources
+
+- [Visualized codebase](https://mango-dune-07a8b7110.1.azurestaticapps.net/?repo=Hihaheho%2FDesk)
+
 ## Join our community
+
+[![Q&A Have a question?](https://img.shields.io/badge/Q%26A-Have%20a%20question%3F-yellowgreen?style=social&logo=github)](https://github.com/Hihaheho/Desk/discussions/new?category=q-a)
+
+[![GitHub Discussions](https://img.shields.io/github/discussions/Hihaheho/Desk?logo=GitHub&style=social)](https://github.com/Hihaheho/Desk/discussions)
+
+[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
 
-[![Discord](https://img.shields.io/discord/808315755460165683?color=555555&label=Discord&logo=discord&logoColor=ffffff&labelColor=6A7EC2&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
+[![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
