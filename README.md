@@ -1,6 +1,6 @@
 # Desk
 
-[![Demo](https://img.shields.io/badge/Desk--X-Wasm+WebGL2-black?labelColor=b236a6)](https://desk-x.com)
+[![Demo](https://img.shields.io/badge/Desk--X-Wasm+WebGL2-grey?labelColor=b236a6)](https://desk-x.com)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)  
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)](https://github.com/Hihaheho/Desk/blob/main/LICENSE)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)  
