@@ -193,6 +193,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-recursion"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7d78656ba01f1b93024b7c3a0467f1608e4be67d725749fdcd7d2c7678fd7a2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-task"
 version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1722,7 +1733,9 @@ dependencies = [
  "deskc-ast",
  "deskc-hir",
  "deskc-ids",
+ "deskc-types",
  "dkernel-card",
+ "mry",
  "salsa",
  "uuid",
 ]
@@ -1732,6 +1745,7 @@ name = "dkernel-card"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",
+ "deskc-ids",
  "deskc-types",
  "uuid",
 ]
@@ -2586,6 +2600,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "mry"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a32ea0585d97556b7e2dd4be4a1ce0ab60cb0114749adaaf3d6e93d1bd3eac0"
+dependencies = [
+ "async-recursion",
+ "mry_macros",
+ "once_cell",
+ "parking_lot 0.11.2",
+]
+
+[[package]]
+name = "mry_macros"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71fcfc3bcbd8ca3fca4cda44ad5c87aa03f0ffa4c37ed1fa5a707a69043dd636"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3933,7 +3970,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9c28b6b6a78440b02647358625e3febc90724126480b9da6a967b5f674b3554"
 dependencies = [
  "jni",
- "ndk-glue 0.3.0",
+ "ndk-glue 0.5.2",
  "url",
  "web-sys",
  "widestring",
@@ -3947,7 +3984,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc6a3cffdb686fbb24d9fb8f03a213803277ed2300f11026a3afe1f108dc021b"
 dependencies = [
  "jni",
- "ndk-glue 0.3.0",
+ "ndk-glue 0.5.2",
  "url",
  "web-sys",
  "widestring",

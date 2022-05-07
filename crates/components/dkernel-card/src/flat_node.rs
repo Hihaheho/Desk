@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use hir::expr::Expr;
-use uuid::Uuid;
 
-use crate::{content::Content, AttributeKey};
+use crate::{content::Content, node::NodeId, AttributeKey};
 
 pub type Attributes = HashMap<AttributeKey, Expr>;
 
@@ -18,5 +17,5 @@ pub struct FlatNode {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NodeRef {
     Hole,
-    Node(Uuid),
+    Node(NodeId),
 }

@@ -16,5 +16,10 @@ deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = 
 deskc-ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 deskc-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 
-uuid = "0.8"
 salsa = "0.16"
+
+[dev-dependencies]
+deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+
+uuid = "0.8"
+mry = "0.1.8"
