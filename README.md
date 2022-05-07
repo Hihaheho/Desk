@@ -75,12 +75,12 @@ Yes.
 
 ## Join our community
 
-[![Q&A Have a question?](https://img.shields.io/badge/Q%26A-Have%20a%20question%3F-yellowgreen?style=social&logo=github)](https://github.com/Hihaheho/Desk/discussions/new?category=q-a)
+👉 [![Q&A Have a question?](https://img.shields.io/badge/Q%26A-Have%20a%20question%3F-yellowgreen?style=social&logo=github)](https://github.com/Hihaheho/Desk/discussions/new?category=q-a)
 
-[![GitHub Discussions](https://img.shields.io/github/discussions/Hihaheho/Desk?logo=GitHub&style=social)](https://github.com/Hihaheho/Desk/discussions)
+👉 [![GitHub Discussions](https://img.shields.io/github/discussions/Hihaheho/Desk?logo=GitHub&style=social)](https://github.com/Hihaheho/Desk/discussions)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
+👉 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
+👉 [![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
 
-[![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
+👉 [![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
