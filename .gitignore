@@ -21,6 +21,7 @@
 !/.gitattributes
 !/README.md
 !/LICENSE
+!/.gitpod.yml
 
 # global allow
 !.gitignore
