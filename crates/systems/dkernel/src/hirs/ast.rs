@@ -3,8 +3,8 @@ use deskc_ids::CardId;
 
 use crate::query_result::QueryResult;
 
-use super::Queries;
+use super::HirQueries;
 
-pub(super) fn ast(db: &dyn Queries, id: CardId) -> QueryResult<Spanned<Expr>> {
+pub(super) fn ast(db: &dyn HirQueries, id: CardId) -> QueryResult<Spanned<Expr>> {
     todo!()
 }

@@ -1,1 +1,10 @@
-pub struct Card {}
+use deskc_ids::FileId;
+
+use crate::node::NodeId;
+
+// TODO: delete this?
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Card {
+    node_id: NodeId,
+    file_id: FileId,
+}

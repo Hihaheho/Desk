@@ -31,7 +31,9 @@ impl TypedHirGen {
         let ty = self.types.get(expr_id).expect("must have type").clone();
         let expr = match &expr.value {
             Expr::Literal(Literal::Hole) => todo!(),
-            Expr::Literal(Literal::Int(value)) => thir::Expr::Literal(thir::Literal::Int(*value)),
+            Expr::Literal(Literal::Integer(value)) => {
+                thir::Expr::Literal(thir::Literal::Int(*value))
+            }
             Expr::Literal(Literal::Float(value)) => {
                 thir::Expr::Literal(thir::Literal::Float(*value))
             }

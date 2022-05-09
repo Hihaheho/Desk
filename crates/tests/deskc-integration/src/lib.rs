@@ -75,7 +75,9 @@ macro_rules! test {
                             let actual = attrs
                                 .get(&format!(
                                     "{:?}",
-                                    hir::expr::Expr::Literal(hir::expr::Literal::Int(*id as i64))
+                                    hir::expr::Expr::Literal(hir::expr::Literal::Integer(
+                                        *id as i64
+                                    ))
                                 ))
                                 .and_then(|id| types.get(id).cloned())
                                 .unwrap();

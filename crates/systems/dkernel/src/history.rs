@@ -1,8 +1,8 @@
-use crate::{event::EventEntry, snapshot::Snapshot};
+use crate::{event::Event, snapshot::Snapshot};
 
 #[derive(Default)]
 pub struct History {}
 
 impl History {
-    pub fn handle_log_entry(&mut self, snapshot: &Snapshot, log: &EventEntry) {}
+    pub fn handle_event(&mut self, _snapshot: &Snapshot, _log: &Event) {}
 }

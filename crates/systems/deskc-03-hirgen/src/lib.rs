@@ -141,7 +141,7 @@ impl HirGen {
         let with_meta = match expr {
             ast::expr::Expr::Literal(literal) => self.with_meta(Expr::Literal(match literal {
                 ast::expr::Literal::String(value) => Literal::String(value.clone()),
-                ast::expr::Literal::Int(value) => Literal::Int(*value),
+                ast::expr::Literal::Int(value) => Literal::Integer(*value),
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(*a, *b),
                 ast::expr::Literal::Float(value) => Literal::Float(*value),
             })),
@@ -509,8 +509,8 @@ mod tests {
                     arguments: vec![WithMeta {
                         meta: Meta {
                             attrs: vec![
-                                Expr::Literal(Literal::Int(2)),
-                                Expr::Literal(Literal::Int(1))
+                                Expr::Literal(Literal::Integer(2)),
+                                Expr::Literal(Literal::Integer(1))
                             ],
                             id: 1,
                             span: 26..27
@@ -524,8 +524,8 @@ mod tests {
         assert_eq!(
             gen.attrs.borrow_mut().get(&1),
             Some(&vec![
-                Expr::Literal(Literal::Int(2)),
-                Expr::Literal(Literal::Int(1))
+                Expr::Literal(Literal::Integer(2)),
+                Expr::Literal(Literal::Integer(1))
             ])
         );
     }
@@ -588,7 +588,7 @@ mod tests {
         assert!(hir.cards.is_empty());
         assert_eq!(
             remove_meta(hir.entrypoint.unwrap()),
-            dummy_meta(Expr::Literal(Literal::Int(1)))
+            dummy_meta(Expr::Literal(Literal::Integer(1)))
         );
     }
 }

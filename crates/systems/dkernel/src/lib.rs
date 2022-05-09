@@ -1,55 +1,50 @@
-mod database;
+mod audit;
 mod event;
+mod hirs;
 mod history;
 mod query_result;
-mod references;
 mod repository;
 mod snapshot;
 
-use database::KernelStorage;
-use database::Queries;
+use audit::audit;
+use dkernel_card::rules::AuditResponse;
+use hirs::Hirs;
 use history::History;
-use references::References;
 use repository::Repository;
 use snapshot::Snapshot;
 
 pub struct Kernel {
     repository: Box<dyn Repository>,
-    db: KernelDatabase,
+    hirs: Hirs,
     pub snapshot: Snapshot,
-    pub references: References,
     pub history: History,
 }
-
-#[salsa::database(KernelStorage)]
-#[derive(Default)]
-pub struct KernelDatabase {
-    storage: salsa::Storage<Self>,
-}
-
-impl salsa::Database for KernelDatabase {}
 
 impl Kernel {
     pub fn new(repository: impl Repository + 'static) -> Self {
         Self {
             repository: Box::new(repository),
-            db: Default::default(),
+            hirs: Default::default(),
             snapshot: Default::default(),
-            references: Default::default(),
             history: Default::default(),
         }
     }
 
     pub fn process(&mut self) {
-        let logs = self.repository.poll();
-        for log in logs {}
+        let entries = self.repository.poll();
+        for entry in entries {
+            if audit(&self.snapshot, &entry) == AuditResponse::Allowed {
+                self.hirs.handle_event(&entry.event);
+                self.history.handle_event(&self.snapshot, &entry.event);
+                self.snapshot.handle_event(&self.hirs, &entry.event);
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
+    use crate::event::{Event, EventEntry};
     use deskc_hir::expr::Literal;
     use deskc_hir::ty::Type as HirType;
     use deskc_hir::{
@@ -58,10 +53,12 @@ mod tests {
     };
     use deskc_ids::{CardId, FileId, LinkName, UserId};
     use deskc_types::Type;
+    use dkernel_card::patch::FilePatch;
+    use dkernel_card::rules::{NodeOperation, Rules};
     use dkernel_card::{content::Content, flat_node::NodeRef, node::NodeId, patch::ChildrenPatch};
+    use hirs::HirQueries;
+    use std::sync::Arc;
     use uuid::Uuid;
-
-    use crate::event::{Event, EventEntry};
 
     use super::*;
 
@@ -100,27 +97,43 @@ mod tests {
             EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
-                log: Event::AddOwner {
+                event: Event::AddOwner {
                     user_id: user_a.clone(),
                 },
             },
             EventEntry {
                 index: 0,
+                user_id: user_a.clone(),
+                event: Event::AddFile(file_id.clone()),
+            },
+            EventEntry {
+                index: 0,
+                user_id: user_a.clone(),
+                event: Event::PatchFile {
+                    file_id: file_id.clone(),
+                    patch: FilePatch::UpdateRules {
+                        rules: Rules {
+                            default: [NodeOperation::AddNode, NodeOperation::PatchChildrenInsert]
+                                .into_iter()
+                                .collect(),
+                            users: Default::default(),
+                        },
+                    },
+                },
+            },
+            EventEntry {
+                index: 0,
                 user_id: user_b.clone(),
-                log: Event::AddOwner {
+                event: Event::AddOwner {
                     user_id: user_b.clone(),
                 },
             },
             EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
-                log: Event::AddFile(file_id.clone()),
-            },
-            EventEntry {
-                index: 0,
-                user_id: user_a.clone(),
-                log: Event::AddNode {
+                event: Event::AddNode {
                     node_id: node_a.clone(),
+                    file_id: file_id.clone(),
                     content: Content::Apply(Type::Function {
                         parameters: vec![Type::String],
                         body: Box::new(Type::Number),
@@ -130,15 +143,16 @@ mod tests {
             EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
-                log: Event::AddNode {
+                event: Event::AddNode {
                     node_id: node_b.clone(),
+                    file_id: file_id.clone(),
                     content: Content::String("string".into()),
                 },
             },
             EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
-                log: Event::PatchChildren {
+                event: Event::PatchChildren {
                     node_id: node_a.clone(),
                     patch: ChildrenPatch::Insert {
                         index: 0,
@@ -149,7 +163,7 @@ mod tests {
             EventEntry {
                 index: 1,
                 user_id: user_a.clone(),
-                log: Event::AddCard {
+                event: Event::AddCard {
                     card_id: card_id.clone(),
                     node_id: node_a.clone(),
                 },
@@ -159,16 +173,10 @@ mod tests {
         let mut kernel = Kernel::new(repository);
         kernel.process();
 
-        assert_eq!(kernel.snapshot.nodes.len(), 2);
+        assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            kernel.references.0,
-            [(node_b.clone(), [node_a.clone()].into_iter().collect()),]
-                .into_iter()
-                .collect()
-        );
-        assert_eq!(
-            kernel.db.hir(card_id),
+            kernel.hirs.hir(card_id),
             Ok(Arc::new(WithMeta {
                 meta: Meta {
                     attrs: vec![],

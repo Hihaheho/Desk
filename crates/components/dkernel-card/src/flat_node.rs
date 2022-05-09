@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 
 use hir::expr::Expr;
+use types::Type;
 
-use crate::{content::Content, node::NodeId, AttributeKey};
+use crate::{content::Content, node::NodeId};
 
-pub type Attributes = HashMap<AttributeKey, Expr>;
+pub type Children = Vec<NodeRef>;
+pub type Attributes = HashMap<Type, Expr>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FlatNode {
     /// The content of the node.
     pub content: Content,
-    pub children: Vec<NodeRef>,
+    pub children: Children,
     pub attributes: Attributes,
 }
 

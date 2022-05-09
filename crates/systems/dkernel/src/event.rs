@@ -2,7 +2,8 @@ use deskc_ids::{CardId, FileId, UserId};
 use dkernel_card::{
     content::Content,
     node::NodeId,
-    patch::{AttributePatch, ChildrenPatch, ContentPatch},
+    patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
+    rules::{Rules, SpaceOperation},
 };
 
 use crate::snapshot::Snapshot;
@@ -11,7 +12,7 @@ use crate::snapshot::Snapshot;
 pub struct EventEntry {
     pub index: usize,
     pub user_id: UserId,
-    pub log: Event,
+    pub event: Event,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,11 +23,17 @@ pub enum Event {
     RemoveOwner {
         user_id: UserId,
     },
+    UpdateRule {
+        rules: Rules<SpaceOperation>,
+    },
     AddNode {
         node_id: NodeId,
+        file_id: FileId,
         content: Content,
     },
-    RemoveNode(NodeId),
+    RemoveNode {
+        node_id: NodeId,
+    },
     PatchContent {
         node_id: NodeId,
         patch: ContentPatch,
@@ -45,10 +52,15 @@ pub enum Event {
     },
     AddFile(FileId),
     DeleteFile(FileId),
-    // PatchFile
+    PatchFile {
+        file_id: FileId,
+        patch: FilePatch,
+    },
     AddCard {
         card_id: CardId,
         node_id: NodeId,
     },
-    RemoveCard(CardId),
+    RemoveCard {
+        card_id: CardId,
+    },
 }

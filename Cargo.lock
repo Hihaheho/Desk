@@ -1737,6 +1737,7 @@ dependencies = [
  "dkernel-card",
  "mry",
  "salsa",
+ "serde",
  "uuid",
 ]
 

@@ -17,7 +17,7 @@ impl Ctx {
         let scope = self.begin_scope();
         let mut synthed_ty = None;
         let ctx = match (&expr.value, ty) {
-            (Expr::Literal(Literal::Int(_)), Type::Number) => self.clone(),
+            (Expr::Literal(Literal::Integer(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
             (Expr::Literal(Literal::String(_)), Type::String) => self.clone(),

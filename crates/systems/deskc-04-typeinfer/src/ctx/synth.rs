@@ -17,7 +17,7 @@ impl Ctx {
     pub fn synth(&self, expr: &WithMeta<Expr>) -> Result<WithEffects<(Ctx, Type)>, ExprTypeError> {
         let scope = self.begin_scope();
         let (ctx, ty) = match &expr.value {
-            Expr::Literal(Literal::Int(_)) => (self.clone(), Type::Number),
+            Expr::Literal(Literal::Integer(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Float(_)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::Rational(_, _)) => (self.clone(), Type::Number),
             Expr::Literal(Literal::String(_)) => (self.clone(), Type::String),

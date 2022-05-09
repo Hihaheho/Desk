@@ -78,7 +78,7 @@ mod tests {
             .iter()
             .flat_map(|(id, attrs)| {
                 attrs.iter().map(|attr| match attr {
-                    Expr::Literal(Literal::Int(attr)) => (*attr as usize, *id),
+                    Expr::Literal(Literal::Integer(attr)) => (*attr as usize, *id),
                     _ => todo!(),
                 })
             })
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn number() {
         assert_eq!(
-            synth(dummy_meta(Expr::Literal(Literal::Int(1)))),
+            synth(dummy_meta(Expr::Literal(Literal::Integer(1)))),
             Ok(Type::Number)
         );
     }
@@ -124,7 +124,7 @@ mod tests {
                     body: Box::new(dummy_meta(hir::ty::Type::String)),
                 }),
                 link_name: Default::default(),
-                arguments: vec![dummy_meta(Expr::Literal(Literal::Int(1))),]
+                arguments: vec![dummy_meta(Expr::Literal(Literal::Integer(1))),]
             })),
             Ok(Type::String)
         );

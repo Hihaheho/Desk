@@ -1,8 +1,10 @@
 use deskc_ids::FileId;
 
+use crate::rules::{NodeOperation, Rules};
+
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct File {
-    name: Option<String>,
-    children: Vec<FileId>,
-    // TODO: rules
+    pub name: Option<String>,
+    pub children: Vec<FileId>,
+    pub rules: Rules<NodeOperation>,
 }

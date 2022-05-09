@@ -5,7 +5,7 @@ use crate::{meta::WithMeta, ty::Type};
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
     String(String),
-    Int(i64),
+    Integer(i64),
     Rational(i64, i64),
     Float(f64),
     Hole,
