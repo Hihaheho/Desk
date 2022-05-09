@@ -27,22 +27,4 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: ryo33/cargo-deny-action@7778bea17b9517fa2c89f5b59615131467e7f79b
-        with:
-          arguments: --all-features
-          command-arguments: --config configs/deny.toml
-
-      - name: Check fmt
-        run: cargo fmt --all -- --check
-
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
-
-      - name: Check
-        run: cargo check --all-features
-
-      - name: Compile test
-        run: cargo test --no-run --locked --all-features
-
-      - name: Run test
-        run: cargo test --all-features
+      - run: tools/check-ci.sh
