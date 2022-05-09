@@ -6,9 +6,9 @@ use dkernel_card::{
 
 use crate::query_result::QueryResult;
 
-use super::KernelQueries;
+use super::Queries;
 
-pub(super) fn build_ast(db: &dyn KernelQueries, id: NodeId) -> QueryResult<Node> {
+pub(super) fn build_ast(db: &dyn Queries, id: NodeId) -> QueryResult<Node> {
     if let Content::Source(source) = db.content(id.clone()) {
     } else {
     }

@@ -1,13 +1,15 @@
-mod cards;
+mod database;
+mod event;
 mod history;
-mod queries;
 mod query_result;
+mod references;
 mod repository;
 mod snapshot;
 
-use cards::Cards;
+use database::KernelStorage;
+use database::Queries;
 use history::History;
-use queries::KernelStorage;
+use references::References;
 use repository::Repository;
 use snapshot::Snapshot;
 
@@ -15,7 +17,7 @@ pub struct Kernel {
     repository: Box<dyn Repository>,
     db: KernelDatabase,
     pub snapshot: Snapshot,
-    pub cards: Cards,
+    pub references: References,
     pub history: History,
 }
 
@@ -33,7 +35,7 @@ impl Kernel {
             repository: Box::new(repository),
             db: Default::default(),
             snapshot: Default::default(),
-            cards: Default::default(),
+            references: Default::default(),
             history: Default::default(),
         }
     }
@@ -46,14 +48,20 @@ impl Kernel {
 
 #[cfg(test)]
 mod tests {
-    use deskc_ids::{CardId, UserId};
-    use deskc_types::Type;
-    use dkernel_card::{
-        content::Content, flat_node::NodeRef, node::NodeId, patch::ChildrenPatch,
+    use std::sync::Arc;
+
+    use deskc_hir::expr::Literal;
+    use deskc_hir::ty::Type as HirType;
+    use deskc_hir::{
+        expr::Expr,
+        meta::{Meta, WithMeta},
     };
+    use deskc_ids::{CardId, FileId, LinkName, UserId};
+    use deskc_types::Type;
+    use dkernel_card::{content::Content, flat_node::NodeRef, node::NodeId, patch::ChildrenPatch};
     use uuid::Uuid;
 
-    use crate::repository::{Log, LogEntry};
+    use crate::event::{Event, EventEntry};
 
     use super::*;
 
@@ -63,10 +71,10 @@ mod tests {
 
     #[mry::mry]
     impl Repository for TestRepository {
-        fn poll(&mut self) -> Vec<repository::LogEntry> {
+        fn poll(&mut self) -> Vec<EventEntry> {
             todo!()
         }
-        fn commit(&mut self, log: repository::Log) {
+        fn commit(&mut self, log: Event) {
             todo!()
         }
         fn add_owner(&mut self, user_id: UserId) {
@@ -77,6 +85,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn integration() {
         let mut repository = TestRepository::default();
 
@@ -84,26 +93,33 @@ mod tests {
         let user_b = UserId("b".into());
         let node_a = NodeId(Uuid::new_v4());
         let node_b = NodeId(Uuid::new_v4());
+        let file_id = FileId(Uuid::new_v4());
+        let card_id = CardId(Uuid::new_v4());
 
         repository.mock_poll().returns(vec![
-            LogEntry {
+            EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
-                log: Log::AddOwner {
+                log: Event::AddOwner {
                     user_id: user_a.clone(),
                 },
             },
-            LogEntry {
+            EventEntry {
                 index: 0,
                 user_id: user_b.clone(),
-                log: Log::AddOwner {
+                log: Event::AddOwner {
                     user_id: user_b.clone(),
                 },
             },
-            LogEntry {
+            EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
-                log: Log::AddNode {
+                log: Event::AddFile(file_id.clone()),
+            },
+            EventEntry {
+                index: 0,
+                user_id: user_a.clone(),
+                log: Event::AddNode {
                     node_id: node_a.clone(),
                     content: Content::Apply(Type::Function {
                         parameters: vec![Type::String],
@@ -111,23 +127,31 @@ mod tests {
                     }),
                 },
             },
-            LogEntry {
+            EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
-                log: Log::AddNode {
+                log: Event::AddNode {
                     node_id: node_b.clone(),
                     content: Content::String("string".into()),
                 },
             },
-            LogEntry {
+            EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
-                log: Log::PatchChildren {
+                log: Event::PatchChildren {
                     node_id: node_a.clone(),
                     patch: ChildrenPatch::Insert {
                         index: 0,
                         node: NodeRef::Node(node_b.clone()),
                     },
+                },
+            },
+            EventEntry {
+                index: 1,
+                user_id: user_a.clone(),
+                log: Event::AddCard {
+                    card_id: card_id.clone(),
+                    node_id: node_a.clone(),
                 },
             },
         ]);
@@ -138,14 +162,56 @@ mod tests {
         assert_eq!(kernel.snapshot.nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            kernel.cards.cards,
-            vec![(
-                CardId(node_a.0.clone()),
-                vec![node_a.clone(), node_b.clone()].into_iter().collect()
-            ),]
-            .into_iter()
-            .collect()
+            kernel.references.0,
+            [(node_b.clone(), [node_a.clone()].into_iter().collect()),]
+                .into_iter()
+                .collect()
         );
-        assert_eq!(kernel.cards.cards.len(), 1);
+        assert_eq!(
+            kernel.db.hir(card_id),
+            Ok(Arc::new(WithMeta {
+                meta: Meta {
+                    attrs: vec![],
+                    id: 0,
+                    span: 0..0
+                },
+                value: Expr::Apply {
+                    function: WithMeta {
+                        meta: Meta {
+                            attrs: vec![],
+                            id: 0,
+                            span: 0..0
+                        },
+                        value: HirType::Function {
+                            parameter: Box::new(WithMeta {
+                                meta: Meta {
+                                    attrs: vec![],
+                                    id: 0,
+                                    span: 0..0
+                                },
+                                value: HirType::String
+                            }),
+                            body: Box::new(WithMeta {
+                                meta: Meta {
+                                    attrs: vec![],
+                                    id: 0,
+                                    span: 0..0
+                                },
+                                value: HirType::Number
+                            }),
+                        }
+                    },
+                    link_name: LinkName::None,
+                    arguments: vec![WithMeta {
+                        meta: Meta {
+                            attrs: vec![],
+                            id: 0,
+                            span: 0..0
+                        },
+                        value: Expr::Literal(Literal::String("string".into()))
+                    }]
+                }
+            }))
+        );
     }
 }

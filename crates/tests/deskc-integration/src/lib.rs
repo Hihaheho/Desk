@@ -9,12 +9,11 @@ macro_rules! test {
                 |case: &str| println!("\n================ {} passes ================\n", case);
             use crate::test_case::TestCase;
             use assertion::Assertion;
-            use file::FileId;
             use serde_dson::from_dson;
             let input = include_str!($file_name);
             let tokens = lexer::scan(input).unwrap();
             let ast = parser::parse(tokens).unwrap();
-            let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
+            let (genhir, hir) = hirgen::gen_hir(&ast).unwrap();
             let entrypoint = hir.entrypoint.unwrap();
             let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &entrypoint).unwrap();
             let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
@@ -52,7 +51,7 @@ macro_rules! test {
                 Ok(ast) => ast,
                 Err(errors) => print_errors(input, errors),
             };
-            let (genhir, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
+            let (genhir, hir) = hirgen::gen_hir(&ast).unwrap();
             let entrypoint = hir.entrypoint.unwrap();
             let ctx = match typeinfer::synth(genhir.next_id(), &entrypoint) {
                 Ok((ctx, _ty)) => ctx,

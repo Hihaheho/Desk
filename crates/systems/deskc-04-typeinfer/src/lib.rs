@@ -44,7 +44,6 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 #[cfg(test)]
 mod tests {
     use ariadne::{Label, Report, ReportKind, Source};
-    use file::FileId;
     use hir::{expr::Literal, meta::dummy_meta};
     use hirgen::HirGen;
     use pretty_assertions::assert_eq;
@@ -68,7 +67,7 @@ mod tests {
     fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
         let tokens = lexer::scan(input).unwrap();
         let ast = parser::parse(tokens).unwrap();
-        let (hirgen, hir) = hirgen::gen_hir(FileId(0), &ast, Default::default()).unwrap();
+        let (hirgen, hir) = hirgen::gen_hir(&ast).unwrap();
         (hirgen, hir.entrypoint.unwrap())
     }
 

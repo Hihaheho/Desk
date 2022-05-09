@@ -1,7 +1,5 @@
 use std::ops::Range;
 
-use file::FileId;
-
 use crate::expr::Expr;
 
 pub type Id = usize;
@@ -10,7 +8,6 @@ pub type Id = usize;
 pub struct Meta {
     pub attrs: Vec<Expr>,
     pub id: Id,
-    pub file_id: FileId,
     pub span: Range<usize>,
 }
 
@@ -25,7 +22,6 @@ pub fn dummy_meta<T>(value: T) -> WithMeta<T> {
         meta: Meta {
             attrs: vec![],
             id: 0,
-            file_id: FileId(0),
             span: 0..0,
         },
         value,

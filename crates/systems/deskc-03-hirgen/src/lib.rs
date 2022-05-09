@@ -9,7 +9,7 @@ use std::{
 
 use ast::span::{Span, Spanned};
 use error::HirGenError;
-use file::{FileId, InFile};
+use file::InFile;
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::{Id, Meta, WithMeta},
@@ -17,16 +17,8 @@ use hir::{
     Hir,
 };
 
-pub fn gen_hir(
-    file_id: FileId,
-    src: &Spanned<ast::expr::Expr>,
-    included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
-) -> Result<(HirGen, Hir), HirGenError> {
-    let mut hirgen = HirGen {
-        file_stack: RefCell::new(vec![file_id]),
-        included,
-        ..Default::default()
-    };
+pub fn gen_hir(src: &Spanned<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenError> {
+    let mut hirgen = HirGen::default();
     hirgen.gen_hir(src)?;
     let hir = Hir {
         entrypoint: hirgen.entrypoint.take(),
@@ -44,19 +36,11 @@ pub struct HirGen {
     pub included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
-    // current file id is the last item.
-    file_stack: RefCell<Vec<FileId>>,
     cards: Vec<(CardId, WithMeta<Expr>)>,
     entrypoint: Option<WithMeta<Expr>>,
 }
 
 impl HirGen {
-    pub fn push_file_id(&self, file_id: FileId) {
-        self.file_stack.borrow_mut().push(file_id);
-    }
-    pub fn pop_file_id(&self) -> FileId {
-        self.file_stack.borrow_mut().pop().unwrap()
-    }
     pub fn gen_type(&self, ty: &Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
         let (ty, span) = ty;
         self.push_span(span.clone());
@@ -338,7 +322,6 @@ impl HirGen {
             meta: Meta {
                 attrs: vec![],
                 id: self.next_id(),
-                file_id: *self.file_stack.borrow().last().unwrap(),
                 span: self.pop_span().unwrap(),
             },
             value,
@@ -480,7 +463,6 @@ mod tests {
     #[test]
     fn test() {
         let gen = HirGen::default();
-        gen.push_file_id(FileId(0));
         assert_eq!(
             gen.gen(&(
                 ast::expr::Expr::Apply {
@@ -512,7 +494,6 @@ mod tests {
                 meta: Meta {
                     attrs: vec![],
                     id: 4,
-                    file_id: FileId(0),
                     span: 0..27
                 },
                 value: Expr::Apply {
@@ -520,7 +501,6 @@ mod tests {
                         meta: Meta {
                             attrs: vec![],
                             id: 0,
-                            file_id: FileId(0),
                             span: 3..10
                         },
                         value: Type::Number
@@ -533,7 +513,6 @@ mod tests {
                                 Expr::Literal(Literal::Int(1))
                             ],
                             id: 1,
-                            file_id: FileId(0),
                             span: 26..27
                         },
                         value: Expr::Literal(Literal::Hole)
@@ -563,7 +542,6 @@ mod tests {
         );
 
         let gen = HirGen::default();
-        gen.push_file_id(FileId(0));
         assert_eq!(
             remove_meta(gen.gen(&expr).unwrap()),
             dummy_meta(Expr::Let {
@@ -606,7 +584,7 @@ mod tests {
         1
         "#,
         );
-        let (_, hir) = gen_hir(FileId(0), &expr, Default::default()).unwrap();
+        let (_, hir) = gen_hir(&expr).unwrap();
         assert!(hir.cards.is_empty());
         assert_eq!(
             remove_meta(hir.entrypoint.unwrap()),

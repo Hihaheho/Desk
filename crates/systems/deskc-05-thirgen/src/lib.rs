@@ -174,7 +174,6 @@ impl TypedHirGen {
 
 #[cfg(test)]
 mod tests {
-    use file::FileId;
     use thir::BuiltinOp;
 
     use super::*;
@@ -183,11 +182,7 @@ mod tests {
     fn parse(input: &str) -> WithMeta<Expr> {
         let tokens = lexer::scan(input).unwrap();
         let ast = parser::parse(tokens).unwrap();
-        hirgen::gen_hir(FileId(0), &ast, Default::default())
-            .unwrap()
-            .1
-            .entrypoint
-            .unwrap()
+        hirgen::gen_hir(&ast).unwrap().1.entrypoint.unwrap()
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {

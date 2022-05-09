@@ -22,6 +22,7 @@ pub enum ChildrenPatch {
     Insert { index: usize, node: NodeRef },
     Remove(usize),
     Move { index: usize, diff: isize },
+    Update { index: usize, node: NodeRef },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
