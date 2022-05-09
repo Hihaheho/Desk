@@ -1,4 +1,4 @@
-use deskc_ids::{FileId, UserId, CardId};
+use deskc_ids::{CardId, FileId, UserId};
 use dkernel_card::{
     content::Content,
     node::NodeId,

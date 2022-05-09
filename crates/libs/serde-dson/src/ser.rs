@@ -207,7 +207,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 #[derive(Default)]
 pub struct SeqSerializer(Vec<Dson>);
 
-impl<'a> SerializeSeq for SeqSerializer {
+impl SerializeSeq for SeqSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -223,7 +223,7 @@ impl<'a> SerializeSeq for SeqSerializer {
         Ok(Dson::Array(self.0))
     }
 }
-impl<'a> SerializeTuple for SeqSerializer {
+impl SerializeTuple for SeqSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -239,7 +239,7 @@ impl<'a> SerializeTuple for SeqSerializer {
         Ok(Dson::Product(self.0))
     }
 }
-impl<'a> SerializeTupleStruct for SeqSerializer {
+impl SerializeTupleStruct for SeqSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -255,7 +255,7 @@ impl<'a> SerializeTupleStruct for SeqSerializer {
         Ok(Dson::Set(self.0))
     }
 }
-impl<'a> SerializeTupleVariant for VariantSerializer {
+impl SerializeTupleVariant for VariantSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -278,7 +278,7 @@ impl<'a> SerializeTupleVariant for VariantSerializer {
 #[derive(Default)]
 pub struct MapSerializer(Vec<Dson>, Vec<Dson>);
 
-impl<'a> SerializeMap for MapSerializer {
+impl SerializeMap for MapSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -316,7 +316,7 @@ impl<'a> SerializeMap for MapSerializer {
         Ok(Dson::Set(entries))
     }
 }
-impl<'a> SerializeStruct for SeqSerializer {
+impl SerializeStruct for SeqSerializer {
     type Ok = Dson;
     type Error = Error;
 
@@ -341,7 +341,7 @@ pub struct VariantSerializer {
     values: Vec<Dson>,
 }
 
-impl<'a> SerializeStructVariant for VariantSerializer {
+impl SerializeStructVariant for VariantSerializer {
     type Ok = Dson;
     type Error = Error;
 

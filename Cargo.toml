@@ -10,11 +10,6 @@ members = [
   "crates/tests/*",
 ]
 
-# fixes weird problem with cargo metadata
-[patch.crates-io]
-# egui = "0.18.1"
-egui = { git = "https://github.com/emilk/egui.git", rev = "b30224471c7df8ad0217756dfd5094bd5355b9f6" }
-
 # for smaller build size
 [profile.release]
 lto = "thin"

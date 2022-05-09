@@ -20,7 +20,7 @@ use dkernel_card::{
     node::{Node, NodeId},
 };
 
-use crate::{query_result::QueryResult, event::Event};
+use crate::{event::Event, query_result::QueryResult};
 
 #[salsa::query_group(KernelStorage)]
 pub trait Queries {
@@ -42,8 +42,7 @@ pub struct Database {
     storage: salsa::Storage<Self>,
 }
 
-impl salsa::Database for Database {
-}
+impl salsa::Database for Database {}
 
 impl Database {
     pub fn handle_event(&mut self, event: &Event) {
