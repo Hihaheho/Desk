@@ -20,8 +20,8 @@
 # top level files
 !/.gitattributes
 !/README.md
-!/LICENSE
-!/.gitpod.yml
+!/LICENSE.md
+!/docs/LICENSE-*
 
 # global allow
 !.gitignore

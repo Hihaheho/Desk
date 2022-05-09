@@ -3,9 +3,9 @@
 ### 🔮 The application platform for your cyberpunk desk. 🔮
 
 [![Demo](https://img.shields.io/badge/Desk--X-Wasm+WebGL2-grey?labelColor=b236a6)](https://desk-x.com)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)  
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg?style=flat)](https://github.com/Hihaheho/Desk/blob/main/LICENSE)
-[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)  
+[![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)
 [![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=flat)](https://discord.gg/egTTeg7DRp)
 
 ## Goal and philosophy
@@ -39,7 +39,7 @@ Desk programming language (Desk-lang) is a programming language which has:
 - Minimalistic syntax and semantics
 - Type system with inference
 - Algebraic effects
-- Content-addressible by type and UUID
+- Content-addressable by type and UUID
 - Embeddable interpreter
 - 🚧 Compiler for performant binary
 
@@ -49,9 +49,9 @@ Any data and programs on Desk apps are finally evaluated as snippets of Desk-lan
 
 ### Desk Kernel
 
-Desk kernel is a platform-agnostic environment for writing and running Desk-lang. Functionalities and UIs of Desk apps are built by using syscalls of the kernel. It's using [Bevy Engine](https://bevyengine.org/) and [egui](https://www.egui.rs/#demo).
+Desk kernel (Dkernel) is a platform-agnostic environment for writing and running Desk-lang. Functionalities and UIs of Desk apps are made up by syscall of Dkernel.
 
-Desk kernel provides these features:
+Dkernel provides these features:
 
 - 🚧 File system for Desk-lang
 - 🚧 Type-driven UI components
