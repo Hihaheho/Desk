@@ -1495,6 +1495,7 @@ name = "deskc-amirgen"
 version = "0.0.0"
 dependencies = [
  "deskc-amir",
+ "deskc-ids",
  "deskc-thir",
  "deskc-types",
  "thiserror",
@@ -1624,6 +1625,7 @@ dependencies = [
  "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
+ "deskc-ids",
  "deskc-lexer",
  "deskc-parser",
  "deskc-textual-diagnostics",
@@ -1668,6 +1670,7 @@ dependencies = [
  "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
+ "deskc-ids",
  "deskc-lexer",
  "deskc-parser",
  "deskc-thir",
@@ -1693,6 +1696,7 @@ dependencies = [
  "deskc-file",
  "deskc-hir",
  "deskc-hirgen",
+ "deskc-ids",
  "deskc-lexer",
  "deskc-parser",
  "deskc-textual-diagnostics",
@@ -1705,6 +1709,7 @@ dependencies = [
 name = "deskc-types"
 version = "0.0.0"
 dependencies = [
+ "deskc-ids",
  "serde",
 ]
 

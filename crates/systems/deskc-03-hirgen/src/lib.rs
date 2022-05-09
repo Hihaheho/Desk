@@ -1,6 +1,7 @@
 mod error;
 mod gen_effect_expr;
-use ids::CardId;
+use ids::{CardId, IrId};
+use uuid::Uuid;
 
 use std::{
     cell::RefCell,
@@ -12,7 +13,7 @@ use error::HirGenError;
 use file::InFile;
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
-    meta::{Id, Meta, WithMeta},
+    meta::{Meta, WithMeta},
     ty::Type,
     Hir,
 };
@@ -29,10 +30,10 @@ pub fn gen_hir(src: &Spanned<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenEr
 
 #[derive(Default, Debug)]
 pub struct HirGen {
-    next_id: RefCell<Id>,
+    next_id: RefCell<usize>,
     next_span: RefCell<Vec<Span>>,
-    pub variables: RefCell<HashMap<String, Id>>,
-    pub attrs: RefCell<HashMap<Id, Vec<Expr>>>,
+    pub variables: RefCell<HashMap<String, usize>>,
+    pub attrs: RefCell<HashMap<IrId, Vec<Expr>>>,
     pub included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
@@ -126,7 +127,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr);
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.meta.id, ret.meta.attrs.clone());
+                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
@@ -243,7 +244,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr);
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.meta.id, ret.meta.attrs.clone());
+                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::expr::Expr::Brand { brands, item: expr } => {
@@ -311,7 +312,7 @@ impl HirGen {
             .or_insert_with(|| self.next_id())
     }
 
-    pub fn next_id(&self) -> Id {
+    pub fn next_id(&self) -> usize {
         let id = *self.next_id.borrow();
         *self.next_id.borrow_mut() += 1;
         id
@@ -321,7 +322,7 @@ impl HirGen {
         WithMeta {
             meta: Meta {
                 attrs: vec![],
-                id: self.next_id(),
+                id: IrId(Uuid::new_v4()),
                 span: self.pop_span().unwrap(),
             },
             value,
@@ -457,51 +458,56 @@ mod tests {
                 item: Box::new(remove_meta(*body)),
             },
         };
-        dummy_meta(value)
+        let mut with_meta = dummy_meta(value);
+        with_meta.meta.attrs = expr.meta.attrs;
+        with_meta
     }
 
     #[test]
     fn test() {
         let gen = HirGen::default();
         assert_eq!(
-            gen.gen(&(
-                ast::expr::Expr::Apply {
-                    function: (ast::ty::Type::Number, 3..10),
-                    link_name: Default::default(),
-                    arguments: vec![(
-                        ast::expr::Expr::Attribute {
-                            attr: Box::new((
-                                ast::expr::Expr::Literal(ast::expr::Literal::Int(1)),
-                                24..25
-                            )),
-                            item: Box::new((
-                                ast::expr::Expr::Attribute {
-                                    attr: Box::new((
-                                        ast::expr::Expr::Literal(ast::expr::Literal::Int(2)),
-                                        24..25
-                                    )),
-                                    item: Box::new((ast::expr::Expr::Hole, 26..27)),
-                                },
-                                25..26
-                            )),
-                        },
-                        24..27
-                    )],
-                },
-                0..27
-            ),),
-            Ok(WithMeta {
+            remove_meta(
+                gen.gen(&(
+                    ast::expr::Expr::Apply {
+                        function: (ast::ty::Type::Number, 3..10),
+                        link_name: Default::default(),
+                        arguments: vec![(
+                            ast::expr::Expr::Attribute {
+                                attr: Box::new((
+                                    ast::expr::Expr::Literal(ast::expr::Literal::Int(1)),
+                                    24..25
+                                )),
+                                item: Box::new((
+                                    ast::expr::Expr::Attribute {
+                                        attr: Box::new((
+                                            ast::expr::Expr::Literal(ast::expr::Literal::Int(2)),
+                                            24..25
+                                        )),
+                                        item: Box::new((ast::expr::Expr::Hole, 26..27)),
+                                    },
+                                    25..26
+                                )),
+                            },
+                            24..27
+                        )],
+                    },
+                    0..27
+                ),)
+                    .unwrap()
+            ),
+            WithMeta {
                 meta: Meta {
                     attrs: vec![],
-                    id: 4,
-                    span: 0..27
+                    id: Default::default(),
+                    span: 0..0
                 },
                 value: Expr::Apply {
                     function: WithMeta {
                         meta: Meta {
                             attrs: vec![],
-                            id: 0,
-                            span: 3..10
+                            id: Default::default(),
+                            span: 0..0
                         },
                         value: Type::Number
                     },
@@ -512,21 +518,22 @@ mod tests {
                                 Expr::Literal(Literal::Integer(2)),
                                 Expr::Literal(Literal::Integer(1))
                             ],
-                            id: 1,
-                            span: 26..27
+                            id: Default::default(),
+                            span: 0..0
                         },
                         value: Expr::Literal(Literal::Hole)
                     }],
                 },
-            })
+            }
         );
 
+        assert_eq!(gen.attrs.borrow().len(), 1);
         assert_eq!(
-            gen.attrs.borrow_mut().get(&1),
-            Some(&vec![
+            gen.attrs.borrow().iter().next().unwrap().1,
+            &vec![
                 Expr::Literal(Literal::Integer(2)),
                 Expr::Literal(Literal::Integer(1))
-            ])
+            ]
         );
     }
 

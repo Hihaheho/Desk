@@ -1,6 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use hir::meta::WithMeta;
+use ids::IrId;
 use thir::{BuiltinOp, Expr, Literal, TypedHir};
 use types::{Effect, EffectExpr, Type};
 
@@ -100,7 +101,7 @@ fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: Builtin
     Expr::Match {
         // zero check
         input: Box::new(TypedHir {
-            id: thirgen.next_id(),
+            id: IrId::default(),
             ty: Type::sum(vec![
                 Type::label("equal", Type::unit()),
                 Type::label("unequal", Type::unit()),
@@ -110,7 +111,7 @@ fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: Builtin
                 operands: vec![
                     divisor.clone(),
                     TypedHir {
-                        id: thirgen.next_id(),
+                        id: IrId::default(),
                         ty: Type::Number,
                         expr: Expr::Literal(Literal::Float(0.0)),
                     },
@@ -122,7 +123,7 @@ fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: Builtin
             thir::MatchCase {
                 ty: Type::label("equal", Type::unit()),
                 expr: TypedHir {
-                    id: thirgen.next_id(),
+                    id: IrId::default(),
                     ty: Type::Effectful {
                         ty: Box::new(Type::Number),
                         effects: EffectExpr::Effects(vec![Effect {
@@ -131,7 +132,7 @@ fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: Builtin
                         }]),
                     },
                     expr: Expr::Perform(Box::new(TypedHir {
-                        id: thirgen.next_id(),
+                        id: IrId::default(),
                         ty: Type::label("division by zero", Type::Number),
                         expr: dividend.expr.clone(),
                     })),
@@ -141,7 +142,7 @@ fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: Builtin
             thir::MatchCase {
                 ty: Type::label("unequal", Type::unit()),
                 expr: TypedHir {
-                    id: thirgen.next_id(),
+                    id: IrId::default(),
                     ty: Type::label("quotient", Type::Number),
                     expr: Expr::Op {
                         op,

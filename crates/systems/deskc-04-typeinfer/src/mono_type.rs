@@ -1,3 +1,5 @@
+use ids::IrId;
+
 use crate::{
     ctx::Id,
     ty::{Type, TypeVisitor},
@@ -17,7 +19,7 @@ impl TypeVisitor for MonoType {
     fn visit_forall(&mut self, _variable: &Id, _body: &Type) {
         self.is_monotype = false;
     }
-    fn visit_infer(&mut self, _id: &Id) {
+    fn visit_infer(&mut self, _id: &IrId) {
         // TODO: this is too conservative, but we may not have a way to know in here
         self.is_monotype = false;
     }

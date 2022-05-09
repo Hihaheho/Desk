@@ -2,6 +2,8 @@ pub mod effect_expr;
 
 use std::collections::HashMap;
 
+use ids::IrId;
+
 use self::effect_expr::EffectExpr;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -36,7 +38,7 @@ pub enum Type {
         body: Box<Self>,
     },
     Existential(Id),
-    Infer(Id),
+    Infer(IrId),
     Effectful {
         ty: Box<Self>,
         effects: EffectExpr,
@@ -75,7 +77,7 @@ pub(crate) trait TypeVisitorMut {
         self.visit(body);
     }
     fn visit_existential(&mut self, _id: &mut Id) {}
-    fn visit_infer(&mut self, _id: &mut Id) {}
+    fn visit_infer(&mut self, _id: &mut IrId) {}
     fn visit_effectful(&mut self, ty: &mut Type, effects: &mut EffectExpr) {
         self.visit(ty);
         self.visit_effect_expr(effects);
@@ -177,7 +179,7 @@ pub(crate) trait TypeVisitor {
         self.visit(body);
     }
     fn visit_existential(&mut self, _id: &Id) {}
-    fn visit_infer(&mut self, _id: &Id) {}
+    fn visit_infer(&mut self, _id: &IrId) {}
     fn visit_effectful(&mut self, ty: &Type, effects: &EffectExpr) {
         self.visit(ty);
         self.visit_effect_expr(effects);

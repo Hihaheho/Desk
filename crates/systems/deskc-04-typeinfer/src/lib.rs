@@ -78,7 +78,7 @@ mod tests {
             .iter()
             .flat_map(|(id, attrs)| {
                 attrs.iter().map(|attr| match attr {
-                    Expr::Literal(Literal::Integer(attr)) => (*attr as usize, *id),
+                    Expr::Literal(Literal::Integer(attr)) => (*attr as usize, id.clone()),
                     _ => todo!(),
                 })
             })

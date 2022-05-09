@@ -130,11 +130,11 @@ impl Ctx {
             (Type::Brand { item, brand: _ }, sup) => self.subtype(item, sup)?,
             // one without brand is not subtype of other with brand
             (Type::Infer(id), sup) => {
-                self.store_inferred_type(*id, sup.clone());
+                self.store_inferred_type(id.clone(), sup.clone());
                 self.clone()
             }
             (sub, Type::Infer(id)) => {
-                self.store_inferred_type(*id, sub.clone());
+                self.store_inferred_type(id.clone(), sub.clone());
                 self.clone()
             }
 

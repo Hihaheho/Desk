@@ -32,3 +32,6 @@ pub struct FileId(pub Uuid);
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct UserId(pub String);
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct IrId(pub Uuid);

@@ -20,6 +20,7 @@ concretizer = { path = "../../systems/deskc-07-concretizer", version = "0.0.0", 
 evalmir = { path = "../../systems/deskc-evalmir", version = "0.0.0", package = "deskc-evalmir", features = ["withserde"] }
 typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 thir2dson = { path = "../../systems/deskc-thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
+ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }

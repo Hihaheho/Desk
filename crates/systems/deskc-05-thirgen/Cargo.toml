@@ -11,6 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }

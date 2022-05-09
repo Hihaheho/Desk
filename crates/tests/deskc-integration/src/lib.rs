@@ -62,7 +62,7 @@ macro_rules! test {
                 match assertion {
                     Assertion::Typed(typings) => {
                         use std::collections::HashMap;
-                        let attrs: HashMap<String, usize> = genhir
+                        let attrs: HashMap<String, ids::IrId> = genhir
                             .attrs
                             .borrow()
                             .iter()

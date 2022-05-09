@@ -278,13 +278,13 @@ impl AmirGen {
                 if let thir::Expr::Apply { .. } = expr.expr {
                     // Reference needs a correct type.
                     self.gen_stmt(&TypedHir {
-                        id: expr.id,
+                        id: expr.id.clone(),
                         ty: expr.ty.clone(),
                         expr: expr.expr.clone(),
                     })?
                 } else {
                     self.gen_stmt(&TypedHir {
-                        id: expr.id,
+                        id: expr.id.clone(),
                         ty: stmt_ty.clone(),
                         expr: expr.expr.clone(),
                     })?
@@ -347,13 +347,14 @@ mod tests {
         stmt::{ATerminator, StmtBind},
         var::AVar,
     };
+    use ids::IrId;
 
     use super::*;
 
     #[test]
     fn simple() {
         let thir = TypedHir {
-            id: 0,
+            id: IrId::default(),
             ty: Type::Number,
             expr: thir::Expr::Literal(thir::Literal::Int(1)),
         };

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use ids::IrId;
+
 pub type Id = usize;
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
@@ -90,11 +92,11 @@ impl Type {
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Types {
-    pub types: HashMap<Id, Type>,
+    pub types: HashMap<IrId, Type>,
 }
 
 impl Types {
-    pub fn get(&self, id: &Id) -> Option<&Type> {
+    pub fn get(&self, id: &IrId) -> Option<&Type> {
         self.types.get(id)
     }
 }

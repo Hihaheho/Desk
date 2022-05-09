@@ -124,7 +124,7 @@ impl Ctx {
                     .instantiate_supertype(item, &a)?
                 }
                 Type::Infer(infer) => {
-                    self.store_inferred_type(*infer, Type::Existential(*id));
+                    self.store_inferred_type(infer.clone(), Type::Existential(*id));
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![Log::Solved(*id, sub.clone())],
@@ -133,7 +133,7 @@ impl Ctx {
                 ty => return Err(TypeError::NotInstantiableSupertype { ty: ty.clone() }),
             }
         };
-        self.store_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));
+        self.store_solved_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));
         Ok(ctx)
     }
 }

@@ -1,13 +1,14 @@
 use std::ops::Range;
 
-use crate::expr::Expr;
+use ids::IrId;
+use uuid::Uuid;
 
-pub type Id = usize;
+use crate::expr::Expr;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Meta {
     pub attrs: Vec<Expr>,
-    pub id: Id,
+    pub id: IrId,
     pub span: Range<usize>,
 }
 
@@ -21,7 +22,7 @@ pub fn dummy_meta<T>(value: T) -> WithMeta<T> {
     WithMeta {
         meta: Meta {
             attrs: vec![],
-            id: 0,
+            id: IrId(Uuid::default()),
             span: 0..0,
         },
         value,

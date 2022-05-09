@@ -156,7 +156,7 @@ impl TypedHirGen {
             },
         };
         TypedHir {
-            id: *expr_id,
+            id: expr_id.clone(),
             ty,
             expr,
         }
@@ -176,7 +176,8 @@ impl TypedHirGen {
 
 #[cfg(test)]
 mod tests {
-    use thir::BuiltinOp;
+    use ids::IrId;
+    use thir::{visitor::TypedHirVisitorMut, BuiltinOp};
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -193,6 +194,18 @@ mod tests {
         infer.get_types()
     }
 
+    pub struct RemoveIdVisitor;
+    impl TypedHirVisitorMut for RemoveIdVisitor {
+        fn visit(&mut self, hir: &mut TypedHir) {
+            hir.id = IrId::default();
+            self.super_visit(hir);
+        }
+    }
+    fn remove_id(mut expr: TypedHir) -> TypedHir {
+        RemoveIdVisitor.visit(&mut expr);
+        expr
+    }
+
     #[test]
     fn literal() {
         let expr = parse("1");
@@ -201,9 +214,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            gen.gen(&expr),
+            remove_id(gen.gen(&expr)),
             TypedHir {
-                id: 0,
+                id: IrId::default(),
                 ty: Type::Number,
                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
             }
@@ -218,9 +231,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            gen.gen(&expr),
+            remove_id(gen.gen(&expr)),
             TypedHir {
-                id: 5,
+                id: IrId::default(),
                 ty: Type::Function {
                     parameters: vec![Type::Number, Type::String],
                     body: Box::new(Type::Number),
@@ -228,7 +241,7 @@ mod tests {
                 expr: thir::Expr::Function {
                     parameters: vec![Type::Number, Type::String],
                     body: Box::new(TypedHir {
-                        id: 3,
+                        id: IrId::default(),
                         ty: Type::Number,
                         expr: thir::Expr::Apply {
                             function: Type::Number,
@@ -249,9 +262,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            gen.gen(&expr),
+            remove_id(gen.gen(&expr)),
             TypedHir {
-                id: 8,
+                id: IrId::default(),
                 ty: Type::Label {
                     label: "sum".to_string(),
                     item: Box::new(Type::Number),
@@ -260,12 +273,12 @@ mod tests {
                     op: BuiltinOp::Add,
                     operands: vec![
                         TypedHir {
-                            id: 6,
+                            id: IrId::default(),
                             ty: Type::Number,
                             expr: thir::Expr::Literal(thir::Literal::Int(1)),
                         },
                         TypedHir {
-                            id: 7,
+                            id: IrId::default(),
                             ty: Type::Number,
                             expr: thir::Expr::Literal(thir::Literal::Int(2)),
                         }
@@ -349,13 +362,13 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            gen.gen(&expr),
+            remove_id(gen.gen(&expr)),
             TypedHir {
-                id: 5,
+                id: IrId::default(),
                 ty: Type::Sum(vec![Type::Number, Type::String]),
                 expr: thir::Expr::Match {
                     input: Box::new(TypedHir {
-                        id: 0,
+                        id: IrId::default(),
                         ty: Type::Number,
                         expr: thir::Expr::Literal(thir::Literal::Int(3)),
                     }),
@@ -363,7 +376,7 @@ mod tests {
                         thir::MatchCase {
                             ty: Type::Number,
                             expr: TypedHir {
-                                id: 2,
+                                id: IrId::default(),
                                 ty: Type::Number,
                                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
                             }
@@ -371,7 +384,7 @@ mod tests {
                         thir::MatchCase {
                             ty: Type::String,
                             expr: TypedHir {
-                                id: 4,
+                                id: IrId::default(),
                                 ty: Type::String,
                                 expr: thir::Expr::Literal(thir::Literal::String("2".into())),
                             }

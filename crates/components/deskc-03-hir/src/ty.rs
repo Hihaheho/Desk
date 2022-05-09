@@ -1,4 +1,4 @@
-use crate::meta::{Id, WithMeta};
+use crate::meta::WithMeta;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Handler {
@@ -32,11 +32,11 @@ pub enum Type {
     Array(Box<WithMeta<Self>>),
     Set(Box<WithMeta<Self>>),
     Let {
-        variable: Id,
+        variable: usize,
         // definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
-    Variable(Id),
+    Variable(usize),
     BoundedVariable {
         bound: Box<WithMeta<Self>>,
         identifier: String,

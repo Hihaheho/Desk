@@ -1,3 +1,6 @@
+pub mod visitor;
+
+use ids::IrId;
 pub use ids::LinkName;
 use types::{Effect, Type};
 
@@ -22,7 +25,7 @@ pub struct MatchCase {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypedHir {
-    pub id: Id,
+    pub id: IrId,
     pub ty: Type,
     pub expr: Expr,
 }

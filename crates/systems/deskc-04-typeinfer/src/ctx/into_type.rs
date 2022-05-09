@@ -54,7 +54,7 @@ impl Ctx {
                     .unwrap_or_else(|| panic!("should be instansiated: {}", id)),
             ),
             Type::Infer(id) => {
-                self.gen_type(self.types.borrow().get(id).expect("should be inferred"))
+                self.gen_type(self.ir_types.borrow().get(id).expect("should be inferred"))
             }
         }
     }

@@ -10,6 +10,7 @@ mod synth;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use hir::meta::WithMeta;
+use ids::IrId;
 use types::{IdGen, Types};
 
 use crate::{
@@ -41,12 +42,13 @@ pub struct Ctx {
     pub(crate) id_gen: Rc<RefCell<IdGen>>,
     pub(crate) logs: RefCell<Vec<Log>>,
     // Result of type inference
+    pub(crate) ir_types: Rc<RefCell<HashMap<IrId, Type>>>,
     pub(crate) types: Rc<RefCell<HashMap<Id, Type>>>,
     // a stack; continue's input of current context
     pub(crate) continue_input: RefCell<Vec<Type>>,
     // a stack; continue's output of current context
     pub(crate) continue_output: RefCell<Vec<Type>>,
-    pub(crate) inferred_types: RefCell<HashMap<Id, Type>>,
+    pub(crate) inferred_types: RefCell<HashMap<IrId, Type>>,
 }
 
 impl Ctx {
@@ -57,6 +59,7 @@ impl Ctx {
         Self {
             id_gen: self.id_gen.clone(),
             logs: Default::default(),
+            ir_types: self.ir_types.clone(),
             types: self.types.clone(),
             continue_input: Default::default(),
             continue_output: Default::default(),
@@ -65,20 +68,26 @@ impl Ctx {
     }
 
     // The type should be substituted with ctx.
-    fn store_type_and_effects(&self, id: Id, ty: Type, effects: EffectExpr) {
+    fn store_type_and_effects(&self, id: IrId, ty: Type, effects: EffectExpr) {
+        self.ir_types
+            .borrow_mut()
+            .insert(id, self.with_effects(ty, effects));
+    }
+
+    fn store_solved_type_and_effects(&self, id: Id, ty: Type, effects: EffectExpr) {
         self.types
             .borrow_mut()
             .insert(id, self.with_effects(ty, effects));
     }
 
-    fn store_inferred_type(&self, infer: Id, ty: Type) {
+    fn store_inferred_type(&self, infer: IrId, ty: Type) {
         self.inferred_types.borrow_mut().insert(infer, ty);
     }
 
-    pub fn get_type(&self, id: &Id) -> Type {
+    pub fn get_type(&self, id: &IrId) -> Type {
         self.finalize(
             &self
-                .types
+                .ir_types
                 .borrow()
                 .get(id)
                 .cloned()
@@ -95,7 +104,11 @@ impl Ctx {
     fn save_from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
         let ty = self.gen_from_hir_type(hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type_and_effects(hir_ty.meta.id, ty.clone(), EffectExpr::Effects(vec![]));
+        self.store_type_and_effects(
+            hir_ty.meta.id.clone(),
+            ty.clone(),
+            EffectExpr::Effects(vec![]),
+        );
         ty
     }
 
@@ -106,10 +119,10 @@ impl Ctx {
     pub fn get_types(&self) -> Types {
         Types {
             types: self
-                .types
+                .ir_types
                 .borrow()
                 .iter()
-                .map(|(id, ty)| (*id, self.gen_type(ty)))
+                .map(|(id, ty)| (id.clone(), self.gen_type(ty)))
                 .collect(),
         }
     }

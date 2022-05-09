@@ -317,7 +317,7 @@ impl Ctx {
         };
         let effects = ctx.end_scope(scope);
         let ty = ctx.substitute_from_ctx(&ty);
-        ctx.store_type_and_effects(expr.meta.id, ty.clone(), effects.clone());
+        ctx.store_type_and_effects(expr.meta.id.clone(), ty.clone(), effects.clone());
         Ok(WithEffects((ctx, ty), effects))
     }
 }

@@ -51,7 +51,7 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{CardId, FileId, LinkName, UserId};
+    use deskc_ids::{CardId, FileId, IrId, LinkName, UserId};
     use deskc_types::Type;
     use dkernel_card::patch::FilePatch;
     use dkernel_card::rules::{NodeOperation, Rules};
@@ -180,21 +180,21 @@ mod tests {
             Ok(Arc::new(WithMeta {
                 meta: Meta {
                     attrs: vec![],
-                    id: 0,
+                    id: IrId::default(),
                     span: 0..0
                 },
                 value: Expr::Apply {
                     function: WithMeta {
                         meta: Meta {
                             attrs: vec![],
-                            id: 0,
+                            id: IrId::default(),
                             span: 0..0
                         },
                         value: HirType::Function {
                             parameter: Box::new(WithMeta {
                                 meta: Meta {
                                     attrs: vec![],
-                                    id: 0,
+                                    id: IrId::default(),
                                     span: 0..0
                                 },
                                 value: HirType::String
@@ -202,7 +202,7 @@ mod tests {
                             body: Box::new(WithMeta {
                                 meta: Meta {
                                     attrs: vec![],
-                                    id: 0,
+                                    id: IrId::default(),
                                     span: 0..0
                                 },
                                 value: HirType::Number
@@ -213,7 +213,7 @@ mod tests {
                     arguments: vec![WithMeta {
                         meta: Meta {
                             attrs: vec![],
-                            id: 0,
+                            id: IrId::default(),
                             span: 0..0
                         },
                         value: Expr::Literal(Literal::String("string".into()))
