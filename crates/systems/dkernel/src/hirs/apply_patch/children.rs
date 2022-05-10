@@ -37,7 +37,7 @@ impl ChildrenPatchApplier for Children {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dkernel_card::node::NodeId;
+    use deskc_ids::NodeId;
     use uuid::Uuid;
 
     #[test]

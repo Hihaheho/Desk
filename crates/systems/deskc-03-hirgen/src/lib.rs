@@ -1,6 +1,6 @@
 mod error;
 mod gen_effect_expr;
-use ids::{CardId, IrId};
+use ids::{CardId, FileId, IrId};
 use uuid::Uuid;
 
 use std::{
@@ -8,9 +8,8 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use ast::span::{Span, Spanned};
+use ast::span::Spanned;
 use error::HirGenError;
-use file::InFile;
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::{Meta, WithMeta},
@@ -30,11 +29,11 @@ pub fn gen_hir(src: &Spanned<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenEr
 
 #[derive(Default, Debug)]
 pub struct HirGen {
+    file_id: FileId,
     next_id: RefCell<usize>,
-    next_span: RefCell<Vec<Span>>,
+    next_span: RefCell<Vec<ast::span::Span>>,
     pub variables: RefCell<HashMap<String, usize>>,
     pub attrs: RefCell<HashMap<IrId, Vec<Expr>>>,
-    pub included: HashMap<String, InFile<Spanned<ast::expr::Expr>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
     cards: Vec<(CardId, WithMeta<Expr>)>,
@@ -127,7 +126,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr);
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
+                    .insert(ret.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
@@ -244,7 +243,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr);
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
+                    .insert(ret.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::expr::Expr::Brand { brands, item: expr } => {
@@ -296,11 +295,11 @@ impl HirGen {
         Ok(())
     }
 
-    pub(crate) fn push_span(&self, span: Span) {
+    pub(crate) fn push_span(&self, span: ast::span::Span) {
         self.next_span.borrow_mut().push(span);
     }
 
-    pub(crate) fn pop_span(&self) -> Option<Span> {
+    pub(crate) fn pop_span(&self) -> Option<ast::span::Span> {
         self.next_span.borrow_mut().pop()
     }
 
@@ -320,10 +319,13 @@ impl HirGen {
 
     fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         WithMeta {
+            id: IrId(Uuid::new_v4()),
             meta: Meta {
                 attrs: vec![],
-                id: IrId(Uuid::new_v4()),
-                span: self.pop_span().unwrap(),
+                file_id: self.file_id.clone(),
+                node_id: None,
+                // no span is a bug of hirgen, so unwrap is safe
+                span: Some(self.pop_span().unwrap()),
             },
             value,
         }
@@ -497,29 +499,25 @@ mod tests {
                     .unwrap()
             ),
             WithMeta {
-                meta: Meta {
-                    attrs: vec![],
-                    id: Default::default(),
-                    span: 0..0
-                },
+                id: Default::default(),
+                meta: Meta::default(),
                 value: Expr::Apply {
                     function: WithMeta {
-                        meta: Meta {
-                            attrs: vec![],
-                            id: Default::default(),
-                            span: 0..0
-                        },
+                        id: Default::default(),
+                        meta: Meta::default(),
                         value: Type::Number
                     },
                     link_name: Default::default(),
                     arguments: vec![WithMeta {
+                        id: Default::default(),
                         meta: Meta {
                             attrs: vec![
                                 Expr::Literal(Literal::Integer(2)),
                                 Expr::Literal(Literal::Integer(1))
                             ],
-                            id: Default::default(),
-                            span: 0..0
+                            file_id: Default::default(),
+                            node_id: None,
+                            span: Default::default()
                         },
                         value: Expr::Literal(Literal::Hole)
                     }],

@@ -13,7 +13,6 @@ edition = "2021"
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
-file = { path = "../../components/deskc-file", version = "0.0.0", package = "deskc-file" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 pretty_assertions = "1.0.0"
 thiserror = "1.0.30"

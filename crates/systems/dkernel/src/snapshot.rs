@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use deskc_ids::{CardId, FileId, UserId};
+use deskc_ids::{CardId, FileId, NodeId, UserId};
 use dkernel_card::patch::FilePatch;
 use dkernel_card::rules::{Rules, SpaceOperation};
-use dkernel_card::{file::File, flat_node::FlatNode, node::NodeId};
+use dkernel_card::{file::File, flat_node::FlatNode};
 
 use crate::hirs::HirQueries;
 use crate::{event::Event, hirs::Hirs};

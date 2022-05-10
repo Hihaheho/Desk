@@ -100,9 +100,9 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
 #[cfg(test)]
 mod tests {
     use deskc_hir::expr::{Expr, Literal};
-    use deskc_ids::{CardId, FileId, UserId};
+    use deskc_ids::{CardId, FileId, NodeId, UserId};
     use deskc_types::Type;
-    use dkernel_card::{content::Content, file::File, flat_node::NodeRef, node::NodeId};
+    use dkernel_card::{content::Content, file::File, flat_node::NodeRef};
     use uuid::Uuid;
 
     use crate::event::Event;

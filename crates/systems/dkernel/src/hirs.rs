@@ -15,11 +15,11 @@ use hir::hir;
 use apply_patch::*;
 use deskc_ast::span::Spanned;
 use deskc_hir::meta::WithMeta;
-use deskc_ids::CardId;
+use deskc_ids::{CardId, NodeId};
 use dkernel_card::{
     content::Content,
     flat_node::{Attributes, FlatNode, NodeRef},
-    node::{Node, NodeId},
+    node::Node,
 };
 
 use crate::{event::Event, query_result::QueryResult};

@@ -51,11 +51,11 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{CardId, FileId, IrId, LinkName, UserId};
+    use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId, UserId};
     use deskc_types::Type;
     use dkernel_card::patch::FilePatch;
     use dkernel_card::rules::{NodeOperation, Rules};
-    use dkernel_card::{content::Content, flat_node::NodeRef, node::NodeId, patch::ChildrenPatch};
+    use dkernel_card::{content::Content, flat_node::NodeRef, patch::ChildrenPatch};
     use hirs::HirQueries;
     use std::sync::Arc;
     use uuid::Uuid;
@@ -178,44 +178,29 @@ mod tests {
         assert_eq!(
             kernel.hirs.hir(card_id),
             Ok(Arc::new(WithMeta {
-                meta: Meta {
-                    attrs: vec![],
-                    id: IrId::default(),
-                    span: 0..0
-                },
+                id: IrId::default(),
+                meta: Meta::default(),
                 value: Expr::Apply {
                     function: WithMeta {
-                        meta: Meta {
-                            attrs: vec![],
-                            id: IrId::default(),
-                            span: 0..0
-                        },
+                        id: IrId::default(),
+                        meta: Meta::default(),
                         value: HirType::Function {
                             parameter: Box::new(WithMeta {
-                                meta: Meta {
-                                    attrs: vec![],
-                                    id: IrId::default(),
-                                    span: 0..0
-                                },
+                                id: IrId::default(),
+                                meta: Meta::default(),
                                 value: HirType::String
                             }),
                             body: Box::new(WithMeta {
-                                meta: Meta {
-                                    attrs: vec![],
-                                    id: IrId::default(),
-                                    span: 0..0
-                                },
+                                id: IrId::default(),
+                                meta: Meta::default(),
                                 value: HirType::Number
                             }),
                         }
                     },
                     link_name: LinkName::None,
                     arguments: vec![WithMeta {
-                        meta: Meta {
-                            attrs: vec![],
-                            id: IrId::default(),
-                            span: 0..0
-                        },
+                        id: IrId::default(),
+                        meta: Meta::default(),
                         value: Expr::Literal(Literal::String("string".into()))
                     }]
                 }

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use dkernel_card::{flat_node::FlatNode, node::NodeId};
+use deskc_ids::NodeId;
+use dkernel_card::{flat_node::FlatNode};
 
 use super::HirQueries;
 

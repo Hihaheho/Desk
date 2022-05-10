@@ -1,7 +1,6 @@
-use deskc_ids::{CardId, FileId, UserId};
+use deskc_ids::{CardId, FileId, NodeId, UserId};
 use dkernel_card::{
     content::Content,
-    node::NodeId,
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{Rules, SpaceOperation},
 };

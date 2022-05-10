@@ -19,6 +19,7 @@ fn genhir(ast: &Node) -> Result<WithMeta<Expr>, QueryError> {
     let expr = match &ast.content {
         Content::Source(source) => todo!(),
         Content::String(string) => WithMeta {
+            id: todo!(),
             meta: todo!(),
             value: todo!(),
         },

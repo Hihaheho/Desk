@@ -14,7 +14,6 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-file = { path = "../../components/deskc-file", version = "0.0.0", package = "deskc-file" }
 textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
 thiserror = "1.0.30"
 

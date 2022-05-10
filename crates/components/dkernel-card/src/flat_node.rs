@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
+use deskc_ids::NodeId;
 use hir::expr::Expr;
 use types::Type;
 
-use crate::{content::Content, node::NodeId};
+use crate::content::Content;
 
 pub type Children = Vec<NodeRef>;
 pub type Attributes = HashMap<Type, Expr>;

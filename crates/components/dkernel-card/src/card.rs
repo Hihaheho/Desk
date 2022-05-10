@@ -1,6 +1,4 @@
-use deskc_ids::FileId;
-
-use crate::node::NodeId;
+use deskc_ids::{FileId, NodeId};
 
 // TODO: delete this?
 #[derive(Clone, Debug, PartialEq, Eq)]

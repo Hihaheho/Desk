@@ -34,7 +34,7 @@ impl From<ExprTypeError> for TextualDiagnostics {
         TextualDiagnostics {
             title: "Typeinfer error".into(),
             reports: vec![Report {
-                span: error.meta.span,
+                span: error.meta.span.unwrap_or(0..0),
                 text: format!("{:?}", error.error),
             }],
         }

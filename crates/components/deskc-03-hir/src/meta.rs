@@ -1,30 +1,29 @@
 use std::ops::Range;
 
-use ids::IrId;
+use ids::{FileId, IrId, NodeId};
 use uuid::Uuid;
 
 use crate::expr::Expr;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Meta {
     pub attrs: Vec<Expr>,
-    pub id: IrId,
-    pub span: Range<usize>,
+    pub file_id: FileId,
+    pub node_id: Option<NodeId>,
+    pub span: Option<Range<usize>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WithMeta<T> {
+    pub id: IrId,
     pub meta: Meta,
     pub value: T,
 }
 
 pub fn dummy_meta<T>(value: T) -> WithMeta<T> {
     WithMeta {
-        meta: Meta {
-            attrs: vec![],
-            id: IrId(Uuid::default()),
-            span: 0..0,
-        },
+        id: IrId(Uuid::default()),
+        meta: Meta::default(),
         value,
     }
 }

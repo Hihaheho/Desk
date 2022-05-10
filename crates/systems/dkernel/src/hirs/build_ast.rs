@@ -1,8 +1,5 @@
-use deskc_ast::{expr::Expr, span::Spanned};
-use dkernel_card::{
-    content::Content,
-    node::{Node, NodeId},
-};
+use deskc_ids::NodeId;
+use dkernel_card::{content::Content, node::Node};
 
 use crate::query_result::QueryResult;
 

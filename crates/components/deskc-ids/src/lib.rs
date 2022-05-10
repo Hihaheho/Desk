@@ -26,7 +26,7 @@ pub struct LinkId<Type> {
 pub struct CardId(pub Uuid);
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct FileId(pub Uuid);
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
@@ -35,3 +35,6 @@ pub struct UserId(pub String);
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct IrId(pub Uuid);
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct NodeId(pub Uuid);

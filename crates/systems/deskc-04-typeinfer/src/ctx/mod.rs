@@ -104,11 +104,7 @@ impl Ctx {
     fn save_from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
         let ty = self.gen_from_hir_type(hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type_and_effects(
-            hir_ty.meta.id.clone(),
-            ty.clone(),
-            EffectExpr::Effects(vec![]),
-        );
+        self.store_type_and_effects(hir_ty.id.clone(), ty.clone(), EffectExpr::Effects(vec![]));
         ty
     }
 

@@ -52,7 +52,7 @@ impl Ctx {
         let effects = ctx.end_scope(scope);
         let ty = synthed_ty.as_ref().unwrap_or(ty);
         ctx.store_type_and_effects(
-            expr.meta.id.clone(),
+            expr.id.clone(),
             ctx.substitute_from_ctx(ty),
             effects.clone(),
         );
