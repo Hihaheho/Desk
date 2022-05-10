@@ -1,6 +1,6 @@
 [package]
 name = "desk-physics"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -9,4 +9,3 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 bevy_math = "0.5.0"
-derivative = "2.2"
