@@ -12,7 +12,7 @@ edition = "2021"
 inspector = ["bevy-inspector-egui"]
 
 [dependencies]
-egui-plugin = { path = "../../plugins/desk-egui", version = "0.0.0", package = "desk-egui-plugin" }
+egui-plugin = { path = "../../plugins/desk-egui", version = "0.0.0", package = "desk-egui" }
 
 bevy = "0.7"
 bevy-inspector-egui = { version = "0.10.0", optional = true }

@@ -1439,7 +1439,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-egui-plugin"
+name = "desk-egui"
 version = "0.0.0"
 dependencies = [
  "bevy",
@@ -1467,7 +1467,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "console_error_panic_hook",
- "desk-egui-plugin",
+ "desk-egui",
  "web-sys",
 ]
 

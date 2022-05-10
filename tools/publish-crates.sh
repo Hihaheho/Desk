@@ -33,7 +33,7 @@ crates=(
     desk-ui
     desk-theme
     dwm
-    desk-egui-plugin
+    desk-egui
     desk-x
 )
 
