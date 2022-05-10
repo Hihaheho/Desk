@@ -1,19 +1,16 @@
 use bevy::{prelude::*, render::camera::Camera};
 use terminal::Cursor;
 
-#[derive(Bundle)]
-struct CursorBundle {
-    cursor: Cursor,
-}
-
 pub(crate) fn add_cursor(mut commands: Commands) {
     commands
         .spawn()
         .insert_bundle((Cursor, Transform::default()));
 }
+
+#[allow(clippy::type_complexity)]
 pub(crate) fn move_cursor(
     windows: Res<Windows>,
-    mut query_set: QuerySet<(
+    mut params: ParamSet<(
         Query<&Transform, With<Camera>>,
         Query<&mut Transform, With<Cursor>>,
     )>,
@@ -23,13 +20,13 @@ pub(crate) fn move_cursor(
         .and_then(|window| window.cursor_position().map(|pos| (window, pos)))
     {
         let camera = {
-            if let Ok(camera) = query_set.q0().single() {
+            if let Ok(camera) = params.p0().get_single() {
                 *camera
             } else {
                 return;
             }
         };
-        if let Ok(mut cursor) = query_set.q1_mut().single_mut() {
+        if let Ok(mut cursor) = params.p1().get_single_mut() {
             let position = translate_position(position, window, &camera);
             cursor.translation.x = position.x;
             cursor.translation.y = position.y;

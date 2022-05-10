@@ -4,17 +4,15 @@ use terminal::Cursor;
 
 pub fn toggle_follow_for_drag_state(
     mut commands: Commands,
-    query_set: QuerySet<(
-        Query<(Entity, &Transform), With<Cursor>>,
-        Query<(Entity, &Transform, &DragState), Changed<DragState>>,
-    )>,
+    cursors: Query<(Entity, &Transform), With<Cursor>>,
+    drags: Query<(Entity, &Transform, &DragState), Changed<DragState>>,
 ) {
-    let (cursor, cursor_vec) = if let Ok((entity, transform)) = query_set.q0().single() {
+    let (cursor, cursor_vec) = if let Ok((entity, transform)) = cursors.get_single() {
         (entity, transform.translation.truncate())
     } else {
         return;
     };
-    for (entity, transform, drag_state) in query_set.q1().iter() {
+    for (entity, transform, drag_state) in drags.iter() {
         match drag_state {
             DragState::Dragging => {
                 let follow: Follow<Entity> = Follow {

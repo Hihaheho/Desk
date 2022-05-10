@@ -12,7 +12,7 @@ pub struct ExprTypeError {
 #[derive(Error, Debug, PartialEq)]
 pub enum TypeError {
     #[error("not applicable")]
-    NotApplicable { expr: Expr, ty: Type },
+    NotApplicable { expr: Box<Expr>, ty: Type },
     #[error("not subtype")]
     NotSubtype { sub: Type, ty: Type },
     #[error("circular existential")]

@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{
     content::Content,
     flat_node::{Attributes, Children},

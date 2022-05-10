@@ -6,7 +6,7 @@ impl AttributePatchApplier for Attributes {
     fn apply_patch(mut self, patch: &AttributePatch) -> Self {
         match patch {
             AttributePatch::Update { key, value } => {
-                self.insert(key.clone(), value.clone());
+                self.insert(key.clone(), *value.clone());
             }
             AttributePatch::Remove { key } => {
                 self.remove(key);
@@ -29,7 +29,7 @@ mod tests {
         let attributes = Attributes::default();
         let attributes = attributes.apply_patch(&AttributePatch::Update {
             key: Type::Number,
-            value: Expr::Literal(Literal::Integer(1)),
+            value: Box::new(Expr::Literal(Literal::Integer(1))),
         });
         assert_eq!(
             attributes.get(&Type::Number),
@@ -42,7 +42,7 @@ mod tests {
         let attributes = Attributes::default();
         let attributes = attributes.apply_patch(&AttributePatch::Update {
             key: Type::Number,
-            value: Expr::Literal(Literal::Integer(1)),
+            value: Box::new(Expr::Literal(Literal::Integer(1))),
         });
         let attributes = attributes.apply_patch(&AttributePatch::Remove { key: Type::Number });
 

@@ -118,12 +118,7 @@ mod tests {
         let mut snapshot = Snapshot::default();
         let mut hirs = Hirs::default();
         let node_id = handle_add_node(&mut hirs, &mut snapshot);
-        snapshot.handle_event(
-            &Default::default(),
-            &Event::RemoveNode {
-                node_id: node_id.clone(),
-            },
-        );
+        snapshot.handle_event(&Default::default(), &Event::RemoveNode { node_id });
 
         assert_eq!(snapshot.flat_nodes, HashMap::default())
     }
@@ -184,7 +179,7 @@ mod tests {
         let file_b = FileId(Uuid::new_v4());
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_a.clone()));
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_b.clone()));
-        snapshot.handle_event(&Default::default(), &Event::DeleteFile(file_b.clone()));
+        snapshot.handle_event(&Default::default(), &Event::DeleteFile(file_b));
         assert_eq!(
             snapshot.files,
             [(file_a, File::default())].into_iter().collect()
@@ -256,7 +251,7 @@ mod tests {
             content: Content::String("a".into()),
         };
         hirs.handle_event(&event);
-        snapshot.handle_event(&hirs, &event);
+        snapshot.handle_event(hirs, &event);
         node_id
     }
 }

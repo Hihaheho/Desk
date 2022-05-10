@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
-terminal = { package = "desk-terminal", path = "../../components/terminal", version = "0.0.0" }
-physics = { package = "desk-physics", path = "../../components/physics", version = "0.0.0" }
+terminal = { package = "desk-terminal", path = "../../components/desk-terminal", version = "0.0.0" }
+physics = { package = "desk-physics", path = "../../components/desk-physics", version = "0.0.0" }
 
 bevy = "0.7"

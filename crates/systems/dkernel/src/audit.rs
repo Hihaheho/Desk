@@ -71,7 +71,7 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
         Event::DeleteFile(_) => Operation::Space(DeleteFile),
         Event::AddCard { node_id, .. } => Operation::Node(AddCard, file_id!(snapshot, node_id)),
         Event::RemoveCard { card_id } => {
-            if let Some(node_id) = snapshot.cards.get(&card_id) {
+            if let Some(node_id) = snapshot.cards.get(card_id) {
                 Operation::Node(RemoveCard, file_id!(snapshot, node_id))
             } else {
                 return AuditResponse::Denied;
@@ -131,7 +131,7 @@ mod tests {
     fn any_event_allowed_for_owners() {
         let mut snapshot = Snapshot::default();
         snapshot.handle_event(
-            &mut Default::default(),
+            &Default::default(),
             &Event::AddOwner {
                 user_id: UserId("a".into()),
             },
@@ -374,7 +374,7 @@ mod tests {
                 node_id,
                 patch: AttributePatch::Update {
                     key: Type::Number,
-                    value: Expr::Literal(Literal::Integer(0)),
+                    value: Box::new(Expr::Literal(Literal::Integer(0))),
                 },
             }
         },

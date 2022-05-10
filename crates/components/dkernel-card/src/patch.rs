@@ -31,7 +31,7 @@ pub enum ChildrenPatch {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AttributePatch {
-    Update { key: Type, value: Expr },
+    Update { key: Type, value: Box<Expr> },
     Remove { key: Type },
 }
 

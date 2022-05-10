@@ -11,3 +11,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+uuid = "0.8"
+bevy_ecs = "0.7"

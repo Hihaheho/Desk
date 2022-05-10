@@ -16,6 +16,6 @@ done
 [[ -z ${NO_CARGO_DENY} ]] && cargo deny check --config configs/deny.toml
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
-cargo check --all-features
+cargo check --tests --all-features
 cargo test --no-run --locked --all-features
 cargo test --all-features

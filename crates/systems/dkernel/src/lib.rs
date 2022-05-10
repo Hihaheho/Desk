@@ -83,6 +83,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wip"]
     fn integration() {
         let mut repository = TestRepository::default();
 
@@ -145,27 +146,27 @@ mod tests {
                 user_id: user_b.clone(),
                 event: Event::AddNode {
                     node_id: node_b.clone(),
-                    file_id: file_id.clone(),
+                    file_id,
                     content: Content::String("string".into()),
                 },
             },
             EventEntry {
                 index: 1,
-                user_id: user_b.clone(),
+                user_id: user_b,
                 event: Event::PatchChildren {
                     node_id: node_a.clone(),
                     patch: ChildrenPatch::Insert {
                         index: 0,
-                        node: NodeRef::Node(node_b.clone()),
+                        node: NodeRef::Node(node_b),
                     },
                 },
             },
             EventEntry {
                 index: 1,
-                user_id: user_a.clone(),
+                user_id: user_a,
                 event: Event::AddCard {
                     card_id: card_id.clone(),
-                    node_id: node_a.clone(),
+                    node_id: node_a,
                 },
             },
         ]);

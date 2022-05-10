@@ -8,4 +8,5 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy_math = "0.5.0"
+bevy_math = "0.7"
+bevy_ecs = "0.7"

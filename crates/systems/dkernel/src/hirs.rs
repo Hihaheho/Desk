@@ -113,7 +113,7 @@ mod tests {
 
         assert_eq!(db.content(node_id.clone()), Content::String("a".into()));
         assert_eq!(db.children(node_id.clone()), vec![]);
-        assert_eq!(db.attributes(node_id.clone()), Attributes::default());
+        assert_eq!(db.attributes(node_id), Attributes::default());
     }
 
     #[test]
@@ -126,7 +126,7 @@ mod tests {
             patch: ContentPatch::Replace(Content::String("b".into())),
         });
 
-        assert_eq!(db.content(node_id.clone()), Content::String("b".into()));
+        assert_eq!(db.content(node_id), Content::String("b".into()));
     }
 
     #[test]
@@ -142,7 +142,7 @@ mod tests {
             },
         });
 
-        assert_eq!(db.children(node_id.clone()), vec![NodeRef::Hole]);
+        assert_eq!(db.children(node_id), vec![NodeRef::Hole]);
     }
 
     #[test]
@@ -154,12 +154,12 @@ mod tests {
             node_id: node_id.clone(),
             patch: AttributePatch::Update {
                 key: Type::Number,
-                value: Expr::Literal(Literal::Integer(0)),
+                value: Box::new(Expr::Literal(Literal::Integer(0))),
             },
         });
 
         assert_eq!(
-            db.attributes(node_id.clone()),
+            db.attributes(node_id),
             vec![(Type::Number, Expr::Literal(Literal::Integer(0)))]
                 .into_iter()
                 .collect()

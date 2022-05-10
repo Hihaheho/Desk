@@ -1,10 +1,11 @@
 use std::f32::EPSILON;
 
+use bevy_ecs::prelude::Component;
 use bevy_math::Vec2;
 
 use crate::Velocity;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Component, Debug, Clone, PartialEq)]
 pub struct Follow<T> {
     pub target: T,
     pub parameters: FollowParams,

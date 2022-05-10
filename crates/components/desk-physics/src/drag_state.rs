@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq)]
+use bevy_ecs::prelude::Component;
+
+#[derive(Component, Clone, Debug, PartialEq)]
 pub enum DragState {
     Dragging,
     NotDragging,

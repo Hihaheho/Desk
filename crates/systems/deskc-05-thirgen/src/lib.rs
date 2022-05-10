@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 use hir::{
     expr::{Expr, Literal, MatchCase},
-    meta::{Meta, WithMeta},
+    meta::WithMeta,
 };
 use thir::{Handler, TypedHir};
 use types::{Effect, IdGen, Type, Types};

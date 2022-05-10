@@ -3,6 +3,6 @@ use deskc_mir::mir::Mirs;
 
 use super::{CardQueries, QueryResult};
 
-pub(super) fn mir(db: &dyn CardQueries, id: CardId) -> QueryResult<Mirs> {
+pub(super) fn mir(_db: &dyn CardQueries, _id: CardId) -> QueryResult<Mirs> {
     todo!()
 }

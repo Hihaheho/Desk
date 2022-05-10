@@ -47,7 +47,7 @@ pub enum Event {
     },
     AddSnapshot {
         index: usize,
-        snapshot: Snapshot,
+        snapshot: Box<Snapshot>,
     },
     AddFile(FileId),
     DeleteFile(FileId),

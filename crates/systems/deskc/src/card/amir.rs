@@ -3,6 +3,6 @@ use deskc_ids::CardId;
 
 use super::{CardQueries, QueryResult};
 
-pub(super) fn amir(db: &dyn CardQueries, id: CardId) -> QueryResult<Amirs> {
+pub(super) fn amir(_db: &dyn CardQueries, _id: CardId) -> QueryResult<Amirs> {
     todo!()
 }

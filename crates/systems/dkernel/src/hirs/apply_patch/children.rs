@@ -57,7 +57,7 @@ mod tests {
         let node_id = NodeId(Uuid::new_v4());
         let children = children.apply_patch(&ChildrenPatch::Insert {
             index: 1,
-            node: NodeRef::Node(node_id.clone()),
+            node: NodeRef::Node(node_id),
         });
         let children = children.apply_patch(&ChildrenPatch::Remove { index: 1 });
         assert_eq!(children, vec![NodeRef::Hole]);

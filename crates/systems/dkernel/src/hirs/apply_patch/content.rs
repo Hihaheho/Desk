@@ -6,9 +6,9 @@ impl ContentPatchApplier for Content {
     fn apply_patch(mut self, patch: &ContentPatch) -> Self {
         match patch {
             ContentPatch::Replace(content) => self = content.clone(),
-            ContentPatch::PatchString(_) => todo!(),
-            ContentPatch::AddInteger(_) => todo!(),
-            ContentPatch::AddFloat(_) => todo!(),
+            ContentPatch::PatchString(_) => {}
+            ContentPatch::AddInteger(_) => {}
+            ContentPatch::AddFloat(_) => {}
         }
         self
     }

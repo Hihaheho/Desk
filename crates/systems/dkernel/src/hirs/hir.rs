@@ -1,5 +1,8 @@
-use deskc_hir::{expr::Expr, meta::WithMeta};
-use deskc_ids::CardId;
+use deskc_hir::{
+    expr::{Expr, Literal},
+    meta::{Meta, WithMeta},
+};
+use deskc_ids::{CardId, IrId};
 use dkernel_card::{content::Content, node::Node};
 
 use crate::query_result::{QueryError, QueryResult};
@@ -10,23 +13,24 @@ pub(super) fn hir(db: &dyn HirQueries, id: CardId) -> QueryResult<WithMeta<Expr>
     let node_id = db.node_id(id);
     let ast = db.build_ast(node_id)?;
 
-    genhir(&*ast);
+    let _ = genhir(&*ast);
 
     todo!()
 }
 
 fn genhir(ast: &Node) -> Result<WithMeta<Expr>, QueryError> {
     let expr = match &ast.content {
-        Content::Source(source) => todo!(),
+        Content::Source(_source) => todo!(),
         Content::String(string) => WithMeta {
-            id: todo!(),
-            meta: todo!(),
-            value: todo!(),
+            id: IrId::new(),
+            // TODO: node_id
+            meta: Meta::default(),
+            value: Expr::Literal(Literal::String(string.clone())),
         },
-        Content::Integer(integer) => todo!(),
-        Content::Rational(a, b) => todo!(),
-        Content::Float(float) => todo!(),
-        Content::Apply(ty) => todo!(),
+        Content::Integer(_integer) => todo!(),
+        Content::Rational(_a, _b) => todo!(),
+        Content::Float(_float) => todo!(),
+        Content::Apply(_ty) => todo!(),
     };
     Ok(expr)
 }

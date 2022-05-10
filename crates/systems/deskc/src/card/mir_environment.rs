@@ -3,6 +3,6 @@ use deskc_mir::environment::Environment;
 
 use super::{CardQueries, QueryResult};
 
-pub(super) fn mir_environment(db: &dyn CardQueries, id: CardId) -> QueryResult<Environment> {
+pub(super) fn mir_environment(_db: &dyn CardQueries, _id: CardId) -> QueryResult<Environment> {
     todo!()
 }

@@ -55,7 +55,7 @@ impl Ctx {
                     expr,
                     TypeError::NotApplicable {
                         ty: ty.clone(),
-                        expr: expr.value.clone(),
+                        expr: Box::new(expr.value.clone()),
                     },
                 ))
             }

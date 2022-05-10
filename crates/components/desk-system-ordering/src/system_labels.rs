@@ -1,7 +1,6 @@
-use bevy::prelude::*;
-use derivative::*;
+use bevy_ecs::schedule::SystemLabel;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+#[derive(SystemLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum DeskSystem {
     UpdateStatesToLatest,
     Shell,
