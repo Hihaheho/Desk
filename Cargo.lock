@@ -1439,32 +1439,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-egui-plugin"
+version = "0.0.0"
+dependencies = [
+ "bevy",
+ "bevy_egui 0.14.0",
+ "desk-theme",
+ "ron",
+]
+
+[[package]]
+name = "desk-theme"
+version = "0.0.0"
+dependencies = [
+ "bevy",
+ "serde",
+]
+
+[[package]]
+name = "desk-ui"
+version = "0.0.0"
+
+[[package]]
 name = "desk-x"
 version = "0.0.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "console_error_panic_hook",
- "desk-x-egui-plugin",
+ "desk-egui-plugin",
  "web-sys",
-]
-
-[[package]]
-name = "desk-x-egui-plugin"
-version = "0.0.0"
-dependencies = [
- "bevy",
- "bevy_egui 0.14.0",
- "desk-x-theme",
- "ron",
-]
-
-[[package]]
-name = "desk-x-theme"
-version = "0.0.0"
-dependencies = [
- "bevy",
- "serde",
 ]
 
 [[package]]
@@ -1764,6 +1768,10 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dson"
+version = "0.0.0"
+
+[[package]]
+name = "dwm"
 version = "0.0.0"
 
 [[package]]

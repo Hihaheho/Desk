@@ -30,8 +30,10 @@ crates=(
     dkernel
     dkernel-firestore
     dkernel-in-memory
-    desk-x-theme
-    desk-x-egui-plugin
+    desk-ui
+    desk-theme
+    dwm
+    desk-egui-plugin
     desk-x
 )
 

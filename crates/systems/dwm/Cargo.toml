@@ -1,5 +1,5 @@
 [package]
-name = "desk-x-egui-plugin"
+name = "dwm"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -8,9 +8,6 @@ repository = "https://github.com/Hihaheho/Desk"
 readme = "../../../README.md"
 edition = "2021"
 
-[dependencies]
-theme = { path = "../../components/desk-x-theme", version = "0.0.0", package = "desk-x-theme" }
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-bevy = "0.7"
-ron = "0.7"
-bevy_egui = "0.14"
+[dependencies]
