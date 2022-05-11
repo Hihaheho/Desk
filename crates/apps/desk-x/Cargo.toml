@@ -15,6 +15,9 @@ inspector = ["bevy-inspector-egui"]
 egui-plugin = { path = "../../plugins/desk-egui", version = "0.0.0", package = "desk-egui" }
 rapier2d-plugin = { path = "../../plugins/desk-rapier2d", version = "0.0.0", package = "desk-rapier2d" }
 touchpanel-plugin = { path = "../../plugins/desk-touchpanel", version = "0.0.0", package = "desk-touchpanel" }
+file-system-plugin = { path = "../../plugins/desk-file-system", version = "0.0.0", package = "desk-file-system" }
+editor-plugin = { path = "../../plugins/desk-editor", version = "0.0.0", package = "desk-editor" }
+terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", package = "desk-terminal" }
 
 bevy = "0.7"
 bevy-inspector-egui = { version = "0.10.0", optional = true }

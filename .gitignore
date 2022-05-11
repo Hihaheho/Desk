@@ -16,7 +16,7 @@
 !/tools/**/*.sh
 
 # desk-x
-!/crates/apps/desk-x/public/index.html
+!/envs/firebase/public/index.html
 
 # specific files
 !/.gitattributes

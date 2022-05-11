@@ -1,9 +1,12 @@
 use bevy::prelude::*;
-use egui_plugin::EguiPlugin;
 
 #[cfg(feature = "inspector")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+use editor_plugin::EditorPlugin;
+use egui_plugin::EguiPlugin;
+use file_system_plugin::FileSystemPlugin;
 use rapier2d_plugin::PhysicsPlugin;
+use terminal_plugin::TerminalPlugin;
 use touchpanel_plugin::TouchpanelPlugin;
 
 fn main() {
@@ -16,6 +19,9 @@ fn main() {
         .add_plugin(EguiPlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(TouchpanelPlugin)
+        .add_plugin(FileSystemPlugin)
+        .add_plugin(EditorPlugin)
+        .add_plugin(TerminalPlugin)
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(ClearColor(Color::rgb(0.0, 120.0 / 255.0, 120.0 / 255.0)))
         .add_startup_system(setup);

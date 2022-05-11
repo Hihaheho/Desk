@@ -5,6 +5,6 @@ set -euo pipefail
 shopt -s inherit_errexit
 
 tools/build-wasm.sh
-cd crates/apps/desk-x/
+cd envs/firebase
 firebase deploy --only hosting
 cd -

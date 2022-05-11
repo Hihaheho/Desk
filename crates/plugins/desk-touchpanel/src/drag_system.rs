@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use physics::{DragState, Follow, FollowParams};
-use terminal::Cursor;
+use command::Cursor;
 
 pub fn toggle_follow_for_drag_state(
     mut commands: Commands,

@@ -1,5 +1,5 @@
 [package]
-name = "desk-touchpanel"
+name = "desk-file-system"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -11,8 +11,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
-physics = { package = "desk-physics", path = "../../components/desk-physics", version = "0.0.0" }
-command = { package = "desk-command", path = "../../components/desk-command", version = "0.0.0" }
-
 bevy = "0.7"

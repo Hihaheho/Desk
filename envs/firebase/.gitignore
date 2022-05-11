@@ -1,0 +1,7 @@
+.firebase/
+
+# allow
+!/.firebaserc
+!/firebase.json
+!/firestore.indexes.json
+!/firestore.rules

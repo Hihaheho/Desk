@@ -1,5 +1,5 @@
 [package]
-name = "desk-terminal"
+name = "desk-command"
 version = "0.0.0"
 authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
 edition = "2018"
