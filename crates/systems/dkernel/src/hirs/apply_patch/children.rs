@@ -1,28 +1,28 @@
-use components::patch::ChildrenPatch;
-use deskc_ids::NodeId;
+use components::{flat_node::Children, patch::ChildrenPatch};
 
 use super::ChildrenPatchApplier;
 
-impl ChildrenPatchApplier for Vec<NodeId> {
-    fn apply_patch(mut self, patch: &ChildrenPatch) -> Self {
+impl ChildrenPatchApplier for &Children {
+    fn apply_patch(self, patch: &ChildrenPatch) -> Children {
+        let mut children = self.clone();
         match patch {
             ChildrenPatch::Insert { index, node } => {
-                self.insert(*index, node.clone());
+                children.insert(*index, node.clone());
             }
             ChildrenPatch::Remove { index } => {
-                self.remove(*index);
+                children.remove(*index);
             }
             ChildrenPatch::Move { index, diff } => {
-                let node = self.remove(*index);
+                let node = children.remove(*index);
                 let new_index = *index as isize + *diff;
-                self.insert(new_index as usize, node);
+                children.insert(new_index as usize, node);
             }
             ChildrenPatch::Update { index, node } => {
-                self.remove(*index);
-                self.insert(*index, node.clone());
+                children.remove(*index);
+                children.insert(*index, node.clone());
             }
         }
-        self
+        children
     }
 }
 
@@ -30,12 +30,11 @@ impl ChildrenPatchApplier for Vec<NodeId> {
 mod tests {
     use super::*;
     use deskc_ids::NodeId;
-    use uuid::Uuid;
 
     #[test]
     fn insert() {
         let children = Vec::default();
-        let node_id = NodeId(Uuid::new_v4());
+        let node_id = NodeId::new();
         let children = children.apply_patch(&ChildrenPatch::Insert {
             index: 0,
             node: node_id.clone(),
@@ -46,8 +45,8 @@ mod tests {
     #[test]
     fn remove() {
         let children = Vec::default();
-        let node_a = NodeId(Uuid::new_v4());
-        let node_b = NodeId(Uuid::new_v4());
+        let node_a = NodeId::new();
+        let node_b = NodeId::new();
         let children = children.apply_patch(&ChildrenPatch::Insert {
             index: 0,
             node: node_a.clone(),
@@ -63,8 +62,8 @@ mod tests {
     #[test]
     fn move_() {
         let children = Vec::default();
-        let node_a = NodeId(Uuid::new_v4());
-        let node_b = NodeId(Uuid::new_v4());
+        let node_a = NodeId::new();
+        let node_b = NodeId::new();
         let children = children.apply_patch(&ChildrenPatch::Insert {
             index: 0,
             node: node_a.clone(),
@@ -73,7 +72,6 @@ mod tests {
             index: 1,
             node: node_b.clone(),
         });
-        let children = children.apply_patch(&ChildrenPatch::Remove { index: 1 });
         let children = children.apply_patch(&ChildrenPatch::Move { index: 1, diff: -1 });
         assert_eq!(children, vec![node_b, node_a]);
     }
@@ -81,15 +79,15 @@ mod tests {
     #[test]
     fn update() {
         let children = Vec::default();
-        let node_a = NodeId(Uuid::new_v4());
-        let node_b = NodeId(Uuid::new_v4());
+        let node_a = NodeId::new();
+        let node_b = NodeId::new();
         let children = children.apply_patch(&ChildrenPatch::Insert {
             index: 0,
-            node: node_a.clone(),
+            node: node_a,
         });
-        let children = children.apply_patch(&ChildrenPatch::Insert {
-            index: 1,
-            node: node_b,
+        let children = children.apply_patch(&ChildrenPatch::Update {
+            index: 0,
+            node: node_b.clone(),
         });
         assert_eq!(children, vec![node_b]);
     }

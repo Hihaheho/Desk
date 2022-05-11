@@ -22,11 +22,14 @@ impl Ctx {
                 Type::Product(types.iter().map(|t| self.gen_from_hir_type(t)).collect())
             }
             Sum(types) => Type::Sum(types.iter().map(|t| self.gen_from_hir_type(t)).collect()),
-            Function { parameter, body } => Type::Function {
-                parameter: Box::new(self.gen_from_hir_type(parameter)),
-                body: Box::new(self.gen_from_hir_type(body)),
-            },
-            Array(ty) => Type::Array(Box::new(self.gen_from_hir_type(ty))),
+            Function { parameters, body } => parameters
+                .iter()
+                .map(|parameter| self.gen_from_hir_type(parameter))
+                .rfold(self.gen_from_hir_type(body), |acc, ty| Type::Function {
+                    parameter: Box::new(ty),
+                    body: Box::new(acc),
+                }),
+            Vector(ty) => Type::Array(Box::new(self.gen_from_hir_type(ty))),
             Set(ty) => Type::Set(Box::new(self.gen_from_hir_type(ty))),
             Let { variable, body } => Type::ForAll {
                 variable: *variable,

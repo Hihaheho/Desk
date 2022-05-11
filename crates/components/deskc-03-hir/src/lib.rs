@@ -3,6 +3,7 @@ use ids::CardId;
 use meta::WithMeta;
 
 pub mod expr;
+pub mod helper;
 pub mod meta;
 pub mod ty;
 

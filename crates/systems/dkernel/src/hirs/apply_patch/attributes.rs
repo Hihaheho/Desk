@@ -2,17 +2,18 @@ use components::{flat_node::Attributes, patch::AttributePatch};
 
 use super::AttributePatchApplier;
 
-impl AttributePatchApplier for Attributes {
-    fn apply_patch(mut self, patch: &AttributePatch) -> Self {
+impl AttributePatchApplier for &Attributes {
+    fn apply_patch(self, patch: &AttributePatch) -> Attributes {
+        let mut attributes = self.clone();
         match patch {
             AttributePatch::Update { key, value } => {
-                self.insert(key.clone(), *value.clone());
+                attributes.insert(key.clone(), *value.clone());
             }
             AttributePatch::Remove { key } => {
-                self.remove(key);
+                attributes.remove(key);
             }
         }
-        self
+        attributes
     }
 }
 

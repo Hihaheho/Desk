@@ -1,9 +1,9 @@
-use deskc_ids::{CardId, FileId, NodeId, UserId};
 use components::{
     content::Content,
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{Rules, SpaceOperation},
 };
+use deskc_ids::{CardId, FileId, NodeId, UserId};
 
 use crate::snapshot::Snapshot;
 

@@ -1,44 +1,26 @@
 mod apply_patch;
 mod ast;
-mod build_ast;
-mod flat_node;
 mod hir;
-mod typed_amir;
 
 use std::sync::Arc;
 
 use ast::ast;
-use build_ast::build_ast;
-use flat_node::flat_node;
 use hir::hir;
 
 use apply_patch::*;
-use components::{
-    content::Content,
-    flat_node::{Attributes, FlatNode},
-    node::Node,
-};
-use deskc_ast::span::Spanned;
+use components::{flat_node::FlatNode, node::Node};
 use deskc_hir::meta::WithMeta;
-use deskc_ids::{CardId, FileId, NodeId};
+use deskc_ids::{CardId, NodeId};
 
 use crate::{event::Event, query_result::QueryResult};
 
 #[salsa::query_group(KernelStorage)]
 pub trait HirQueries {
     #[salsa::input]
-    fn file_id(&self, id: NodeId) -> FileId;
-    #[salsa::input]
-    fn content(&self, id: NodeId) -> Content;
-    #[salsa::input]
-    fn children(&self, id: NodeId) -> Vec<NodeId>;
-    #[salsa::input]
-    fn attributes(&self, id: NodeId) -> Attributes;
     fn flat_node(&self, id: NodeId) -> Arc<FlatNode>;
-    fn build_ast(&self, id: NodeId) -> QueryResult<Node>;
+    fn ast(&self, id: NodeId) -> Arc<Node>;
     #[salsa::input]
     fn node_id(&self, id: CardId) -> NodeId;
-    fn ast(&self, id: CardId) -> QueryResult<Spanned<deskc_ast::expr::Expr>>;
     fn hir(&self, id: CardId) -> QueryResult<WithMeta<deskc_hir::expr::Expr>>;
 }
 
@@ -54,33 +36,48 @@ impl Hirs {
     pub fn handle_event(&mut self, event: &Event) {
         match event {
             Event::AddNode {
-                node_id, content, ..
+                node_id,
+                content,
+                file_id,
             } => {
-                self.set_content(node_id.clone(), content.clone());
-                self.set_children(node_id.clone(), vec![]);
-                self.set_attributes(node_id.clone(), Attributes::default());
-            }
-            Event::PatchContent { node_id, patch } => match patch {
-                components::patch::ContentPatch::Replace(content) => {
-                    self.set_content(node_id.clone(), content.clone());
-                }
-                patch => {
-                    self.set_content(
-                        node_id.clone(),
-                        self.content(node_id.clone()).apply_patch(patch),
-                    );
-                }
-            },
-            Event::PatchChildren { node_id, patch } => {
-                self.set_children(
+                self.set_flat_node(
                     node_id.clone(),
-                    self.children(node_id.clone()).apply_patch(patch),
+                    Arc::new(FlatNode {
+                        file_id: file_id.clone(),
+                        content: content.clone(),
+                        children: Default::default(),
+                        attributes: Default::default(),
+                    }),
+                );
+            }
+            Event::PatchContent { node_id, patch } => {
+                let flat_node = self.flat_node(node_id.clone());
+                self.set_flat_node(
+                    node_id.clone(),
+                    Arc::new(FlatNode {
+                        content: flat_node.content.apply_patch(patch),
+                        ..(*flat_node).clone()
+                    }),
+                );
+            }
+            Event::PatchChildren { node_id, patch } => {
+                let flat_node = self.flat_node(node_id.clone());
+                self.set_flat_node(
+                    node_id.clone(),
+                    Arc::new(FlatNode {
+                        children: flat_node.children.apply_patch(patch),
+                        ..(*flat_node).clone()
+                    }),
                 );
             }
             Event::PatchAttribute { node_id, patch } => {
-                self.set_attributes(
+                let flat_node = self.flat_node(node_id.clone());
+                self.set_flat_node(
                     node_id.clone(),
-                    self.attributes(node_id.clone()).apply_patch(patch),
+                    Arc::new(FlatNode {
+                        attributes: flat_node.attributes.apply_patch(patch),
+                        ..(*flat_node).clone()
+                    }),
                 );
             }
             Event::AddSnapshot { .. } => todo!(),
@@ -94,28 +91,38 @@ impl Hirs {
 
 #[cfg(test)]
 mod tests {
-    use components::patch::{AttributePatch, ChildrenPatch, ContentPatch};
+    use components::{
+        content::Content,
+        flat_node::{Attributes, Children},
+        patch::{AttributePatch, ChildrenPatch, ContentPatch},
+    };
     use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::FileId;
     use deskc_types::Type;
-    use uuid::Uuid;
 
     use super::*;
 
     #[test]
     fn add_node() {
         let mut db = Hirs::default();
-        let node_id = NodeId(Uuid::new_v4());
+        let node_id = NodeId::new();
+        let file_id = FileId::new();
 
         db.handle_event(&Event::AddNode {
             node_id: node_id.clone(),
-            file_id: FileId(Uuid::new_v4()),
+            file_id: file_id.clone(),
             content: Content::String("a".into()),
         });
 
-        assert_eq!(db.content(node_id.clone()), Content::String("a".into()));
-        assert_eq!(db.children(node_id.clone()), vec![]);
-        assert_eq!(db.attributes(node_id), Attributes::default());
+        assert_eq!(
+            *db.flat_node(node_id),
+            FlatNode {
+                file_id,
+                content: Content::String("a".into()),
+                children: Children::default(),
+                attributes: Attributes::default(),
+            }
+        );
     }
 
     #[test]
@@ -128,7 +135,7 @@ mod tests {
             patch: ContentPatch::Replace(Content::String("b".into())),
         });
 
-        assert_eq!(db.content(node_id), Content::String("b".into()));
+        assert_eq!(db.flat_node(node_id).content, Content::String("b".into()));
     }
 
     #[test]
@@ -145,7 +152,7 @@ mod tests {
             },
         });
 
-        assert_eq!(db.children(node_id), vec![node_a]);
+        assert_eq!(db.flat_node(node_id).children, vec![node_a]);
     }
 
     #[test]
@@ -162,7 +169,7 @@ mod tests {
         });
 
         assert_eq!(
-            db.attributes(node_id),
+            db.flat_node(node_id).attributes,
             vec![(Type::Number, Expr::Literal(Literal::Integer(0)))]
                 .into_iter()
                 .collect()
@@ -173,7 +180,7 @@ mod tests {
     fn add_card() {
         let mut db = Hirs::default();
         let node_id = handle_add_node(&mut db);
-        let card_id = CardId(Uuid::new_v4());
+        let card_id = CardId::new();
 
         db.handle_event(&Event::AddCard {
             card_id: card_id.clone(),
@@ -184,10 +191,10 @@ mod tests {
     }
 
     fn handle_add_node(db: &mut Hirs) -> NodeId {
-        let node_id = NodeId(Uuid::new_v4());
+        let node_id = NodeId::new();
         db.handle_event(&Event::AddNode {
             node_id: node_id.clone(),
-            file_id: FileId(Uuid::new_v4()),
+            file_id: FileId::new(),
             content: Content::String("a".into()),
         });
         node_id

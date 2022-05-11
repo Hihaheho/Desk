@@ -120,7 +120,7 @@ mod tests {
         assert_eq!(
             synth(dummy_meta(Expr::Apply {
                 function: dummy_meta(hir::ty::Type::Function {
-                    parameter: Box::new(dummy_meta(hir::ty::Type::Number)),
+                    parameters: vec![dummy_meta(hir::ty::Type::Number)],
                     body: Box::new(dummy_meta(hir::ty::Type::String)),
                 }),
                 link_name: Default::default(),

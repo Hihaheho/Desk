@@ -16,8 +16,8 @@ enum Operation<'a> {
 
 macro_rules! file_id {
     ($snapshot:expr, $node_id:expr) => {
-        if let Some(file_id) = $snapshot.node_files.get($node_id) {
-            file_id
+        if let Some(node) = $snapshot.flat_nodes.get($node_id) {
+            &node.file_id
         } else {
             return AuditResponse::Denied;
         }
@@ -88,6 +88,7 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
     match operation {
         Operation::Space(operation) => snapshot.rules.audit(&entry.user_id, &operation),
         Operation::Node(operation, file_id) => {
+            println!("{:?}", operation);
             if let Some(file) = snapshot.files.get(file_id) {
                 file.rules.audit(&entry.user_id, &operation)
             } else {
@@ -99,11 +100,10 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
 
 #[cfg(test)]
 mod tests {
-    use components::{content::Content, file::File};
+    use components::{content::Content, file::File, flat_node::FlatNode};
     use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::{CardId, FileId, NodeId, UserId};
     use deskc_types::Type;
-    use uuid::Uuid;
 
     use crate::event::Event;
 
@@ -186,9 +186,9 @@ mod tests {
         ($fn:ident, $event:expr, $operation:ident) => {
             #[test]
             fn $fn() {
-                let node_id = NodeId(Uuid::new_v4());
-                let file_id = FileId(Uuid::new_v4());
-                let card_id = CardId(Uuid::new_v4());
+                let node_id = NodeId::new();
+                let file_id = FileId::new();
+                let card_id = CardId::new();
                 let event_entry = EventEntry {
                     index: 0,
                     user_id: UserId("a".into()),
@@ -196,8 +196,16 @@ mod tests {
                 };
                 let mut base = Snapshot::default();
                 base.files.insert(file_id.clone(), File::default());
-                base.node_files.insert(node_id.clone(), file_id.clone());
-                base.cards.insert(card_id, node_id.clone());
+                base.flat_nodes.insert(
+                    node_id.clone(),
+                    FlatNode {
+                        file_id: file_id.clone(),
+                        content: Content::String("a".into()),
+                        children: Default::default(),
+                        attributes: Default::default(),
+                    },
+                );
+                base.cards.insert(card_id.clone(), node_id.clone());
 
                 // Denied
                 let snapshot = base.clone();
@@ -241,12 +249,8 @@ mod tests {
         },
         AddSnapshot
     );
-    test_space!(add_file, Event::AddFile(FileId(Uuid::new_v4())), AddFile);
-    test_space!(
-        delete_file,
-        Event::DeleteFile(FileId(Uuid::new_v4())),
-        DeleteFile
-    );
+    test_space!(add_file, Event::AddFile(FileId::new()), AddFile);
+    test_space!(delete_file, Event::DeleteFile(FileId::new()), DeleteFile);
     test_space!(
         update_rule,
         Event::UpdateRule {
@@ -258,7 +262,7 @@ mod tests {
     test_node!(
         add_card,
         |node_id, _, _| Event::AddCard {
-            card_id: CardId(Uuid::new_v4()),
+            card_id: CardId::new(),
             node_id
         },
         AddCard

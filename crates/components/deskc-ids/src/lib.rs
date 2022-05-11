@@ -22,7 +22,7 @@ pub struct LinkId<Type> {
 }
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq, PartialOrd, Ord, Default)]
 pub struct CardId(pub Uuid);
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
@@ -48,5 +48,17 @@ impl IrId {
 impl NodeId {
     pub fn new() -> Self {
         NodeId(Uuid::new_v4())
+    }
+}
+
+impl FileId {
+    pub fn new() -> Self {
+        FileId(Uuid::new_v4())
+    }
+}
+
+impl CardId {
+    pub fn new() -> Self {
+        CardId(Uuid::new_v4())
     }
 }

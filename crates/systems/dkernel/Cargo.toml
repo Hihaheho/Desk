@@ -13,6 +13,7 @@ edition = "2021"
 [dependencies]
 components = { path = "../../components/dkernel-components", version = "0.0.0", package = "dkernel-components" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 deskc-ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 deskc-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 deskc-lexer = { path = "../deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }

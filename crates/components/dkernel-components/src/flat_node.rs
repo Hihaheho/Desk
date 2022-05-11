@@ -6,12 +6,13 @@ use types::Type;
 
 use crate::content::Content;
 
+pub type Children = Vec<NodeId>;
 pub type Attributes = HashMap<Type, Expr>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FlatNode {
     pub file_id: FileId,
     pub content: Content,
-    pub children: Vec<NodeId>,
+    pub children: Children,
     pub attributes: Attributes,
 }

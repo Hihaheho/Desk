@@ -2,15 +2,14 @@ use components::{content::Content, patch::ContentPatch};
 
 use super::ContentPatchApplier;
 
-impl ContentPatchApplier for Content {
-    fn apply_patch(mut self, patch: &ContentPatch) -> Self {
+impl ContentPatchApplier for &Content {
+    fn apply_patch(self, patch: &ContentPatch) -> Content {
         match patch {
-            ContentPatch::Replace(content) => self = content.clone(),
-            ContentPatch::PatchString(_) => {}
-            ContentPatch::AddInteger(_) => {}
-            ContentPatch::AddFloat(_) => {}
+            ContentPatch::Replace(content) => content.clone(),
+            ContentPatch::PatchString(_) => todo!(),
+            ContentPatch::AddInteger(_) => todo!(),
+            ContentPatch::AddFloat(_) => todo!(),
         }
-        self
     }
 }
 

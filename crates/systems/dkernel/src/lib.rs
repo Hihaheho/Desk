@@ -50,6 +50,7 @@ mod tests {
     use components::rules::{NodeOperation, Rules};
     use components::{content::Content, patch::ChildrenPatch};
     use deskc_hir::expr::Literal;
+    use deskc_hir::helper::remove_meta;
     use deskc_hir::ty::Type as HirType;
     use deskc_hir::{
         expr::Expr,
@@ -58,8 +59,6 @@ mod tests {
     use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId, UserId};
     use deskc_types::Type;
     use hirs::HirQueries;
-    use std::sync::Arc;
-    use uuid::Uuid;
 
     use super::*;
 
@@ -70,16 +69,16 @@ mod tests {
     #[mry::mry]
     impl Repository for TestRepository {
         fn poll(&mut self) -> Vec<EventEntry> {
-            todo!()
+            panic!()
         }
         fn commit(&mut self, log: Event) {
-            todo!()
+            panic!()
         }
         fn add_owner(&mut self, user_id: UserId) {
-            todo!()
+            panic!()
         }
         fn remove_owner(&mut self, user_id: UserId) {
-            todo!()
+            panic!()
         }
     }
 
@@ -89,10 +88,10 @@ mod tests {
 
         let user_a = UserId("a".into());
         let user_b = UserId("b".into());
-        let node_a = NodeId(Uuid::new_v4());
-        let node_b = NodeId(Uuid::new_v4());
-        let file_id = FileId(Uuid::new_v4());
-        let card_id = CardId(Uuid::new_v4());
+        let node_a = NodeId::new();
+        let node_b = NodeId::new();
+        let file_id = FileId::new();
+        let card_id = CardId::new();
 
         repository.mock_poll().returns(vec![
             EventEntry {
@@ -180,8 +179,8 @@ mod tests {
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            kernel.hirs.hir(card_id),
-            Ok(Arc::new(WithMeta {
+            remove_meta(kernel.hirs.hir(card_id).unwrap().as_ref().clone()),
+            WithMeta {
                 id: IrId::default(),
                 meta: Meta::default(),
                 value: Expr::Apply {
@@ -189,11 +188,11 @@ mod tests {
                         id: IrId::default(),
                         meta: Meta::default(),
                         value: HirType::Function {
-                            parameter: Box::new(WithMeta {
+                            parameters: vec![WithMeta {
                                 id: IrId::default(),
                                 meta: Meta::default(),
                                 value: HirType::String
-                            }),
+                            }],
                             body: Box::new(WithMeta {
                                 id: IrId::default(),
                                 meta: Meta::default(),
@@ -208,7 +207,7 @@ mod tests {
                         value: Expr::Literal(Literal::String("string".into()))
                     }]
                 }
-            }))
+            }
         );
     }
 }

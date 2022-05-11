@@ -13,11 +13,8 @@ pub struct Snapshot {
     pub owners: HashSet<UserId>,
     // flat nodes are owned by hirs db
     pub flat_nodes: HashMap<NodeId, FlatNode>,
-    pub node_files: HashMap<NodeId, FileId>,
     pub cards: HashMap<CardId, NodeId>,
     pub files: HashMap<FileId, File>,
-    // None is the rare and short-lived.
-    pub default_file: Option<FileId>,
     pub rules: Rules<SpaceOperation>,
     pub card_files: HashMap<CardId, FileId>,
 }
@@ -46,9 +43,6 @@ impl Snapshot {
             } => todo!(),
             Event::AddFile(file_id) => {
                 self.files.insert(file_id.clone(), File::default());
-                if self.default_file.is_none() {
-                    self.default_file = Some(file_id.clone());
-                }
             }
             Event::DeleteFile(file_id) => {
                 self.files.remove(file_id);
@@ -75,7 +69,6 @@ impl Snapshot {
 #[cfg(test)]
 mod tests {
     use components::{content::Content, patch::FilePatch, rules::NodeOperation};
-    use uuid::Uuid;
 
     use super::*;
 
@@ -128,7 +121,7 @@ mod tests {
     fn add_card() {
         let mut snapshot = Snapshot::default();
         let node_id = handle_add_node(&mut Default::default(), &mut snapshot);
-        let card_id = CardId(Uuid::new_v4());
+        let card_id = CardId::new();
         snapshot.handle_event(
             &Default::default(),
             &Event::AddCard {
@@ -143,41 +136,20 @@ mod tests {
     #[test]
     fn add_file() {
         let mut snapshot = Snapshot::default();
-        let file_id = FileId(Uuid::new_v4());
+        let file_id = FileId::new();
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_id.clone()));
 
         assert_eq!(
             snapshot.files,
-            [(file_id.clone(), File::default())].into_iter().collect()
+            [(file_id, File::default())].into_iter().collect()
         );
-        assert_eq!(snapshot.default_file, Some(file_id));
-    }
-
-    #[test]
-    fn add_file_some_default() {
-        let mut snapshot = Snapshot::default();
-        let default_file = FileId(Uuid::new_v4());
-        let file_id = FileId(Uuid::new_v4());
-        snapshot.handle_event(&Default::default(), &Event::AddFile(default_file.clone()));
-        snapshot.handle_event(&Default::default(), &Event::AddFile(file_id.clone()));
-
-        assert_eq!(
-            snapshot.files,
-            [
-                (default_file.clone(), File::default()),
-                (file_id, File::default())
-            ]
-            .into_iter()
-            .collect()
-        );
-        assert_eq!(snapshot.default_file, Some(default_file));
     }
 
     #[test]
     fn remove_file() {
         let mut snapshot = Snapshot::default();
-        let file_a = FileId(Uuid::new_v4());
-        let file_b = FileId(Uuid::new_v4());
+        let file_a = FileId::new();
+        let file_b = FileId::new();
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_a.clone()));
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_b.clone()));
         snapshot.handle_event(&Default::default(), &Event::DeleteFile(file_b));
@@ -190,7 +162,7 @@ mod tests {
     #[test]
     fn patch_file_update_rules() {
         let mut snapshot = Snapshot::default();
-        let file_id = FileId(Uuid::new_v4());
+        let file_id = FileId::new();
         snapshot.handle_event(&Default::default(), &Event::AddFile(file_id.clone()));
         snapshot.handle_event(
             &Default::default(),
@@ -245,10 +217,10 @@ mod tests {
     }
 
     fn handle_add_node(hirs: &mut Hirs, snapshot: &mut Snapshot) -> NodeId {
-        let node_id = NodeId(Uuid::new_v4());
+        let node_id = NodeId::new();
         let event = Event::AddNode {
             node_id: node_id.clone(),
-            file_id: FileId(Uuid::new_v4()),
+            file_id: FileId::default(),
             content: Content::String("a".into()),
         };
         hirs.handle_event(&event);

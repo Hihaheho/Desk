@@ -26,10 +26,10 @@ pub enum Type {
     Product(Vec<WithMeta<Self>>),
     Sum(Vec<WithMeta<Self>>),
     Function {
-        parameter: Box<WithMeta<Self>>,
+        parameters: Vec<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
-    Array(Box<WithMeta<Self>>),
+    Vector(Box<WithMeta<Self>>),
     Set(Box<WithMeta<Self>>),
     Let {
         variable: usize,
