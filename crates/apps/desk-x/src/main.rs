@@ -3,6 +3,8 @@ use egui_plugin::EguiPlugin;
 
 #[cfg(feature = "inspector")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+use rapier2d_plugin::PhysicsPlugin;
+use touchpanel_plugin::TouchpanelPlugin;
 
 fn main() {
     #[cfg(target_arch = "wasm32")]
@@ -12,6 +14,8 @@ fn main() {
 
     app.add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
+        .add_plugin(PhysicsPlugin)
+        .add_plugin(TouchpanelPlugin)
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(ClearColor(Color::rgb(0.0, 120.0 / 255.0, 120.0 / 255.0)))
         .add_startup_system(setup);

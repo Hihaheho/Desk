@@ -1578,6 +1578,8 @@ dependencies = [
  "bevy-inspector-egui",
  "console_error_panic_hook",
  "desk-egui",
+ "desk-rapier2d",
+ "desk-touchpanel",
  "web-sys",
 ]
 

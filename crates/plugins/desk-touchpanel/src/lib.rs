@@ -7,9 +7,9 @@ use system_ordering::{DeskSystem, ShellSystem};
 
 use bevy::prelude::*;
 
-pub struct ShellPlugin;
+pub struct TouchpanelPlugin;
 
-impl Plugin for ShellPlugin {
+impl Plugin for TouchpanelPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_startup_system(add_cursor)
             .add_system(

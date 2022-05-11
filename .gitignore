@@ -18,11 +18,12 @@
 # desk-x
 !/crates/apps/desk-x/public/index.html
 
-# top level files
+# specific files
 !/.gitattributes
 !/README.md
 !/LICENSE.md
 !/docs/LICENSE-*
+!/configs/crates.txt
 
 # global allow
 !.gitignore
