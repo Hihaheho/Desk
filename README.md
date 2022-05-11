@@ -35,7 +35,7 @@ Desk is powered by several systems:
 - Desk Programming Language (Desk-lang)
 - Desk Kernel (dkernel)
 - Desk Editor
-- Desk VM (DVM)
+- Desk Virtual Machine (DeskVM)
 - Desk Compiler (deskc)
 - Desk Window Manager (DeskWM)
 - and so on ...
@@ -68,7 +68,7 @@ Dkernel provides these features:
 ### Other systems
 
 - Desk Editor provides 🚧 type-driven UI for Desk-lang
-- DVM provides 🚧 incremental computation
+- DeskVM provides 🚧 incremental computation
 - Deskc provides 🚧 incremental compilation
 - DeskWM provides 🚧 3D/2D rendering with meshes
 
