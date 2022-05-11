@@ -1,4 +1,4 @@
-use dkernel_card::{flat_node::Attributes, patch::AttributePatch};
+use components::{flat_node::Attributes, patch::AttributePatch};
 
 use super::AttributePatchApplier;
 
@@ -18,9 +18,9 @@ impl AttributePatchApplier for Attributes {
 
 #[cfg(test)]
 mod tests {
+    use components::patch::AttributePatch;
     use deskc_hir::expr::{Expr, Literal};
     use deskc_types::Type;
-    use dkernel_card::patch::AttributePatch;
 
     use super::*;
 

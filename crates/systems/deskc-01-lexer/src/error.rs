@@ -1,7 +1,9 @@
 use chumsky::prelude::Simple;
 use textual_diagnostics::{Report, TextualDiagnostics};
+use thiserror::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
+#[error("{0:?}")]
 pub struct LexerError(pub Vec<Simple<char>>);
 
 impl From<LexerError> for TextualDiagnostics {

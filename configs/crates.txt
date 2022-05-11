@@ -31,7 +31,7 @@ dson
 serde-dson
 
 # kernel components
-dkernel-card
+dkernel-components
 
 # kernel systems
 dkernel

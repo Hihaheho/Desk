@@ -1,6 +1,7 @@
 use ast::{expr::Expr, span::Span};
 use chumsky::prelude::Simple;
 use textual_diagnostics::{Report, TextualDiagnostics};
+use thiserror::Error;
 use tokens::Token;
 
 pub mod common;
@@ -19,7 +20,8 @@ pub fn parse(input: Vec<(Token, Span)>) -> Result<(Expr, Span), ParserError> {
         .map_err(ParserError)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
+#[error("{0:?}")]
 pub struct ParserError(pub Vec<Simple<Token>>);
 
 impl From<ParserError> for TextualDiagnostics {

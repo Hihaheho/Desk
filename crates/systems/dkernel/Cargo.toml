@@ -11,13 +11,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dkernel-card = { path = "../../components/dkernel-card", version = "0.0.0", package = "dkernel-card" }
+components = { path = "../../components/dkernel-components", version = "0.0.0", package = "dkernel-components" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 deskc-ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 deskc-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+deskc-lexer = { path = "../deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+deskc-parser = { path = "../deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+deskc-hirgen = { path = "../deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
+deskc-typeinfer = { path = "../deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 
 salsa = "0.16"
 serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0.30"
 
 [dev-dependencies]
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }

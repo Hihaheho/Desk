@@ -1,4 +1,5 @@
 mod audit;
+mod error;
 mod event;
 mod hirs;
 mod history;
@@ -7,7 +8,7 @@ mod repository;
 mod snapshot;
 
 use audit::audit;
-use dkernel_card::rules::AuditResponse;
+use components::rules::AuditResponse;
 use hirs::Hirs;
 use history::History;
 use repository::Repository;
@@ -45,6 +46,9 @@ impl Kernel {
 #[cfg(test)]
 mod tests {
     use crate::event::{Event, EventEntry};
+    use components::patch::FilePatch;
+    use components::rules::{NodeOperation, Rules};
+    use components::{content::Content, patch::ChildrenPatch};
     use deskc_hir::expr::Literal;
     use deskc_hir::ty::Type as HirType;
     use deskc_hir::{
@@ -53,9 +57,6 @@ mod tests {
     };
     use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId, UserId};
     use deskc_types::Type;
-    use dkernel_card::patch::FilePatch;
-    use dkernel_card::rules::{NodeOperation, Rules};
-    use dkernel_card::{content::Content, flat_node::NodeRef, patch::ChildrenPatch};
     use hirs::HirQueries;
     use std::sync::Arc;
     use uuid::Uuid;
@@ -83,7 +84,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "wip"]
     fn integration() {
         let mut repository = TestRepository::default();
 
@@ -135,10 +135,13 @@ mod tests {
                 event: Event::AddNode {
                     node_id: node_a.clone(),
                     file_id: file_id.clone(),
-                    content: Content::Apply(Type::Function {
-                        parameters: vec![Type::String],
-                        body: Box::new(Type::Number),
-                    }),
+                    content: Content::Apply {
+                        ty: Type::Function {
+                            parameters: vec![Type::String],
+                            body: Box::new(Type::Number),
+                        },
+                        link_name: Default::default(),
+                    },
                 },
             },
             EventEntry {
@@ -157,7 +160,7 @@ mod tests {
                     node_id: node_a.clone(),
                     patch: ChildrenPatch::Insert {
                         index: 0,
-                        node: NodeRef::Node(node_b),
+                        node: node_b,
                     },
                 },
             },

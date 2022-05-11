@@ -13,23 +13,25 @@ use flat_node::flat_node;
 use hir::hir;
 
 use apply_patch::*;
-use deskc_ast::span::Spanned;
-use deskc_hir::meta::WithMeta;
-use deskc_ids::{CardId, NodeId};
-use dkernel_card::{
+use components::{
     content::Content,
-    flat_node::{Attributes, FlatNode, NodeRef},
+    flat_node::{Attributes, FlatNode},
     node::Node,
 };
+use deskc_ast::span::Spanned;
+use deskc_hir::meta::WithMeta;
+use deskc_ids::{CardId, FileId, NodeId};
 
 use crate::{event::Event, query_result::QueryResult};
 
 #[salsa::query_group(KernelStorage)]
 pub trait HirQueries {
     #[salsa::input]
+    fn file_id(&self, id: NodeId) -> FileId;
+    #[salsa::input]
     fn content(&self, id: NodeId) -> Content;
     #[salsa::input]
-    fn children(&self, id: NodeId) -> Vec<NodeRef>;
+    fn children(&self, id: NodeId) -> Vec<NodeId>;
     #[salsa::input]
     fn attributes(&self, id: NodeId) -> Attributes;
     fn flat_node(&self, id: NodeId) -> Arc<FlatNode>;
@@ -59,7 +61,7 @@ impl Hirs {
                 self.set_attributes(node_id.clone(), Attributes::default());
             }
             Event::PatchContent { node_id, patch } => match patch {
-                dkernel_card::patch::ContentPatch::Replace(content) => {
+                components::patch::ContentPatch::Replace(content) => {
                     self.set_content(node_id.clone(), content.clone());
                 }
                 patch => {
@@ -92,10 +94,10 @@ impl Hirs {
 
 #[cfg(test)]
 mod tests {
+    use components::patch::{AttributePatch, ChildrenPatch, ContentPatch};
     use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::FileId;
     use deskc_types::Type;
-    use dkernel_card::patch::{AttributePatch, ChildrenPatch, ContentPatch};
     use uuid::Uuid;
 
     use super::*;
@@ -133,16 +135,17 @@ mod tests {
     fn patch_children() {
         let mut db = Hirs::default();
         let node_id = handle_add_node(&mut db);
+        let node_a = NodeId::new();
 
         db.handle_event(&Event::PatchChildren {
             node_id: node_id.clone(),
             patch: ChildrenPatch::Insert {
                 index: 0,
-                node: NodeRef::Hole,
+                node: node_a.clone(),
             },
         });
 
-        assert_eq!(db.children(node_id), vec![NodeRef::Hole]);
+        assert_eq!(db.children(node_id), vec![node_a]);
     }
 
     #[test]

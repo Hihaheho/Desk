@@ -1,5 +1,5 @@
+use components::{content::Content, node::Node};
 use deskc_ids::NodeId;
-use dkernel_card::{content::Content, node::Node};
 
 use crate::query_result::QueryResult;
 

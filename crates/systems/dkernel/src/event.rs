@@ -1,5 +1,5 @@
 use deskc_ids::{CardId, FileId, NodeId, UserId};
-use dkernel_card::{
+use components::{
     content::Content,
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{Rules, SpaceOperation},

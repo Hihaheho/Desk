@@ -1,4 +1,4 @@
-use dkernel_card::patch::{AttributePatch, ChildrenPatch, ContentPatch};
+use components::patch::{AttributePatch, ChildrenPatch, ContentPatch};
 
 mod attributes;
 mod children;

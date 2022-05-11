@@ -15,6 +15,7 @@ ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+
 thiserror = "1.0.30"
 
 [dev-dependencies]

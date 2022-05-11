@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
+use components::patch::FilePatch;
+use components::rules::{Rules, SpaceOperation};
+use components::{file::File, flat_node::FlatNode};
 use deskc_ids::{CardId, FileId, NodeId, UserId};
-use dkernel_card::patch::FilePatch;
-use dkernel_card::rules::{Rules, SpaceOperation};
-use dkernel_card::{file::File, flat_node::FlatNode};
 
 use crate::hirs::HirQueries;
 use crate::{event::Event, hirs::Hirs};
@@ -74,7 +74,7 @@ impl Snapshot {
 
 #[cfg(test)]
 mod tests {
-    use dkernel_card::{content::Content, patch::FilePatch, rules::NodeOperation};
+    use components::{content::Content, patch::FilePatch, rules::NodeOperation};
     use uuid::Uuid;
 
     use super::*;
@@ -103,6 +103,7 @@ mod tests {
             [(
                 node_id,
                 FlatNode {
+                    file_id: FileId::default(),
                     content: Content::String("a".into()),
                     children: vec![],
                     attributes: [].into_iter().collect(),

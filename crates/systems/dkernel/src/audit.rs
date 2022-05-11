@@ -1,8 +1,8 @@
-use deskc_ids::FileId;
-use dkernel_card::{
+use components::{
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{AuditResponse, NodeOperation, SpaceOperation},
 };
+use deskc_ids::FileId;
 
 use crate::{
     event::{Event, EventEntry},
@@ -99,10 +99,10 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
 
 #[cfg(test)]
 mod tests {
+    use components::{content::Content, file::File};
     use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::{CardId, FileId, NodeId, UserId};
     use deskc_types::Type;
-    use dkernel_card::{content::Content, file::File, flat_node::NodeRef};
     use uuid::Uuid;
 
     use crate::event::Event;
@@ -328,7 +328,7 @@ mod tests {
             node_id,
             patch: ChildrenPatch::Insert {
                 index: 0,
-                node: NodeRef::Hole,
+                node: NodeId::new(),
             }
         },
         PatchChildrenInsert
@@ -360,8 +360,7 @@ mod tests {
                 node_id,
                 patch: ChildrenPatch::Update {
                     index: 0,
-
-                    node: NodeRef::Hole,
+                    node: NodeId::new(),
                 },
             }
         },

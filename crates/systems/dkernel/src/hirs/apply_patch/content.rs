@@ -1,4 +1,4 @@
-use dkernel_card::{content::Content, patch::ContentPatch};
+use components::{content::Content, patch::ContentPatch};
 
 use super::ContentPatchApplier;
 

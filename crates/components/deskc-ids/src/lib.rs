@@ -44,3 +44,9 @@ impl IrId {
         IrId(Uuid::new_v4())
     }
 }
+
+impl NodeId {
+    pub fn new() -> Self {
+        NodeId(Uuid::new_v4())
+    }
+}
