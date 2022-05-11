@@ -9,6 +9,7 @@
 
 # other files
 !/.github/**/*.yml
+!/.github/**/*.json
 !/docs/**/*.md
 !/configs/**/*.toml
 !/configs/**/*.ron
