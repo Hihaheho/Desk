@@ -30,37 +30,47 @@ Desk apps (applications built on Desk) are inherently:
 
 ## How does it work?
 
-Desk is powered by *Desk Programming Language* and *Desk Kernel*.
+Desk is powered by several systems:
+
+- Desk Programming Language (Desk-lang)
+- Desk Kernel (dkernel)
+- Desk Editor
+- Desk VM (DVM)
+- Desk Compiler (deskc)
+- Desk Window Manager (DeskWM)
+- and so on ...
 
 ### Desk Programming Language
 
-Desk programming language (Desk-lang) is a programming language which has:
+Desk-lang is a programming language which has:
 
 - Minimalistic syntax and semantics
 - Type system with inference
 - Algebraic effects
 - Content-addressable by type and UUID
-- Embeddable interpreter
-- 🚧 Compiler for performant binary
-
-🚧 not yet implemented
 
 Any data and programs on Desk apps are finally evaluated as snippets of Desk-lang.
 
 ### Desk Kernel
 
-Desk kernel (Dkernel) is a platform-agnostic environment for writing and running Desk-lang. Functionalities and UIs of Desk apps are made up by syscall of Dkernel.
+Dkernel is a platform-agnostic environment for writing and running Desk-lang. Functionalities and UIs of Desk apps are made up by syscall of Dkernel.
 
 Dkernel provides these features:
 
-- 🚧 File system for Desk-lang
-- 🚧 Type-driven UI components
-- 🚧 Incremental computation engine
-- 🚧 Realtime collaboration support
+- File system for Desk-lang
+- Permission management system
+- Realtime collaboration support
 - 🚧 Package management system
 - 🚧 Version control system
-- 🚧 Permission management system
-- 🚧 3D/2D rendering with meshes
+
+🚧 not yet implemented
+
+### Other systems
+
+- Desk Editor provides 🚧 type-driven UI for Desk-lang
+- DVM provides 🚧 incremental computation
+- Deskc provides 🚧 incremental compilation
+- DeskWM provides 🚧 3D/2D rendering with meshes
 
 🚧 not yet implemented
 
