@@ -1,0 +1,59 @@
+# deskc components
+deskc-ids
+deskc-types
+deskc-tokens
+deskc-ast
+deskc-hir
+deskc-thir
+deskc-amir
+deskc-mir
+deskc-textual-diagnostics
+
+# deskc systems
+deskc-lexer
+deskc-parser
+deskc-hirgen
+deskc-typeinfer
+deskc-thirgen
+deskc-amirgen
+deskc-concretizer
+deskc-evalmir
+deskc-fmt
+deskc-thir2dson
+
+# deskc apps
+deskc
+deskc-cli
+deskc-language-server
+
+# dson
+dson
+serde-dson
+
+# kernel components
+dkernel-card
+
+# kernel systems
+dkernel
+
+# kernel adapters
+dkernel-firestore
+dkernel-in-memory
+
+# desk components
+desk-ui
+desk-theme
+desk-physics
+desk-system-ordering
+desk-terminal
+
+# desk systems
+dwm
+
+# desk plugins
+desk-egui
+desk-rapier2d
+desk-touchpanel
+
+# desk apps
+desk-x

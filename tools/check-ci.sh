@@ -13,6 +13,7 @@ do
     esac
 done
 
+tools/diff-crates.sh
 [[ -z ${NO_CARGO_DENY} ]] && cargo deny check --config configs/deny.toml
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
