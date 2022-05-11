@@ -1,10 +1,10 @@
 mod string_diff;
+use deskc_ids::NodeId;
 use hir::expr::Expr;
 use types::Type;
 
 use crate::{
     content::Content,
-    flat_node::NodeRef,
     rules::{NodeOperation, Rules},
 };
 
@@ -23,10 +23,10 @@ impl Eq for ContentPatch {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChildrenPatch {
-    Insert { index: usize, node: NodeRef },
+    Insert { index: usize, node: NodeId },
     Remove { index: usize },
     Move { index: usize, diff: isize },
-    Update { index: usize, node: NodeRef },
+    Update { index: usize, node: NodeId },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

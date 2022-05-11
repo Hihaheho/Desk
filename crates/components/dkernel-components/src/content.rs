@@ -1,13 +1,14 @@
+use deskc_ids::LinkName;
 use types::Type;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Content {
     Source(String),
     String(String),
-    Integer(u64),
-    Rational(u64, u64),
+    Integer(i64),
+    Rational(i64, i64),
     Float(f64),
-    Apply(Type),
+    Apply { ty: Type, link_name: LinkName },
 }
 
 // Content::Float should not be NaN
