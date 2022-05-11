@@ -306,7 +306,7 @@ mod tests {
         assert_eq!(
             parse("> 'a add ~ 1, 2.").unwrap().0,
             Expr::Apply {
-                function: (Type::Alias("add".into()), 2..8),
+                function: (Type::Variable("add".into()), 2..8),
                 link_name: LinkName::None,
                 arguments: vec![
                     (Expr::Literal(Literal::Int(1)), 11..12),
@@ -321,7 +321,7 @@ mod tests {
         assert_eq!(
             parse("& 'a x").unwrap().0,
             Expr::Apply {
-                function: (Type::Alias("x".into()), 2..6),
+                function: (Type::Variable("x".into()), 2..6),
                 link_name: LinkName::None,
                 arguments: vec![],
             }
@@ -450,7 +450,7 @@ mod tests {
             Expr::Match {
                 of: Box::new((
                     Expr::Apply {
-                        function: (Type::Alias("x".into()), 17..21),
+                        function: (Type::Variable("x".into()), 17..21),
                         link_name: LinkName::None,
                         arguments: vec![]
                     },

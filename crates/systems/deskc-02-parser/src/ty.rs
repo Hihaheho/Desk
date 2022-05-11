@@ -35,7 +35,6 @@ pub fn parser(
                 .separated_by_comma_at_least_one()
                 .map(Type::Trait),
         );
-        let alias = just(Token::A).ignore_then(parse_ident().map(Type::Alias));
         let effectful = just(Token::Perform)
             .ignore_then(type_.clone())
             .then(parse_effects(type_.clone()))
@@ -81,7 +80,10 @@ pub fn parser(
             brand,
             item: Box::new(ty),
         });
-        let variable = parse_ident().map(Type::Variable);
+        let variable = just(Token::A)
+            .or_not()
+            .ignore_then(parse_ident())
+            .map(Type::Variable);
         let bound = parse_ident()
             .then_ignore(just(Token::TypeAnnotation))
             .then(type_.clone())
@@ -113,7 +115,6 @@ pub fn parser(
             .or(number)
             .or(string)
             .or(trait_)
-            .or(alias)
             .or(effectful)
             .or(product)
             .or(sum)
@@ -224,10 +225,10 @@ mod tests {
     }
 
     #[test]
-    fn parse_type_alias() {
+    fn parse_variable() {
         assert_eq!(
             parse("'a something").unwrap().0,
-            Type::Alias("something".into())
+            Type::Variable("something".into())
         );
     }
 
@@ -284,7 +285,7 @@ mod tests {
             parse("a: 'a bound").unwrap().0,
             Type::BoundedVariable {
                 identifier: "a".into(),
-                bound: Box::new((Type::Alias("bound".into()), 3..11)),
+                bound: Box::new((Type::Variable("bound".into()), 3..11)),
             }
         );
     }

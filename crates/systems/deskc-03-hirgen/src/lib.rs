@@ -60,7 +60,7 @@ impl HirGen {
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
             ast::ty::Type::This => self.with_meta(Type::This),
-            ast::ty::Type::Alias(ident) | ast::ty::Type::Variable(ident) => self.with_meta(
+            ast::ty::Type::Variable(ident) => self.with_meta(
                 self.type_aliases
                     .borrow()
                     .get(ident)

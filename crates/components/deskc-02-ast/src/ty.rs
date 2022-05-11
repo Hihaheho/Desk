@@ -21,7 +21,6 @@ pub enum Type {
     },
     Infer,
     This,
-    Alias(String),
     Product(Vec<Spanned<Self>>),
     Sum(Vec<Spanned<Self>>),
     Function {
