@@ -27,9 +27,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - run: cargo clean
-
-      - uses: ryo33/cargo-deny-action@7778bea17b9517fa2c89f5b59615131467e7f79b
+      - uses: EmbarkStudios/cargo-deny-action@v1
         with:
           arguments: --all-features
           command-arguments: --config configs/deny.toml
