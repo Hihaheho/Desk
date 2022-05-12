@@ -1,7 +1,10 @@
 # ignore all but allows all directories except /target
 *
 !*/
+
+# ignore directories
 /target
+/node_modules
 
 # rust files
 !/crates/**/*.rs
@@ -16,7 +19,7 @@
 !/tools/**/*.sh
 
 # desk-x
-!/envs/firebase/public/index.html
+!/crates/apps/desk-x/public/index.html
 
 # specific files
 !/.gitattributes

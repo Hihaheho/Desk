@@ -5,6 +5,4 @@ set -euo pipefail
 shopt -s inherit_errexit
 
 tools/build-wasm.sh
-cd envs/firebase
-firebase deploy --only hosting
-cd -
+npx wrangler pages publish --project-name desk --commit-dirty=true crates/apps/desk-x/public
