@@ -11,3 +11,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dkernel = { package = "dkernel", path = "../../systems/dkernel", version = "0.0.0" }
+dkernel-components = { package = "dkernel-components", path = "../../components/dkernel-components", version = "0.0.0" }

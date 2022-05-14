@@ -41,7 +41,7 @@ dkernel-firestore
 dkernel-in-memory
 
 # desk components
-desk-ui
+dwm-ui
 desk-theme
 desk-physics
 desk-system-ordering

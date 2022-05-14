@@ -9,7 +9,10 @@ readme = "../../../README.md"
 edition = "2021"
 
 [dependencies]
+desk-window = { package = "desk-window", path = "../../components/desk-window", version = "0.0.0" }
+dkernel = { package = "dkernel", path = "../../systems/dkernel", version = "0.0.0" }
 system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
 command = { package = "desk-command", path = "../../components/desk-command", version = "0.0.0" }
 
 bevy = "0.7"
+egui = "0.18.1"

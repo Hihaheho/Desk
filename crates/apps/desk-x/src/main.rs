@@ -1,3 +1,6 @@
+mod about;
+mod windows;
+use about::AboutPlugin;
 use bevy::prelude::*;
 
 #[cfg(feature = "inspector")]
@@ -8,6 +11,11 @@ use file_system_plugin::FileSystemPlugin;
 use rapier2d_plugin::PhysicsPlugin;
 use terminal_plugin::TerminalPlugin;
 use touchpanel_plugin::TouchpanelPlugin;
+use windows::WindowsPlugin;
+
+// #[cfg(target_arch = "wasm32")]
+// #[global_allocator]
+// static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 fn main() {
     #[cfg(target_arch = "wasm32")]
@@ -22,9 +30,11 @@ fn main() {
         .add_plugin(FileSystemPlugin)
         .add_plugin(EditorPlugin)
         .add_plugin(TerminalPlugin)
+        .add_plugin(WindowsPlugin)
+        .add_plugin(AboutPlugin)
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(ClearColor(Color::rgb(0.0, 120.0 / 255.0, 120.0 / 255.0)))
-        .add_startup_system(setup);
+        .add_startup_system(setup_cameras);
 
     #[cfg(target_arch = "wasm32")]
     app.add_system(resize);
@@ -35,7 +45,7 @@ fn main() {
     app.run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup_cameras(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(PerspectiveCameraBundle::new_3d());
 }

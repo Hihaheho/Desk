@@ -1,11 +1,10 @@
 mod follow_system;
 
-use desk_ui::WidgetId;
 use system_ordering::DeskSystem;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use physics::{shape::Shape, DragState};
+use physics::{shape::Shape, DragState, PhysicalObject};
 
 pub struct PhysicsPlugin;
 
@@ -21,7 +20,7 @@ impl Plugin for PhysicsPlugin {
             })
             .add_system(
                 add_physics_components
-                    .after(DeskSystem::Shell)
+                    .after(DeskSystem::Update)
                     .before(DeskSystem::PrePhysics),
             )
             .add_system(follow_system::follow.before(DeskSystem::PrePhysics))
@@ -35,7 +34,7 @@ impl Plugin for PhysicsPlugin {
     }
 }
 
-fn add_physics_components(mut commands: Commands, query: Query<Entity, Added<WidgetId>>) {
+fn add_physics_components(mut commands: Commands, query: Query<Entity, Added<PhysicalObject>>) {
     for card in query.iter() {
         commands
             .entity(card)

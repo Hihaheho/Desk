@@ -3,6 +3,9 @@ use bevy_egui::{
     egui::{self, Color32},
     EguiContext,
 };
+use desk_system_ordering::DeskSystem;
+use desk_window::ctx::Ctx;
+use desk_window::window::Window;
 use theme::Theme;
 
 pub struct EguiPlugin;
@@ -13,7 +16,19 @@ impl Plugin for EguiPlugin {
             .register_type::<Theme>()
             .add_startup_system(add_theme)
             .add_system(egui_theme)
-            .add_system(ui_example);
+            .add_system(ui_example)
+            .add_system(
+                render
+                    .label(DeskSystem::RenderWidget)
+                    .after(DeskSystem::Update),
+            );
+    }
+}
+
+fn render(mut egui_context: ResMut<EguiContext>, mut windows: Query<&mut Window<egui::Context>>) {
+    for mut window in windows.iter_mut() {
+        let ctx = Ctx::new(egui_context.ctx_mut());
+        window.render(ctx);
     }
 }
 

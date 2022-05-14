@@ -14,8 +14,7 @@ impl Plugin for TouchpanelPlugin {
         app.add_startup_system(add_cursor)
             .add_system(
                 move_cursor
-                    .label(DeskSystem::UpdateStatesToLatest)
-                    .before(DeskSystem::Shell),
+                    .before(DeskSystem::Update),
             )
             .add_system(
                 drag_system::toggle_follow_for_drag_state

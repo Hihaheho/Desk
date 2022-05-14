@@ -2,9 +2,8 @@ use bevy_ecs::schedule::SystemLabel;
 
 #[derive(SystemLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum DeskSystem {
-    UpdateStatesToLatest,
-    Shell,
-    HandleOperations,
+    Update,
+    RenderWidget,
     PrePhysics,
 }
 

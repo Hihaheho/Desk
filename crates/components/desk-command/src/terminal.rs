@@ -1,3 +1,5 @@
+use bevy_ecs::prelude::Component;
+
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
@@ -42,7 +44,7 @@ impl Default for TerminalPrompt {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Component, Clone, Debug, PartialEq, Default)]
 pub struct Terminal {
     pub logs: TerminalLogs,
     pub prompt: TerminalPrompt,

@@ -1,4 +1,4 @@
-# ignore all but allows all directories except /target
+# ignore all but allows all directories
 *
 !*/
 
