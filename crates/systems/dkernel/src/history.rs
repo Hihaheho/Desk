@@ -1,4 +1,4 @@
-use crate::{event::Event, snapshot::Snapshot};
+use components::{snapshot::Snapshot, event::Event};
 
 #[derive(Default)]
 pub struct History {}

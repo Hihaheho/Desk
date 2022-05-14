@@ -1,13 +1,10 @@
 use components::{
+    event::{Event, EventEntry},
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{AuditResponse, NodeOperation, SpaceOperation},
-};
-use deskc_ids::FileId;
-
-use crate::{
-    event::{Event, EventEntry},
     snapshot::Snapshot,
 };
+use deskc_ids::FileId;
 
 enum Operation<'a> {
     Space(SpaceOperation),
@@ -69,14 +66,6 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
         Event::AddSnapshot { .. } => Operation::Space(AddSnapshot),
         Event::AddFile(_) => Operation::Space(AddFile),
         Event::DeleteFile(_) => Operation::Space(DeleteFile),
-        Event::AddCard { node_id, .. } => Operation::Node(AddCard, file_id!(snapshot, node_id)),
-        Event::RemoveCard { card_id } => {
-            if let Some(node_id) = snapshot.cards.get(card_id) {
-                Operation::Node(RemoveCard, file_id!(snapshot, node_id))
-            } else {
-                return AuditResponse::Denied;
-            }
-        }
         Event::UpdateRule { .. } => Operation::Space(UpdateRule),
         Event::PatchFile { file_id, patch } => {
             let operation = match patch {
@@ -100,12 +89,10 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
 
 #[cfg(test)]
 mod tests {
-    use components::{content::Content, file::File, flat_node::FlatNode};
+    use components::{content::Content, file::File, flat_node::FlatNode, user::UserId};
     use deskc_hir::expr::{Expr, Literal};
-    use deskc_ids::{CardId, FileId, NodeId, UserId};
+    use deskc_ids::{FileId, NodeId};
     use deskc_types::Type;
-
-    use crate::event::Event;
 
     use super::*;
 
@@ -130,12 +117,9 @@ mod tests {
     #[test]
     fn any_event_allowed_for_owners() {
         let mut snapshot = Snapshot::default();
-        snapshot.handle_event(
-            &Default::default(),
-            &Event::AddOwner {
-                user_id: UserId("a".into()),
-            },
-        );
+        snapshot.handle_event(&Event::AddOwner {
+            user_id: UserId("a".into()),
+        });
         assert_eq!(
             audit(
                 &snapshot,
@@ -188,11 +172,10 @@ mod tests {
             fn $fn() {
                 let node_id = NodeId::new();
                 let file_id = FileId::new();
-                let card_id = CardId::new();
                 let event_entry = EventEntry {
                     index: 0,
                     user_id: UserId("a".into()),
-                    event: $event(node_id.clone(), file_id.clone(), card_id.clone()),
+                    event: $event(node_id.clone(), file_id.clone()),
                 };
                 let mut base = Snapshot::default();
                 base.files.insert(file_id.clone(), File::default());
@@ -205,7 +188,6 @@ mod tests {
                         attributes: Default::default(),
                     },
                 );
-                base.cards.insert(card_id.clone(), node_id.clone());
 
                 // Denied
                 let snapshot = base.clone();
@@ -260,21 +242,8 @@ mod tests {
     );
 
     test_node!(
-        add_card,
-        |node_id, _, _| Event::AddCard {
-            card_id: CardId::new(),
-            node_id
-        },
-        AddCard
-    );
-    test_node!(
-        remove_card,
-        |_, _, card_id| Event::RemoveCard { card_id },
-        RemoveCard
-    );
-    test_node!(
         add_node,
-        |node_id, file_id, _| Event::AddNode {
+        |node_id, file_id| Event::AddNode {
             node_id,
             file_id,
             content: Content::String("a".into())
@@ -283,12 +252,12 @@ mod tests {
     );
     test_node!(
         remove_node,
-        |node_id, _, _| Event::RemoveNode { node_id },
+        |node_id, _| Event::RemoveNode { node_id },
         RemoveNode
     );
     test_node!(
         patch_content_replace,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchContent {
                 node_id,
                 patch: ContentPatch::Replace(Content::String("a".into())),
@@ -298,7 +267,7 @@ mod tests {
     );
     test_node!(
         patch_content_patch_string,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchContent {
                 node_id,
                 patch: ContentPatch::PatchString(vec![]),
@@ -308,7 +277,7 @@ mod tests {
     );
     test_node!(
         patch_content_add_integer,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchContent {
                 node_id,
                 patch: ContentPatch::AddInteger(0),
@@ -318,7 +287,7 @@ mod tests {
     );
     test_node!(
         patch_content_add_float,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchContent {
                 node_id,
                 patch: ContentPatch::AddFloat(0.0),
@@ -328,7 +297,7 @@ mod tests {
     );
     test_node!(
         patch_children_insert,
-        |node_id, _, _| Event::PatchChildren {
+        |node_id, _| Event::PatchChildren {
             node_id,
             patch: ChildrenPatch::Insert {
                 index: 0,
@@ -339,7 +308,7 @@ mod tests {
     );
     test_node!(
         patch_children_remove,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchChildren {
                 node_id,
                 patch: ChildrenPatch::Remove { index: 0 },
@@ -349,7 +318,7 @@ mod tests {
     );
     test_node!(
         patch_children_move,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchChildren {
                 node_id,
                 patch: ChildrenPatch::Move { index: 0, diff: 0 },
@@ -359,7 +328,7 @@ mod tests {
     );
     test_node!(
         patch_children_update,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchChildren {
                 node_id,
                 patch: ChildrenPatch::Update {
@@ -372,7 +341,7 @@ mod tests {
     );
     test_node!(
         patch_attribute_update,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchAttribute {
                 node_id,
                 patch: AttributePatch::Update {
@@ -385,7 +354,7 @@ mod tests {
     );
     test_node!(
         patch_attribute_remove,
-        |node_id, _, _| {
+        |node_id, _| {
             Event::PatchAttribute {
                 node_id,
                 patch: AttributePatch::Remove { key: Type::Number },
@@ -395,7 +364,7 @@ mod tests {
     );
     test_node!(
         patch_file_update_rules,
-        |_, file_id, _| {
+        |_, file_id| {
             Event::PatchFile {
                 file_id,
                 patch: FilePatch::UpdateRules {

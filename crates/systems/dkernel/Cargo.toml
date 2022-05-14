@@ -21,12 +21,14 @@ deskc-parser = { path = "../deskc-02-parser", version = "0.0.0", package = "desk
 deskc-hirgen = { path = "../deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 deskc-typeinfer = { path = "../deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 
-salsa = "0.16"
+salsa = { git = "https://github.com/ryo33/salsa.git", rev = "7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34" }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0.30"
+bevy_ecs = "0.7"
+downcast-rs = "1.2.0"
 
 [dev-dependencies]
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 
 uuid = { version = "0.8", features = ["v4"] }
-mry = "0.1.8"
+mry = "0.2.1"

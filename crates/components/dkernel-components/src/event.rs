@@ -1,9 +1,10 @@
-use components::{
+use crate::{
     content::Content,
     patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
     rules::{Rules, SpaceOperation},
+    user::UserId,
 };
-use deskc_ids::{CardId, FileId, NodeId, UserId};
+use deskc_ids::{FileId, NodeId};
 
 use crate::snapshot::Snapshot;
 
@@ -54,12 +55,5 @@ pub enum Event {
     PatchFile {
         file_id: FileId,
         patch: FilePatch,
-    },
-    AddCard {
-        card_id: CardId,
-        node_id: NodeId,
-    },
-    RemoveCard {
-        card_id: CardId,
     },
 }

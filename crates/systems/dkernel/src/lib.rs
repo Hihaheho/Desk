@@ -1,33 +1,38 @@
 mod audit;
 mod error;
-mod event;
 mod hirs;
 mod history;
-mod query_result;
-mod repository;
-mod snapshot;
+pub mod query_result;
+pub mod repository;
+mod state;
+
+use std::{any::TypeId, collections::HashMap};
 
 use audit::audit;
-use components::rules::AuditResponse;
+use bevy_ecs::prelude::Component;
+use components::{rules::AuditResponse, snapshot::Snapshot};
 use hirs::Hirs;
 use history::History;
 use repository::Repository;
-use snapshot::Snapshot;
+use state::State;
 
+#[derive(Component)]
 pub struct Kernel {
-    repository: Box<dyn Repository>,
+    repository: Box<dyn Repository + Send + Sync + 'static>,
     hirs: Hirs,
     pub snapshot: Snapshot,
-    pub history: History,
+    history: History,
+    states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
 }
 
 impl Kernel {
-    pub fn new(repository: impl Repository + 'static) -> Self {
+    pub fn new(repository: impl Repository + Send + Sync + 'static) -> Self {
         Self {
             repository: Box::new(repository),
             hirs: Default::default(),
             snapshot: Default::default(),
             history: Default::default(),
+            states: Default::default(),
         }
     }
 
@@ -37,17 +42,37 @@ impl Kernel {
             if audit(&self.snapshot, &entry) == AuditResponse::Allowed {
                 self.hirs.handle_event(&entry.event);
                 self.history.handle_event(&self.snapshot, &entry.event);
-                self.snapshot.handle_event(&self.hirs, &entry.event);
+                for state in self.states.values_mut() {
+                    state.handle_event(&self.snapshot, &entry.event);
+                }
+                self.snapshot.handle_event(&entry.event);
             }
         }
+    }
+
+    pub fn add_state<T: State + Send + Sync + 'static>(&mut self, state: T) {
+        self.states.insert(TypeId::of::<T>(), Box::new(state));
+    }
+
+    pub fn get_state<T: State + Send + Sync + 'static>(&self) -> Option<&T> {
+        self.states
+            .get(&TypeId::of::<T>())
+            .map(|state| state.as_any().downcast_ref::<T>().unwrap())
+    }
+
+    pub fn get_state_mut<T: State + Send + Sync + 'static>(&mut self) -> Option<&mut T> {
+        self.states
+            .get_mut(&TypeId::of::<T>())
+            .map(|state| state.as_any_mut().downcast_mut::<T>().unwrap())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::event::{Event, EventEntry};
+    use components::event::{Event, EventEntry};
     use components::patch::FilePatch;
     use components::rules::{NodeOperation, Rules};
+    use components::user::UserId;
     use components::{content::Content, patch::ChildrenPatch};
     use deskc_hir::expr::Literal;
     use deskc_hir::helper::remove_meta;
@@ -56,7 +81,7 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId, UserId};
+    use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId};
     use deskc_types::Type;
     use hirs::HirQueries;
 
@@ -78,6 +103,17 @@ mod tests {
             panic!()
         }
         fn remove_owner(&mut self, user_id: UserId) {
+            panic!()
+        }
+    }
+
+    #[mry::mry]
+    #[derive(Default)]
+    pub struct TestState {}
+
+    #[mry::mry]
+    impl State for TestState {
+        fn handle_event(&mut self, _snapshot: &Snapshot, _: &Event) {
             panic!()
         }
     }
@@ -163,23 +199,19 @@ mod tests {
                     },
                 },
             },
-            EventEntry {
-                index: 1,
-                user_id: user_a,
-                event: Event::AddCard {
-                    card_id: card_id.clone(),
-                    node_id: node_a,
-                },
-            },
         ]);
 
+        let mut test_state = TestState::default();
+        test_state.mock_handle_event(mry::Any, mry::Any).returns(());
+
         let mut kernel = Kernel::new(repository);
+        kernel.add_state(test_state);
         kernel.process();
 
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            remove_meta(kernel.hirs.hir(card_id).unwrap().as_ref().clone()),
+            remove_meta(kernel.hirs.hir(node_a).unwrap().as_ref().clone()),
             WithMeta {
                 id: IrId::default(),
                 meta: Meta::default(),
@@ -209,5 +241,18 @@ mod tests {
                 }
             }
         );
+
+        kernel
+            .get_state_mut::<TestState>()
+            .unwrap()
+            .mock_handle_event(mry::Any, mry::Any)
+            .assert_called(6);
+
+        // asserts handle_event was called with unprocessed snapshot
+        kernel
+            .get_state_mut::<TestState>()
+            .unwrap()
+            .mock_handle_event(Snapshot::default(), Event::AddOwner { user_id: user_a })
+            .assert_called(1);
     }
 }

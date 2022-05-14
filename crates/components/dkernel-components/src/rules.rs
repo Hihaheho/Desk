@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use deskc_ids::UserId;
+use crate::user::UserId;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rules<Operation: Eq + std::hash::Hash> {

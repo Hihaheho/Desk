@@ -7,7 +7,7 @@ use deskc_hir::{
     ty::{Effect, EffectExpr, Type},
 };
 use deskc_hirgen::gen_hir;
-use deskc_ids::{CardId, IrId};
+use deskc_ids::{CardId, IrId, NodeId};
 use deskc_lexer::scan;
 use deskc_parser::parse;
 
@@ -18,8 +18,7 @@ use crate::{
 
 use super::HirQueries;
 
-pub(super) fn hir(db: &dyn HirQueries, id: CardId) -> QueryResult<WithMeta<Expr>> {
-    let node_id = db.node_id(id);
+pub(super) fn hir(db: &dyn HirQueries, node_id: NodeId) -> QueryResult<WithMeta<Expr>> {
     let ast = db.ast(node_id);
 
     Ok(Arc::new(genhir(&ast)?))

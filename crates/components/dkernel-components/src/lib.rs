@@ -5,3 +5,6 @@ pub mod flat_node;
 pub mod node;
 pub mod patch;
 pub mod rules;
+pub mod user;
+pub mod event;
+pub mod snapshot;

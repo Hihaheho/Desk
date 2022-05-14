@@ -1,4 +1,3 @@
-mod apply_patch;
 mod ast;
 mod hir;
 
@@ -7,21 +6,19 @@ use std::sync::Arc;
 use ast::ast;
 use hir::hir;
 
-use apply_patch::*;
-use components::{flat_node::FlatNode, node::Node};
+use components::{event::Event, flat_node::FlatNode, node::Node};
 use deskc_hir::meta::WithMeta;
-use deskc_ids::{CardId, NodeId};
+use deskc_ids::NodeId;
+use salsa::Snapshot;
 
-use crate::{event::Event, query_result::QueryResult};
+use crate::query_result::QueryResult;
 
 #[salsa::query_group(KernelStorage)]
 pub trait HirQueries {
     #[salsa::input]
     fn flat_node(&self, id: NodeId) -> Arc<FlatNode>;
     fn ast(&self, id: NodeId) -> Arc<Node>;
-    #[salsa::input]
-    fn node_id(&self, id: CardId) -> NodeId;
-    fn hir(&self, id: CardId) -> QueryResult<WithMeta<deskc_hir::expr::Expr>>;
+    fn hir(&self, id: NodeId) -> QueryResult<WithMeta<deskc_hir::expr::Expr>>;
 }
 
 #[salsa::database(KernelStorage)]
@@ -31,6 +28,14 @@ pub struct Hirs {
 }
 
 impl salsa::Database for Hirs {}
+
+impl salsa::ParallelDatabase for Hirs {
+    fn snapshot(&self) -> salsa::Snapshot<Self> {
+        Snapshot::new(Hirs {
+            storage: self.storage.snapshot(),
+        })
+    }
+}
 
 impl Hirs {
     pub fn handle_event(&mut self, event: &Event) {
@@ -51,39 +56,21 @@ impl Hirs {
                 );
             }
             Event::PatchContent { node_id, patch } => {
-                let flat_node = self.flat_node(node_id.clone());
-                self.set_flat_node(
-                    node_id.clone(),
-                    Arc::new(FlatNode {
-                        content: flat_node.content.apply_patch(patch),
-                        ..(*flat_node).clone()
-                    }),
-                );
+                let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
+                flat_node.patch_content(patch);
+                self.set_flat_node(node_id.clone(), Arc::new(flat_node));
             }
             Event::PatchChildren { node_id, patch } => {
-                let flat_node = self.flat_node(node_id.clone());
-                self.set_flat_node(
-                    node_id.clone(),
-                    Arc::new(FlatNode {
-                        children: flat_node.children.apply_patch(patch),
-                        ..(*flat_node).clone()
-                    }),
-                );
+                let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
+                flat_node.patch_children(patch);
+                self.set_flat_node(node_id.clone(), Arc::new(flat_node));
             }
             Event::PatchAttribute { node_id, patch } => {
-                let flat_node = self.flat_node(node_id.clone());
-                self.set_flat_node(
-                    node_id.clone(),
-                    Arc::new(FlatNode {
-                        attributes: flat_node.attributes.apply_patch(patch),
-                        ..(*flat_node).clone()
-                    }),
-                );
+                let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
+                flat_node.patch_attribute(patch);
+                self.set_flat_node(node_id.clone(), Arc::new(flat_node));
             }
             Event::AddSnapshot { .. } => todo!(),
-            Event::AddCard { card_id, node_id } => {
-                self.set_node_id(card_id.clone(), node_id.clone());
-            }
             _ => {}
         }
     }
@@ -174,20 +161,6 @@ mod tests {
                 .into_iter()
                 .collect()
         );
-    }
-
-    #[test]
-    fn add_card() {
-        let mut db = Hirs::default();
-        let node_id = handle_add_node(&mut db);
-        let card_id = CardId::new();
-
-        db.handle_event(&Event::AddCard {
-            card_id: card_id.clone(),
-            node_id: node_id.clone(),
-        });
-
-        assert_eq!(db.node_id(card_id), node_id);
     }
 
     fn handle_add_node(db: &mut Hirs) -> NodeId {

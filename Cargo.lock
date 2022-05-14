@@ -144,6 +144,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arc-swap"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5d78ce20460b82d3fa150275ed9d55e21064fc7951177baacf86a145c4a4b1f"
+
+[[package]]
 name = "ariadne"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1491,6 +1497,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e77a43b28d0668df09411cb0bc9a8c2adc40f9a048afe863e05fd43251e8e39c"
+dependencies = [
+ "cfg-if 1.0.0",
+ "num_cpus",
+]
+
+[[package]]
 name = "deflate"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1514,6 +1530,7 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "desk-system-ordering",
+ "desk-window",
 ]
 
 [[package]]
@@ -1522,7 +1539,9 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "bevy_egui 0.14.0",
+ "desk-system-ordering",
  "desk-theme",
+ "desk-window",
  "ron",
 ]
 
@@ -1532,6 +1551,10 @@ version = "0.0.0"
 dependencies = [
  "bevy",
 ]
+
+[[package]]
+name = "desk-guide"
+version = "0.1.0"
 
 [[package]]
 name = "desk-physics"
@@ -1549,7 +1572,6 @@ dependencies = [
  "bevy_rapier2d",
  "desk-physics",
  "desk-system-ordering",
- "desk-ui",
 ]
 
 [[package]]
@@ -1566,6 +1588,9 @@ dependencies = [
  "bevy",
  "desk-command",
  "desk-system-ordering",
+ "desk-window",
+ "dkernel",
+ "egui 0.18.1",
 ]
 
 [[package]]
@@ -1587,10 +1612,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-ui"
+name = "desk-window"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
+ "dkernel-components",
  "uuid",
 ]
 
@@ -1605,9 +1631,16 @@ dependencies = [
  "desk-egui",
  "desk-file-system",
  "desk-rapier2d",
+ "desk-system-ordering",
  "desk-terminal",
  "desk-touchpanel",
+ "desk-window",
+ "dkernel",
+ "dkernel-components",
+ "dkernel-in-memory",
+ "egui 0.18.1",
  "web-sys",
+ "wee_alloc",
 ]
 
 [[package]]
@@ -1620,7 +1653,7 @@ dependencies = [
  "deskc-mir",
  "deskc-thir",
  "deskc-types",
- "salsa",
+ "salsa 0.16.1",
  "uuid",
 ]
 
@@ -1872,6 +1905,7 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 name = "dkernel"
 version = "0.0.0"
 dependencies = [
+ "bevy_ecs",
  "deskc-ast",
  "deskc-hir",
  "deskc-hirgen",
@@ -1881,8 +1915,9 @@ dependencies = [
  "deskc-typeinfer",
  "deskc-types",
  "dkernel-components",
+ "downcast-rs",
  "mry",
- "salsa",
+ "salsa 0.17.0-pre.2",
  "serde",
  "thiserror",
  "uuid",
@@ -1905,6 +1940,10 @@ version = "0.0.0"
 [[package]]
 name = "dkernel-in-memory"
 version = "0.0.0"
+dependencies = [
+ "dkernel",
+ "dkernel-components",
+]
 
 [[package]]
 name = "downcast-rs"
@@ -1914,10 +1953,6 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dson"
-version = "0.0.0"
-
-[[package]]
-name = "dwm"
 version = "0.0.0"
 
 [[package]]
@@ -2334,6 +2369,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashlink"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
+dependencies = [
+ "hashbrown",
+]
+
+[[package]]
 name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2698,6 +2742,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "memory_units"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
+
+[[package]]
 name = "metal"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2780,9 +2830,9 @@ dependencies = [
 
 [[package]]
 name = "mry"
-version = "0.1.8"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a32ea0585d97556b7e2dd4be4a1ce0ab60cb0114749adaaf3d6e93d1bd3eac0"
+checksum = "458f712f9c27a2a3f2d8fdf499afceeb4c92eef1e98afb803f27bb76150bf8f3"
 dependencies = [
  "async-recursion",
  "mry_macros",
@@ -2792,9 +2842,9 @@ dependencies = [
 
 [[package]]
 name = "mry_macros"
-version = "0.1.8"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71fcfc3bcbd8ca3fca4cda44ad5c87aa03f0ffa4c37ed1fa5a707a69043dd636"
+checksum = "9f3737613eba78fc4860e1fb9ffffeca86043cb4327c75d8473701c7ccbe3039"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3666,7 +3716,26 @@ dependencies = [
  "oorandom",
  "parking_lot 0.11.2",
  "rustc-hash",
- "salsa-macros",
+ "salsa-macros 0.16.0",
+ "smallvec",
+]
+
+[[package]]
+name = "salsa"
+version = "0.17.0-pre.2"
+source = "git+https://github.com/ryo33/salsa.git?rev=7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34#7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34"
+dependencies = [
+ "arc-swap",
+ "crossbeam-utils",
+ "dashmap",
+ "hashlink",
+ "indexmap",
+ "lock_api",
+ "log",
+ "oorandom",
+ "parking_lot 0.11.2",
+ "rustc-hash",
+ "salsa-macros 0.17.0-pre.2",
  "smallvec",
 ]
 
@@ -3675,6 +3744,17 @@ name = "salsa-macros"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd3904a4ba0a9d0211816177fd34b04c7095443f8cdacd11175064fe541c8fe2"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "salsa-macros"
+version = "0.17.0-pre.2"
+source = "git+https://github.com/ryo33/salsa.git?rev=7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34#7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -4320,6 +4400,18 @@ dependencies = [
  "url",
  "web-sys",
  "widestring",
+ "winapi",
+]
+
+[[package]]
+name = "wee_alloc"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbb3b5a6b2bb17cb6ad44a2e68a43e8d2722c997da10e928665c72ec6c0a0b8e"
+dependencies = [
+ "cfg-if 0.1.10",
+ "libc",
+ "memory_units",
  "winapi",
 ]
 
