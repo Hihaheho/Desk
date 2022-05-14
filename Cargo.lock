@@ -1531,6 +1531,10 @@ dependencies = [
  "bevy",
  "desk-system-ordering",
  "desk-window",
+ "deskc-ids",
+ "dkernel",
+ "dkernel-components",
+ "egui 0.18.1",
 ]
 
 [[package]]
@@ -1542,6 +1546,7 @@ dependencies = [
  "desk-system-ordering",
  "desk-theme",
  "desk-window",
+ "dkernel",
  "ron",
 ]
 
@@ -1589,7 +1594,10 @@ dependencies = [
  "desk-command",
  "desk-system-ordering",
  "desk-window",
+ "deskc-ids",
+ "deskc-types",
  "dkernel",
+ "dkernel-components",
  "egui 0.18.1",
 ]
 
@@ -1616,6 +1624,7 @@ name = "desk-window"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
+ "deskc-ids",
  "dkernel-components",
  "uuid",
 ]
@@ -1635,6 +1644,7 @@ dependencies = [
  "desk-terminal",
  "desk-touchpanel",
  "desk-window",
+ "deskc-ids",
  "dkernel",
  "dkernel-components",
  "dkernel-in-memory",

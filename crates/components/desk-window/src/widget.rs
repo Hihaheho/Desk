@@ -2,7 +2,7 @@ use crate::ctx::Ctx;
 use uuid::Uuid;
 
 pub trait Widget<T> {
-    fn render<'a>(&mut self, ctx: &Ctx<'a, T>);
+    fn render<'a>(&mut self, ctx: &mut Ctx<'a, T>);
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::Component;
+use deskc_ids::FileId;
 use uuid::Uuid;
 
 use crate::{
@@ -11,6 +12,9 @@ use crate::{
 #[derive(Component)]
 pub struct DefaultWindow;
 
+#[derive(Component)]
+pub struct DefaultFile(pub FileId);
+
 #[derive(Component, Default)]
 pub struct Window<T> {
     widgets: HashMap<WidgetId, Box<dyn Widget<T> + Send + Sync + 'static>>,
@@ -20,9 +24,9 @@ pub struct Window<T> {
 pub struct WindowId(pub Uuid);
 
 impl<T> Window<T> {
-    pub fn render(&mut self, mut ctx: Ctx<T>) {
+    pub fn render(&mut self, ctx: &mut Ctx<T>) {
         for (_id, mut widget) in self.widgets.drain() {
-            widget.render(&mut ctx);
+            widget.render(ctx);
         }
     }
 

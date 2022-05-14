@@ -7,7 +7,7 @@ use deskc_hir::{
     ty::{Effect, EffectExpr, Type},
 };
 use deskc_hirgen::gen_hir;
-use deskc_ids::{CardId, IrId, NodeId};
+use deskc_ids::{IrId, NodeId};
 use deskc_lexer::scan;
 use deskc_parser::parse;
 

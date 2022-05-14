@@ -15,12 +15,12 @@ pub struct AboutPlugin;
 
 impl Plugin for AboutPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(about.label(DeskSystem::Update));
+        app.add_system(about.label(DeskSystem::UpdateWidget));
     }
 }
 
 fn about(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWindow>>) {
-    if let Ok((mut window, kernel)) = window.get_single_mut() {
+    if let Ok((mut window, _kernel)) = window.get_single_mut() {
         window.add_widget(WidgetId::new(), AboutWidget);
     }
 }
@@ -28,7 +28,7 @@ fn about(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWi
 struct AboutWidget;
 
 impl Widget<egui::Context> for AboutWidget {
-    fn render(&mut self, ctx: &Ctx<egui::Context>) {
+    fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
         egui::Window::new("About").show(ctx.backend, |ui| {
             ui.label("Hello World");
         });

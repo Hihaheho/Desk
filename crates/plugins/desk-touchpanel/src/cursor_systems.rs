@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::camera::Camera};
-use command::Cursor;
+use command::cursor::Cursor;
 
 pub(crate) fn add_cursor(mut commands: Commands) {
     commands

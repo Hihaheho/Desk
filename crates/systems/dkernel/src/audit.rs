@@ -77,7 +77,6 @@ pub fn audit(snapshot: &Snapshot, entry: &EventEntry) -> AuditResponse {
     match operation {
         Operation::Space(operation) => snapshot.rules.audit(&entry.user_id, &operation),
         Operation::Node(operation, file_id) => {
-            println!("{:?}", operation);
             if let Some(file) = snapshot.files.get(file_id) {
                 file.rules.audit(&entry.user_id, &operation)
             } else {

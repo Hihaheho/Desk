@@ -2,8 +2,9 @@ use bevy_ecs::schedule::SystemLabel;
 
 #[derive(SystemLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum DeskSystem {
-    Update,
+    UpdateWidget,
     RenderWidget,
+    ProcessKernel,
     PrePhysics,
 }
 

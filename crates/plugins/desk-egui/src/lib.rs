@@ -6,6 +6,7 @@ use bevy_egui::{
 use desk_system_ordering::DeskSystem;
 use desk_window::ctx::Ctx;
 use desk_window::window::Window;
+use dkernel::Kernel;
 use theme::Theme;
 
 pub struct EguiPlugin;
@@ -20,15 +21,21 @@ impl Plugin for EguiPlugin {
             .add_system(
                 render
                     .label(DeskSystem::RenderWidget)
-                    .after(DeskSystem::Update),
+                    .after(DeskSystem::UpdateWidget),
             );
     }
 }
 
-fn render(mut egui_context: ResMut<EguiContext>, mut windows: Query<&mut Window<egui::Context>>) {
-    for mut window in windows.iter_mut() {
-        let ctx = Ctx::new(egui_context.ctx_mut());
-        window.render(ctx);
+fn render(
+    mut egui_context: ResMut<EguiContext>,
+    mut windows: Query<(&mut Kernel, &mut Window<egui::Context>)>,
+) {
+    for (mut kernel, mut window) in windows.iter_mut() {
+        let mut ctx = Ctx::new(egui_context.ctx_mut());
+        window.render(&mut ctx);
+        for event in ctx.events {
+            kernel.commit(event);
+        }
     }
 }
 

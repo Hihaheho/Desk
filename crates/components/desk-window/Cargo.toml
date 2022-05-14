@@ -12,5 +12,6 @@ edition = "2021"
 
 [dependencies]
 dkernel-components = { package = "dkernel-components", version = "0.0.0", path = "../dkernel-components" }
+deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 bevy_ecs = "0.7"
 uuid = "0.8"

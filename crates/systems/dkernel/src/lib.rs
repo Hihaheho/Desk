@@ -10,7 +10,7 @@ use std::{any::TypeId, collections::HashMap};
 
 use audit::audit;
 use bevy_ecs::prelude::Component;
-use components::{rules::AuditResponse, snapshot::Snapshot};
+use components::{event::Event, rules::AuditResponse, snapshot::Snapshot};
 use hirs::Hirs;
 use history::History;
 use repository::Repository;
@@ -34,6 +34,10 @@ impl Kernel {
             history: Default::default(),
             states: Default::default(),
         }
+    }
+
+    pub fn commit(&mut self, event: Event) {
+        self.repository.commit(event);
     }
 
     pub fn process(&mut self) {
@@ -127,7 +131,6 @@ mod tests {
         let node_a = NodeId::new();
         let node_b = NodeId::new();
         let file_id = FileId::new();
-        let card_id = CardId::new();
 
         repository.mock_poll().returns(vec![
             EventEntry {

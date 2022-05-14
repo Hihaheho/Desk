@@ -12,10 +12,7 @@ pub struct TouchpanelPlugin;
 impl Plugin for TouchpanelPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_startup_system(add_cursor)
-            .add_system(
-                move_cursor
-                    .before(DeskSystem::Update),
-            )
+            .add_system(move_cursor.before(DeskSystem::UpdateWidget))
             .add_system(
                 drag_system::toggle_follow_for_drag_state
                     .after(ShellSystem::Render)

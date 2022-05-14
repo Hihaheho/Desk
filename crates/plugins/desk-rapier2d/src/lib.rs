@@ -20,7 +20,7 @@ impl Plugin for PhysicsPlugin {
             })
             .add_system(
                 add_physics_components
-                    .after(DeskSystem::Update)
+                    .after(DeskSystem::UpdateWidget)
                     .before(DeskSystem::PrePhysics),
             )
             .add_system(follow_system::follow.before(DeskSystem::PrePhysics))
