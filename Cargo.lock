@@ -682,7 +682,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -737,7 +737,7 @@ dependencies = [
  "ron",
  "serde",
  "thiserror",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -858,7 +858,7 @@ dependencies = [
  "hashbrown",
  "instant",
  "tracing",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1627,7 +1627,7 @@ dependencies = [
  "deskc-ids",
  "dkernel",
  "dkernel-components",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1665,7 +1665,7 @@ dependencies = [
  "deskc-thir",
  "deskc-types",
  "salsa 0.16.1",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1693,7 +1693,7 @@ name = "deskc-ast"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1732,7 +1732,7 @@ name = "deskc-hir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1747,7 +1747,7 @@ dependencies = [
  "deskc-parser",
  "pretty_assertions",
  "thiserror",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1755,7 +1755,7 @@ name = "deskc-ids"
 version = "0.0.0"
 dependencies = [
  "serde",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1771,7 +1771,7 @@ dependencies = [
  "deskc-textual-diagnostics",
  "deskc-tokens",
  "thiserror",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1794,7 +1794,7 @@ dependencies = [
  "deskc-textual-diagnostics",
  "deskc-tokens",
  "thiserror",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1866,7 +1866,7 @@ dependencies = [
 name = "deskc-tokens"
 version = "0.0.0"
 dependencies = [
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1931,7 +1931,7 @@ dependencies = [
  "salsa 0.17.0-pre.2",
  "serde",
  "thiserror",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1941,7 +1941,7 @@ dependencies = [
  "deskc-hir",
  "deskc-ids",
  "deskc-types",
- "uuid",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -2220,7 +2220,7 @@ dependencies = [
  "fnv",
  "gilrs-core",
  "log",
- "uuid",
+ "uuid 0.8.2",
  "vec_map",
 ]
 
@@ -2239,7 +2239,7 @@ dependencies = [
  "nix 0.23.1",
  "rusty-xinput",
  "stdweb 0.4.20",
- "uuid",
+ "uuid 0.8.2",
  "vec_map",
  "web-sys",
  "winapi",
@@ -4258,6 +4258,16 @@ name = "uuid"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom",
+ "serde",
+]
+
+[[package]]
+name = "uuid"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cfcd319456c4d6ea10087ed423473267e1a071f3bc0aa89f80d60997843c6f0"
 dependencies = [
  "getrandom",
  "serde",
