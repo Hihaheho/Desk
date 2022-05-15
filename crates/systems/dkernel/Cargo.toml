@@ -23,7 +23,7 @@ deskc-typeinfer = { path = "../deskc-04-typeinfer", version = "0.0.0", package =
 
 salsa = { git = "https://github.com/ryo33/salsa.git", rev = "7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34" }
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "1.0.30"
+thiserror = "1.0.31"
 bevy_ecs = "0.7"
 downcast-rs = "1.2.0"
 

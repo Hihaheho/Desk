@@ -15,8 +15,8 @@ ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc
 ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 
-pretty_assertions = "1.0.0"
-thiserror = "1.0.30"
+pretty_assertions = "1.2.1"
+thiserror = "1.0.31"
 uuid = { version = "0.8", features = ["v4"] }
 
 [dev-dependencies]

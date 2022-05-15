@@ -27,7 +27,7 @@ dkernel-components = { package = "dkernel-components", path = "../../components/
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 
 bevy = "0.7"
-bevy-inspector-egui = { version = "0.10.0", optional = true }
+bevy-inspector-egui = { version = "0.11.0", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3.57"
 egui = "0.18.1"
