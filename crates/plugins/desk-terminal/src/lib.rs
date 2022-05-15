@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-
 use desk_window::{
     ctx::Ctx,
     widget::{Widget, WidgetId},
@@ -10,11 +9,12 @@ use deskc_ids::{FileId, LinkName, NodeId};
 use deskc_types::Type;
 use dkernel::Kernel;
 use dkernel_components::{content::Content, event::Event};
+use system_ordering::DeskSystem;
 pub struct TerminalPlugin;
 
 impl Plugin for TerminalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(terminal);
+        app.add_system(terminal.label(DeskSystem::UpdateWidget));
     }
 }
 

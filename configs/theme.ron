@@ -9,8 +9,8 @@
         border: (
             color: Rgba(
                 red: 1,
-                green: 0,
-                blue: 0.9941969,
+                green: 1,
+                blue: 1,
                 alpha: 1,
             ),
             size: 2,
@@ -34,18 +34,18 @@
         ),
         border: (
             color: Rgba(
-                red: 0,
-                green: 0,
-                blue: 0,
+                red: 1,
+                green: 1,
+                blue: 1,
                 alpha: 1,
             ),
             size: 1,
         ),
         stroke: (
             color: Rgba(
-                red: 0,
-                green: 0,
-                blue: 0,
+                red: 1,
+                green: 1,
+                blue: 1,
                 alpha: 1,
             ),
             size: 1,
@@ -60,9 +60,9 @@
         ),
         border: (
             color: Rgba(
-                red: 0.22143145,
-                green: 0.22143145,
-                blue: 0.22143145,
+                red: 0.3433844,
+                green: 0.3433844,
+                blue: 0.3433844,
                 alpha: 1,
             ),
             size: 2,
@@ -74,7 +74,7 @@
                 blue: 0,
                 alpha: 1,
             ),
-            size: 1,
+            size: 2.1,
         ),
     ),
     inactive: (
@@ -86,9 +86,9 @@
         ),
         border: (
             color: Rgba(
-                red: 0,
-                green: 0,
-                blue: 0,
+                red: 0.57931143,
+                green: 0.57931143,
+                blue: 0.57931143,
                 alpha: 1,
             ),
             size: 1,
@@ -112,9 +112,9 @@
         ),
         border: (
             color: Rgba(
-                red: 0,
-                green: 0,
-                blue: 0,
+                red: 1,
+                green: 1,
+                blue: 1,
                 alpha: 1,
             ),
             size: 1,
@@ -129,7 +129,7 @@
             size: 1,
         ),
     ),
-    window_corner_radius: 4.2,
+    window_corner_radius: 3,
     window_shadow: (
         color: Rgba(
             red: 0.76763356,
@@ -138,5 +138,11 @@
             alpha: 1,
         ),
         extrusion: 6,
+    ),
+    extreme_background: Rgba(
+        red: 0.9372549,
+        green: 0.9372549,
+        blue: 0.9372549,
+        alpha: 1,
     ),
 )

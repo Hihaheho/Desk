@@ -4,7 +4,7 @@ mod hirs;
 mod history;
 pub mod query_result;
 pub mod repository;
-mod state;
+pub mod state;
 
 use std::{any::TypeId, collections::HashMap};
 

@@ -17,7 +17,6 @@ impl Plugin for EguiPlugin {
             .register_type::<Theme>()
             .add_startup_system(add_theme)
             .add_system(egui_theme)
-            .add_system(ui_example)
             .add_system(
                 render
                     .label(DeskSystem::RenderWidget)
@@ -31,18 +30,12 @@ fn render(
     mut windows: Query<(&mut Kernel, &mut Window<egui::Context>)>,
 ) {
     for (mut kernel, mut window) in windows.iter_mut() {
-        let mut ctx = Ctx::new(egui_context.ctx_mut());
+        let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut());
         window.render(&mut ctx);
         for event in ctx.events {
             kernel.commit(event);
         }
     }
-}
-
-fn ui_example(mut egui_context: ResMut<EguiContext>) {
-    egui::Window::new("Hello").show(egui_context.ctx_mut(), |ui| {
-        ui.label("world");
-    });
 }
 
 fn add_theme(mut commands: Commands) {
@@ -69,6 +62,7 @@ fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Change
         }
 
         let mut style = bevy_egui::egui::Style::default();
+        style.visuals.dark_mode = true;
         style.visuals.window_shadow.color = color(&theme.window_shadow.color);
         style.visuals.window_shadow.extrusion = theme.window_shadow.extrusion;
 
@@ -108,6 +102,8 @@ fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Change
         style.visuals.widgets.open.bg_stroke.width = theme.open.border.size;
         style.visuals.widgets.open.fg_stroke.color = color(&theme.open.stroke.color);
         style.visuals.widgets.open.fg_stroke.width = theme.open.stroke.size;
+
+        style.visuals.extreme_bg_color = color(&theme.extreme_background);
 
         egui_context.ctx_mut().set_style(style);
     }

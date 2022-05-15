@@ -16,6 +16,7 @@ pub struct Theme {
     pub active: Widget,
     pub window_corner_radius: f32,
     pub window_shadow: Shadow,
+    pub extreme_background: Color,
 }
 
 #[derive(Reflect, Serialize, Deserialize, Clone)]
