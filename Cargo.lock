@@ -1535,13 +1535,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-file-system"
-version = "0.0.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "desk-guide"
 version = "0.1.0"
 
@@ -1623,7 +1616,6 @@ dependencies = [
  "console_error_panic_hook",
  "desk-editor",
  "desk-egui",
- "desk-file-system",
  "desk-rapier2d",
  "desk-system-ordering",
  "desk-terminal",

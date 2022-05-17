@@ -7,7 +7,6 @@ use bevy::prelude::*;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use editor_plugin::EditorPlugin;
 use egui_plugin::EguiPlugin;
-use file_system_plugin::FileSystemPlugin;
 use rapier2d_plugin::PhysicsPlugin;
 use terminal_plugin::TerminalPlugin;
 use touchpanel_plugin::TouchpanelPlugin;
@@ -27,7 +26,6 @@ fn main() {
         .add_plugin(EguiPlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(TouchpanelPlugin)
-        .add_plugin(FileSystemPlugin)
         .add_plugin(EditorPlugin)
         .add_plugin(TerminalPlugin)
         .add_plugin(WindowsPlugin)

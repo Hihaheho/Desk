@@ -14,11 +14,13 @@ pub struct EditorPlugin;
 impl Plugin for EditorPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(setup.before(DeskSystem::UpdateWidget))
+            // move this to proper plugin
             .add_system(
                 process_kernel
                     .label(DeskSystem::ProcessKernel)
                     .after(DeskSystem::RenderWidget),
             )
+            .add_system(compile_system)
             .add_system(editor.label(DeskSystem::UpdateWidget));
     }
 }
@@ -32,6 +34,11 @@ pub fn setup(mut kernel: Query<&mut Kernel, Added<Kernel>>) {
 pub fn process_kernel(mut kernel: Query<&mut Kernel>) {
     for mut kernel in kernel.iter_mut() {
         kernel.process();
+    }
+}
+
+pub fn compile_system(mut kernel: Query<&mut Kernel>) {
+    for mut kernel in kernel.iter_mut() {
     }
 }
 
