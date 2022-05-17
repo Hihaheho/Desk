@@ -23,4 +23,4 @@ parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = 
 hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 chumsky = "0.8.0"
-pretty_assertions = "1.0.0"
+pretty_assertions = "1.2.1"
