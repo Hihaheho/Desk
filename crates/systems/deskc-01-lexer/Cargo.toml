@@ -16,5 +16,5 @@ tokens = { path = "../../components/deskc-01-tokens", version = "0.0.0", package
 textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
 
 chumsky = "0.8.0"
-uuid = "0.8"
+uuid = "1.0"
 thiserror = "1.0"
