@@ -14,4 +14,4 @@ edition = "2021"
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-thiserror = "1.0.30"
+thiserror = "1.0.31"
