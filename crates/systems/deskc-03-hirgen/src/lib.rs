@@ -1,13 +1,13 @@
 mod error;
 mod gen_effect_expr;
-use ids::{CardId, FileId, IrId};
+use ids::{CardId, FileId, NodeId};
 
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
 };
 
-use ast::span::Spanned;
+use ast::span::{Span, WithSpan};
 use error::HirGenError;
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
@@ -16,7 +16,7 @@ use hir::{
     Hir,
 };
 
-pub fn gen_hir(src: &Spanned<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenError> {
+pub fn gen_hir(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenError> {
     let mut hirgen = HirGen::default();
     hirgen.gen_hir(src)?;
     let hir = Hir {
@@ -30,9 +30,9 @@ pub fn gen_hir(src: &Spanned<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenEr
 pub struct HirGen {
     file_id: FileId,
     next_id: RefCell<usize>,
-    next_span: RefCell<Vec<ast::span::Span>>,
+    next_span: RefCell<Vec<(NodeId, Span)>>,
     pub variables: RefCell<HashMap<String, usize>>,
-    pub attrs: RefCell<HashMap<IrId, Vec<Expr>>>,
+    pub attrs: RefCell<HashMap<NodeId, Vec<Expr>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
     cards: Vec<(CardId, WithMeta<Expr>)>,
@@ -40,9 +40,13 @@ pub struct HirGen {
 }
 
 impl HirGen {
-    pub fn gen_type(&self, ty: &Spanned<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
-        let (ty, span) = ty;
-        self.push_span(span.clone());
+    pub fn gen_type(&self, ty: &WithSpan<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
+        let WithSpan {
+            id,
+            value: ty,
+            span,
+        } = ty;
+        self.push_span(id.clone(), span.clone());
 
         let with_meta = match ty {
             ast::ty::Type::Number => self.with_meta(Type::Number),
@@ -125,9 +129,13 @@ impl HirGen {
         Ok(with_meta)
     }
 
-    pub fn gen(&self, ast: &Spanned<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
-        let (expr, span) = ast;
-        self.push_span(span.clone());
+    pub fn gen(&self, ast: &WithSpan<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
+        let WithSpan {
+            value: expr,
+            id,
+            span,
+        } = ast;
+        self.push_span(id.clone(), span.clone());
 
         let with_meta = match expr {
             ast::expr::Expr::Literal(literal) => self.with_meta(Expr::Literal(match literal {
@@ -199,14 +207,14 @@ impl HirGen {
                 item: Box::new(self.gen(expr)?),
             }),
             ast::expr::Expr::Function { parameters, body } => {
-                let span = self.pop_span().unwrap();
+                let (node_id, span) = self.pop_span().unwrap();
                 parameters
                     .iter()
                     .map(|parameter| self.gen_type(parameter))
                     .collect::<Result<Vec<_>, _>>()?
                     .into_iter()
                     .try_rfold(self.gen(body)?, |body, parameter| {
-                        self.push_span(span.clone());
+                        self.push_span(node_id.clone(), span.clone());
                         Ok(self.with_meta(Expr::Function {
                             parameter,
                             body: Box::new(body),
@@ -281,16 +289,16 @@ impl HirGen {
         Ok(with_meta)
     }
 
-    pub fn gen_hir(&mut self, ast: &Spanned<ast::expr::Expr>) -> Result<(), HirGenError> {
+    pub fn gen_hir(&mut self, ast: &WithSpan<ast::expr::Expr>) -> Result<(), HirGenError> {
         self.entrypoint = Some(self.gen(ast)?);
         Ok(())
     }
 
-    pub(crate) fn push_span(&self, span: ast::span::Span) {
-        self.next_span.borrow_mut().push(span);
+    pub(crate) fn push_span(&self, node_id: NodeId, span: Span) {
+        self.next_span.borrow_mut().push((node_id, span));
     }
 
-    pub(crate) fn pop_span(&self) -> Option<ast::span::Span> {
+    pub(crate) fn pop_span(&self) -> Option<(NodeId, Span)> {
         self.next_span.borrow_mut().pop()
     }
 
@@ -309,14 +317,14 @@ impl HirGen {
     }
 
     fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
+        let span = self.pop_span().unwrap();
         WithMeta {
-            id: IrId::new(),
+            id: span.0,
             meta: Meta {
                 attrs: vec![],
                 file_id: self.file_id.clone(),
-                node_id: None,
                 // no span is a bug of hirgen, so unwrap is safe
-                span: Some(self.pop_span().unwrap()),
+                span: Some(span.1),
             },
             value,
         }
@@ -325,6 +333,7 @@ impl HirGen {
 
 #[cfg(test)]
 mod tests {
+    use ast::span::dummy_span;
     use hir::{
         helper::remove_meta,
         meta::{dummy_meta, Meta},
@@ -334,7 +343,7 @@ mod tests {
 
     use super::*;
 
-    fn parse(input: &str) -> Spanned<ast::expr::Expr> {
+    fn parse(input: &str) -> WithSpan<ast::expr::Expr> {
         parser::parse(lexer::scan(input).unwrap()).unwrap()
     }
 
@@ -343,32 +352,21 @@ mod tests {
         let gen = HirGen::default();
         assert_eq!(
             remove_meta(
-                gen.gen(&(
-                    ast::expr::Expr::Apply {
-                        function: (ast::ty::Type::Number, 3..10),
-                        link_name: Default::default(),
-                        arguments: vec![(
-                            ast::expr::Expr::Attribute {
-                                attr: Box::new((
-                                    ast::expr::Expr::Literal(ast::expr::Literal::Int(1)),
-                                    24..25
-                                )),
-                                item: Box::new((
-                                    ast::expr::Expr::Attribute {
-                                        attr: Box::new((
-                                            ast::expr::Expr::Literal(ast::expr::Literal::Int(2)),
-                                            24..25
-                                        )),
-                                        item: Box::new((ast::expr::Expr::Hole, 26..27)),
-                                    },
-                                    25..26
-                                )),
-                            },
-                            24..27
-                        )],
-                    },
-                    0..27
-                ),)
+                gen.gen(&dummy_span(ast::expr::Expr::Apply {
+                    function: dummy_span(ast::ty::Type::Number),
+                    link_name: Default::default(),
+                    arguments: vec![dummy_span(ast::expr::Expr::Attribute {
+                        attr: Box::new(dummy_span(ast::expr::Expr::Literal(
+                            ast::expr::Literal::Int(1)
+                        ),)),
+                        item: Box::new(dummy_span(ast::expr::Expr::Attribute {
+                            attr: Box::new(dummy_span(ast::expr::Expr::Literal(
+                                ast::expr::Literal::Int(2)
+                            ),)),
+                            item: Box::new(dummy_span(ast::expr::Expr::Hole)),
+                        },)),
+                    },)],
+                },),)
                     .unwrap()
             ),
             WithMeta {
@@ -389,7 +387,6 @@ mod tests {
                                 Expr::Literal(Literal::Integer(1))
                             ],
                             file_id: Default::default(),
-                            node_id: None,
                             span: Default::default()
                         },
                         value: Expr::Literal(Literal::Hole)

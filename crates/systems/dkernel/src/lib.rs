@@ -85,7 +85,7 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{CardId, FileId, IrId, LinkName, NodeId};
+    use deskc_ids::{CardId, FileId, LinkName, NodeId};
     use deskc_types::Type;
     use hirs::HirQueries;
 
@@ -216,20 +216,20 @@ mod tests {
         assert_eq!(
             remove_meta(kernel.hirs.hir(node_a).unwrap().as_ref().clone()),
             WithMeta {
-                id: IrId::default(),
+                id: NodeId::default(),
                 meta: Meta::default(),
                 value: Expr::Apply {
                     function: WithMeta {
-                        id: IrId::default(),
+                        id: NodeId::default(),
                         meta: Meta::default(),
                         value: HirType::Function {
                             parameters: vec![WithMeta {
-                                id: IrId::default(),
+                                id: NodeId::default(),
                                 meta: Meta::default(),
                                 value: HirType::String
                             }],
                             body: Box::new(WithMeta {
-                                id: IrId::default(),
+                                id: NodeId::default(),
                                 meta: Meta::default(),
                                 value: HirType::Number
                             }),
@@ -237,7 +237,7 @@ mod tests {
                     },
                     link_name: LinkName::None,
                     arguments: vec![WithMeta {
-                        id: IrId::default(),
+                        id: NodeId::default(),
                         meta: Meta::default(),
                         value: Expr::Literal(Literal::String("string".into()))
                     }]

@@ -7,7 +7,7 @@ use deskc_hir::{
     ty::{Effect, EffectExpr, Type},
 };
 use deskc_hirgen::gen_hir;
-use deskc_ids::{IrId, NodeId};
+use deskc_ids::NodeId;
 use deskc_lexer::scan;
 use deskc_parser::parse;
 
@@ -28,7 +28,6 @@ fn genhir(node: &Node) -> Result<WithMeta<Expr>, QueryError> {
     let meta = Meta {
         attrs: vec![],
         file_id: node.file_id.clone(),
-        node_id: Some(node.id.clone()),
         span: None,
     };
     let expr = match &node.content {
@@ -55,7 +54,7 @@ fn genhir(node: &Node) -> Result<WithMeta<Expr>, QueryError> {
         },
     };
     Ok(WithMeta {
-        id: IrId::new(),
+        id: node.id.clone(),
         meta,
         value: expr,
     })
@@ -95,7 +94,7 @@ fn from_types(ty: &deskc_types::Type, meta: Meta) -> WithMeta<Type> {
         },
     };
     WithMeta {
-        id: IrId::new(),
+        id: NodeId::new(),
         meta,
         value,
     }
@@ -107,7 +106,7 @@ fn from_types_effects(effects: &deskc_types::EffectExpr, meta: Meta) -> WithMeta
             effects
                 .iter()
                 .map(|deskc_types::Effect { input, output }| WithMeta {
-                    id: IrId::new(),
+                    id: NodeId::new(),
                     meta: meta.clone(),
                     value: Effect {
                         input: from_types(input, meta.clone()),
@@ -141,7 +140,7 @@ fn from_types_effects(effects: &deskc_types::EffectExpr, meta: Meta) -> WithMeta
         },
     };
     WithMeta {
-        id: IrId::new(),
+        id: NodeId::new(),
         meta,
         value,
     }

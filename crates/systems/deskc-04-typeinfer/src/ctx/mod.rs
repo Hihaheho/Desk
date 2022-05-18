@@ -10,7 +10,7 @@ mod synth;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use hir::meta::WithMeta;
-use ids::IrId;
+use ids::NodeId;
 use types::{IdGen, Types};
 
 use crate::{
@@ -42,13 +42,13 @@ pub struct Ctx {
     pub(crate) id_gen: Rc<RefCell<IdGen>>,
     pub(crate) logs: RefCell<Vec<Log>>,
     // Result of type inference
-    pub(crate) ir_types: Rc<RefCell<HashMap<IrId, Type>>>,
+    pub(crate) ir_types: Rc<RefCell<HashMap<NodeId, Type>>>,
     pub(crate) types: Rc<RefCell<HashMap<Id, Type>>>,
     // a stack; continue's input of current context
     pub(crate) continue_input: RefCell<Vec<Type>>,
     // a stack; continue's output of current context
     pub(crate) continue_output: RefCell<Vec<Type>>,
-    pub(crate) inferred_types: RefCell<HashMap<IrId, Type>>,
+    pub(crate) inferred_types: RefCell<HashMap<NodeId, Type>>,
 }
 
 impl Ctx {
@@ -68,7 +68,7 @@ impl Ctx {
     }
 
     // The type should be substituted with ctx.
-    fn store_type_and_effects(&self, id: IrId, ty: Type, effects: EffectExpr) {
+    fn store_type_and_effects(&self, id: NodeId, ty: Type, effects: EffectExpr) {
         self.ir_types
             .borrow_mut()
             .insert(id, self.with_effects(ty, effects));
@@ -80,11 +80,11 @@ impl Ctx {
             .insert(id, self.with_effects(ty, effects));
     }
 
-    fn store_inferred_type(&self, infer: IrId, ty: Type) {
+    fn store_inferred_type(&self, infer: NodeId, ty: Type) {
         self.inferred_types.borrow_mut().insert(infer, ty);
     }
 
-    pub fn get_type(&self, id: &IrId) -> Type {
+    pub fn get_type(&self, id: &NodeId) -> Type {
         self.finalize(
             &self
                 .ir_types

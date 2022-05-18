@@ -173,7 +173,7 @@ impl TypedHirGen {
 
 #[cfg(test)]
 mod tests {
-    use ids::IrId;
+    use ids::NodeId;
     use thir::{visitor::TypedHirVisitorMut, BuiltinOp};
 
     use super::*;
@@ -194,7 +194,7 @@ mod tests {
     pub struct RemoveIdVisitor;
     impl TypedHirVisitorMut for RemoveIdVisitor {
         fn visit(&mut self, hir: &mut TypedHir) {
-            hir.id = IrId::default();
+            hir.id = NodeId::default();
             self.super_visit(hir);
         }
     }
@@ -213,7 +213,7 @@ mod tests {
         assert_eq!(
             remove_id(gen.gen(&expr)),
             TypedHir {
-                id: IrId::default(),
+                id: NodeId::default(),
                 ty: Type::Number,
                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
             }
@@ -230,7 +230,7 @@ mod tests {
         assert_eq!(
             remove_id(gen.gen(&expr)),
             TypedHir {
-                id: IrId::default(),
+                id: NodeId::default(),
                 ty: Type::Function {
                     parameters: vec![Type::Number, Type::String],
                     body: Box::new(Type::Number),
@@ -238,7 +238,7 @@ mod tests {
                 expr: thir::Expr::Function {
                     parameters: vec![Type::Number, Type::String],
                     body: Box::new(TypedHir {
-                        id: IrId::default(),
+                        id: NodeId::default(),
                         ty: Type::Number,
                         expr: thir::Expr::Apply {
                             function: Type::Number,
@@ -261,7 +261,7 @@ mod tests {
         assert_eq!(
             remove_id(gen.gen(&expr)),
             TypedHir {
-                id: IrId::default(),
+                id: NodeId::default(),
                 ty: Type::Label {
                     label: "sum".to_string(),
                     item: Box::new(Type::Number),
@@ -270,12 +270,12 @@ mod tests {
                     op: BuiltinOp::Add,
                     operands: vec![
                         TypedHir {
-                            id: IrId::default(),
+                            id: NodeId::default(),
                             ty: Type::Number,
                             expr: thir::Expr::Literal(thir::Literal::Int(1)),
                         },
                         TypedHir {
-                            id: IrId::default(),
+                            id: NodeId::default(),
                             ty: Type::Number,
                             expr: thir::Expr::Literal(thir::Literal::Int(2)),
                         }
@@ -361,11 +361,11 @@ mod tests {
         assert_eq!(
             remove_id(gen.gen(&expr)),
             TypedHir {
-                id: IrId::default(),
+                id: NodeId::default(),
                 ty: Type::Sum(vec![Type::Number, Type::String]),
                 expr: thir::Expr::Match {
                     input: Box::new(TypedHir {
-                        id: IrId::default(),
+                        id: NodeId::default(),
                         ty: Type::Number,
                         expr: thir::Expr::Literal(thir::Literal::Int(3)),
                     }),
@@ -373,7 +373,7 @@ mod tests {
                         thir::MatchCase {
                             ty: Type::Number,
                             expr: TypedHir {
-                                id: IrId::default(),
+                                id: NodeId::default(),
                                 ty: Type::Number,
                                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
                             }
@@ -381,7 +381,7 @@ mod tests {
                         thir::MatchCase {
                             ty: Type::String,
                             expr: TypedHir {
-                                id: IrId::default(),
+                                id: NodeId::default(),
                                 ty: Type::String,
                                 expr: thir::Expr::Literal(thir::Literal::String("2".into())),
                             }

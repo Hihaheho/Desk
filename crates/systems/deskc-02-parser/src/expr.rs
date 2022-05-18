@@ -1,16 +1,17 @@
 use ast::{
     expr::{Expr, Handler, LinkName, Literal, MatchCase},
-    span::Spanned,
+    span::WithSpan,
     ty::{CommentPosition, Type},
 };
 use chumsky::prelude::*;
+use ids::NodeId;
 use tokens::Token;
 
 use crate::common::{parse_attr, parse_comment, parse_ident, parse_uuid};
 
 use super::common::{parse_collection, parse_function, parse_op, parse_typed, ParserExt};
 
-pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
+pub fn parser() -> impl Parser<Token, WithSpan<Expr>, Error = Simple<Token>> + Clone {
     recursive(|expr| {
         let hole = just(Token::Hole).to(Expr::Hole);
         let int64 = filter_map(|span, token| match token {
@@ -36,7 +37,13 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 just(Token::TypeAnnotation)
                     .ignore_then(type_.clone())
                     .or_not()
-                    .map(|ty| ty.unwrap_or((Type::Infer, 0..0))),
+                    .map(|ty| {
+                        ty.unwrap_or(WithSpan {
+                            id: NodeId::new(),
+                            value: Type::Infer,
+                            span: 0..0,
+                        })
+                    }),
             )
             .in_()
             .then(expr.clone())
@@ -209,18 +216,23 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             .or(label.labelled("label"))
             .or(newtype.labelled("newtype"))
             .or(card.labelled("card"))
-            .map_with_span(|token, span| (token, span))
+            .map_with_span(|token, span| WithSpan {
+                id: NodeId::new(),
+                value: token,
+                span,
+            })
             .then(parse_comment().or_not())
             .map_with_span(|(expr, comment), span| {
                 if let Some(comment) = comment {
-                    (
-                        Expr::Comment {
+                    WithSpan {
+                        id: NodeId::new(),
+                        value: Expr::Comment {
                             position: CommentPosition::Suffix,
                             text: comment,
                             item: Box::new(expr),
                         },
                         span,
-                    )
+                    }
                 } else {
                     expr
                 }
@@ -230,26 +242,32 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 
 #[cfg(test)]
 mod tests {
-    use ast::{expr::MatchCase, ty::Type};
+    use ast::{expr::MatchCase, remove_span::remove_span, span::dummy_span, ty::Type};
     use lexer::scan;
 
     use crate::ParserError;
 
     use super::*;
 
-    fn parse(input: &str) -> Result<Spanned<Expr>, ParserError> {
-        crate::parse(scan(input).unwrap())
+    fn parse(input: &str) -> Result<WithSpan<Expr>, ParserError> {
+        crate::parse(scan(input).unwrap()).map(|mut with_span| {
+            remove_span(&mut with_span);
+            with_span
+        })
     }
 
     #[test]
     fn parse_literal_int() {
-        assert_eq!(parse("-12").unwrap().0, Expr::Literal(Literal::Int(-12)));
+        assert_eq!(
+            parse("-12").unwrap().value,
+            Expr::Literal(Literal::Int(-12))
+        );
     }
 
     #[test]
     fn parse_literal_rational() {
         assert_eq!(
-            parse("1/2").unwrap().0,
+            parse("1/2").unwrap().value,
             Expr::Literal(Literal::Rational(1, 2))
         );
     }
@@ -257,7 +275,7 @@ mod tests {
     #[test]
     fn parse_literal_string() {
         assert_eq!(
-            parse(r#""abc""#).unwrap().0,
+            parse(r#""abc""#).unwrap().value,
             Expr::Literal(Literal::String("abc".into()))
         );
     }
@@ -265,11 +283,11 @@ mod tests {
     #[test]
     fn parse_let() {
         assert_eq!(
-            parse("$ 3: 'number ~ ?").unwrap().0,
+            parse("$ 3: 'number ~ ?").unwrap().value,
             Expr::Let {
-                ty: (Type::Number, 5..12),
-                definition: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                body: Box::new((Expr::Hole, 15..16)),
+                ty: dummy_span(Type::Number),
+                definition: Box::new(dummy_span(Expr::Literal(Literal::Int(3)))),
+                body: Box::new(dummy_span(Expr::Hole)),
             }
         );
     }
@@ -277,25 +295,27 @@ mod tests {
     #[test]
     fn parse_perform() {
         assert_eq!(
-            parse("! ? => 'string").unwrap().0,
+            parse("! ? => 'string").unwrap().value,
             Expr::Perform {
-                input: Box::new((Expr::Hole, 2..3)),
-                output: (Type::String, 7..14),
+                input: Box::new(dummy_span(Expr::Hole)),
+                output: dummy_span(Type::String),
             }
         );
     }
 
     #[test]
     fn parse_handle() {
-        let trait_ = parse(r#"'handle ? ~ 'number => 'string -> 3"#).unwrap().0;
+        let trait_ = parse(r#"'handle ? ~ 'number => 'string -> 3"#)
+            .unwrap()
+            .value;
         assert_eq!(
             trait_,
             Expr::Handle {
-                expr: Box::new((Expr::Hole, 8..9)),
+                expr: Box::new(dummy_span(Expr::Hole)),
                 handlers: vec![Handler {
-                    input: (Type::Number, 12..19),
-                    output: (Type::String, 23..30),
-                    handler: (Expr::Literal(Literal::Int(3)), 34..35),
+                    input: dummy_span(Type::Number),
+                    output: dummy_span(Type::String),
+                    handler: dummy_span(Expr::Literal(Literal::Int(3))),
                 }],
             }
         );
@@ -304,13 +324,13 @@ mod tests {
     #[test]
     fn parse_call() {
         assert_eq!(
-            parse("> 'a add ~ 1, 2.").unwrap().0,
+            parse("> 'a add ~ 1, 2.").unwrap().value,
             Expr::Apply {
-                function: (Type::Variable("add".into()), 2..8),
+                function: dummy_span(Type::Variable("add".into())),
                 link_name: LinkName::None,
                 arguments: vec![
-                    (Expr::Literal(Literal::Int(1)), 11..12),
-                    (Expr::Literal(Literal::Int(2)), 14..15)
+                    dummy_span(Expr::Literal(Literal::Int(1))),
+                    dummy_span(Expr::Literal(Literal::Int(2)))
                 ],
             }
         );
@@ -319,9 +339,9 @@ mod tests {
     #[test]
     fn parse_reference() {
         assert_eq!(
-            parse("& 'a x").unwrap().0,
+            parse("& 'a x").unwrap().value,
             Expr::Apply {
-                function: (Type::Variable("x".into()), 2..6),
+                function: dummy_span(Type::Variable("x".into())),
                 link_name: LinkName::None,
                 arguments: vec![],
             }
@@ -331,10 +351,10 @@ mod tests {
     #[test]
     fn parse_product() {
         assert_eq!(
-            parse("* 1, ?").unwrap().0,
+            parse("* 1, ?").unwrap().value,
             Expr::Product(vec![
-                (Expr::Literal(Literal::Int(1)), 2..3),
-                (Expr::Hole, 5..6),
+                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Hole),
             ])
         );
     }
@@ -342,10 +362,10 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ 'number, _ -> ?"#).unwrap().0,
+            parse(r#"\ 'number, _ -> ?"#).unwrap().value,
             Expr::Function {
-                parameters: vec![(Type::Number, 2..9), (Type::Infer, 11..12)],
-                body: Box::new((Expr::Hole, 16..17)),
+                parameters: vec![dummy_span(Type::Number), dummy_span(Type::Infer)],
+                body: Box::new(dummy_span(Expr::Hole)),
             },
         );
     }
@@ -353,11 +373,11 @@ mod tests {
     #[test]
     fn parse_array() {
         assert_eq!(
-            parse("[1, ?, ?]").unwrap().0,
+            parse("[1, ?, ?]").unwrap().value,
             Expr::Vector(vec![
-                (Expr::Literal(Literal::Int(1)), 1..2),
-                (Expr::Hole, 4..5),
-                (Expr::Hole, 7..8),
+                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Hole),
+                dummy_span(Expr::Hole),
             ])
         );
     }
@@ -365,11 +385,11 @@ mod tests {
     #[test]
     fn parse_set() {
         assert_eq!(
-            parse("{1, ?, ?}").unwrap().0,
+            parse("{1, ?, ?}").unwrap().value,
             Expr::Set(vec![
-                (Expr::Literal(Literal::Int(1)), 1..2),
-                (Expr::Hole, 4..5),
-                (Expr::Hole, 7..8),
+                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Hole),
+                dummy_span(Expr::Hole),
             ])
         );
     }
@@ -377,10 +397,10 @@ mod tests {
     #[test]
     fn parse_type_annotation() {
         assert_eq!(
-            parse("^?: 'number").unwrap().0,
+            parse("^?: 'number").unwrap().value,
             Expr::Typed {
-                item: Box::new((Expr::Hole, 1..2)),
-                ty: (Type::Number, 4..11),
+                item: Box::new(dummy_span(Expr::Hole)),
+                ty: dummy_span(Type::Number),
             }
         );
     }
@@ -388,10 +408,10 @@ mod tests {
     #[test]
     fn parse_attribute() {
         assert_eq!(
-            parse("# 3 ~ ?").unwrap().0,
+            parse("# 3 ~ ?").unwrap().value,
             Expr::Attribute {
-                attr: Box::new((Expr::Literal(Literal::Int(3)), 2..3)),
-                item: Box::new((Expr::Hole, 6..7)),
+                attr: Box::new(dummy_span(Expr::Literal(Literal::Int(3)))),
+                item: Box::new(dummy_span(Expr::Hole)),
             }
         );
     }
@@ -399,10 +419,10 @@ mod tests {
     #[test]
     fn parse_brand() {
         assert_eq!(
-            parse("'brand a, b. ~ ?").unwrap().0,
+            parse("'brand a, b. ~ ?").unwrap().value,
             Expr::Brand {
                 brands: vec!["a".into(), "b".into()],
-                item: Box::new((Expr::Hole, 15..16)),
+                item: Box::new(dummy_span(Expr::Hole)),
             }
         );
     }
@@ -418,17 +438,17 @@ mod tests {
             "#
             )
             .unwrap()
-            .0,
+            .value,
             Expr::Match {
-                of: Box::new((Expr::Hole, 15..16)),
+                of: Box::new(dummy_span(Expr::Hole)),
                 cases: vec![
                     MatchCase {
-                        ty: (Type::Number, 31..38),
-                        expr: (Expr::Literal(Literal::String("number".into())), 42..50),
+                        ty: dummy_span(Type::Number),
+                        expr: dummy_span(Expr::Literal(Literal::String("number".into()))),
                     },
                     MatchCase {
-                        ty: (Type::String, 64..71),
-                        expr: (Expr::Literal(Literal::String("string".into())), 75..83),
+                        ty: dummy_span(Type::String),
+                        expr: dummy_span(Expr::Literal(Literal::String("string".into()))),
                     },
                 ]
             }
@@ -446,24 +466,21 @@ mod tests {
             "#
             )
             .unwrap()
-            .0,
+            .value,
             Expr::Match {
-                of: Box::new((
-                    Expr::Apply {
-                        function: (Type::Variable("x".into()), 17..21),
-                        link_name: LinkName::None,
-                        arguments: vec![]
-                    },
-                    15..21
-                )),
+                of: Box::new(dummy_span(Expr::Apply {
+                    function: dummy_span(Type::Variable("x".into())),
+                    link_name: LinkName::None,
+                    arguments: vec![]
+                },)),
                 cases: vec![
                     MatchCase {
-                        ty: (Type::Number, 34..41),
-                        expr: (Expr::Literal(Literal::String("number".into())), 45..53),
+                        ty: dummy_span(Type::Number),
+                        expr: dummy_span(Expr::Literal(Literal::String("number".into()))),
                     },
                     MatchCase {
-                        ty: (Type::String, 67..74),
-                        expr: (Expr::Literal(Literal::String("string".into())), 78..86),
+                        ty: dummy_span(Type::String),
+                        expr: dummy_span(Expr::Literal(Literal::String("string".into()))),
                     },
                 ]
             }
@@ -473,10 +490,10 @@ mod tests {
     #[test]
     fn parse_label() {
         assert_eq!(
-            parse("@true *").unwrap().0,
+            parse("@true *").unwrap().value,
             Expr::Label {
                 label: "true".into(),
-                item: Box::new((Expr::Product(vec![]), 6..7)),
+                item: Box::new(dummy_span(Expr::Product(vec![]))),
             }
         );
     }
@@ -484,18 +501,15 @@ mod tests {
     #[test]
     fn parse_comment() {
         assert_eq!(
-            parse("(a)*(b)").unwrap().0,
+            parse("(a)*(b)").unwrap().value,
             Expr::Comment {
                 position: CommentPosition::Prefix,
                 text: "(a)".into(),
-                item: Box::new((
-                    Expr::Comment {
-                        position: CommentPosition::Suffix,
-                        text: "(b)".into(),
-                        item: Box::new((Expr::Product(vec![]), 3..4)),
-                    },
-                    3..7
-                )),
+                item: Box::new(dummy_span(Expr::Comment {
+                    position: CommentPosition::Suffix,
+                    text: "(b)".into(),
+                    item: Box::new(dummy_span(Expr::Product(vec![]))),
+                },)),
             }
         );
     }

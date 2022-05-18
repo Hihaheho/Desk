@@ -347,14 +347,14 @@ mod tests {
         stmt::{ATerminator, StmtBind},
         var::AVar,
     };
-    use ids::IrId;
+    use ids::NodeId;
 
     use super::*;
 
     #[test]
     fn simple() {
         let thir = TypedHir {
-            id: IrId::default(),
+            id: NodeId::default(),
             ty: Type::Number,
             expr: thir::Expr::Literal(thir::Literal::Int(1)),
         };

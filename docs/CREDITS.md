@@ -16,7 +16,7 @@ Influenced by:
 - [Unison](https://www.unison-lang.org) for content-addressable implementation
 - [Flix](https://flix.dev) for 🚧 embedded logic programming
 - [Rust](https://www.rust-lang.org) for;
-  - 🚧 trait (type class)
+  - 🚧 trait
   - 🚧 zero-cost abstraction
   - 🚧 linear type
 

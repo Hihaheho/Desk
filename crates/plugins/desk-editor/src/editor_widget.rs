@@ -75,13 +75,14 @@ impl Widget<egui::Context> for EditorWidget {
                     }
                 }
             }
-            if let Some(target) = &ctx
+            if let Some(target) = ctx
                 .kernel
                 .get_state::<EditorState>()
                 .unwrap()
                 .child_addition_target
+                .clone()
             {
-                if *target != self.node_id {
+                if target != self.node_id {
                     if ui.button("Add this as a child").clicked() {
                         ctx.kernel.commit(Event::PatchChildren {
                             node_id: target.clone(),

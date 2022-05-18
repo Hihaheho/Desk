@@ -1,4 +1,7 @@
-use ast::{expr::Expr, span::Span};
+use ast::{
+    expr::Expr,
+    span::{Span, WithSpan},
+};
 use chumsky::prelude::Simple;
 use textual_diagnostics::{Report, TextualDiagnostics};
 use thiserror::Error;
@@ -8,7 +11,7 @@ pub mod common;
 pub mod expr;
 pub mod ty;
 
-pub fn parse(input: Vec<(Token, Span)>) -> Result<(Expr, Span), ParserError> {
+pub fn parse(input: Vec<(Token, Span)>) -> Result<WithSpan<Expr>, ParserError> {
     use chumsky::prelude::*;
     use chumsky::Stream;
     expr::parser()

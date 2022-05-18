@@ -1,51 +1,51 @@
-use crate::{expr::Expr, span::Spanned};
+use crate::{expr::Expr, span::WithSpan};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Effect {
-    pub input: Spanned<Type>,
-    pub output: Spanned<Type>,
+    pub input: WithSpan<Type>,
+    pub output: WithSpan<Type>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Brand {
         brand: String,
-        item: Box<Spanned<Type>>,
+        item: Box<WithSpan<Type>>,
     },
     Number,
     String,
-    Trait(Vec<Spanned<Self>>),
+    Trait(Vec<WithSpan<Self>>),
     Effectful {
-        ty: Box<Spanned<Self>>,
-        effects: Spanned<EffectExpr>,
+        ty: Box<WithSpan<Self>>,
+        effects: WithSpan<EffectExpr>,
     },
     Infer,
     This,
-    Product(Vec<Spanned<Self>>),
-    Sum(Vec<Spanned<Self>>),
+    Product(Vec<WithSpan<Self>>),
+    Sum(Vec<WithSpan<Self>>),
     Function {
-        parameters: Vec<Spanned<Self>>,
-        body: Box<Spanned<Self>>,
+        parameters: Vec<WithSpan<Self>>,
+        body: Box<WithSpan<Self>>,
     },
-    Array(Box<Spanned<Self>>),
-    Set(Box<Spanned<Self>>),
+    Array(Box<WithSpan<Self>>),
+    Set(Box<WithSpan<Self>>),
     Let {
         variable: String,
-        body: Box<Spanned<Self>>,
+        body: Box<WithSpan<Self>>,
     },
     Variable(String),
     BoundedVariable {
-        bound: Box<Spanned<Self>>,
+        bound: Box<WithSpan<Self>>,
         identifier: String,
     },
     Attribute {
-        attr: Box<Spanned<Expr>>,
-        ty: Box<Spanned<Self>>,
+        attr: Box<WithSpan<Expr>>,
+        ty: Box<WithSpan<Self>>,
     },
     Comment {
         position: CommentPosition,
         text: String,
-        item: Box<Spanned<Self>>,
+        item: Box<WithSpan<Self>>,
     },
 }
 
@@ -57,14 +57,14 @@ pub enum CommentPosition {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum EffectExpr {
-    Effects(Vec<Spanned<Effect>>),
-    Add(Vec<Spanned<EffectExpr>>),
+    Effects(Vec<WithSpan<Effect>>),
+    Add(Vec<WithSpan<EffectExpr>>),
     Sub {
-        minuend: Box<Spanned<EffectExpr>>,
-        subtrahend: Box<Spanned<EffectExpr>>,
+        minuend: Box<WithSpan<EffectExpr>>,
+        subtrahend: Box<WithSpan<EffectExpr>>,
     },
     Apply {
-        function: Box<Spanned<Type>>,
-        arguments: Vec<Spanned<Type>>,
+        function: Box<WithSpan<Type>>,
+        arguments: Vec<WithSpan<Type>>,
     },
 }

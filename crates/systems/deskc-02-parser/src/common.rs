@@ -1,4 +1,4 @@
-use ast::span::Spanned;
+use ast::span::WithSpan;
 use chumsky::{
     combinator::{Map, OrNot, SeparatedBy, Then},
     prelude::*,
@@ -31,17 +31,17 @@ pub(crate) fn parse_uuid() -> impl Parser<Token, Uuid, Error = Simple<Token>> + 
 
 pub(crate) fn parse_op<U, O>(
     op: impl Parser<Token, U, Error = Simple<Token>> + Clone,
-    item: impl Parser<Token, Spanned<O>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, Vec<Spanned<O>>, Error = Simple<Token>> + Clone {
+    item: impl Parser<Token, WithSpan<O>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, Vec<WithSpan<O>>, Error = Simple<Token>> + Clone {
     op.ignore_then(item.separated_by_comma())
 }
 
 pub(crate) fn parse_function<A, O, U>(
     op: impl Parser<Token, U, Error = Simple<Token>> + Clone,
-    args: impl Parser<Token, Spanned<A>, Error = Simple<Token>> + Clone,
+    args: impl Parser<Token, WithSpan<A>, Error = Simple<Token>> + Clone,
     arrow: impl Parser<Token, U, Error = Simple<Token>> + Clone,
-    output: impl Parser<Token, Spanned<O>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Vec<Spanned<A>>, Spanned<O>), Error = Simple<Token>> + Clone {
+    output: impl Parser<Token, WithSpan<O>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (Vec<WithSpan<A>>, WithSpan<O>), Error = Simple<Token>> + Clone {
     op.ignore_then(args.separated_by(just(Token::Comma)))
         .then_ignore(arrow)
         .then(output)
@@ -49,17 +49,17 @@ pub(crate) fn parse_function<A, O, U>(
 
 pub(crate) fn parse_collection<T>(
     begin: Token,
-    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
+    item: impl Parser<Token, WithSpan<T>, Error = Simple<Token>> + Clone,
     end: Token,
-) -> impl Parser<Token, Vec<Spanned<T>>, Error = Simple<Token>> + Clone {
+) -> impl Parser<Token, Vec<WithSpan<T>>, Error = Simple<Token>> + Clone {
     item.separated_by(just(Token::Comma))
         .delimited_by(just(begin), just(end))
 }
 
 pub(crate) fn parse_typed<I, T>(
-    item: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
-    ty: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
+    item: impl Parser<Token, WithSpan<I>, Error = Simple<Token>> + Clone,
+    ty: impl Parser<Token, WithSpan<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (WithSpan<I>, WithSpan<T>), Error = Simple<Token>> + Clone {
     just(Token::FromHere)
         .ignore_then(item)
         .then_ignore(just(Token::TypeAnnotation))
@@ -67,9 +67,9 @@ pub(crate) fn parse_typed<I, T>(
 }
 
 pub(crate) fn parse_attr<I, T>(
-    attr: impl Parser<Token, Spanned<I>, Error = Simple<Token>> + Clone,
-    item: impl Parser<Token, Spanned<T>, Error = Simple<Token>> + Clone,
-) -> impl Parser<Token, (Spanned<I>, Spanned<T>), Error = Simple<Token>> + Clone {
+    attr: impl Parser<Token, WithSpan<I>, Error = Simple<Token>> + Clone,
+    item: impl Parser<Token, WithSpan<T>, Error = Simple<Token>> + Clone,
+) -> impl Parser<Token, (WithSpan<I>, WithSpan<T>), Error = Simple<Token>> + Clone {
     just(Token::Attribute).ignore_then(attr).in_().then(item)
 }
 

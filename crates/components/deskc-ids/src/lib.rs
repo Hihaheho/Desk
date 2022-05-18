@@ -30,16 +30,7 @@ pub struct CardId(pub Uuid);
 pub struct FileId(pub Uuid);
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
-pub struct IrId(pub Uuid);
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct NodeId(pub Uuid);
-
-impl IrId {
-    pub fn new() -> Self {
-        IrId(Uuid::new_v4())
-    }
-}
 
 impl NodeId {
     pub fn new() -> Self {

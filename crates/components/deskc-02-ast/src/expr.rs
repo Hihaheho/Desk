@@ -2,7 +2,7 @@ pub use ids::LinkName;
 use uuid::Uuid;
 
 use crate::{
-    span::Spanned,
+    span::WithSpan,
     ty::{CommentPosition, Type},
 };
 
@@ -19,90 +19,90 @@ impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
-    pub input: Spanned<Type>,
-    pub output: Spanned<Type>,
-    pub handler: Spanned<Expr>,
+    pub input: WithSpan<Type>,
+    pub output: WithSpan<Type>,
+    pub handler: WithSpan<Expr>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
     Let {
-        ty: Spanned<Type>,
-        definition: Box<Spanned<Self>>,
-        body: Box<Spanned<Self>>,
+        ty: WithSpan<Type>,
+        definition: Box<WithSpan<Self>>,
+        body: Box<WithSpan<Self>>,
     },
     Perform {
-        input: Box<Spanned<Self>>,
-        output: Spanned<Type>,
+        input: Box<WithSpan<Self>>,
+        output: WithSpan<Type>,
     },
     Continue {
-        input: Box<Spanned<Self>>,
-        output: Option<Spanned<Type>>,
+        input: Box<WithSpan<Self>>,
+        output: Option<WithSpan<Type>>,
     },
     Handle {
-        expr: Box<Spanned<Self>>,
+        expr: Box<WithSpan<Self>>,
         handlers: Vec<Handler>,
     },
     Apply {
-        function: Spanned<Type>,
+        function: WithSpan<Type>,
         link_name: LinkName,
-        arguments: Vec<Spanned<Self>>,
+        arguments: Vec<WithSpan<Self>>,
     },
-    Product(Vec<Spanned<Self>>),
+    Product(Vec<WithSpan<Self>>),
     Match {
-        of: Box<Spanned<Self>>,
+        of: Box<WithSpan<Self>>,
         cases: Vec<MatchCase>,
     },
     Typed {
-        ty: Spanned<Type>,
-        item: Box<Spanned<Self>>,
+        ty: WithSpan<Type>,
+        item: Box<WithSpan<Self>>,
     },
     Hole,
     Function {
-        parameters: Vec<Spanned<Type>>,
-        body: Box<Spanned<Self>>,
+        parameters: Vec<WithSpan<Type>>,
+        body: Box<WithSpan<Self>>,
     },
-    Vector(Vec<Spanned<Self>>),
-    Set(Vec<Spanned<Self>>),
+    Vector(Vec<WithSpan<Self>>),
+    Set(Vec<WithSpan<Self>>),
     Import {
-        ty: Spanned<Type>,
+        ty: WithSpan<Type>,
         uuid: Option<Uuid>,
     },
     Export {
-        ty: Spanned<Type>,
+        ty: WithSpan<Type>,
     },
     Attribute {
-        attr: Box<Spanned<Self>>,
-        item: Box<Spanned<Self>>,
+        attr: Box<WithSpan<Self>>,
+        item: Box<WithSpan<Self>>,
     },
     Brand {
         brands: Vec<String>,
-        item: Box<Spanned<Self>>,
+        item: Box<WithSpan<Self>>,
     },
     Label {
         label: String,
-        item: Box<Spanned<Self>>,
+        item: Box<WithSpan<Self>>,
     },
     NewType {
         ident: String,
-        ty: Spanned<Type>,
-        expr: Box<Spanned<Self>>,
+        ty: WithSpan<Type>,
+        expr: Box<WithSpan<Self>>,
     },
     Comment {
         position: CommentPosition,
         text: String,
-        item: Box<Spanned<Self>>,
+        item: Box<WithSpan<Self>>,
     },
     Card {
         uuid: Uuid,
-        item: Box<Spanned<Self>>,
-        next: Option<Box<Spanned<Self>>>,
+        item: Box<WithSpan<Self>>,
+        next: Option<Box<WithSpan<Self>>>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MatchCase {
-    pub ty: Spanned<Type>,
-    pub expr: Spanned<Expr>,
+    pub ty: WithSpan<Type>,
+    pub expr: WithSpan<Expr>,
 }

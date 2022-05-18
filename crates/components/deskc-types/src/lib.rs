@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ids::IrId;
+use ids::NodeId;
 
 pub type Id = usize;
 
@@ -92,11 +92,11 @@ impl Type {
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Types {
-    pub types: HashMap<IrId, Type>,
+    pub types: HashMap<NodeId, Type>,
 }
 
 impl Types {
-    pub fn get(&self, id: &IrId) -> Option<&Type> {
+    pub fn get(&self, id: &NodeId) -> Option<&Type> {
         self.types.get(id)
     }
 }

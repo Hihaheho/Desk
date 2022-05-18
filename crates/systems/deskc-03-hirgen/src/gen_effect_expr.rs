@@ -1,4 +1,4 @@
-use ast::span::Spanned;
+use ast::span::WithSpan;
 use hir::{
     meta::WithMeta,
     ty::{Effect, EffectExpr},
@@ -9,21 +9,31 @@ use crate::{error::HirGenError, HirGen};
 impl HirGen {
     pub fn gen_effect_expr(
         &self,
-        expr: &Spanned<ast::ty::EffectExpr>,
+        expr: &WithSpan<ast::ty::EffectExpr>,
     ) -> Result<WithMeta<EffectExpr>, HirGenError> {
-        let (expr, span) = expr;
-        self.push_span(span.clone());
+        let WithSpan {
+            id,
+            value: expr,
+            span,
+        } = expr;
+        self.push_span(id.clone(), span.clone());
         let expr = match expr {
             ast::ty::EffectExpr::Effects(effects) => self.with_meta(EffectExpr::Effects(
                 effects
                     .iter()
-                    .map(|(effect, span)| {
-                        self.push_span(span.clone());
-                        Ok(self.with_meta(Effect {
-                            input: self.gen_type(&effect.input)?,
-                            output: self.gen_type(&effect.output)?,
-                        }))
-                    })
+                    .map(
+                        |WithSpan {
+                             id,
+                             value: effect,
+                             span,
+                         }| {
+                            self.push_span(id.clone(), span.clone());
+                            Ok(self.with_meta(Effect {
+                                input: self.gen_type(&effect.input)?,
+                                output: self.gen_type(&effect.output)?,
+                            }))
+                        },
+                    )
                     .collect::<Result<_, _>>()?,
             )),
             ast::ty::EffectExpr::Add(exprs) => self.with_meta(EffectExpr::Add(
