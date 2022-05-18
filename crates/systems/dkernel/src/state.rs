@@ -1,5 +1,3 @@
-
-
 use components::{event::Event, snapshot::Snapshot};
 use downcast_rs::{impl_downcast, Downcast};
 

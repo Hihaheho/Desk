@@ -38,13 +38,12 @@ pub fn process_kernel(mut kernel: Query<&mut Kernel>) {
 }
 
 pub fn compile_system(mut kernel: Query<&mut Kernel>) {
-    for mut kernel in kernel.iter_mut() {
-    }
+    for _kernel in kernel.iter_mut() {}
 }
 
 pub fn editor(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWindow>>) {
     if let Ok((mut window, kernel)) = window.get_single_mut() {
-        for (id, node) in kernel.snapshot.flat_nodes.iter() {
+        for (id, _node) in kernel.snapshot.flat_nodes.iter() {
             window.add_widget(
                 WidgetId::new(),
                 EditorWidget {

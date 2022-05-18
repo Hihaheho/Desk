@@ -5,7 +5,7 @@ pub trait Widget<T> {
     fn render<'a>(&mut self, ctx: &mut Ctx<'a, T>);
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct WidgetId(pub Uuid);
 
 impl WidgetId {

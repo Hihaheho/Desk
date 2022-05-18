@@ -41,19 +41,19 @@ dkernel-firestore
 dkernel-in-memory
 
 # desk components
-dwm-ui
 desk-theme
 desk-physics
 desk-system-ordering
 desk-terminal
-
-# desk systems
-dwm
+desk-command
+desk-window
 
 # desk plugins
 desk-egui
 desk-rapier2d
 desk-touchpanel
+desk-editor
+desk-guide
 
 # desk apps
 desk-x

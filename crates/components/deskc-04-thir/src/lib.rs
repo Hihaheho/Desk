@@ -1,7 +1,7 @@
 pub mod visitor;
 
-use ids::NodeId;
 pub use ids::LinkName;
+use ids::NodeId;
 use types::{Effect, Type};
 
 pub type Id = usize;

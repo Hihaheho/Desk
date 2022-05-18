@@ -11,9 +11,9 @@ pub struct WithSpan<T> {
 }
 
 pub fn dummy_span<T>(value: T) -> WithSpan<T> {
-	WithSpan {
-		id: NodeId(Uuid::default()),
-		span: 0..0,
-		value,
-	}
+    WithSpan {
+        id: NodeId(Uuid::default()),
+        span: 0..0,
+        value,
+    }
 }

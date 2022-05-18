@@ -47,8 +47,8 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dkernel_components::content::Content::Rational(a, b) => todo!(),
-                    dkernel_components::content::Content::Float(float) => todo!(),
+                    dkernel_components::content::Content::Rational(_a, _b) => todo!(),
+                    dkernel_components::content::Content::Float(_float) => todo!(),
                     dkernel_components::content::Content::Apply { ty, .. } => {
                         let mut clicked = None;
                         ui.label(format!("{:?}", ty));
@@ -82,20 +82,18 @@ impl Widget<egui::Context> for EditorWidget {
                 .child_addition_target
                 .clone()
             {
-                if target != self.node_id {
-                    if ui.button("Add this as a child").clicked() {
-                        ctx.kernel.commit(Event::PatchChildren {
-                            node_id: target.clone(),
-                            patch: ChildrenPatch::Insert {
-                                index: 0,
-                                node: self.node_id.clone(),
-                            },
-                        });
-                        ctx.kernel
-                            .get_state_mut::<EditorState>()
-                            .unwrap()
-                            .child_addition_target = None;
-                    }
+                if target != self.node_id && ui.button("Add this as a child").clicked() {
+                    ctx.kernel.commit(Event::PatchChildren {
+                        node_id: target,
+                        patch: ChildrenPatch::Insert {
+                            index: 0,
+                            node: self.node_id.clone(),
+                        },
+                    });
+                    ctx.kernel
+                        .get_state_mut::<EditorState>()
+                        .unwrap()
+                        .child_addition_target = None;
                 }
             }
         });
