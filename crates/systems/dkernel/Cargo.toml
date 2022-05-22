@@ -31,4 +31,4 @@ downcast-rs = "1.2.0"
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 
 uuid = { version = "1.0", features = ["v4"] }
-mry = "0.2.1"
+mry = "0.2.2"
