@@ -15,4 +15,4 @@ deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = 
 types = { path = "../deskc-types", version = "0.0.0", package = "deskc-types" }
 hir = { path = "../deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 
-uuid = "1.0"
+uuid = "1.1"
