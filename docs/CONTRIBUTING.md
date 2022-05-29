@@ -1,5 +1,11 @@
 # Contribution Guide for Desk
 
+## Flowchart
+
+1. If you have a question -> [Create a new discussion if not exists](https://github.com/Hihaheho/Desk/discussions/categories/q-a)
+2. If you have a feature request or a bug you found -> [Create a new issue if not exists](https://github.com/Hihaheho/Desk/issues)
+3. If you have a nice code to merge -> [Open a pull request](https://github.com/Hihaheho/Desk/compare)
+
 ## Getting started
 
 1. Fork [Hihaheho/Desk](https://github.com/Hihaheho/Desk)
@@ -64,21 +70,18 @@
 
 ## The big picture of Desk
 
-### Desk-lang
+- **Desk-lang**
+  - The most core thing of Desk.
+  - Using Desk is ultimately decomposed into manipulating and interacting with the language.
+- **Dkernel**
+  - Dkernel is like file system in OS.
+    - An API set and data store for developing Dplugins.
+    - Permission management
+    - Collaboration support
+- **Dplugin**
+  - Each dplugin adds a unique feature for Desk app.
 
-The most core thing of Desk. Using Desk is ultimately decomposed into manipulating and interacting with the language.
-
-### Dkernel
-
-Dkernel is a API set for developing Dplugins.
-Dkernel is like file system in OS
-Data store
-Permission management
-Collaboration support
-
-### Dplugin
-
-Each Dplugin adds a unique interactive surface to Desk-lang by communicating with Dkernel.
+![Screen Shot 0004-05-29 at 11 33 08](https://user-images.githubusercontent.com/8780513/170849556-1fdb2246-a9fe-4753-80a7-b547cce2e486.png)
 
 ## Dplugin guide
 
@@ -105,10 +108,26 @@ Flowchart
 
 ### Execution
 
-Currently there is only a interpreter called MIR Evaluator (mireval)
-Mireval executes a concrere MIR by statement by statement   
+- Currently there is only a interpreter called MIR Evaluator (mireval).
+- Mireval executes a concrere MIR by statement by statement.
 
 ## Dkernel guide
+
+### Terminolopy
+
+- **event** - an enum data that describes how AST is modified
+- **repository** - an object that stores events
+- **audit** - filters denied events
+- **snapshot** - all AST data
+
+### Lifecycle
+
+1. `Kernel::process` is called
+2. Poll events from repository
+3. Audit events
+4. Handle events for internal
+5. Handle events for kernel states
+6. Handle events for snapshot
 
 ## Coding guidelines
 
