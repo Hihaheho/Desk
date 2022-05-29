@@ -80,7 +80,7 @@ Yes.
 
 ## Resources
 
-- [Visualized codebase](https://mango-dune-07a8b7110.1.azurestaticapps.net/?repo=Hihaheho%2FDesk)
+- [Contributing Guide](https://github.com/Hihaheho/Desk/blob/main/docs/CONTRIBUTING.md)
 
 ## Join our community
 
