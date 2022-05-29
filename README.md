@@ -34,11 +34,7 @@ Desk is powered by several systems:
 
 - Desk Programming Language (Desk-lang)
 - Desk Kernel (dkernel)
-- Desk Editor
-- Desk Virtual Machine (DeskVM)
-- Desk Compiler (deskc)
-- Desk Window Manager (DeskWM)
-- and so on ...
+- Desk Plugins (dplugins)
 
 ### Desk Programming Language
 
@@ -48,12 +44,13 @@ Desk-lang is a programming language which has:
 - Type system with inference
 - Algebraic effects
 - Content-addressable by type and UUID
+- Incremental compilation
 
-Any data and programs on Desk apps are finally evaluated as snippets of Desk-lang.
+Most of data and programs on Desk apps are finally evaluated as a snippet of Desk-lang.
 
 ### Desk Kernel
 
-Dkernel is a platform-agnostic environment for writing and running Desk-lang. Functionalities and UIs of Desk apps are made up by syscall of Dkernel.
+Dkernel is a platform-agnostic environment for editing Desk-lang.
 
 Dkernel provides these features:
 
@@ -65,12 +62,14 @@ Dkernel provides these features:
 
 🚧 not yet implemented
 
-### Other systems
+### Desk Plugins
 
-- Desk Editor provides 🚧 type-driven UI for Desk-lang
-- DeskVM provides 🚧 incremental computation
-- Deskc provides 🚧 incremental compilation
-- DeskWM provides 🚧 3D/2D rendering with meshes
+There are many dplugins. Each dplugin implements single feature for Desk.
+
+- **Desk Editor** is an default editor for Desk-lang
+- **Desk Runtime** is an default runtime for Desk-lang
+- **Desk Guide** provides 🚧 interactive tutorials of Desk
+- **Desk Craft** provides 🚧 3D/2D rendering with meshes
 
 🚧 not yet implemented
 
