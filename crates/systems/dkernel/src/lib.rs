@@ -5,6 +5,7 @@ mod history;
 pub mod query_result;
 pub mod repository;
 pub mod state;
+pub mod prelude;
 
 use std::{any::TypeId, collections::HashMap};
 
@@ -85,7 +86,7 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{FileId, LinkName, NodeId};
+    use deskc_ids::{FileId, IrId, LinkName, NodeId};
     use deskc_types::Type;
     use hirs::HirQueries;
 

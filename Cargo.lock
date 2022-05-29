@@ -1516,9 +1516,12 @@ dependencies = [
  "desk-system-ordering",
  "desk-window",
  "deskc-ids",
+ "deskc-types",
  "dkernel",
  "dkernel-components",
  "egui",
+ "egui_cable",
+ "uuid 1.0.0",
 ]
 
 [[package]]
@@ -1951,6 +1954,16 @@ dependencies = [
  "ahash 0.7.6",
  "epaint",
  "nohash-hasher",
+]
+
+[[package]]
+name = "egui_cable"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d21e5278043c6f1fbf6841f94f5ccca6cd2f3ab6b66c34a971349bbdc277c464"
+dependencies = [
+ "egui",
+ "epaint",
 ]
 
 [[package]]

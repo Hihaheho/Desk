@@ -1,5 +1,7 @@
+mod compile;
 mod editor_state;
 mod editor_widget;
+mod runtime;
 
 use bevy::prelude::*;
 use desk_window::window::Window;
