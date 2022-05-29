@@ -88,7 +88,7 @@ mod tests {
         expr::Expr,
         meta::{Meta, WithMeta},
     };
-    use deskc_ids::{FileId, IrId, LinkName, NodeId};
+    use deskc_ids::{FileId, LinkName, NodeId};
     use deskc_types::Type;
     use hirs::HirQueries;
 
