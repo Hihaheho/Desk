@@ -60,12 +60,13 @@
 - `configs/` Config files
 - `tools/` Command line tools for ease of development
 
+- See [visualized codebase](https://mango-dune-07a8b7110.1.azurestaticapps.net/?repo=Hihaheho%2FDesk).
+
 ## The big picture of Desk
 
 ### Desk-lang
 
-The most core thing.
-Using Desk is ultimately decomposed into manipulating of language
+The most core thing of Desk. Using Desk is ultimately decomposed into manipulating and interacting with the language.
 
 ### Dkernel
 
