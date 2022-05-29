@@ -140,7 +140,8 @@ Flowchart
   - If you cannot name it, you should not work on it.
     Feel free to ask someone for naming in [Discussion](https://github.com/Hihaheho/Desk/discussions) or Discord.
 - **Perfect is better than done**
-  - Perfect means "If I would rewrite the code tomorrow, I'll write the same code."
+  - Your code may be used for decades.
+  - Perfect means "If I would rewrite the code after years, I'll write the same code."
   - Perfect does not mean complex or complete.
   - If you don't think your architecture perfect, you should not write any code.
     Feel free to discuss in [Discussion](https://github.com/Hihaheho/Desk/discussions) or Discord.
