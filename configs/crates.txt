@@ -52,8 +52,8 @@ desk-window
 desk-egui
 desk-rapier2d
 desk-touchpanel
-desk-editor
 desk-guide
+desk-editor
 
 # desk apps
 desk-x

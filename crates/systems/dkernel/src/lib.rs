@@ -2,10 +2,10 @@ mod audit;
 mod error;
 mod hirs;
 mod history;
+pub mod prelude;
 pub mod query_result;
 pub mod repository;
 pub mod state;
-pub mod prelude;
 
 use std::{any::TypeId, collections::HashMap};
 
@@ -14,13 +14,15 @@ use bevy_ecs::prelude::Component;
 use components::{event::Event, rules::AuditResponse, snapshot::Snapshot};
 use hirs::Hirs;
 use history::History;
+use parking_lot::Mutex;
 use repository::Repository;
 use state::State;
 
 #[derive(Component)]
 pub struct Kernel {
     repository: Box<dyn Repository + Send + Sync + 'static>,
-    hirs: Hirs,
+    // salsa database is not Sync
+    hirs: Mutex<Hirs>,
     pub snapshot: Snapshot,
     history: History,
     states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
@@ -45,7 +47,7 @@ impl Kernel {
         let entries = self.repository.poll();
         for entry in entries {
             if audit(&self.snapshot, &entry) == AuditResponse::Allowed {
-                self.hirs.handle_event(&entry.event);
+                self.hirs.lock().handle_event(&entry.event);
                 self.history.handle_event(&self.snapshot, &entry.event);
                 for state in self.states.values_mut() {
                     state.handle_event(&self.snapshot, &entry.event);
@@ -215,7 +217,7 @@ mod tests {
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            remove_meta(kernel.hirs.hir(node_a).unwrap().as_ref().clone()),
+            remove_meta(kernel.hirs.lock().hir(node_a).unwrap().as_ref().clone()),
             WithMeta {
                 id: NodeId::default(),
                 meta: Meta::default(),

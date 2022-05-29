@@ -9,7 +9,6 @@ use hir::hir;
 use components::{event::Event, flat_node::FlatNode, node::Node};
 use deskc_hir::meta::WithMeta;
 use deskc_ids::NodeId;
-use salsa::Snapshot;
 
 use crate::query_result::QueryResult;
 
@@ -28,14 +27,6 @@ pub struct Hirs {
 }
 
 impl salsa::Database for Hirs {}
-
-impl salsa::ParallelDatabase for Hirs {
-    fn snapshot(&self) -> salsa::Snapshot<Self> {
-        Snapshot::new(Hirs {
-            storage: self.storage.snapshot(),
-        })
-    }
-}
 
 impl Hirs {
     pub fn handle_event(&mut self, event: &Event) {

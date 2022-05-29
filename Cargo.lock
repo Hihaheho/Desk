@@ -144,12 +144,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arc-swap"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5d78ce20460b82d3fa150275ed9d55e21064fc7951177baacf86a145c4a4b1f"
-
-[[package]]
 name = "ariadne"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1481,16 +1475,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashmap"
-version = "4.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e77a43b28d0668df09411cb0bc9a8c2adc40f9a048afe863e05fd43251e8e39c"
-dependencies = [
- "cfg-if 1.0.0",
- "num_cpus",
-]
-
-[[package]]
 name = "deflate"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1642,7 +1626,7 @@ dependencies = [
  "deskc-mir",
  "deskc-thir",
  "deskc-types",
- "salsa 0.16.1",
+ "salsa",
  "uuid 1.0.0",
 ]
 
@@ -1907,7 +1891,8 @@ dependencies = [
  "dkernel-components",
  "downcast-rs",
  "mry",
- "salsa 0.17.0-pre.2",
+ "parking_lot 0.12.0",
+ "salsa",
  "serde",
  "thiserror",
  "uuid 1.0.0",
@@ -2332,15 +2317,6 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 dependencies = [
  "ahash 0.7.6",
  "serde",
-]
-
-[[package]]
-name = "hashlink"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
-dependencies = [
- "hashbrown",
 ]
 
 [[package]]
@@ -3676,26 +3652,7 @@ dependencies = [
  "oorandom",
  "parking_lot 0.11.2",
  "rustc-hash",
- "salsa-macros 0.16.0",
- "smallvec",
-]
-
-[[package]]
-name = "salsa"
-version = "0.17.0-pre.2"
-source = "git+https://github.com/ryo33/salsa.git?rev=7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34#7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34"
-dependencies = [
- "arc-swap",
- "crossbeam-utils",
- "dashmap",
- "hashlink",
- "indexmap",
- "lock_api",
- "log",
- "oorandom",
- "parking_lot 0.11.2",
- "rustc-hash",
- "salsa-macros 0.17.0-pre.2",
+ "salsa-macros",
  "smallvec",
 ]
 
@@ -3704,17 +3661,6 @@ name = "salsa-macros"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd3904a4ba0a9d0211816177fd34b04c7095443f8cdacd11175064fe541c8fe2"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "salsa-macros"
-version = "0.17.0-pre.2"
-source = "git+https://github.com/ryo33/salsa.git?rev=7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34#7a0e914ea1ca3c2a6d2be50cc47bc5f635dbef34"
 dependencies = [
  "heck",
  "proc-macro2",
