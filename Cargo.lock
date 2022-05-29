@@ -1505,7 +1505,7 @@ dependencies = [
  "dkernel-components",
  "egui",
  "egui_cable",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1591,7 +1591,7 @@ dependencies = [
  "deskc-ids",
  "dkernel",
  "dkernel-components",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1627,7 +1627,7 @@ dependencies = [
  "deskc-thir",
  "deskc-types",
  "salsa",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1655,7 +1655,7 @@ name = "deskc-ast"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1694,7 +1694,7 @@ name = "deskc-hir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1709,7 +1709,7 @@ dependencies = [
  "deskc-parser",
  "pretty_assertions",
  "thiserror",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1717,7 +1717,7 @@ name = "deskc-ids"
 version = "0.0.0"
 dependencies = [
  "serde",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1733,7 +1733,7 @@ dependencies = [
  "deskc-textual-diagnostics",
  "deskc-tokens",
  "thiserror",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1757,7 +1757,7 @@ dependencies = [
  "deskc-textual-diagnostics",
  "deskc-tokens",
  "thiserror",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1829,7 +1829,7 @@ dependencies = [
 name = "deskc-tokens"
 version = "0.0.0"
 dependencies = [
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1895,7 +1895,7 @@ dependencies = [
  "salsa",
  "serde",
  "thiserror",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -1905,7 +1905,7 @@ dependencies = [
  "deskc-hir",
  "deskc-ids",
  "deskc-types",
- "uuid 1.0.0",
+ "uuid 1.1.0",
 ]
 
 [[package]]
@@ -4160,9 +4160,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.0.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cfcd319456c4d6ea10087ed423473267e1a071f3bc0aa89f80d60997843c6f0"
+checksum = "93bbc61e655a4833cf400d0d15bf3649313422fa7572886ad6dab16d79886365"
 dependencies = [
  "getrandom",
  "serde",
