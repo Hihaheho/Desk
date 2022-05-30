@@ -12,4 +12,4 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../deskc-ids", version = "0.0.0", package = "deskc-ids" }
-uuid = "1.0"
+uuid = "1.1"
