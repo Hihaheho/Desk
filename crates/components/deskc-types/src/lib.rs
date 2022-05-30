@@ -24,9 +24,9 @@ pub enum Type {
     },
     Vector(Box<Self>),
     Set(Box<Self>),
-    Variable(Id),
+    Variable(String),
     ForAll {
-        variable: Id,
+        variable: String,
         body: Box<Self>,
     },
     Effectful {

@@ -3,6 +3,8 @@ use crate::{
     Ctx,
 };
 
+use super::Id;
+
 impl Ctx {
     pub(crate) fn gen_type(&self, ty: &Type) -> types::Type {
         match ty {
@@ -30,9 +32,9 @@ impl Ctx {
             }
             Type::Array(ty) => types::Type::Vector(Box::new(self.gen_type(ty))),
             Type::Set(ty) => types::Type::Set(Box::new(self.gen_type(ty))),
-            Type::Variable(id) => types::Type::Variable(*id),
+            Type::Variable(id) => types::Type::Variable(self.get_ident_of(*id)),
             Type::ForAll { variable, body } => types::Type::ForAll {
-                variable: *variable,
+                variable: self.get_ident_of(*variable),
                 body: Box::new(self.gen_type(body)),
             },
             Type::Effectful { ty, effects } => types::Type::Effectful {
@@ -88,5 +90,20 @@ impl Ctx {
                 arguments: arguments.iter().map(|a| self.gen_type(a)).collect(),
             },
         }
+    }
+
+    fn get_ident_of(&self, id: Id) -> String {
+        self.variables_idents
+            .borrow_mut()
+            .entry(id)
+            .or_insert_with(|| {
+                let mut id_str = id.to_string();
+                while self.variables_ids.borrow().contains_key(&id_str) {
+                    id_str.push('\'');
+                }
+                self.variables_ids.borrow_mut().insert(id_str.clone(), id);
+                id_str
+            })
+            .clone()
     }
 }

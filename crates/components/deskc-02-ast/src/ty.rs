@@ -27,7 +27,7 @@ pub enum Type {
         parameters: Vec<WithSpan<Self>>,
         body: Box<WithSpan<Self>>,
     },
-    Array(Box<WithSpan<Self>>),
+    Vector(Box<WithSpan<Self>>),
     Set(Box<WithSpan<Self>>),
     Let {
         variable: String,

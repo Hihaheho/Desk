@@ -3,9 +3,9 @@ use std::sync::Arc;
 use components::node::Node;
 use deskc_ids::NodeId;
 
-use super::HirQueries;
+use super::NodeQueries;
 
-pub(super) fn ast(db: &dyn HirQueries, id: NodeId) -> Arc<Node> {
+pub(super) fn node(db: &dyn NodeQueries, id: NodeId) -> Arc<Node> {
     let flat_node = db.flat_node(id.clone());
     Arc::new(Node {
         id,
@@ -14,7 +14,7 @@ pub(super) fn ast(db: &dyn HirQueries, id: NodeId) -> Arc<Node> {
         children: flat_node
             .children
             .iter()
-            .map(|child_id| db.ast(child_id.clone()).as_ref().clone())
+            .map(|child_id| db.node(child_id.clone()).as_ref().clone())
             .collect(),
         attributes: flat_node.attributes.clone(),
     })

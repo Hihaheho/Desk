@@ -20,9 +20,9 @@ impl TypeConcretizer {
             },
             Type::Vector(ty) => ConcType::Array(Box::new(self.gen_conc_type(ty))),
             Type::Set(ty) => ConcType::Set(Box::new(self.gen_conc_type(ty))),
-            Type::Variable(id) => ConcType::Variable(*id),
+            Type::Variable(id) => ConcType::Variable(id.clone()),
             Type::ForAll { variable, body } => ConcType::ForAll {
-                variable: *variable,
+                variable: variable.clone(),
                 body: Box::new(self.gen_conc_type(body)),
             },
             Type::Effectful { ty, effects } => ConcType::Effectful {

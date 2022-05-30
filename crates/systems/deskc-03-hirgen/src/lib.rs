@@ -31,7 +31,6 @@ pub struct HirGen {
     file_id: FileId,
     next_id: RefCell<usize>,
     next_span: RefCell<Vec<(NodeId, Span)>>,
-    pub variables: RefCell<HashMap<String, usize>>,
     pub attrs: RefCell<HashMap<NodeId, Vec<Expr>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<String>>,
@@ -68,7 +67,7 @@ impl HirGen {
                     .borrow()
                     .get(ident)
                     .cloned()
-                    .unwrap_or_else(|| Type::Variable(self.get_id_of(ident.clone()))),
+                    .unwrap_or_else(|| Type::Variable(ident.clone())),
             ),
             ast::ty::Type::Product(types) => self.with_meta(Type::Product(
                 types
@@ -89,10 +88,10 @@ impl HirGen {
                     .collect::<Result<_, _>>()?,
                 body: Box::new(self.gen_type(body)?),
             }),
-            ast::ty::Type::Array(ty) => self.with_meta(Type::Vector(Box::new(self.gen_type(ty)?))),
+            ast::ty::Type::Vector(ty) => self.with_meta(Type::Vector(Box::new(self.gen_type(ty)?))),
             ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(ty)?))),
             ast::ty::Type::Let { variable, body } => self.with_meta(Type::Let {
-                variable: self.get_id_of(variable.clone()),
+                variable: variable.clone(),
                 body: Box::new(self.gen_type(body)?),
             }),
             ast::ty::Type::BoundedVariable { bound, identifier } => {
@@ -140,7 +139,7 @@ impl HirGen {
         let with_meta = match expr {
             ast::expr::Expr::Literal(literal) => self.with_meta(Expr::Literal(match literal {
                 ast::expr::Literal::String(value) => Literal::String(value.clone()),
-                ast::expr::Literal::Int(value) => Literal::Integer(*value),
+                ast::expr::Literal::Integer(value) => Literal::Integer(*value),
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(*a, *b),
                 ast::expr::Literal::Float(value) => Literal::Float(*value),
             })),
@@ -302,14 +301,6 @@ impl HirGen {
         self.next_span.borrow_mut().pop()
     }
 
-    fn get_id_of(&self, ident: String) -> usize {
-        *self
-            .variables
-            .borrow_mut()
-            .entry(ident)
-            .or_insert_with(|| self.next_id())
-    }
-
     pub fn next_id(&self) -> usize {
         let id = *self.next_id.borrow();
         *self.next_id.borrow_mut() += 1;
@@ -357,11 +348,11 @@ mod tests {
                     link_name: Default::default(),
                     arguments: vec![dummy_span(ast::expr::Expr::Attribute {
                         attr: Box::new(dummy_span(ast::expr::Expr::Literal(
-                            ast::expr::Literal::Int(1)
+                            ast::expr::Literal::Integer(1)
                         ),)),
                         item: Box::new(dummy_span(ast::expr::Expr::Attribute {
                             attr: Box::new(dummy_span(ast::expr::Expr::Literal(
-                                ast::expr::Literal::Int(2)
+                                ast::expr::Literal::Integer(2)
                             ),)),
                             item: Box::new(dummy_span(ast::expr::Expr::Hole)),
                         },)),

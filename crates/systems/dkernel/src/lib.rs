@@ -1,7 +1,7 @@
 mod audit;
 mod error;
-mod hirs;
 mod history;
+mod nodes;
 pub mod prelude;
 pub mod query_result;
 pub mod repository;
@@ -12,8 +12,8 @@ use std::{any::TypeId, collections::HashMap};
 use audit::audit;
 use bevy_ecs::prelude::Component;
 use components::{event::Event, rules::AuditResponse, snapshot::Snapshot};
-use hirs::Hirs;
 use history::History;
+use nodes::Hirs;
 use parking_lot::Mutex;
 use repository::Repository;
 use state::State;
@@ -81,16 +81,15 @@ mod tests {
     use components::rules::{NodeOperation, Rules};
     use components::user::UserId;
     use components::{content::Content, patch::ChildrenPatch};
-    use deskc_hir::expr::Literal;
-    use deskc_hir::helper::remove_meta;
-    use deskc_hir::ty::Type as HirType;
-    use deskc_hir::{
-        expr::Expr,
-        meta::{Meta, WithMeta},
+    use deskc_ast::visitor::remove_node_id;
+    use deskc_ast::{
+        expr::{Expr, Literal},
+        span::WithSpan,
+        ty::Type as AstType,
     };
     use deskc_ids::{FileId, LinkName, NodeId};
     use deskc_types::Type;
-    use hirs::HirQueries;
+    use nodes::NodeQueries;
 
     use super::*;
 
@@ -217,31 +216,31 @@ mod tests {
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            remove_meta(kernel.hirs.lock().hir(node_a).unwrap().as_ref().clone()),
-            WithMeta {
+            remove_node_id(kernel.hirs.lock().ast(node_a).unwrap().as_ref().clone()),
+            WithSpan {
                 id: NodeId::default(),
-                meta: Meta::default(),
+                span: 0..0,
                 value: Expr::Apply {
-                    function: WithMeta {
+                    function: WithSpan {
                         id: NodeId::default(),
-                        meta: Meta::default(),
-                        value: HirType::Function {
-                            parameters: vec![WithMeta {
+                        span: 0..0,
+                        value: AstType::Function {
+                            parameters: vec![WithSpan {
                                 id: NodeId::default(),
-                                meta: Meta::default(),
-                                value: HirType::String
+                                span: 0..0,
+                                value: AstType::String
                             }],
-                            body: Box::new(WithMeta {
+                            body: Box::new(WithSpan {
                                 id: NodeId::default(),
-                                meta: Meta::default(),
-                                value: HirType::Number
+                                span: 0..0,
+                                value: AstType::Number
                             }),
                         }
                     },
                     link_name: LinkName::None,
-                    arguments: vec![WithMeta {
+                    arguments: vec![WithSpan {
                         id: NodeId::default(),
-                        meta: Meta::default(),
+                        span: 0..0,
                         value: Expr::Literal(Literal::String("string".into()))
                     }]
                 }

@@ -156,6 +156,7 @@ mod tests {
 
     #[test]
     fn generic_function() {
+        let x = 102;
         assert_eq!(
             synth(parse(
                 r#"
@@ -163,8 +164,8 @@ mod tests {
             "#
             )),
             Ok(Type::Function {
-                parameter: Box::new(Type::Existential(101)),
-                body: Box::new(Type::Existential(101)),
+                parameter: Box::new(Type::Existential(x)),
+                body: Box::new(Type::Existential(x)),
             })
         );
     }
@@ -199,11 +200,11 @@ mod tests {
                 (
                     2,
                     Type::Function {
-                        parameter: Box::new(Type::Existential(102)),
-                        body: Box::new(Type::Existential(102)),
+                        parameter: Box::new(Type::Existential(103)),
+                        body: Box::new(Type::Existential(103)),
                     },
                 ),
-                (3, Type::Existential(102)),
+                (3, Type::Existential(103)),
                 (4, Type::Number),
                 (5, Type::Number),
                 (6, Type::String),
@@ -248,6 +249,7 @@ mod tests {
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
+        let x = 103;
         assert_eq!(
             get_types(&hirgen, &ctx),
             vec![
@@ -256,7 +258,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::Number),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(102),
+                            input: Type::Existential(x),
                             output: Type::Number,
                         }]),
                     },
@@ -266,7 +268,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(102),
+                            input: Type::Existential(x),
                             output: Type::Number,
                         }]),
                     },
@@ -274,11 +276,11 @@ mod tests {
                 (
                     3,
                     Type::Function {
-                        parameter: Box::new(Type::Existential(102)),
+                        parameter: Box::new(Type::Existential(x)),
                         body: Box::new(Type::Effectful {
                             ty: Box::new(Type::String),
                             effects: EffectExpr::Effects(vec![Effect {
-                                input: Type::Existential(102),
+                                input: Type::Existential(x),
                                 output: Type::Number,
                             }]),
                         }),
@@ -311,34 +313,36 @@ mod tests {
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
-        // x: 1, y: 5, z: 9
+        let x = 102;
+        let y = 107;
+        let z = 112;
         assert_eq!(
             get_types(&hirgen, &ctx),
             vec![
                 (
                     1,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(109)),
+                        ty: Box::new(Type::Existential(z)),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(105),
-                            output: Type::Existential(109),
+                            input: Type::Existential(y),
+                            output: Type::Existential(z),
                         }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(109)),
+                        ty: Box::new(Type::Existential(z)),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(101),
-                            output: Type::Existential(105),
+                            input: Type::Existential(x),
+                            output: Type::Existential(y),
                         }]),
                     },
                 ),
                 (
                     3,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(109)),
+                        ty: Box::new(Type::Existential(z)),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Number,
                             output: Type::String,
@@ -361,6 +365,7 @@ mod tests {
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
+        let x = 102;
         assert_eq!(
             get_types(&hirgen, &ctx),
             vec![
@@ -379,7 +384,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(101),
+                            input: Type::Existential(x),
                             output: Type::Number,
                         }]),
                     },
@@ -417,9 +422,9 @@ mod tests {
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(105)),
+                        ty: Box::new(Type::Existential(107)),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(101),
+                            input: Type::Existential(102),
                             output: Type::Number,
                         }]),
                     },

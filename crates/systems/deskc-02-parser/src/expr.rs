@@ -27,7 +27,7 @@ pub fn parser() -> impl Parser<Token, WithSpan<Expr>, Error = Simple<Token>> + C
             _ => Err(Simple::custom(span, "expected string literal")),
         });
         let literal = rational
-            .or(int64.map(|int| Expr::Literal(Literal::Int(int))))
+            .or(int64.map(|int| Expr::Literal(Literal::Integer(int))))
             .or(string);
         let type_ = super::ty::parser(expr.clone());
         let let_in = just(Token::Let)
@@ -260,7 +260,7 @@ mod tests {
     fn parse_literal_int() {
         assert_eq!(
             parse("-12").unwrap().value,
-            Expr::Literal(Literal::Int(-12))
+            Expr::Literal(Literal::Integer(-12))
         );
     }
 
@@ -286,7 +286,7 @@ mod tests {
             parse("$ 3: 'number ~ ?").unwrap().value,
             Expr::Let {
                 ty: dummy_span(Type::Number),
-                definition: Box::new(dummy_span(Expr::Literal(Literal::Int(3)))),
+                definition: Box::new(dummy_span(Expr::Literal(Literal::Integer(3)))),
                 body: Box::new(dummy_span(Expr::Hole)),
             }
         );
@@ -315,7 +315,7 @@ mod tests {
                 handlers: vec![Handler {
                     input: dummy_span(Type::Number),
                     output: dummy_span(Type::String),
-                    handler: dummy_span(Expr::Literal(Literal::Int(3))),
+                    handler: dummy_span(Expr::Literal(Literal::Integer(3))),
                 }],
             }
         );
@@ -329,8 +329,8 @@ mod tests {
                 function: dummy_span(Type::Variable("add".into())),
                 link_name: LinkName::None,
                 arguments: vec![
-                    dummy_span(Expr::Literal(Literal::Int(1))),
-                    dummy_span(Expr::Literal(Literal::Int(2)))
+                    dummy_span(Expr::Literal(Literal::Integer(1))),
+                    dummy_span(Expr::Literal(Literal::Integer(2)))
                 ],
             }
         );
@@ -353,7 +353,7 @@ mod tests {
         assert_eq!(
             parse("* 1, ?").unwrap().value,
             Expr::Product(vec![
-                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Literal(Literal::Integer(1))),
                 dummy_span(Expr::Hole),
             ])
         );
@@ -375,7 +375,7 @@ mod tests {
         assert_eq!(
             parse("[1, ?, ?]").unwrap().value,
             Expr::Vector(vec![
-                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Literal(Literal::Integer(1))),
                 dummy_span(Expr::Hole),
                 dummy_span(Expr::Hole),
             ])
@@ -387,7 +387,7 @@ mod tests {
         assert_eq!(
             parse("{1, ?, ?}").unwrap().value,
             Expr::Set(vec![
-                dummy_span(Expr::Literal(Literal::Int(1))),
+                dummy_span(Expr::Literal(Literal::Integer(1))),
                 dummy_span(Expr::Hole),
                 dummy_span(Expr::Hole),
             ])
@@ -410,7 +410,7 @@ mod tests {
         assert_eq!(
             parse("# 3 ~ ?").unwrap().value,
             Expr::Attribute {
-                attr: Box::new(dummy_span(Expr::Literal(Literal::Int(3)))),
+                attr: Box::new(dummy_span(Expr::Literal(Literal::Integer(3)))),
                 item: Box::new(dummy_span(Expr::Hole)),
             }
         );

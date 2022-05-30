@@ -49,7 +49,7 @@ pub fn parser(
             .clone()
             .delimited_by(just(Token::ArrayBegin), just(Token::ArrayEnd))
             .map(Box::new)
-            .map(Type::Array);
+            .map(Type::Vector);
         let set = type_
             .clone()
             .delimited_by(just(Token::SetBegin), just(Token::SetEnd))
@@ -289,7 +289,7 @@ mod tests {
     fn parse_array() {
         assert_eq!(
             parse("['number]").unwrap().value,
-            Type::Array(Box::new(dummy_span(Type::Number)))
+            Type::Vector(Box::new(dummy_span(Type::Number)))
         );
     }
 
@@ -358,7 +358,7 @@ mod tests {
         assert_eq!(
             parse("#1 ~ 'number").unwrap().value,
             Type::Attribute {
-                attr: Box::new(dummy_span(Expr::Literal(Literal::Int(1)))),
+                attr: Box::new(dummy_span(Expr::Literal(Literal::Integer(1)))),
                 ty: Box::new(dummy_span(Type::Number)),
             }
         );

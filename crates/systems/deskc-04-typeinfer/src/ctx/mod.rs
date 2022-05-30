@@ -49,6 +49,8 @@ pub struct Ctx {
     // a stack; continue's output of current context
     pub(crate) continue_output: RefCell<Vec<Type>>,
     pub(crate) inferred_types: RefCell<HashMap<NodeId, Type>>,
+    pub(crate) variables_ids: RefCell<HashMap<String, usize>>,
+    pub(crate) variables_idents: RefCell<HashMap<usize, String>>,
 }
 
 impl Ctx {
@@ -64,6 +66,8 @@ impl Ctx {
             continue_input: Default::default(),
             continue_output: Default::default(),
             inferred_types: Default::default(),
+            variables_idents: Default::default(),
+            variables_ids: Default::default(),
         }
     }
 

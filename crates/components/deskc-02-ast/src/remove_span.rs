@@ -153,7 +153,7 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
             }
             remove_span_ty(body);
         }
-        Type::Array(ty) => {
+        Type::Vector(ty) => {
             remove_span_ty(ty);
         }
         Type::Set(ty) => {

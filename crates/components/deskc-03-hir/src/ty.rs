@@ -32,11 +32,11 @@ pub enum Type {
     Vector(Box<WithMeta<Self>>),
     Set(Box<WithMeta<Self>>),
     Let {
-        variable: usize,
+        variable: String,
         // definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
     },
-    Variable(usize),
+    Variable(String),
     BoundedVariable {
         bound: Box<WithMeta<Self>>,
         identifier: String,

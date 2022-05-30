@@ -1,23 +1,23 @@
 mod ast;
-mod hir;
+mod node;
 
 use std::sync::Arc;
 
 use ast::ast;
-use hir::hir;
+use deskc_ast::{expr::Expr, span::WithSpan};
+use node::node;
 
 use components::{event::Event, flat_node::FlatNode, node::Node};
-use deskc_hir::meta::WithMeta;
 use deskc_ids::NodeId;
 
 use crate::query_result::QueryResult;
 
 #[salsa::query_group(KernelStorage)]
-pub trait HirQueries {
+pub trait NodeQueries {
     #[salsa::input]
     fn flat_node(&self, id: NodeId) -> Arc<FlatNode>;
-    fn ast(&self, id: NodeId) -> Arc<Node>;
-    fn hir(&self, id: NodeId) -> QueryResult<WithMeta<deskc_hir::expr::Expr>>;
+    fn node(&self, id: NodeId) -> Arc<Node>;
+    fn ast(&self, id: NodeId) -> QueryResult<WithSpan<Expr>>;
 }
 
 #[salsa::database(KernelStorage)]

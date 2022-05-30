@@ -34,11 +34,12 @@ impl Ctx {
                 {
                     let (ctx, def_ty) = self.synth(definition)?.recover_effects();
                     let def_ty = ctx.make_polymorphic(def_ty);
+                    let var_id = ctx.get_id_of(var.clone());
                     let (ctx, ty) = ctx
-                        .add(Log::TypedVariable(*var, def_ty.clone()))
+                        .add(Log::TypedVariable(var_id, def_ty.clone()))
                         .synth(expression)?
                         .recover_effects();
-                    ctx.insert_in_place(&Log::TypedVariable(*var, def_ty), vec![])
+                    ctx.insert_in_place(&Log::TypedVariable(var_id, def_ty), vec![])
                         .with_type(ty)
                 } else {
                     let (ctx, _def_ty) = self.synth(definition)?.recover_effects();

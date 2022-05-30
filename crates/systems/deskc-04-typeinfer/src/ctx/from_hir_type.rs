@@ -32,10 +32,10 @@ impl Ctx {
             Vector(ty) => Type::Array(Box::new(self.gen_from_hir_type(ty))),
             Set(ty) => Type::Set(Box::new(self.gen_from_hir_type(ty))),
             Let { variable, body } => Type::ForAll {
-                variable: *variable,
+                variable: self.get_id_of(variable.clone()),
                 body: Box::new(self.gen_from_hir_type(body)),
             },
-            Variable(id) => Type::Variable(*id),
+            Variable(id) => Type::Variable(self.get_id_of(id.clone())),
             BoundedVariable {
                 bound: _,
                 identifier: _,
@@ -89,5 +89,15 @@ impl Ctx {
                     .collect(),
             },
         }
+    }
+
+    pub(crate) fn get_id_of(&self, ident: String) -> usize {
+        let id = *self
+            .variables_ids
+            .borrow_mut()
+            .entry(ident.clone())
+            .or_insert_with(|| self.next_id());
+        self.variables_idents.borrow_mut().insert(id, ident);
+        id
     }
 }
