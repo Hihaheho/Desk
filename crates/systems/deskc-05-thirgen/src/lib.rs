@@ -182,7 +182,7 @@ mod tests {
     fn parse(input: &str) -> WithMeta<Expr> {
         let tokens = lexer::scan(input).unwrap();
         let ast = parser::parse(tokens).unwrap();
-        hirgen::gen_hir(&ast).unwrap().1.entrypoint.unwrap()
+        hirgen::gen_hir(&ast).unwrap().1
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {

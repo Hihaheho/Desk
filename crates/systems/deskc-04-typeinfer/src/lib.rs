@@ -68,7 +68,7 @@ mod tests {
         let tokens = lexer::scan(input).unwrap();
         let ast = parser::parse(tokens).unwrap();
         let (hirgen, hir) = hirgen::gen_hir(&ast).unwrap();
-        (hirgen, hir.entrypoint.unwrap())
+        (hirgen, hir)
     }
 
     fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {

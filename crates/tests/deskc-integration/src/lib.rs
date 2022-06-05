@@ -14,9 +14,8 @@ macro_rules! test {
             let tokens = lexer::scan(input).unwrap();
             let ast = parser::parse(tokens).unwrap();
             let (genhir, hir) = hirgen::gen_hir(&ast).unwrap();
-            let entrypoint = hir.entrypoint.unwrap();
-            let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &entrypoint).unwrap();
-            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
+            let (ctx, _ty) = typeinfer::synth(genhir.next_id(), &hir).unwrap();
+            let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir);
             let dson = thir2dson::thir_to_dson(&thir).unwrap();
             let test_case: TestCase = from_dson(dson).unwrap();
             // compile sources
@@ -51,7 +50,7 @@ macro_rules! test {
                 Ok(ast) => ast,
                 Err(errors) => print_errors(input, errors),
             };
-            let (genhir, hir) = hirgen::gen_hir(&ast).unwrap();
+            let (genhir, hir) = hirgen::gen_cards(&ast).unwrap();
             let entrypoint = hir.entrypoint.unwrap();
             let ctx = match typeinfer::synth(genhir.next_id(), &entrypoint) {
                 Ok((ctx, _ty)) => ctx,
