@@ -2766,9 +2766,9 @@ dependencies = [
 
 [[package]]
 name = "mry"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52cdcccbc40ba9e3960e41c0f6cca1bbc01c2e0b1fb458951987cf6f7695bee9"
+checksum = "590fff4470967b9c3efe1f313fe3ea915c3009b166aee251ac103970a8822189"
 dependencies = [
  "async-recursion",
  "mry_macros",
@@ -2778,9 +2778,9 @@ dependencies = [
 
 [[package]]
 name = "mry_macros"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35c38682aa8c8d83076aeacd14cb853bd476e6c052de5a5f495ff47b9ef1e673"
+checksum = "8df6886f8ca7ab053aaec8ebe84aa56217026694ce25ebeee72170214b8fc97c"
 dependencies = [
  "proc-macro2",
  "quote",
