@@ -41,7 +41,7 @@ pub enum Token {
     Type,
     NumberType,
     StringType,
-    Brand(String),
+    Brand,
     Alias,
     A,
     Card,

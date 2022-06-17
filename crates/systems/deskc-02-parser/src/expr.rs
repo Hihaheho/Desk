@@ -157,18 +157,13 @@ pub fn parser() -> impl Parser<Token, WithSpan<Expr>, Error = Simple<Token>> + C
                 of: Box::new(of),
                 cases,
             });
-        let label = filter_map(|span, input| {
-            if let Token::Brand(ident) = input {
-                Ok(ident)
-            } else {
-                Err(Simple::custom(span, "Expected brand"))
-            }
-        })
-        .then(expr.clone())
-        .map(|(label, expr)| Expr::Label {
-            label,
-            item: Box::new(expr),
-        });
+        let label = just(Token::Brand)
+            .ignore_then(parse_ident())
+            .then(expr.clone())
+            .map(|(label, expr)| Expr::Label {
+                label,
+                item: Box::new(expr),
+            });
         let newtype = just(Token::Type)
             .ignore_then(parse_ident())
             .then(type_.clone())

@@ -93,7 +93,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<c
                 format!(r#"undefined special keyword: {}"#, ident),
             )),
         });
-    let brand = just('@').ignore_then(ident()).map(Token::Brand);
+    let brand = just('@').to(Token::Brand);
     let uuid = just("'uuid")
         .then_ignore(text::whitespace())
         .ignore_then(
@@ -188,7 +188,8 @@ mod tests {
                 Comma,
                 NumberType,
                 Arrow,
-                Brand("added".into()),
+                Brand,
+                Ident("added".into()),
                 NumberType,
                 Apply,
                 Int(1),
@@ -196,7 +197,8 @@ mod tests {
                 Ident("x".into()),
                 Comment("(1 + x)".into()),
                 TypeAnnotation,
-                Brand("incremented".into()),
+                Brand,
+                Ident("incremented".into()),
                 NumberType,
                 Apply,
                 In,
@@ -204,7 +206,8 @@ mod tests {
                 Lambda,
                 NumberType,
                 Arrow,
-                Brand("incremented".into()),
+                Brand,
+                Ident("incremented".into()),
                 NumberType,
                 Apply,
                 Hole,
@@ -232,8 +235,8 @@ mod tests {
     #[test]
     fn brand_with_spaces() {
         assert_eq!(
-            lexer().parse("@あ-　a0").unwrap(),
-            vec![(Token::Brand("あ- a0".into()), 0..6)]
+            lexer().parse("@ あ-　a0").unwrap(),
+            vec![(Token::Brand, 0..1), (Token::Ident("あ- a0".into()), 2..7)]
         );
     }
 

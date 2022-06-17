@@ -69,18 +69,13 @@ pub fn parser(
             attr: Box::new(attr),
             ty: Box::new(ty),
         });
-        let brand = filter_map(|span, input| {
-            if let Token::Brand(ident) = input {
-                Ok(ident)
-            } else {
-                Err(Simple::custom(span, "Expected brand"))
-            }
-        })
-        .then(type_.clone())
-        .map(|(brand, ty)| Type::Brand {
-            brand,
-            item: Box::new(ty),
-        });
+        let brand = just(Token::Brand)
+            .ignore_then(parse_ident())
+            .then(type_.clone())
+            .map(|(brand, ty)| Type::Brand {
+                brand,
+                item: Box::new(ty),
+            });
         let variable = just(Token::A)
             .or_not()
             .ignore_then(parse_ident())
