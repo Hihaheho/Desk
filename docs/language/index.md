@@ -65,7 +65,3 @@ $ "Ryo": a name of me ~
 ```
 
 If branches have different output types, they will be summed.
-
-## Resources
-
-- [Specification](/docs/language/specification.md)
