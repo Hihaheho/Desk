@@ -2,6 +2,10 @@
 
 Note: 🚧 means "under development".
 
+## Resources
+
+- [Specification](/docs/language/specification.md)
+
 ## Features
 
 Desk-lang is a statically typed programming language with;
