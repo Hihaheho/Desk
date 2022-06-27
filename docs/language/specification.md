@@ -1,7 +1,7 @@
 # Desk Programming Language Specification
 
 This is an official formal specification of Desk programming language (aka. Desk-lang).
-It's intended for academic use and not for easy-understanding guidance.
+It's intended for implementation or academic use and not for easy-understanding guidance.
 
 ## Tokens
 
