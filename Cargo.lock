@@ -1943,9 +1943,9 @@ dependencies = [
 
 [[package]]
 name = "egui_cable"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d21e5278043c6f1fbf6841f94f5ccca6cd2f3ab6b66c34a971349bbdc277c464"
+checksum = "beb99990af341b370dea1fa3645e51bbc2955157f5348eea5efb4b6d43f37e98"
 dependencies = [
  "egui",
  "epaint",
@@ -2766,9 +2766,9 @@ dependencies = [
 
 [[package]]
 name = "mry"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "590fff4470967b9c3efe1f313fe3ea915c3009b166aee251ac103970a8822189"
+checksum = "9a512f7d9e5eeeab82f7a1052c9fba31e4d1bcb1055807b55f87600747a91cd1"
 dependencies = [
  "async-recursion",
  "mry_macros",
@@ -2778,9 +2778,9 @@ dependencies = [
 
 [[package]]
 name = "mry_macros"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8df6886f8ca7ab053aaec8ebe84aa56217026694ce25ebeee72170214b8fc97c"
+checksum = "2cf299850813bd59480278b79c22a69b4e8dca9807b269e3d2db2eaaea5e91bc"
 dependencies = [
  "proc-macro2",
  "quote",
