@@ -32,4 +32,4 @@ parking_lot = "0.12.1"
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 
 uuid = { version = "1.1", features = ["v4"] }
-mry = "0.2.4"
+mry = "0.2.5"
