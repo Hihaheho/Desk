@@ -16,5 +16,5 @@ deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 # FIXME: component depends system
 dkernel = { package = "dkernel", version = "0.0.0", path = "../../systems/dkernel" }
 
-bevy_ecs = "0.7"
+bevy_ecs = "0.8"
 uuid = "1.1"

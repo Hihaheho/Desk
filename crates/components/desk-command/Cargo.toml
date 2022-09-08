@@ -9,5 +9,5 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 
-bevy_math = "0.7"
-bevy_ecs = "0.7"
+bevy_math = "0.8"
+bevy_ecs = "0.8"

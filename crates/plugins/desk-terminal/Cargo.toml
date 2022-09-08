@@ -17,5 +17,5 @@ dkernel-components = { package = "dkernel-components", path = "../../components/
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 deskc-types = { package = "deskc-types", path = "../../components/deskc-types", version = "0.0.0" }
 
-bevy = "0.7"
-egui = "0.18.1"
+bevy = "0.8"
+egui = "0.19.0"
