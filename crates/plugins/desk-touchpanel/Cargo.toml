@@ -15,4 +15,4 @@ system-ordering = { package = "desk-system-ordering", path = "../../components/d
 physics = { package = "desk-physics", path = "../../components/desk-physics", version = "0.0.0" }
 command = { package = "desk-command", path = "../../components/desk-command", version = "0.0.0" }
 
-bevy = "0.7"
+bevy = "0.8"

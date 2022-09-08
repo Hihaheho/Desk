@@ -23,8 +23,8 @@ deskc-typeinfer = { path = "../deskc-04-typeinfer", version = "0.0.0", package =
 
 salsa = "0.16"
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "1.0.31"
-bevy_ecs = "0.7"
+thiserror = "1.0.34"
+bevy_ecs = "0.8"
 downcast-rs = "1.2.0"
 parking_lot = "0.12.1"
 

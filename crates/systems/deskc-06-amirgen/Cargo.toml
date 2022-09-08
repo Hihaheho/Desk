@@ -14,5 +14,5 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 amir = { path = "../../components/deskc-05-amir", version = "0.0.0", package = "deskc-amir" }
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
-thiserror = "1.0.31"
+thiserror = "1.0.34"
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
