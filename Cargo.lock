@@ -259,22 +259,22 @@ dependencies = [
 
 [[package]]
 name = "bevy-inspector-egui"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0c53ed1cad011e33ea145d2c1f649a966e7457453f3768ddff39bc5064bd525"
+checksum = "3e18f673a7040930e20c899ad5e98d62f5db702a742c9cd96b5862d051a7b5da"
 dependencies = [
  "bevy",
  "bevy-inspector-egui-derive",
- "bevy_egui 0.15.1",
+ "bevy_egui",
  "image 0.23.14",
  "pretty-type-name",
 ]
 
 [[package]]
 name = "bevy-inspector-egui-derive"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48ef6260a46924d40781bcb9da157c110d5166bbd573795e4a16f2505913d0d0"
+checksum = "2ce0a659fdb2c31c2ae7f2ee8020fa758aff458a4ae4dc4e55bc27dcc31ef487"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -444,19 +444,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "bevy_egui"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acbf44ff770566dca66b805a6829df783f64700bd01d35aec1034dff31b531a4"
-dependencies = [
- "arboard",
- "bevy",
- "egui 0.18.1",
- "thread_local",
- "webbrowser",
 ]
 
 [[package]]
@@ -660,9 +647,9 @@ checksum = "9960c19e582b43cebe1894b6679520a4f50802d1cc5b6fa432f8d685ed232f09"
 
 [[package]]
 name = "bevy_rapier2d"
-version = "0.16.2"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e94ea9324a836efedf4b3673a3c5e2011490fa440478d244fe6b1783557ab4fd"
+checksum = "c75900b1242f0c590fe102645ba3bde98e6330b623e6fba5ed0c399991dfcdc0"
 dependencies = [
  "bevy",
  "bitflags",
@@ -1567,7 +1554,7 @@ name = "desk-egui"
 version = "0.0.0"
 dependencies = [
  "bevy",
- "bevy_egui 0.16.0",
+ "bevy_egui",
  "desk-system-ordering",
  "desk-theme",
  "desk-window",
@@ -2021,9 +2008,6 @@ name = "emath"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c223f58c7e38abe1770f367b969f1b3fbd4704b67666bcb65dbb1adb0980ba72"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "emath"
@@ -2085,7 +2069,6 @@ dependencies = [
  "ab_glyph",
  "ahash 0.7.6",
  "atomic_refcell",
- "bytemuck",
  "emath 0.18.0",
  "nohash-hasher",
  "parking_lot 0.12.1",
@@ -3441,9 +3424,9 @@ dependencies = [
 
 [[package]]
 name = "parry2d"
-version = "0.9.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2841cebc29aaf7c69058b242742853d9b106c5245ed946090a75d941d23a6f5e"
+checksum = "f2451e4bf2c6ba705bf584f94bb51772e22977e37c82575ce2445dd797eb35a9"
 dependencies = [
  "approx",
  "arrayvec",
@@ -3614,9 +3597,9 @@ checksum = "63e935c45e09cc6dcf00d2f0b2d630a58f4095320223d47fc68918722f0538b6"
 
 [[package]]
 name = "rapier2d"
-version = "0.14.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84d7e798266018ec9194a6ca931ae6520c0bf5f7dbdbcb5f1d8bb0d9c075ea24"
+checksum = "12435d8c8ea7eee77be71f90e87fea038e9630baf89008e4602f68fe39fcac06"
 dependencies = [
  "approx",
  "arrayvec",
@@ -3872,9 +3855,9 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "simba"
-version = "0.7.1"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13a2609e876d4f77f6ab7ff5254fc39b4f1927ba8e6db3d18be7c32534d3725e"
+checksum = "2f3fd720c48c53cace224ae62bef1bbff363a70c68c4802a78b5cc6159618176"
 dependencies = [
  "approx",
  "num-complex",
@@ -3994,18 +3977,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.34"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c1b05ca9d106ba7d2e31a9dab4a64e7be2cce415321966ea3132c49a656e252"
+checksum = "10deb33631e3c9018b9baf9dcbbc4f737320d2b576bac10f6aefa048fa407e3e"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.34"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8f2591983642de85c921015f3f070c665a197ed69e417af436115e3a1407487"
+checksum = "982d17546b47146b28f7c22e3d08465f6b8903d0ea13c1660d9d84a6e7adcdbb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4197,9 +4180,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.1.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93bbc61e655a4833cf400d0d15bf3649313422fa7572886ad6dab16d79886365"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
 dependencies = [
  "getrandom",
  "serde",
