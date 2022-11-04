@@ -1,20 +1,17 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::event::Event;
-use crate::patch::FilePatch;
+use crate::flat_node::FlatNode;
 use crate::rules::{Rules, SpaceOperation};
 use crate::user::UserId;
-use crate::{file::File, flat_node::FlatNode};
-use deskc_ids::{CardId, FileId, NodeId};
+use deskc_ids::NodeId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Snapshot {
     pub owners: HashSet<UserId>,
     // flat nodes are owned by hirs db
     pub flat_nodes: HashMap<NodeId, FlatNode>,
-    pub files: HashMap<FileId, File>,
     pub rules: Rules<SpaceOperation>,
-    pub card_files: HashMap<CardId, FileId>,
 }
 
 impl Snapshot {
@@ -25,13 +22,13 @@ impl Snapshot {
             }
             Event::RemoveOwner { user_id: _ } => todo!(),
             Event::AddNode {
+                parent: parent_id,
                 node_id,
-                file_id,
                 content,
             } => {
                 self.flat_nodes.insert(
                     node_id.clone(),
-                    FlatNode::new(file_id.clone(), content.clone()),
+                    FlatNode::new(content.clone()).parent(parent_id.clone()),
                 );
             }
             Event::RemoveNode { node_id } => {
@@ -43,7 +40,7 @@ impl Snapshot {
                     .unwrap()
                     .patch_content(patch);
             }
-            Event::PatchChildren { node_id, patch } => {
+            Event::PatchOperands { node_id, patch } => {
                 self.flat_nodes
                     .get_mut(node_id)
                     .unwrap()
@@ -59,22 +56,13 @@ impl Snapshot {
                 index: _,
                 snapshot: _,
             } => todo!(),
-            Event::AddFile(file_id) => {
-                self.files.insert(file_id.clone(), File::default());
-            }
-            Event::DeleteFile(file_id) => {
-                self.files.remove(file_id);
-            }
-            Event::UpdateRule { rules } => {
+            Event::UpdateSpaceRules { rules } => {
                 self.rules = rules.clone();
             }
-            Event::PatchFile { file_id, patch } => {
-                match patch {
-                    FilePatch::UpdateRules { rules } => {
-                        // unwrap is safe because audit checks that the file exists
-                        self.files.get_mut(file_id).unwrap().rules = rules.clone()
-                    }
-                };
+            Event::UpdateNodeRules { node_id, rules } => {
+                if let Some(node) = self.flat_nodes.get_mut(node_id) {
+                    node.rules = rules.clone();
+                }
             }
         }
     }
@@ -104,17 +92,9 @@ mod tests {
         let node_id = handle_add_node(&mut snapshot);
         assert_eq!(
             snapshot.flat_nodes,
-            [(
-                node_id,
-                FlatNode {
-                    file_id: FileId::default(),
-                    content: Content::String("a".into()),
-                    children: vec![],
-                    attributes: [].into_iter().collect(),
-                }
-            )]
-            .into_iter()
-            .collect()
+            [(node_id, FlatNode::new(Content::String("a".into())))]
+                .into_iter()
+                .collect()
         )
     }
 
@@ -128,69 +108,11 @@ mod tests {
     }
 
     #[test]
-    fn add_file() {
+    fn update_space_rule() {
         let mut snapshot = Snapshot::default();
-        let file_id = FileId::new();
-        snapshot.handle_event(&Event::AddFile(file_id.clone()));
-
-        assert_eq!(
-            snapshot.files,
-            [(file_id, File::default())].into_iter().collect()
-        );
-    }
-
-    #[test]
-    fn remove_file() {
-        let mut snapshot = Snapshot::default();
-        let file_a = FileId::new();
-        let file_b = FileId::new();
-        snapshot.handle_event(&Event::AddFile(file_a.clone()));
-        snapshot.handle_event(&Event::AddFile(file_b.clone()));
-        snapshot.handle_event(&Event::DeleteFile(file_b));
-        assert_eq!(
-            snapshot.files,
-            [(file_a, File::default())].into_iter().collect()
-        );
-    }
-
-    #[test]
-    fn patch_file_update_rules() {
-        let mut snapshot = Snapshot::default();
-        let file_id = FileId::new();
-        snapshot.handle_event(&Event::AddFile(file_id.clone()));
-        snapshot.handle_event(&Event::PatchFile {
-            file_id: file_id.clone(),
-            patch: FilePatch::UpdateRules {
-                rules: Rules {
-                    default: [NodeOperation::AddCard].into_iter().collect(),
-                    users: Default::default(),
-                },
-            },
-        });
-
-        assert_eq!(
-            snapshot.files,
-            [(
-                file_id,
-                File {
-                    rules: Rules {
-                        default: [NodeOperation::AddCard].into_iter().collect(),
-                        users: Default::default(),
-                    },
-                    ..File::default()
-                }
-            )]
-            .into_iter()
-            .collect()
-        );
-    }
-
-    #[test]
-    fn update_rule() {
-        let mut snapshot = Snapshot::default();
-        snapshot.handle_event(&Event::UpdateRule {
+        snapshot.handle_event(&Event::UpdateSpaceRules {
             rules: Rules {
-                default: [SpaceOperation::AddFile].into_iter().collect(),
+                default: [SpaceOperation::AddNode].into_iter().collect(),
                 users: Default::default(),
             },
         });
@@ -198,7 +120,28 @@ mod tests {
         assert_eq!(
             snapshot.rules,
             Rules {
-                default: [SpaceOperation::AddFile].into_iter().collect(),
+                default: [SpaceOperation::AddNode].into_iter().collect(),
+                users: Default::default(),
+            }
+        );
+    }
+
+    #[test]
+    fn update_node_rule() {
+        let mut snapshot = Snapshot::default();
+        let node_id = handle_add_node(&mut snapshot);
+        snapshot.handle_event(&Event::UpdateNodeRules {
+            node_id: node_id.clone(),
+            rules: Rules {
+                default: [NodeOperation::AddNode].into_iter().collect(),
+                users: Default::default(),
+            },
+        });
+
+        assert_eq!(
+            snapshot.flat_nodes.get(&node_id).unwrap().rules,
+            Rules {
+                default: [NodeOperation::AddNode].into_iter().collect(),
                 users: Default::default(),
             }
         );
@@ -207,8 +150,8 @@ mod tests {
     fn handle_add_node(snapshot: &mut Snapshot) -> NodeId {
         let node_id = NodeId::new();
         let event = Event::AddNode {
+            parent: None,
             node_id: node_id.clone(),
-            file_id: FileId::default(),
             content: Content::String("a".into()),
         };
         snapshot.handle_event(&event);

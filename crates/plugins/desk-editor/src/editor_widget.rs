@@ -3,7 +3,7 @@ use desk_window::widget::Widget;
 use deskc_ids::NodeId;
 use dkernel_components::content::Content;
 use dkernel_components::event::Event;
-use dkernel_components::patch::{ChildrenPatch, ContentPatch};
+use dkernel_components::patch::{ContentPatch, OperandsPatch};
 
 use crate::editor_state::EditorState;
 
@@ -52,13 +52,13 @@ impl Widget<egui::Context> for EditorWidget {
                     dkernel_components::content::Content::Apply { ty, .. } => {
                         let mut clicked = None;
                         ui.label(format!("{:?}", ty));
-                        for (index, child) in node.children.iter().enumerate() {
+                        for (index, child) in node.operands.iter().enumerate() {
                             ui.horizontal(|ui| {
                                 ui.label(format!("{:?}", child));
                                 if ui.button("x").clicked() {
-                                    clicked = Some(Event::PatchChildren {
+                                    clicked = Some(Event::PatchOperands {
                                         node_id: self.node_id.clone(),
-                                        patch: ChildrenPatch::Remove { index },
+                                        patch: OperandsPatch::Remove { index },
                                     });
                                 }
                             });
@@ -83,9 +83,9 @@ impl Widget<egui::Context> for EditorWidget {
                 .clone()
             {
                 if target != self.node_id && ui.button("Add this as a child").clicked() {
-                    ctx.kernel.commit(Event::PatchChildren {
+                    ctx.kernel.commit(Event::PatchOperands {
                         node_id: target,
-                        patch: ChildrenPatch::Insert {
+                        patch: OperandsPatch::Insert {
                             index: 0,
                             node: self.node_id.clone(),
                         },

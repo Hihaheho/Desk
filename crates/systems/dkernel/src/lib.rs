@@ -77,17 +77,16 @@ impl Kernel {
 #[cfg(test)]
 mod tests {
     use components::event::{Event, EventEntry};
-    use components::patch::FilePatch;
-    use components::rules::{NodeOperation, Rules};
+    use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
-    use components::{content::Content, patch::ChildrenPatch};
+    use components::{content::Content, patch::OperandsPatch};
     use deskc_ast::visitor::remove_node_id;
     use deskc_ast::{
         expr::{Expr, Literal},
         span::WithSpan,
         ty::Type as AstType,
     };
-    use deskc_ids::{FileId, LinkName, NodeId};
+    use deskc_ids::{LinkName, NodeId};
     use deskc_types::Type;
     use nodes::NodeQueries;
 
@@ -132,7 +131,6 @@ mod tests {
         let user_b = UserId("b".into());
         let node_a = NodeId::new();
         let node_b = NodeId::new();
-        let file_id = FileId::new();
 
         repository.mock_poll().returns(vec![
             EventEntry {
@@ -140,26 +138,6 @@ mod tests {
                 user_id: user_a.clone(),
                 event: Event::AddOwner {
                     user_id: user_a.clone(),
-                },
-            },
-            EventEntry {
-                index: 0,
-                user_id: user_a.clone(),
-                event: Event::AddFile(file_id.clone()),
-            },
-            EventEntry {
-                index: 0,
-                user_id: user_a.clone(),
-                event: Event::PatchFile {
-                    file_id: file_id.clone(),
-                    patch: FilePatch::UpdateRules {
-                        rules: Rules {
-                            default: [NodeOperation::AddNode, NodeOperation::PatchChildrenInsert]
-                                .into_iter()
-                                .collect(),
-                            users: Default::default(),
-                        },
-                    },
                 },
             },
             EventEntry {
@@ -172,9 +150,19 @@ mod tests {
             EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
+                event: Event::UpdateSpaceRules {
+                    rules: Rules {
+                        default: [SpaceOperation::AddNode].into_iter().collect(),
+                        users: Default::default(),
+                    },
+                },
+            },
+            EventEntry {
+                index: 0,
+                user_id: user_a.clone(),
                 event: Event::AddNode {
+                    parent: None,
                     node_id: node_a.clone(),
-                    file_id: file_id.clone(),
                     content: Content::Apply {
                         ty: Type::Function {
                             parameters: vec![Type::String],
@@ -185,20 +173,33 @@ mod tests {
                 },
             },
             EventEntry {
+                index: 0,
+                user_id: user_a.clone(),
+                event: Event::UpdateNodeRules {
+                    node_id: node_a.clone(),
+                    rules: Rules {
+                        default: [NodeOperation::AddNode, NodeOperation::PatchOperandsInsert]
+                            .into_iter()
+                            .collect(),
+                        users: Default::default(),
+                    },
+                },
+            },
+            EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
                 event: Event::AddNode {
+                    parent: None,
                     node_id: node_b.clone(),
-                    file_id,
                     content: Content::String("string".into()),
                 },
             },
             EventEntry {
                 index: 1,
                 user_id: user_b,
-                event: Event::PatchChildren {
+                event: Event::PatchOperands {
                     node_id: node_a.clone(),
-                    patch: ChildrenPatch::Insert {
+                    patch: OperandsPatch::Insert {
                         index: 0,
                         node: node_b,
                     },

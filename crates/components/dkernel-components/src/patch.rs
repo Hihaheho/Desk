@@ -3,10 +3,7 @@ use deskc_ids::NodeId;
 use hir::expr::Expr;
 use types::Type;
 
-use crate::{
-    content::Content,
-    rules::{NodeOperation, Rules},
-};
+use crate::content::Content;
 
 use self::string_diff::StringPatch;
 
@@ -22,7 +19,7 @@ pub enum ContentPatch {
 impl Eq for ContentPatch {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ChildrenPatch {
+pub enum OperandsPatch {
     Insert { index: usize, node: NodeId },
     Remove { index: usize },
     Move { index: usize, diff: isize },
@@ -33,9 +30,4 @@ pub enum ChildrenPatch {
 pub enum AttributePatch {
     Update { key: Type, value: Box<Expr> },
     Remove { key: Type },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum FilePatch {
-    UpdateRules { rules: Rules<NodeOperation> },
 }

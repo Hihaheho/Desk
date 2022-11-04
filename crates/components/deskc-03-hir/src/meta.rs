@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use ids::{FileId, NodeId};
+use ids::NodeId;
 use uuid::Uuid;
 
 use crate::expr::Expr;
@@ -8,7 +8,6 @@ use crate::expr::Expr;
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Meta {
     pub attrs: Vec<Expr>,
-    pub file_id: FileId,
     pub span: Option<Range<usize>>,
 }
 

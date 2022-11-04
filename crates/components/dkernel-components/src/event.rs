@@ -1,10 +1,10 @@
 use crate::{
     content::Content,
-    patch::{AttributePatch, ChildrenPatch, ContentPatch, FilePatch},
-    rules::{Rules, SpaceOperation},
+    patch::{AttributePatch, ContentPatch, OperandsPatch},
+    rules::{NodeOperation, Rules, SpaceOperation},
     user::UserId,
 };
-use deskc_ids::{FileId, NodeId};
+use deskc_ids::NodeId;
 
 use crate::snapshot::Snapshot;
 
@@ -23,12 +23,12 @@ pub enum Event {
     RemoveOwner {
         user_id: UserId,
     },
-    UpdateRule {
+    UpdateSpaceRules {
         rules: Rules<SpaceOperation>,
     },
     AddNode {
+        parent: Option<NodeId>,
         node_id: NodeId,
-        file_id: FileId,
         content: Content,
     },
     RemoveNode {
@@ -38,22 +38,22 @@ pub enum Event {
         node_id: NodeId,
         patch: ContentPatch,
     },
-    PatchChildren {
+    PatchOperands {
         node_id: NodeId,
-        patch: ChildrenPatch,
+        patch: OperandsPatch,
     },
     PatchAttribute {
         node_id: NodeId,
         patch: AttributePatch,
     },
+    UpdateNodeRules {
+        node_id: NodeId,
+        rules: Rules<NodeOperation>,
+    },
     AddSnapshot {
+        /// current index of events
+        /// if the index of this event is not index+1, this event must be
         index: usize,
         snapshot: Box<Snapshot>,
-    },
-    AddFile(FileId),
-    DeleteFile(FileId),
-    PatchFile {
-        file_id: FileId,
-        patch: FilePatch,
     },
 }

@@ -1,6 +1,6 @@
 mod error;
 mod gen_effect_expr;
-use ids::{CardId, FileId, NodeId};
+use ids::{CardId, NodeId};
 
 use std::{
     cell::RefCell,
@@ -34,7 +34,6 @@ pub fn gen_hir(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, WithMeta<Expr
 
 #[derive(Default, Debug)]
 pub struct HirGen {
-    file_id: FileId,
     next_id: RefCell<usize>,
     next_span: RefCell<Vec<(NodeId, Span)>>,
     pub attrs: RefCell<HashMap<NodeId, Vec<Expr>>>,
@@ -319,7 +318,6 @@ impl HirGen {
             id: span.0,
             meta: Meta {
                 attrs: vec![],
-                file_id: self.file_id.clone(),
                 // no span is a bug of hirgen, so unwrap is safe
                 span: Some(span.1),
             },
@@ -383,7 +381,6 @@ mod tests {
                                 Expr::Literal(Literal::Integer(2)),
                                 Expr::Literal(Literal::Integer(1))
                             ],
-                            file_id: Default::default(),
                             span: Default::default()
                         },
                         value: Expr::Literal(Literal::Hole)

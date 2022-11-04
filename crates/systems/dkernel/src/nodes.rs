@@ -32,18 +32,13 @@ impl Hirs {
     pub fn handle_event(&mut self, event: &Event) {
         match event {
             Event::AddNode {
+                parent,
                 node_id,
                 content,
-                file_id,
             } => {
                 self.set_flat_node(
                     node_id.clone(),
-                    Arc::new(FlatNode {
-                        file_id: file_id.clone(),
-                        content: content.clone(),
-                        children: Default::default(),
-                        attributes: Default::default(),
-                    }),
+                    Arc::new(FlatNode::new(content.clone()).parent(parent.clone())),
                 );
             }
             Event::PatchContent { node_id, patch } => {
@@ -51,7 +46,7 @@ impl Hirs {
                 flat_node.patch_content(patch);
                 self.set_flat_node(node_id.clone(), Arc::new(flat_node));
             }
-            Event::PatchChildren { node_id, patch } => {
+            Event::PatchOperands { node_id, patch } => {
                 let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
                 flat_node.patch_children(patch);
                 self.set_flat_node(node_id.clone(), Arc::new(flat_node));
@@ -71,11 +66,9 @@ impl Hirs {
 mod tests {
     use components::{
         content::Content,
-        flat_node::{Attributes, Children},
-        patch::{AttributePatch, ChildrenPatch, ContentPatch},
+        patch::{AttributePatch, ContentPatch, OperandsPatch},
     };
     use deskc_hir::expr::{Expr, Literal};
-    use deskc_ids::FileId;
     use deskc_types::Type;
 
     use super::*;
@@ -84,22 +77,17 @@ mod tests {
     fn add_node() {
         let mut db = Hirs::default();
         let node_id = NodeId::new();
-        let file_id = FileId::new();
+        let parent = Some(NodeId::new());
 
         db.handle_event(&Event::AddNode {
+            parent: parent.clone(),
             node_id: node_id.clone(),
-            file_id: file_id.clone(),
             content: Content::String("a".into()),
         });
 
         assert_eq!(
             *db.flat_node(node_id),
-            FlatNode {
-                file_id,
-                content: Content::String("a".into()),
-                children: Children::default(),
-                attributes: Attributes::default(),
-            }
+            FlatNode::new(Content::String("a".into())).parent(parent)
         );
     }
 
@@ -122,15 +110,15 @@ mod tests {
         let node_id = handle_add_node(&mut db);
         let node_a = NodeId::new();
 
-        db.handle_event(&Event::PatchChildren {
+        db.handle_event(&Event::PatchOperands {
             node_id: node_id.clone(),
-            patch: ChildrenPatch::Insert {
+            patch: OperandsPatch::Insert {
                 index: 0,
                 node: node_a.clone(),
             },
         });
 
-        assert_eq!(db.flat_node(node_id).children, vec![node_a]);
+        assert_eq!(db.flat_node(node_id).operands, vec![node_a]);
     }
 
     #[test]
@@ -157,8 +145,8 @@ mod tests {
     fn handle_add_node(db: &mut Hirs) -> NodeId {
         let node_id = NodeId::new();
         db.handle_event(&Event::AddNode {
+            parent: None,
             node_id: node_id.clone(),
-            file_id: FileId::new(),
             content: Content::String("a".into()),
         });
         node_id

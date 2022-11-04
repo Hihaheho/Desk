@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::Component;
-use deskc_ids::FileId;
 use uuid::Uuid;
 
 use crate::{
@@ -11,9 +10,6 @@ use crate::{
 
 #[derive(Component)]
 pub struct DefaultWindow;
-
-#[derive(Component)]
-pub struct DefaultFile(pub FileId);
 
 #[derive(Component, Default)]
 pub struct Window<T> {

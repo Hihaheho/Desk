@@ -34,7 +34,7 @@ fn genast(node: &Node) -> Result<WithSpan<Expr>, QueryError> {
             function: from_types(ty),
             link_name: link_name.clone(),
             arguments: node
-                .children
+                .operands
                 .iter()
                 .map(genast)
                 .collect::<Result<Vec<_>, _>>()?,
