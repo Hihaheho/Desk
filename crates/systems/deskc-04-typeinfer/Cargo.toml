@@ -24,4 +24,4 @@ parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = 
 hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 chumsky = "0.8.0"
 ariadne = "0.1"
-pretty_assertions = "1.2.1"
+pretty_assertions = "1.3.0"
