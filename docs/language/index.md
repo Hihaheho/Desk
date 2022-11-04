@@ -17,19 +17,55 @@ Desk-lang is a statically typed programming language with;
 - algebraic effects and handlers
 - 🚧 structural trait
 - content-addressed code (like [Unison](https://www.unison-lang.org/learn/the-big-idea/))
+- 🚧 metaprogramming support
+
+## Basic syntax
+
+a comment:
+```desk
+(this is a comment)
+```
+
+a type annotated expression:
+```desk
+^ expr : type
+```
 
 ## Basic types
 
-Note: `^expr: type` is the type annotation syntax.
-
+`'number`
 ```desk
-^42: 'number
-^"hello world": 'string
-^[1, 2, 2]: ['number] (an array)
-^{1, 2}: {'number} (a set)
-^* "Ryo", 24: * 'string, 'number (a tuple of a string and number)
-^[1, "a"]: [+ 'number, 'string] (an array of strings and numbers)
-^@name "Ryo": @name 'string (a labelled type)
+42
+```
+
+`'string`
+```desk
+"hello world"
+```
+
+`['number']` an array of numbers
+```desk
+[1, 2, 2]
+```
+
+`{'number}` a set of numbers
+```desk
+{1, 2}
+```
+
+`* 'string, 'number` a product type
+```desk
+* "Ryo", 24
+```
+
+`[+ 'number, 'string]` a sum type
+```desk
+[1, "a"]
+```
+
+`@name 'string` a labelled type
+```desk
+@name "Ryo"
 ```
 
 ## Function
@@ -42,6 +78,12 @@ a function:
 calling a function:
 ```desk
 > type arg1, arg2
+```
+
+an identity function:
+```desk
+$ \ x -> x: id ~
+> id "a"
 ```
 
 ## Let in
@@ -65,7 +107,28 @@ $ "Ryo": a name of me ~
 'number ->
   "this is number"
 'string ->
-	"this is string"
+  "this is string"
 ```
 
 If branches have different output types, they will be summed.
+The type of this expression is `+ 'string, 'string` simplified to `'string`.
+
+## Effects
+
+Performs an effect
+```
+! expr
+```
+
+The type of the below expression is `b ! {`
+```
+! ^expr: in => out
+```
+
+## Handlers
+
+## Trait
+
+## Resources
+
+- [Specification](/docs/language/specification.md)
