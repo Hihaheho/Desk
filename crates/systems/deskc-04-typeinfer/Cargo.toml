@@ -16,7 +16,7 @@ hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "de
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
 
-thiserror = "1.0.34"
+thiserror = "1.0.37"
 
 [dev-dependencies]
 lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }

@@ -19,4 +19,4 @@ deskc-mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 
 salsa = "0.16"
-uuid = "1.1"
+uuid = "1.2"

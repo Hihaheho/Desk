@@ -18,5 +18,5 @@ deskc-types = { path = "../../components/deskc-types", version = "0.0.0", packag
 
 bevy = "0.8"
 egui = "0.19.0"
-uuid = "1.1"
+uuid = "1.2"
 egui_cable = "0.3"
