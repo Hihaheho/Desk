@@ -51,5 +51,5 @@ Each AST Node is like a file or a directory.
 
 ## More Information
 
-- [this [article](https://fkohlgrueber.github.io/blog/tree-structure-of-file-systems/) considers current file systems' problems, and says "I would seriously consider using this simple and general node-based structure and drop the separation between files and folders.".
+- [this article](https://fkohlgrueber.github.io/blog/tree-structure-of-file-systems/) considers current file systems' problems, and says "I would seriously consider using this simple and general node-based structure and drop the separation between files and folders.".
 - Unity's hierarchy system is like our system. There is no file and directory, and each GameObject is like a file or a directory.
