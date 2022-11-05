@@ -532,6 +532,7 @@ mod tests {
         },
         PatchContentAddFloat
     );
+    #[test]
     fn patch_operands_insert() {
         let node_id = NodeId::new();
         let node_operand = NodeId::new();
@@ -551,17 +552,17 @@ mod tests {
             .flat_nodes
             .insert(node_id.clone(), FlatNode::new(Content::String("a".into())));
 
-        // Here is the difference from other tests
-        base.loop_detector
-            .operand
-            .lock()
-            .set_node(node_operand.clone(), Arc::new(Default::default()));
-
         // Denied
         let kernel = Kernel {
             snapshot: base.snapshot.clone(),
             ..Kernel::new(TestRepository {})
         };
+        // Here is the difference from other tests
+        kernel
+            .loop_detector
+            .operand
+            .lock()
+            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
         assert_eq!(kernel.audit(&event_entry), AuditResponse::Denied);
 
         // Allowed default includes operation
@@ -569,6 +570,12 @@ mod tests {
             snapshot: base.snapshot.clone(),
             ..Kernel::new(TestRepository {})
         };
+        // Here is the difference from other tests
+        kernel
+            .loop_detector
+            .operand
+            .lock()
+            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
         kernel
             .snapshot
             .flat_nodes
@@ -583,6 +590,12 @@ mod tests {
             snapshot: base.snapshot.clone(),
             ..Kernel::new(TestRepository {})
         };
+        // Here is the difference from other tests
+        kernel
+            .loop_detector
+            .operand
+            .lock()
+            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
         assert_eq!(kernel.audit(&event_entry), AuditResponse::Denied);
         kernel
             .snapshot
@@ -642,7 +655,7 @@ mod tests {
     );
 
     #[test]
-    fn node_not_found() {
+    fn deny_always_if_node_not_found() {
         let node_id = NodeId::new();
         let snapshot = Snapshot::default();
         assert_eq!(
@@ -650,14 +663,14 @@ mod tests {
                 &snapshot,
                 &UserId("a".into()),
                 &node_id,
-                &NodeOperation::AddNode
+                &NodeOperation::RemoveNode
             ),
             AuditResponse::Denied
         );
     }
 
     #[test]
-    fn parent_not_fount() {
+    fn deny_always_if_parent_not_found_for_adding_new_node() {
         let node_id = NodeId::new();
         let mut snapshot = Snapshot::default();
         snapshot.flat_nodes.insert(
@@ -669,7 +682,7 @@ mod tests {
                 &snapshot,
                 &UserId("a".into()),
                 &node_id,
-                &NodeOperation::AddNode
+                &NodeOperation::RemoveNode
             ),
             AuditResponse::Denied
         );
