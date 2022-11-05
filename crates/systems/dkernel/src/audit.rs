@@ -11,8 +11,21 @@ use crate::Kernel;
 
 enum Operation<'a> {
     Space(SpaceOperation),
-    Node(NodeOperation, &'a NodeId),
-    Both(SpaceOperation, NodeOperation, &'a NodeId),
+    Node {
+        operation: NodeOperation,
+        node_id: &'a NodeId,
+    },
+    Both {
+        space_operation: SpaceOperation,
+        node_operation: NodeOperation,
+        node_id: &'a NodeId,
+    },
+    Double {
+        operation_1: NodeOperation,
+        node_id_1: &'a NodeId,
+        operation_2: NodeOperation,
+        node_id_2: &'a NodeId,
+    },
 }
 
 impl Kernel {
@@ -37,14 +50,33 @@ impl Kernel {
             Event::RemoveOwner { .. } => Operation::Space(RemoveOwner),
             Event::AddNode { parent, .. } => {
                 if let Some(parent) = parent {
-                    Operation::Both(SpaceOperation::AddNode, NodeOperation::AddNode, parent)
+                    Operation::Both {
+                        space_operation: SpaceOperation::AddNode,
+                        node_operation: NodeOperation::AddNode,
+                        node_id: parent,
+                    }
                 } else {
                     Operation::Space(SpaceOperation::AddNode)
                 }
             }
-            Event::RemoveNode { node_id } => Operation::Node(RemoveNode, node_id),
+            Event::RemoveNode { node_id } => Operation::Node {
+                operation: RemoveNode,
+                node_id,
+            },
             Event::UpdateParent { node_id, parent } => {
-                todo!()
+                if let Some(parent) = parent {
+                    Operation::Double {
+                        operation_1: UpdateParent,
+                        node_id_1: node_id,
+                        operation_2: AddChild,
+                        node_id_2: parent,
+                    }
+                } else {
+                    Operation::Node {
+                        operation: UpdateParent,
+                        node_id,
+                    }
+                }
             }
             Event::PatchContent { node_id, patch } => {
                 let operation = match patch {
@@ -53,7 +85,7 @@ impl Kernel {
                     ContentPatch::AddInteger(_) => PatchContentAddInteger,
                     ContentPatch::AddFloat(_) => PatchContentAddFloat,
                 };
-                Operation::Node(operation, node_id)
+                Operation::Node { operation, node_id }
             }
             Event::PatchOperands { node_id, patch } => {
                 let operation = match patch {
@@ -61,27 +93,34 @@ impl Kernel {
                     OperandsPatch::Remove { .. } => PatchOperandsRemove,
                     OperandsPatch::Move { .. } => PatchOperandsMove,
                 };
-                Operation::Node(operation, node_id)
+                Operation::Node { operation, node_id }
             }
             Event::PatchAttribute { node_id, patch } => {
                 let operation = match patch {
                     AttributePatch::Update { .. } => PatchAttributeUpdate,
                     AttributePatch::Remove { .. } => PatchAttributeRemove,
                 };
-                Operation::Node(operation, node_id)
+                Operation::Node { operation, node_id }
             }
             Event::AddSnapshot { .. } => Operation::Space(AddSnapshot),
             Event::UpdateSpaceRules { .. } => {
                 return AuditResponse::Denied;
             }
-            Event::UpdateNodeRules { node_id, .. } => Operation::Node(UpdateRules, node_id),
+            Event::UpdateNodeRules { node_id, .. } => Operation::Node {
+                operation: UpdateRules,
+                node_id,
+            },
         };
         match operation {
             Operation::Space(operation) => self.snapshot.rules.audit(&entry.user_id, &operation),
-            Operation::Node(operation, node_id) => {
+            Operation::Node { operation, node_id } => {
                 audit_node(&self.snapshot, &entry.user_id, node_id, &operation)
             }
-            Operation::Both(space_operation, node_operation, node_id) => {
+            Operation::Both {
+                space_operation,
+                node_operation,
+                node_id,
+            } => {
                 if self.snapshot.rules.audit(&entry.user_id, &space_operation)
                     == AuditResponse::Denied
                 {
@@ -90,6 +129,21 @@ impl Kernel {
                 }
                 // audit by node
                 audit_node(&self.snapshot, &entry.user_id, node_id, &node_operation)
+            }
+            Operation::Double {
+                operation_1,
+                node_id_1,
+                operation_2,
+                node_id_2,
+            } => {
+                if audit_node(&self.snapshot, &entry.user_id, node_id_1, &operation_1)
+                    == AuditResponse::Denied
+                {
+                    // node 1 denies
+                    return AuditResponse::Denied;
+                }
+                // audit by node 2
+                audit_node(&self.snapshot, &entry.user_id, node_id_2, &operation_2)
             }
         }
     }
@@ -101,9 +155,9 @@ fn audit_node(
     node_id: &NodeId,
     operation: &NodeOperation,
 ) -> AuditResponse {
-    if let Some(mut flat_node) = dbg!(snapshot.flat_nodes.get(node_id)) {
+    if let Some(mut flat_node) = snapshot.flat_nodes.get(node_id) {
         let mut rule = flat_node.rules.clone();
-        while let Some(parent_id) = dbg!(&flat_node.parent) {
+        while let Some(parent_id) = &flat_node.parent {
             if let Some(parent) = snapshot.flat_nodes.get(parent_id) {
                 flat_node = parent;
                 rule = rule.intersection(&flat_node.rules);
@@ -562,7 +616,7 @@ mod tests {
             .loop_detector
             .operand
             .lock()
-            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
+            .set_node(node_operand.clone(), Arc::new(Default::default()));
         assert_eq!(kernel.audit(&event_entry), AuditResponse::Denied);
 
         // Allowed default includes operation
@@ -575,7 +629,7 @@ mod tests {
             .loop_detector
             .operand
             .lock()
-            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
+            .set_node(node_operand.clone(), Arc::new(Default::default()));
         kernel
             .snapshot
             .flat_nodes
@@ -595,7 +649,7 @@ mod tests {
             .loop_detector
             .operand
             .lock()
-            .set_node(dbg!(node_operand.clone()), Arc::new(Default::default()));
+            .set_node(node_operand.clone(), Arc::new(Default::default()));
         assert_eq!(kernel.audit(&event_entry), AuditResponse::Denied);
         kernel
             .snapshot
@@ -729,6 +783,165 @@ mod tests {
                         node: node_a,
                     },
                 },
+            }),
+            AuditResponse::Denied
+        );
+    }
+
+    #[test]
+    fn audit_update_parent_allowed_without_parent() {
+        let node_id = NodeId::new();
+        let mut kernel = Kernel::new(TestRepository {});
+        kernel.snapshot.flat_nodes.insert(
+            node_id.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [NodeOperation::UpdateParent].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        assert_eq!(
+            kernel.audit(&EventEntry {
+                index: 0,
+                user_id: UserId("a".into()),
+                event: Event::UpdateParent {
+                    node_id,
+                    parent: None,
+                },
+            }),
+            AuditResponse::Allowed
+        );
+    }
+
+    #[test]
+    fn audit_update_parent_denied_without_parent() {
+        let node_id = NodeId::new();
+        let mut kernel = Kernel::new(TestRepository {});
+        kernel.snapshot.flat_nodes.insert(
+            node_id.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        assert_eq!(
+            kernel.audit(&EventEntry {
+                index: 0,
+                user_id: UserId("a".into()),
+                event: Event::UpdateParent {
+                    node_id,
+                    parent: None,
+                },
+            }),
+            AuditResponse::Denied
+        );
+    }
+
+    #[test]
+    fn audit_add_child_allowed() {
+        let node_id = NodeId::new();
+        let child = NodeId::new();
+        let mut kernel = Kernel::new(TestRepository {});
+        kernel
+            .loop_detector
+            .parent
+            .lock()
+            .set_node(node_id.clone(), Arc::new([].into_iter().collect()));
+        kernel.snapshot.flat_nodes.insert(
+            child.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [NodeOperation::UpdateParent].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        kernel.snapshot.flat_nodes.insert(
+            node_id.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [NodeOperation::AddChild].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        assert_eq!(
+            kernel.audit(&EventEntry {
+                index: 0,
+                user_id: UserId("a".into()),
+                event: Event::UpdateParent {
+                    node_id: child,
+                    parent: Some(node_id)
+                }
+            }),
+            AuditResponse::Allowed
+        );
+    }
+
+    #[test]
+    fn audit_add_child_denied() {
+        let node_id = NodeId::new();
+        let child = NodeId::new();
+        let mut kernel = Kernel::new(TestRepository {});
+        kernel
+            .loop_detector
+            .parent
+            .lock()
+            .set_node(node_id.clone(), Arc::new([].into_iter().collect()));
+        kernel.snapshot.flat_nodes.insert(
+            child.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [NodeOperation::UpdateParent].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        kernel.snapshot.flat_nodes.insert(
+            node_id.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        assert_eq!(
+            kernel.audit(&EventEntry {
+                index: 0,
+                user_id: UserId("a".into()),
+                event: Event::UpdateParent {
+                    node_id: child,
+                    parent: Some(node_id)
+                }
+            }),
+            AuditResponse::Denied
+        );
+    }
+
+    #[test]
+    fn audit_update_parent_denied() {
+        let parent = NodeId::new();
+        let node_id = NodeId::new();
+        let mut kernel = Kernel::new(TestRepository {});
+        kernel
+            .loop_detector
+            .parent
+            .lock()
+            .set_node(parent.clone(), Arc::new([].into_iter().collect()));
+        kernel.snapshot.flat_nodes.insert(
+            node_id.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        kernel.snapshot.flat_nodes.insert(
+            parent.clone(),
+            FlatNode::new(Content::String("a".into())).rules(Rules {
+                default: [NodeOperation::AddChild].into_iter().collect(),
+                ..Default::default()
+            }),
+        );
+        assert_eq!(
+            kernel.audit(&EventEntry {
+                index: 0,
+                user_id: UserId("a".into()),
+                event: Event::UpdateParent {
+                    node_id: node_id.clone(),
+                    parent: Some(parent.clone())
+                }
             }),
             AuditResponse::Denied
         );
