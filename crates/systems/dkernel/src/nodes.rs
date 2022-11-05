@@ -22,13 +22,13 @@ pub trait NodeQueries {
 
 #[salsa::database(KernelStorage)]
 #[derive(Default)]
-pub struct Hirs {
+pub struct Nodes {
     storage: salsa::Storage<Self>,
 }
 
-impl salsa::Database for Hirs {}
+impl salsa::Database for Nodes {}
 
-impl Hirs {
+impl Nodes {
     pub fn handle_event(&mut self, event: &Event) {
         match event {
             Event::AddNode {
@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn add_node() {
-        let mut db = Hirs::default();
+        let mut db = Nodes::default();
         let node_id = NodeId::new();
         let parent = Some(NodeId::new());
 
@@ -93,7 +93,7 @@ mod tests {
 
     #[test]
     fn patch_content() {
-        let mut db = Hirs::default();
+        let mut db = Nodes::default();
         let node_id = handle_add_node(&mut db);
 
         db.handle_event(&Event::PatchContent {
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn patch_children() {
-        let mut db = Hirs::default();
+        let mut db = Nodes::default();
         let node_id = handle_add_node(&mut db);
         let node_a = NodeId::new();
 
@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn patch_attribute() {
-        let mut db = Hirs::default();
+        let mut db = Nodes::default();
         let node_id = handle_add_node(&mut db);
 
         db.handle_event(&Event::PatchAttribute {
@@ -142,7 +142,7 @@ mod tests {
         );
     }
 
-    fn handle_add_node(db: &mut Hirs) -> NodeId {
+    fn handle_add_node(db: &mut Nodes) -> NodeId {
         let node_id = NodeId::new();
         db.handle_event(&Event::AddNode {
             parent: None,

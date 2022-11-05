@@ -23,7 +23,6 @@ pub enum OperandsPatch {
     Insert { index: usize, node: NodeId },
     Remove { index: usize },
     Move { index: usize, diff: isize },
-    Update { index: usize, node: NodeId },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

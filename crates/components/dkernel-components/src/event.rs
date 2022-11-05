@@ -34,6 +34,10 @@ pub enum Event {
     RemoveNode {
         node_id: NodeId,
     },
+    UpdateParent {
+        node_id: NodeId,
+        parent: Option<NodeId>,
+    },
     PatchContent {
         node_id: NodeId,
         patch: ContentPatch,

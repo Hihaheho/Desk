@@ -34,6 +34,11 @@ impl Snapshot {
             Event::RemoveNode { node_id } => {
                 self.flat_nodes.remove(node_id);
             }
+            Event::UpdateParent { node_id, parent } => {
+                if let Some(node) = self.flat_nodes.get_mut(node_id) {
+                    node.parent = parent.clone();
+                }
+            }
             Event::PatchContent { node_id, patch } => {
                 self.flat_nodes
                     .get_mut(node_id)
@@ -105,6 +110,30 @@ mod tests {
         snapshot.handle_event(&Event::RemoveNode { node_id });
 
         assert_eq!(snapshot.flat_nodes, HashMap::default())
+    }
+
+    #[test]
+    fn update_parent() {
+        let mut snapshot = Snapshot::default();
+        let node_id = handle_add_node(&mut snapshot);
+        let parent_id = handle_add_node(&mut snapshot);
+        snapshot.handle_event(&Event::UpdateParent {
+            node_id: node_id.clone(),
+            parent: Some(parent_id.clone()),
+        });
+
+        assert_eq!(
+            snapshot.flat_nodes,
+            [
+                (
+                    node_id,
+                    FlatNode::new(Content::String("a".into())).parent(Some(parent_id.clone()))
+                ),
+                (parent_id, FlatNode::new(Content::String("a".into())))
+            ]
+            .into_iter()
+            .collect()
+        )
     }
 
     #[test]

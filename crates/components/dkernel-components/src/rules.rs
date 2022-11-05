@@ -79,10 +79,11 @@ pub enum NodeOperation {
     PatchOperandsInsert,
     PatchOperandsRemove,
     PatchOperandsMove,
-    PatchOperandsUpdate,
     PatchAttributeUpdate,
     PatchAttributeRemove,
     UpdateRules,
+    UpdateParent,
+    AddChild,
 }
 
 #[cfg(test)]

@@ -1,6 +1,8 @@
 mod audit;
+mod descendants;
 mod error;
 mod history;
+mod loop_detector;
 mod nodes;
 pub mod prelude;
 pub mod query_result;
@@ -9,11 +11,11 @@ pub mod state;
 
 use std::{any::TypeId, collections::HashMap};
 
-use audit::audit;
 use bevy_ecs::prelude::Component;
 use components::{event::Event, rules::AuditResponse, snapshot::Snapshot};
 use history::History;
-use nodes::Hirs;
+use loop_detector::LoopDetector;
+use nodes::Nodes;
 use parking_lot::Mutex;
 use repository::Repository;
 use state::State;
@@ -22,7 +24,8 @@ use state::State;
 pub struct Kernel {
     repository: Box<dyn Repository + Send + Sync + 'static>,
     // salsa database is not Sync
-    hirs: Mutex<Hirs>,
+    nodes: Mutex<Nodes>,
+    loop_detector: LoopDetector,
     pub snapshot: Snapshot,
     history: History,
     states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
@@ -32,7 +35,8 @@ impl Kernel {
     pub fn new(repository: impl Repository + Send + Sync + 'static) -> Self {
         Self {
             repository: Box::new(repository),
-            hirs: Default::default(),
+            nodes: Default::default(),
+            loop_detector: Default::default(),
             snapshot: Default::default(),
             history: Default::default(),
             states: Default::default(),
@@ -46,12 +50,15 @@ impl Kernel {
     pub fn process(&mut self) {
         let entries = self.repository.poll();
         for entry in entries {
-            if audit(&self.snapshot, &entry) == AuditResponse::Allowed {
-                self.hirs.lock().handle_event(&entry.event);
+            if self.audit(&entry) == AuditResponse::Allowed {
+                self.nodes.lock().handle_event(&entry.event);
                 self.history.handle_event(&self.snapshot, &entry.event);
                 for state in self.states.values_mut() {
                     state.handle_event(&self.snapshot, &entry.event);
                 }
+                self.loop_detector
+                    .handle_event(&self.snapshot, &entry.event);
+                // This must be last for using the previous snapshot above
                 self.snapshot.handle_event(&entry.event);
             }
         }
@@ -217,7 +224,7 @@ mod tests {
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
         assert_eq!(
-            remove_node_id(kernel.hirs.lock().ast(node_a).unwrap().as_ref().clone()),
+            remove_node_id(kernel.nodes.lock().ast(node_a).unwrap().as_ref().clone()),
             WithSpan {
                 id: NodeId::default(),
                 span: 0..0,

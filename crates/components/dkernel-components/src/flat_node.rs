@@ -66,10 +66,6 @@ impl FlatNode {
                 let new_index = *index as isize + *diff;
                 self.operands.insert(new_index as usize, node);
             }
-            OperandsPatch::Update { index, node } => {
-                self.operands.remove(*index);
-                self.operands.insert(*index, node.clone());
-            }
         }
     }
 
@@ -80,6 +76,11 @@ impl FlatNode {
 
     pub fn parent(mut self, parent: Option<NodeId>) -> Self {
         self.parent = parent;
+        self
+    }
+
+    pub fn operands(mut self, operands: Operands) -> Self {
+        self.operands = operands;
         self
     }
 }
@@ -158,21 +159,5 @@ mod tests {
         });
         flat_node.patch_children(&OperandsPatch::Move { index: 1, diff: -1 });
         assert_eq!(flat_node.operands, vec![node_b, node_a]);
-    }
-
-    #[test]
-    fn operands_update() {
-        let mut flat_node = FlatNode::new(Content::String("a".into()));
-        let node_a = NodeId::new();
-        let node_b = NodeId::new();
-        flat_node.patch_children(&OperandsPatch::Insert {
-            index: 0,
-            node: node_a,
-        });
-        flat_node.patch_children(&OperandsPatch::Update {
-            index: 0,
-            node: node_b.clone(),
-        });
-        assert_eq!(flat_node.operands, vec![node_b]);
     }
 }
