@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use desk_window::window::{DefaultWindow, Window};
-use dworkspace::Kernel;
+use dworkspace::Workspace;
 use dworkspace_components::{event::Event, user::UserId};
 use dworkspace_in_memory::InMemoryRepository;
 
@@ -15,7 +15,7 @@ impl Plugin for WindowsPlugin {
 
 pub fn setup(mut commands: Commands) {
     let user_id = UserId("me".into());
-    let mut kernel = Kernel::new(InMemoryRepository::new(user_id.clone()));
+    let mut kernel = Workspace::new(InMemoryRepository::new(user_id.clone()));
     kernel.commit(Event::AddOwner { user_id });
     commands
         .spawn()

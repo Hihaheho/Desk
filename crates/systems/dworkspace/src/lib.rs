@@ -22,7 +22,7 @@ use repository::Repository;
 use state::State;
 
 #[derive(Component)]
-pub struct Kernel {
+pub struct Workspace {
     repository: Box<dyn Repository + Send + Sync + 'static>,
     // salsa database is not Sync
     nodes: Mutex<Nodes>,
@@ -34,7 +34,7 @@ pub struct Kernel {
     states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
 }
 
-impl Kernel {
+impl Workspace {
     pub fn new(repository: impl Repository + Send + Sync + 'static) -> Self {
         Self {
             repository: Box::new(repository),
@@ -203,7 +203,7 @@ mod tests {
         let mut test_state = TestState::default();
         test_state.mock_handle_event(mry::Any, mry::Any).returns(());
 
-        let mut kernel = Kernel::new(repository);
+        let mut kernel = Workspace::new(repository);
         kernel.add_state(test_state);
         kernel.process();
 

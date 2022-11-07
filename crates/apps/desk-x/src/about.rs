@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use desk_system_ordering::DeskSystem;
-use dworkspace::Kernel;
+use dworkspace::Workspace;
 
 use desk_window::{
     ctx::Ctx,
@@ -19,7 +19,7 @@ impl Plugin for AboutPlugin {
     }
 }
 
-fn about(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWindow>>) {
+fn about(mut window: Query<(&mut Window<egui::Context>, &Workspace), With<DefaultWindow>>) {
     if let Ok((mut window, _kernel)) = window.get_single_mut() {
         window.add_widget(WidgetId::new(), AboutWidget);
     }

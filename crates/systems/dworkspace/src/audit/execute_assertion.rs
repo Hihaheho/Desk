@@ -5,7 +5,7 @@ use components::{
 };
 use deskc_ids::NodeId;
 
-use crate::{references::ReferencesQueries, Kernel};
+use crate::{references::ReferencesQueries, Workspace};
 
 use super::assertion::Assertion;
 
@@ -41,7 +41,7 @@ pub enum AssertionError {
     },
 }
 
-impl Kernel {
+impl Workspace {
     pub fn execute_assertion(
         &self,
         user_id: &UserId,
@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn space_denies() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::SpaceAllows(SpaceOperation::CreateNode);
         assert_eq!(
             kernel.execute_assertion(&UserId("a".into()), assertion),
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn space_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel
             .snapshot
             .rules
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn node_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel
             .snapshot
@@ -260,7 +260,7 @@ mod tests {
 
     #[test]
     fn node_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -285,7 +285,7 @@ mod tests {
 
     #[test]
     fn parent_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn parent_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -377,7 +377,7 @@ mod tests {
 
     #[test]
     fn owner_denies() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::Owner;
         assert_eq!(
             kernel.execute_assertion(&UserId("b".into()), assertion),
@@ -387,7 +387,7 @@ mod tests {
 
     #[test]
     fn owner_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.handle_event(&Event::AddOwner {
             user_id: UserId("a".into()),
         });
@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     fn no_owner_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.handle_event(&Event::AddOwner {
             user_id: UserId("a".into()),
         });
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn no_owner_allows() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::NoOwner;
         assert_eq!(
             kernel.execute_assertion(&UserId("a".into()), assertion),
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn node_exists_denies() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let assertion = Assertion::NodeExists(&node_id);
         assert_eq!(
@@ -434,7 +434,7 @@ mod tests {
 
     #[test]
     fn node_exists_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -449,7 +449,7 @@ mod tests {
 
     #[test]
     fn not_referenced_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn not_referenced_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -496,7 +496,7 @@ mod tests {
 
     #[test]
     fn no_operand_loop_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -529,7 +529,7 @@ mod tests {
 
     #[test]
     fn no_operand_loop_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
@@ -552,7 +552,7 @@ mod tests {
 
     #[test]
     fn operands_has_size() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         let node_a = NodeId::new();
         let node_b = NodeId::new();
@@ -644,7 +644,7 @@ mod tests {
 
     #[test]
     fn content_kind_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -664,7 +664,7 @@ mod tests {
 
     #[test]
     fn content_kind_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -688,7 +688,7 @@ mod tests {
 
     #[test]
     fn all_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -722,7 +722,7 @@ mod tests {
 
     #[test]
     fn all_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -760,7 +760,7 @@ mod tests {
 
     #[test]
     fn all_allows_empty() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::All(vec![]);
         assert_eq!(
             kernel.execute_assertion(&UserId("a".into()), assertion),
@@ -770,7 +770,7 @@ mod tests {
 
     #[test]
     fn any_allows() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -801,7 +801,7 @@ mod tests {
 
     #[test]
     fn any_denies() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         let node_id = NodeId::new();
         kernel.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
@@ -841,7 +841,7 @@ mod tests {
 
     #[test]
     fn any_denies_empty() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::Any(vec![]);
         assert_eq!(
             kernel.execute_assertion(&UserId("a".into()), assertion),

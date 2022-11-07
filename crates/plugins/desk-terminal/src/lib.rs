@@ -7,7 +7,7 @@ use desk_window::{
 };
 use deskc_ids::{LinkName, NodeId};
 use deskc_types::Type;
-use dworkspace::Kernel;
+use dworkspace::Workspace;
 use dworkspace_components::{content::Content, event::Event};
 use system_ordering::DeskSystem;
 pub struct TerminalPlugin;
@@ -18,7 +18,7 @@ impl Plugin for TerminalPlugin {
     }
 }
 
-fn terminal(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWindow>>) {
+fn terminal(mut window: Query<(&mut Window<egui::Context>, &Workspace), With<DefaultWindow>>) {
     if let Ok((mut window, _kernel)) = window.get_single_mut() {
         window.add_widget(WidgetId::new(), TerminalWidget);
     }

@@ -1,5 +1,5 @@
 pub use crate::state::State;
-pub use crate::Kernel;
+pub use crate::Workspace;
 pub use components::content::Content;
 pub use components::event::{Event, EventEntry};
 pub use components::flat_node::{Attributes, FlatNode, Operands};

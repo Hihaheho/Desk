@@ -4,11 +4,11 @@ pub(super) mod extract_assertion;
 
 use components::event::EventEntry;
 
-use crate::Kernel;
+use crate::Workspace;
 
 use self::execute_assertion::AssertionError;
 
-impl Kernel {
+impl Workspace {
     pub fn audit(&self, entry: &EventEntry) -> Result<(), AssertionError> {
         let assertion = extract_assertion::extract_assertion(&entry.event);
         self.execute_assertion(&entry.user_id, assertion)
@@ -29,7 +29,7 @@ mod tests {
 
     #[test]
     fn initial_add_owner_is_always_allowed() {
-        let kernel = Kernel::new(TestRepository::default());
+        let kernel = Workspace::new(TestRepository::default());
 
         assert!(kernel
             .audit(&EventEntry {
@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn any_event_allowed_for_owners() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.snapshot.handle_event(&Event::AddOwner {
             user_id: UserId("a".into()),
         });
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn update_space_rule_denied() {
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.snapshot.handle_event(&Event::AddOwner {
             user_id: UserId("a".into()),
         });
@@ -89,7 +89,7 @@ mod tests {
     fn prevent_loop() {
         let node_a = NodeId::new();
         let node_b = NodeId::new();
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.snapshot.owners.insert(UserId("a".into()));
 
         kernel.handle_event(&Event::CreateNode {
@@ -141,7 +141,7 @@ mod tests {
         let node_b = NodeId::new();
         let node_c = NodeId::new();
         let node_d = NodeId::new();
-        let mut kernel = Kernel::new(TestRepository::default());
+        let mut kernel = Workspace::new(TestRepository::default());
         kernel.snapshot.owners.insert(UserId("a".into()));
         kernel.handle_event(&Event::CreateNode {
             node_id: node_a.clone(),

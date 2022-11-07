@@ -6,7 +6,7 @@ mod runtime;
 use bevy::prelude::*;
 use desk_window::window::Window;
 use desk_window::{widget::WidgetId, window::DefaultWindow};
-use dworkspace::Kernel;
+use dworkspace::Workspace;
 use editor_state::EditorState;
 use editor_widget::EditorWidget;
 use system_ordering::DeskSystem;
@@ -27,23 +27,23 @@ impl Plugin for EditorPlugin {
     }
 }
 
-pub fn setup(mut kernel: Query<&mut Kernel, Added<Kernel>>) {
+pub fn setup(mut kernel: Query<&mut Workspace, Added<Workspace>>) {
     for mut kernel in kernel.iter_mut() {
         kernel.add_state(EditorState::default());
     }
 }
 
-pub fn process_kernel(mut kernel: Query<&mut Kernel>) {
+pub fn process_kernel(mut kernel: Query<&mut Workspace>) {
     for mut kernel in kernel.iter_mut() {
         kernel.process();
     }
 }
 
-pub fn compile_system(mut kernel: Query<&mut Kernel>) {
+pub fn compile_system(mut kernel: Query<&mut Workspace>) {
     for _kernel in kernel.iter_mut() {}
 }
 
-pub fn editor(mut window: Query<(&mut Window<egui::Context>, &Kernel), With<DefaultWindow>>) {
+pub fn editor(mut window: Query<(&mut Window<egui::Context>, &Workspace), With<DefaultWindow>>) {
     if let Ok((mut window, kernel)) = window.get_single_mut() {
         for (id, _node) in kernel.snapshot.flat_nodes.iter() {
             window.add_widget(

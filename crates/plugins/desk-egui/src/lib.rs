@@ -6,7 +6,7 @@ use bevy_egui::{
 use desk_system_ordering::DeskSystem;
 use desk_window::ctx::Ctx;
 use desk_window::window::Window;
-use dworkspace::Kernel;
+use dworkspace::Workspace;
 use theme::Theme;
 
 pub struct EguiPlugin;
@@ -27,7 +27,7 @@ impl Plugin for EguiPlugin {
 
 fn render(
     mut egui_context: ResMut<EguiContext>,
-    mut windows: Query<(&mut Kernel, &mut Window<egui::Context>)>,
+    mut windows: Query<(&mut Workspace, &mut Window<egui::Context>)>,
 ) {
     for (mut kernel, mut window) in windows.iter_mut() {
         let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut());
