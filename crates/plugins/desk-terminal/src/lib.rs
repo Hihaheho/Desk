@@ -31,14 +31,14 @@ impl Widget<egui::Context> for TerminalWidget {
         egui::Window::new("Terminal").show(ctx.backend, |ui| {
             ui.label("Hello World");
             if ui.button("Add number").clicked() {
-                ctx.add_event(Event::AddNode {
+                ctx.add_event(Event::CreateNode {
                     parent: None,
                     node_id: NodeId::new(),
                     content: Content::Integer(1),
                 });
             }
             if ui.button("Add apply").clicked() {
-                ctx.add_event(Event::AddNode {
+                ctx.add_event(Event::CreateNode {
                     parent: None,
                     node_id: NodeId::new(),
                     content: Content::Apply {

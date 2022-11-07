@@ -31,22 +31,15 @@ impl salsa::Database for Nodes {}
 impl Nodes {
     pub fn handle_event(&mut self, event: &Event) {
         match event {
-            Event::AddNode {
-                parent,
-                node_id,
-                content,
-            } => {
-                self.set_flat_node(
-                    node_id.clone(),
-                    Arc::new(FlatNode::new(content.clone()).parent(parent.clone())),
-                );
+            Event::CreateNode { node_id, content } => {
+                self.set_flat_node(node_id.clone(), Arc::new(FlatNode::new(content.clone())));
             }
             Event::PatchContent { node_id, patch } => {
                 let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
                 flat_node.patch_content(patch);
                 self.set_flat_node(node_id.clone(), Arc::new(flat_node));
             }
-            Event::PatchOperands { node_id, patch } => {
+            Event::PatchOperand { node_id, patch } => {
                 let mut flat_node = self.flat_node(node_id.clone()).as_ref().clone();
                 flat_node.patch_children(patch);
                 self.set_flat_node(node_id.clone(), Arc::new(flat_node));
@@ -66,7 +59,7 @@ impl Nodes {
 mod tests {
     use components::{
         content::Content,
-        patch::{AttributePatch, ContentPatch, OperandsPatch},
+        patch::{AttributePatch, ContentPatch, OperandPatch},
     };
     use deskc_hir::expr::{Expr, Literal};
     use deskc_types::Type;
@@ -77,17 +70,15 @@ mod tests {
     fn add_node() {
         let mut db = Nodes::default();
         let node_id = NodeId::new();
-        let parent = Some(NodeId::new());
 
-        db.handle_event(&Event::AddNode {
-            parent: parent.clone(),
+        db.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
             content: Content::String("a".into()),
         });
 
         assert_eq!(
             *db.flat_node(node_id),
-            FlatNode::new(Content::String("a".into())).parent(parent)
+            FlatNode::new(Content::String("a".into()))
         );
     }
 
@@ -110,11 +101,11 @@ mod tests {
         let node_id = handle_add_node(&mut db);
         let node_a = NodeId::new();
 
-        db.handle_event(&Event::PatchOperands {
+        db.handle_event(&Event::PatchOperand {
             node_id: node_id.clone(),
-            patch: OperandsPatch::Insert {
+            patch: OperandPatch::Insert {
                 index: 0,
-                node: node_a.clone(),
+                node_id: node_a.clone(),
             },
         });
 
@@ -144,8 +135,7 @@ mod tests {
 
     fn handle_add_node(db: &mut Nodes) -> NodeId {
         let node_id = NodeId::new();
-        db.handle_event(&Event::AddNode {
-            parent: None,
+        db.handle_event(&Event::CreateNode {
             node_id: node_id.clone(),
             content: Content::String("a".into()),
         });

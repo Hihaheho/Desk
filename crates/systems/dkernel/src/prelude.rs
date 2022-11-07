@@ -3,7 +3,7 @@ pub use crate::Kernel;
 pub use components::content::Content;
 pub use components::event::{Event, EventEntry};
 pub use components::flat_node::{Attributes, FlatNode, Operands};
-pub use components::patch::{AttributePatch, ContentPatch, OperandsPatch};
+pub use components::patch::{AttributePatch, ContentPatch, OperandPatch};
 pub use components::rules::{NodeOperation, SpaceOperation};
 pub use components::snapshot::Snapshot;
 pub use components::user::UserId;

@@ -1,28 +1,38 @@
-mod string_diff;
-use deskc_ids::NodeId;
+mod diff_match_patch;
+use deskc_ids::{LinkName, NodeId};
 use hir::expr::Expr;
 use types::Type;
 
-use crate::content::Content;
+use crate::content::{Content, SyntaxKind};
 
-use self::string_diff::StringPatch;
+use self::diff_match_patch::Patch;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ContentPatch {
     Replace(Content),
-    PatchString(Vec<StringPatch>),
-    AddInteger(u64),
-    AddFloat(f64),
+    ChangeSourceCodeSyntax { syntax: SyntaxKind, source: String },
+    PatchSourceCode(StringPatch),
+    PatchString(StringPatch),
+    UpdateInteger(u64),
+    UpdateFloat(f64),
+    UpdateRational(u64, u64),
+    UpdateApply { ty: Type, link_name: LinkName },
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StringPatch {
+    Replace(String),
+    DiffMatchPatch(Vec<Patch>),
 }
 
 // ContentPatch::AddFloat should not be NaN
 impl Eq for ContentPatch {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OperandsPatch {
-    Insert { index: usize, node: NodeId },
+pub enum OperandPatch {
+    Insert { index: usize, node_id: NodeId },
     Remove { index: usize },
-    Move { index: usize, diff: isize },
+    Move { from: usize, to: usize },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

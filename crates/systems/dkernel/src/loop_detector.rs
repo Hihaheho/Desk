@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use components::{event::Event, patch::OperandsPatch, snapshot::Snapshot};
+use components::{event::Event, patch::OperandPatch, snapshot::Snapshot};
+use deskc_ids::NodeId;
 use parking_lot::Mutex;
 
 use crate::descendants::{Descendants, DescendantsQueries};
@@ -8,65 +9,35 @@ use crate::descendants::{Descendants, DescendantsQueries};
 #[derive(Default)]
 pub struct LoopDetector {
     // salsa database is not Sync
-    pub parent: Mutex<Descendants>,
     pub operand: Mutex<Descendants>,
 }
 
 impl LoopDetector {
-    pub fn does_make_loop(&self, event: &Event) -> bool {
-        match event {
-            Event::PatchOperands {
-                node_id,
-                patch: OperandsPatch::Insert { node: operand, .. },
-            } => {
-                node_id == operand
-                    || self
-                        .operand
-                        .lock()
-                        .does_make_loop(node_id.clone(), operand.clone())
-            }
-            Event::UpdateParent {
-                node_id,
-                parent: Some(parent),
-            } => {
-                node_id == parent
-                    || self
-                        .parent
-                        .lock()
-                        .does_make_loop(node_id.clone(), parent.clone())
-            }
-            _ => false,
-        }
+    pub fn does_make_loop_insert_operand(&self, node_id: &NodeId, operand_id: &NodeId) -> bool {
+        node_id == operand_id
+            || self
+                .operand
+                .lock()
+                .does_make_loop(node_id.clone(), operand_id.clone())
     }
 
     pub fn handle_event(&mut self, snapshot: &Snapshot, event: &Event) {
         match event {
-            Event::UpdateParent {
+            Event::PatchOperand {
                 node_id,
-                parent: Some(parent),
-            } => self.parent.lock().set_node(
-                node_id.clone(),
-                Arc::new([parent.clone()].into_iter().collect()),
-            ),
-            Event::UpdateParent {
-                node_id,
-                parent: None,
-            } => self
-                .parent
-                .lock()
-                .set_node(node_id.clone(), Default::default()),
-            Event::PatchOperands {
-                node_id,
-                patch: OperandsPatch::Insert { node: operand, .. },
+                patch:
+                    OperandPatch::Insert {
+                        node_id: operand, ..
+                    },
             } => {
                 let mut lock = self.operand.lock();
                 let mut operands = lock.node(node_id.clone()).as_ref().clone();
                 operands.insert(operand.clone());
                 lock.set_node(node_id.clone(), Arc::new(operands))
             }
-            Event::PatchOperands {
+            Event::PatchOperand {
                 node_id,
-                patch: OperandsPatch::Remove { index },
+                patch: OperandPatch::Remove { index },
             } => {
                 let mut lock = self.operand.lock();
                 let mut operands = lock.node(node_id.clone()).as_ref().clone();
@@ -80,18 +51,13 @@ impl LoopDetector {
                     lock.set_node(node_id.clone(), Arc::new(operands))
                 }
             }
-            Event::AddNode {
-                parent, node_id, ..
+            Event::CreateNode {
+                node_id,
+                content: _,
             } => {
-                if let Some(parent) = parent {
-                    self.parent.lock().set_node(
-                        node_id.clone(),
-                        Arc::new([parent.clone()].into_iter().collect()),
-                    );
-                }
                 self.operand
                     .lock()
-                    .set_node(node_id.clone(), Arc::new(Default::default()));
+                    .set_node(node_id.clone(), Default::default());
             }
             _ => {}
         }
@@ -123,52 +89,11 @@ mod tests {
             .lock()
             .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
         assert_eq!(
-            detector.does_make_loop(&Event::PatchOperands {
-                node_id: node_a.clone(),
-                patch: OperandsPatch::Insert {
-                    node: node_b.clone(),
-                    index: 0,
-                },
-            }),
+            detector.does_make_loop_insert_operand(&node_a, &node_b),
             false
         );
         assert_eq!(
-            detector.does_make_loop(&Event::PatchOperands {
-                node_id: node_b.clone(),
-                patch: OperandsPatch::Insert {
-                    node: node_a.clone(),
-                    index: 0,
-                },
-            }),
-            true
-        );
-    }
-
-    #[test]
-    fn detect_for_set_parent() {
-        let node_a = NodeId::new();
-        let node_b = NodeId::new();
-        let detector = LoopDetector::default();
-        detector.parent.lock().set_node(
-            node_a.clone(),
-            Arc::new([node_b.clone()].into_iter().collect()),
-        );
-        detector
-            .parent
-            .lock()
-            .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
-        assert_eq!(
-            detector.does_make_loop(&Event::UpdateParent {
-                node_id: node_a.clone(),
-                parent: Some(node_b.clone()),
-            }),
-            false
-        );
-        assert_eq!(
-            detector.does_make_loop(&Event::UpdateParent {
-                node_id: node_b.clone(),
-                parent: Some(node_a.clone()),
-            }),
+            detector.does_make_loop_insert_operand(&node_b, &node_a),
             true
         );
     }
@@ -178,79 +103,25 @@ mod tests {
         let node_id = NodeId::new();
         let detector = LoopDetector::default();
         assert_eq!(
-            detector.does_make_loop(&Event::PatchOperands {
-                node_id: node_id.clone(),
-                patch: OperandsPatch::Insert {
-                    node: node_id.clone(),
-                    index: 0,
-                },
-            }),
+            detector.does_make_loop_insert_operand(&node_id, &node_id),
             true
         );
     }
 
     #[test]
-    fn detect_self_loop_by_parent() {
+    fn handle_create_node() {
         let node_id = NodeId::new();
-        let detector = LoopDetector::default();
-        assert_eq!(
-            detector.does_make_loop(&Event::UpdateParent {
+        let mut detector = LoopDetector::default();
+        detector.handle_event(
+            &Snapshot::default(),
+            &Event::CreateNode {
                 node_id: node_id.clone(),
-                parent: Some(node_id.clone()),
-            }),
-            true
-        );
-    }
-
-    #[test]
-    fn handle_set_some_parent() {
-        let mut detector = LoopDetector::default();
-        let node_a = NodeId::new();
-        let node_b = NodeId::new();
-        detector
-            .parent
-            .lock()
-            .set_node(node_a.clone(), Arc::new([].into_iter().collect()));
-        detector
-            .parent
-            .lock()
-            .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
-        detector.handle_event(
-            &Snapshot::default(),
-            &Event::UpdateParent {
-                node_id: node_a.clone(),
-                parent: Some(node_b.clone()),
+                content: Content::Integer(0),
             },
         );
         assert_eq!(
-            detector.parent.lock().descendants(node_a),
-            Arc::new([node_b].into_iter().collect())
-        );
-    }
-
-    #[test]
-    fn handle_set_none_parent() {
-        let mut detector = LoopDetector::default();
-        let node_a = NodeId::new();
-        let node_b = NodeId::new();
-        detector.parent.lock().set_node(
-            node_a.clone(),
-            Arc::new([node_b.clone()].into_iter().collect()),
-        );
-        detector
-            .parent
-            .lock()
-            .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
-        detector.handle_event(
-            &Snapshot::default(),
-            &Event::UpdateParent {
-                node_id: node_a.clone(),
-                parent: None,
-            },
-        );
-        assert_eq!(
-            detector.parent.lock().descendants(node_a),
-            Arc::new(Default::default())
+            detector.operand.lock().node(node_id.clone()),
+            Default::default()
         );
     }
 
@@ -274,10 +145,10 @@ mod tests {
             .set_node(node_c.clone(), Arc::new([].into_iter().collect()));
         detector.handle_event(
             &Snapshot::default(),
-            &Event::PatchOperands {
+            &Event::PatchOperand {
                 node_id: node_a.clone(),
-                patch: OperandsPatch::Insert {
-                    node: node_b.clone(),
+                patch: OperandPatch::Insert {
+                    node_id: node_b.clone(),
                     index: 0,
                 },
             },
@@ -313,59 +184,14 @@ mod tests {
         );
         detector.handle_event(
             &snapshot,
-            &Event::PatchOperands {
+            &Event::PatchOperand {
                 node_id: node_a.clone(),
-                patch: OperandsPatch::Remove { index: 0 },
+                patch: OperandPatch::Remove { index: 0 },
             },
         );
         assert_eq!(
             detector.operand.lock().descendants(node_a),
             Arc::new([node_c].into_iter().collect())
-        );
-    }
-
-    #[test]
-    fn handle_add_node_with_out_parent() {
-        let mut detector = LoopDetector::default();
-        let node_id = NodeId::new();
-        detector.handle_event(
-            &Snapshot::default(),
-            &Event::AddNode {
-                node_id: node_id.clone(),
-                parent: None,
-                content: Content::Integer(1),
-            },
-        );
-        assert_eq!(
-            detector.operand.lock().descendants(node_id),
-            Arc::new([].into_iter().collect())
-        );
-    }
-
-    #[test]
-    fn handle_add_node_with_parent() {
-        let mut detector = LoopDetector::default();
-        let node_a = NodeId::new();
-        let node_b = NodeId::new();
-        detector
-            .parent
-            .lock()
-            .set_node(node_a.clone(), Arc::new([].into_iter().collect()));
-        detector.handle_event(
-            &Snapshot::default(),
-            &Event::AddNode {
-                node_id: node_b.clone(),
-                parent: Some(node_a.clone()),
-                content: Content::Integer(1),
-            },
-        );
-        assert_eq!(
-            detector.operand.lock().descendants(node_b.clone()),
-            Arc::new([].into_iter().collect())
-        );
-        assert_eq!(
-            detector.parent.lock().descendants(node_b),
-            Arc::new([node_a].into_iter().collect())
         );
     }
 }

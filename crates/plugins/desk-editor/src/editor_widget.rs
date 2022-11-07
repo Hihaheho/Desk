@@ -3,7 +3,7 @@ use desk_window::widget::Widget;
 use deskc_ids::NodeId;
 use dkernel_components::content::Content;
 use dkernel_components::event::Event;
-use dkernel_components::patch::{ContentPatch, OperandsPatch};
+use dkernel_components::patch::{ContentPatch, OperandPatch};
 
 use crate::editor_state::EditorState;
 
@@ -17,13 +17,13 @@ impl Widget<egui::Context> for EditorWidget {
             ui.label("====");
             if let Some(node) = ctx.kernel.snapshot.flat_nodes.get(&self.node_id) {
                 match &node.content {
-                    dkernel_components::content::Content::Source(original) => {
+                    dkernel_components::content::Content::SourceCode(original) => {
                         let mut source = original.clone();
                         ui.text_edit_multiline(&mut source);
                         if *original != source {
                             ctx.kernel.commit(Event::PatchContent {
                                 node_id: self.node_id.clone(),
-                                patch: ContentPatch::Replace(Content::Source(source)),
+                                patch: ContentPatch::Replace(Content::SourceCode(source)),
                             });
                         }
                     }
@@ -56,9 +56,9 @@ impl Widget<egui::Context> for EditorWidget {
                             ui.horizontal(|ui| {
                                 ui.label(format!("{:?}", child));
                                 if ui.button("x").clicked() {
-                                    clicked = Some(Event::PatchOperands {
+                                    clicked = Some(Event::PatchOperand {
                                         node_id: self.node_id.clone(),
-                                        patch: OperandsPatch::Remove { index },
+                                        patch: OperandPatch::Remove { index },
                                     });
                                 }
                             });
@@ -83,11 +83,11 @@ impl Widget<egui::Context> for EditorWidget {
                 .clone()
             {
                 if target != self.node_id && ui.button("Add this as a child").clicked() {
-                    ctx.kernel.commit(Event::PatchOperands {
+                    ctx.kernel.commit(Event::PatchOperand {
                         node_id: target,
-                        patch: OperandsPatch::Insert {
+                        patch: OperandPatch::Insert {
                             index: 0,
-                            node: self.node_id.clone(),
+                            node_id: self.node_id.clone(),
                         },
                     });
                     ctx.kernel

@@ -6,7 +6,7 @@ use types::Type;
 
 use crate::{
     content::Content,
-    patch::{AttributePatch, ContentPatch, OperandsPatch},
+    patch::{AttributePatch, ContentPatch, OperandPatch},
     rules::{NodeOperation, Rules},
 };
 
@@ -19,7 +19,7 @@ pub struct FlatNode {
     pub operands: Operands,
     pub attributes: Attributes,
     pub rules: Rules<NodeOperation>,
-    pub parent: Option<NodeId>,
+    pub operand_rules: Rules<NodeOperation>,
 }
 
 impl FlatNode {
@@ -29,16 +29,14 @@ impl FlatNode {
             operands: Operands::default(),
             attributes: Attributes::default(),
             rules: Rules::default(),
-            parent: None,
+            operand_rules: Rules::default(),
         }
     }
 
     pub fn patch_content(&mut self, patch: &ContentPatch) {
         match patch {
             ContentPatch::Replace(content) => self.content = content.clone(),
-            ContentPatch::PatchString(_) => todo!(),
-            ContentPatch::AddInteger(_) => todo!(),
-            ContentPatch::AddFloat(_) => todo!(),
+            _ => todo!(),
         }
     }
 
@@ -53,18 +51,23 @@ impl FlatNode {
         }
     }
 
-    pub fn patch_children(&mut self, patch: &OperandsPatch) {
+    pub fn patch_children(&mut self, patch: &OperandPatch) {
         match patch {
-            OperandsPatch::Insert { index, node } => {
+            OperandPatch::Insert {
+                index,
+                node_id: node,
+            } => {
                 self.operands.insert(*index, node.clone());
             }
-            OperandsPatch::Remove { index } => {
+            OperandPatch::Remove { index } => {
                 self.operands.remove(*index);
             }
-            OperandsPatch::Move { index, diff } => {
+            OperandPatch::Move {
+                from: index,
+                to: next,
+            } => {
                 let node = self.operands.remove(*index);
-                let new_index = *index as isize + *diff;
-                self.operands.insert(new_index as usize, node);
+                self.operands.insert(*next, node);
             }
         }
     }
@@ -74,8 +77,8 @@ impl FlatNode {
         self
     }
 
-    pub fn parent(mut self, parent: Option<NodeId>) -> Self {
-        self.parent = parent;
+    pub fn operand_rules(mut self, rules: Rules<NodeOperation>) -> Self {
+        self.operand_rules = rules;
         self
     }
 
@@ -120,9 +123,9 @@ mod tests {
     fn operands_insert() {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         let node_id = NodeId::new();
-        flat_node.patch_children(&OperandsPatch::Insert {
+        flat_node.patch_children(&OperandPatch::Insert {
             index: 0,
-            node: node_id.clone(),
+            node_id: node_id.clone(),
         });
         assert_eq!(flat_node.operands, vec![node_id]);
     }
@@ -132,32 +135,38 @@ mod tests {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         let node_a = NodeId::new();
         let node_b = NodeId::new();
-        flat_node.patch_children(&OperandsPatch::Insert {
+        flat_node.patch_children(&OperandPatch::Insert {
             index: 0,
-            node: node_a.clone(),
+            node_id: node_a.clone(),
         });
-        flat_node.patch_children(&OperandsPatch::Insert {
+        flat_node.patch_children(&OperandPatch::Insert {
             index: 1,
-            node: node_b,
+            node_id: node_b,
         });
-        flat_node.patch_children(&OperandsPatch::Remove { index: 1 });
+        flat_node.patch_children(&OperandPatch::Remove { index: 1 });
         assert_eq!(flat_node.operands, vec![node_a]);
     }
 
     #[test]
-    fn operands_move_() {
+    fn operands_move() {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         let node_a = NodeId::new();
         let node_b = NodeId::new();
-        flat_node.patch_children(&OperandsPatch::Insert {
+        let node_c = NodeId::new();
+        flat_node.patch_children(&OperandPatch::Insert {
             index: 0,
-            node: node_a.clone(),
+            node_id: node_a.clone(),
         });
-        flat_node.patch_children(&OperandsPatch::Insert {
+        flat_node.patch_children(&OperandPatch::Insert {
             index: 1,
-            node: node_b.clone(),
+            node_id: node_b.clone(),
         });
-        flat_node.patch_children(&OperandsPatch::Move { index: 1, diff: -1 });
-        assert_eq!(flat_node.operands, vec![node_b, node_a]);
+        flat_node.patch_children(&OperandPatch::Insert {
+            index: 2,
+            node_id: node_c.clone(),
+        });
+        flat_node.patch_children(&OperandPatch::Move { from: 1, to: 0 });
+        flat_node.patch_children(&OperandPatch::Move { from: 1, to: 2 });
+        assert_eq!(flat_node.operands, vec![node_b, node_c, node_a]);
     }
 }

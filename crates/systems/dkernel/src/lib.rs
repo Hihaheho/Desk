@@ -6,13 +6,14 @@ mod loop_detector;
 mod nodes;
 pub mod prelude;
 pub mod query_result;
+mod references;
 pub mod repository;
 pub mod state;
 
 use std::{any::TypeId, collections::HashMap};
 
 use bevy_ecs::prelude::Component;
-use components::{event::Event, rules::AuditResponse, snapshot::Snapshot};
+use components::{event::Event, snapshot::Snapshot};
 use history::History;
 use loop_detector::LoopDetector;
 use nodes::Nodes;
@@ -25,6 +26,8 @@ pub struct Kernel {
     repository: Box<dyn Repository + Send + Sync + 'static>,
     // salsa database is not Sync
     nodes: Mutex<Nodes>,
+    // salsa database is not Sync
+    references: Mutex<references::References>,
     loop_detector: LoopDetector,
     pub snapshot: Snapshot,
     history: History,
@@ -36,6 +39,7 @@ impl Kernel {
         Self {
             repository: Box::new(repository),
             nodes: Default::default(),
+            references: Default::default(),
             loop_detector: Default::default(),
             snapshot: Default::default(),
             history: Default::default(),
@@ -50,18 +54,22 @@ impl Kernel {
     pub fn process(&mut self) {
         let entries = self.repository.poll();
         for entry in entries {
-            if self.audit(&entry) == AuditResponse::Allowed {
-                self.nodes.lock().handle_event(&entry.event);
-                self.history.handle_event(&self.snapshot, &entry.event);
-                for state in self.states.values_mut() {
-                    state.handle_event(&self.snapshot, &entry.event);
-                }
-                self.loop_detector
-                    .handle_event(&self.snapshot, &entry.event);
-                // This must be last for using the previous snapshot above
-                self.snapshot.handle_event(&entry.event);
+            if self.audit(&entry).is_ok() {
+                self.handle_event(&entry.event);
             }
         }
+    }
+
+    fn handle_event(&mut self, event: &Event) {
+        self.nodes.lock().handle_event(event);
+        self.references.lock().handle_event(&self.snapshot, event);
+        self.history.handle_event(&self.snapshot, event);
+        for state in self.states.values_mut() {
+            state.handle_event(&self.snapshot, event);
+        }
+        self.loop_detector.handle_event(&self.snapshot, event);
+        // This must be last for using the previous snapshot above
+        self.snapshot.handle_event(event);
     }
 
     pub fn add_state<T: State + Send + Sync + 'static>(&mut self, state: T) {
@@ -86,7 +94,7 @@ mod tests {
     use components::event::{Event, EventEntry};
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
-    use components::{content::Content, patch::OperandsPatch};
+    use components::{content::Content, patch::OperandPatch};
     use deskc_ast::visitor::remove_node_id;
     use deskc_ast::{
         expr::{Expr, Literal},
@@ -97,27 +105,9 @@ mod tests {
     use deskc_types::Type;
     use nodes::NodeQueries;
 
+    use crate::repository::TestRepository;
+
     use super::*;
-
-    #[mry::mry]
-    #[derive(Default)]
-    pub struct TestRepository {}
-
-    #[mry::mry]
-    impl Repository for TestRepository {
-        fn poll(&mut self) -> Vec<EventEntry> {
-            panic!()
-        }
-        fn commit(&mut self, log: Event) {
-            panic!()
-        }
-        fn add_owner(&mut self, user_id: UserId) {
-            panic!()
-        }
-        fn remove_owner(&mut self, user_id: UserId) {
-            panic!()
-        }
-    }
 
     #[mry::mry]
     #[derive(Default)]
@@ -159,7 +149,7 @@ mod tests {
                 user_id: user_a.clone(),
                 event: Event::UpdateSpaceRules {
                     rules: Rules {
-                        default: [SpaceOperation::AddNode].into_iter().collect(),
+                        default: [SpaceOperation::CreateNode].into_iter().collect(),
                         users: Default::default(),
                     },
                 },
@@ -167,8 +157,7 @@ mod tests {
             EventEntry {
                 index: 0,
                 user_id: user_a.clone(),
-                event: Event::AddNode {
-                    parent: None,
+                event: Event::CreateNode {
                     node_id: node_a.clone(),
                     content: Content::Apply {
                         ty: Type::Function {
@@ -185,9 +174,7 @@ mod tests {
                 event: Event::UpdateNodeRules {
                     node_id: node_a.clone(),
                     rules: Rules {
-                        default: [NodeOperation::AddNode, NodeOperation::PatchOperandsInsert]
-                            .into_iter()
-                            .collect(),
+                        default: [NodeOperation::InsertOperand].into_iter().collect(),
                         users: Default::default(),
                     },
                 },
@@ -195,8 +182,7 @@ mod tests {
             EventEntry {
                 index: 1,
                 user_id: user_b.clone(),
-                event: Event::AddNode {
-                    parent: None,
+                event: Event::CreateNode {
                     node_id: node_b.clone(),
                     content: Content::String("string".into()),
                 },
@@ -204,11 +190,11 @@ mod tests {
             EventEntry {
                 index: 1,
                 user_id: user_b,
-                event: Event::PatchOperands {
+                event: Event::PatchOperand {
                     node_id: node_a.clone(),
-                    patch: OperandsPatch::Insert {
+                    patch: OperandPatch::Insert {
                         index: 0,
-                        node: node_b,
+                        node_id: node_b,
                     },
                 },
             },

@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use types::Type;
+
 use crate::user::UserId;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,17 +21,11 @@ impl<Operation: Eq + std::hash::Hash> Default for Rules<Operation> {
 }
 
 impl<T: Eq + std::hash::Hash + Clone> Rules<T> {
-    pub fn audit(&self, user_id: &UserId, operation: &T) -> AuditResponse {
-        if self
-            .users
+    pub fn user_has_operation(&self, user_id: &UserId, operation: &T) -> bool {
+        self.users
             .get(user_id)
             .unwrap_or(&self.default)
             .contains(operation)
-        {
-            AuditResponse::Allowed
-        } else {
-            AuditResponse::Denied
-        }
     }
 
     pub fn intersection(&self, other: &Rules<T>) -> Rules<T> {
@@ -54,36 +50,34 @@ impl<T: Eq + std::hash::Hash + Clone> Rules<T> {
     }
 }
 
-#[derive(Clone, Debug, Copy, PartialEq, Eq)]
-pub enum AuditResponse {
-    Allowed,
-    Denied,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SpaceOperation {
     AddOwner,
     RemoveOwner,
     AddSnapshot,
-    AddNode,
+    CreateNode,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum NodeOperation {
-    AddNode,
     RemoveNode,
-    PatchContentReplace,
-    PatchContentPatchString,
-    PatchContentAddInteger,
-    PatchContentAddFloat,
-    PatchOperandsInsert,
-    PatchOperandsRemove,
-    PatchOperandsMove,
-    PatchAttributeUpdate,
-    PatchAttributeRemove,
+    PatchSourceCode,
+    ChangeSourceCodeSyntax,
+    PatchString,
+    UpdateInteger,
+    UpdateFloat,
+    UpdateRational,
+    UpdateApply,
+    UpdateApplyLinkName,
+    ReplaceContent,
+    InsertOperand,
+    RemoveOperand,
+    MoveOperand,
+    // These should be boxed for size reason?
+    UpdateAttribute(Type),
+    RemoveAttribute(Type),
     UpdateRules,
-    UpdateParent,
-    AddChild,
+    UpdateOperandRules,
 }
 
 #[cfg(test)]
@@ -94,8 +88,8 @@ mod tests {
     fn returns_denied() {
         let rules = Rules::default();
         assert_eq!(
-            rules.audit(&UserId("a".into()), &SpaceOperation::AddOwner),
-            AuditResponse::Denied
+            rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner),
+            false
         );
     }
 
@@ -103,10 +97,7 @@ mod tests {
     fn returns_allowed() {
         let mut rules = Rules::default();
         rules.default.insert(SpaceOperation::AddOwner);
-        assert_eq!(
-            rules.audit(&UserId("a".into()), &SpaceOperation::AddOwner),
-            AuditResponse::Allowed
-        );
+        assert!(rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
     }
 
     #[test]
@@ -116,43 +107,40 @@ mod tests {
             UserId("a".into()),
             [SpaceOperation::AddOwner].into_iter().collect(),
         );
-        assert_eq!(
-            rules.audit(&UserId("a".into()), &SpaceOperation::AddOwner),
-            AuditResponse::Allowed
-        );
+        assert!(rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
     }
 
     #[test]
     fn returns_intersection() {
         use NodeOperation::*;
         let a = Rules {
-            default: [AddNode, RemoveNode].into_iter().collect(),
+            default: [UpdateInteger, UpdateFloat].into_iter().collect(),
             users: [
                 (
                     UserId("a".into()),
-                    [AddNode, RemoveNode].into_iter().collect(),
+                    [UpdateInteger, UpdateFloat].into_iter().collect(),
                 ),
                 (
                     UserId("b".into()),
-                    [AddNode, PatchContentReplace].into_iter().collect(),
+                    [UpdateInteger, ReplaceContent].into_iter().collect(),
                 ),
-                (UserId("c".into()), [AddNode].into_iter().collect()),
+                (UserId("c".into()), [UpdateInteger].into_iter().collect()),
             ]
             .into_iter()
             .collect(),
         };
         let b = Rules {
-            default: [AddNode, UpdateRules].into_iter().collect(),
+            default: [UpdateInteger, UpdateRules].into_iter().collect(),
             users: [
                 (
                     UserId("a".into()),
-                    [RemoveNode, PatchContentReplace].into_iter().collect(),
+                    [UpdateFloat, ReplaceContent].into_iter().collect(),
                 ),
                 (
                     UserId("b".into()),
-                    [RemoveNode, PatchContentReplace].into_iter().collect(),
+                    [UpdateFloat, ReplaceContent].into_iter().collect(),
                 ),
-                (UserId("d".into()), [AddNode].into_iter().collect()),
+                (UserId("d".into()), [UpdateInteger].into_iter().collect()),
             ]
             .into_iter()
             .collect(),
@@ -160,13 +148,10 @@ mod tests {
         assert_eq!(
             a.intersection(&b),
             Rules {
-                default: [AddNode].into_iter().collect(),
+                default: [UpdateInteger].into_iter().collect(),
                 users: [
-                    (UserId("a".into()), [RemoveNode].into_iter().collect(),),
-                    (
-                        UserId("b".into()),
-                        [PatchContentReplace].into_iter().collect(),
-                    ),
+                    (UserId("a".into()), [UpdateFloat].into_iter().collect(),),
+                    (UserId("b".into()), [ReplaceContent].into_iter().collect(),),
                 ]
                 .into_iter()
                 .collect(),

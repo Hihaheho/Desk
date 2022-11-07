@@ -1,6 +1,6 @@
 use crate::{
     content::Content,
-    patch::{AttributePatch, ContentPatch, OperandsPatch},
+    patch::{AttributePatch, ContentPatch, OperandPatch},
     rules::{NodeOperation, Rules, SpaceOperation},
     user::UserId,
 };
@@ -26,31 +26,30 @@ pub enum Event {
     UpdateSpaceRules {
         rules: Rules<SpaceOperation>,
     },
-    AddNode {
-        parent: Option<NodeId>,
+    CreateNode {
         node_id: NodeId,
         content: Content,
     },
     RemoveNode {
         node_id: NodeId,
     },
-    UpdateParent {
-        node_id: NodeId,
-        parent: Option<NodeId>,
-    },
     PatchContent {
         node_id: NodeId,
         patch: ContentPatch,
     },
-    PatchOperands {
+    PatchOperand {
         node_id: NodeId,
-        patch: OperandsPatch,
+        patch: OperandPatch,
     },
     PatchAttribute {
         node_id: NodeId,
         patch: AttributePatch,
     },
     UpdateNodeRules {
+        node_id: NodeId,
+        rules: Rules<NodeOperation>,
+    },
+    UpdateOperandRules {
         node_id: NodeId,
         rules: Rules<NodeOperation>,
     },

@@ -12,7 +12,7 @@ pub struct StringDiff {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct StringPatch {
+pub struct Patch {
     pub diffs: Vec<StringDiff>,
     pub start1: i32,
     pub start2: i32,

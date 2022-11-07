@@ -21,23 +21,12 @@ impl Snapshot {
                 self.owners.insert(user_id.clone());
             }
             Event::RemoveOwner { user_id: _ } => todo!(),
-            Event::AddNode {
-                parent: parent_id,
-                node_id,
-                content,
-            } => {
-                self.flat_nodes.insert(
-                    node_id.clone(),
-                    FlatNode::new(content.clone()).parent(parent_id.clone()),
-                );
+            Event::CreateNode { node_id, content } => {
+                self.flat_nodes
+                    .insert(node_id.clone(), FlatNode::new(content.clone()));
             }
             Event::RemoveNode { node_id } => {
                 self.flat_nodes.remove(node_id);
-            }
-            Event::UpdateParent { node_id, parent } => {
-                if let Some(node) = self.flat_nodes.get_mut(node_id) {
-                    node.parent = parent.clone();
-                }
             }
             Event::PatchContent { node_id, patch } => {
                 self.flat_nodes
@@ -45,7 +34,7 @@ impl Snapshot {
                     .unwrap()
                     .patch_content(patch);
             }
-            Event::PatchOperands { node_id, patch } => {
+            Event::PatchOperand { node_id, patch } => {
                 self.flat_nodes
                     .get_mut(node_id)
                     .unwrap()
@@ -64,10 +53,13 @@ impl Snapshot {
             Event::UpdateSpaceRules { rules } => {
                 self.rules = rules.clone();
             }
+            Event::UpdateOperandRules { node_id, rules } => {
+                let node = self.flat_nodes.get_mut(node_id).unwrap();
+                node.operand_rules = rules.clone();
+            }
             Event::UpdateNodeRules { node_id, rules } => {
-                if let Some(node) = self.flat_nodes.get_mut(node_id) {
-                    node.rules = rules.clone();
-                }
+                let node = self.flat_nodes.get_mut(node_id).unwrap();
+                node.rules = rules.clone();
             }
         }
     }
@@ -113,35 +105,11 @@ mod tests {
     }
 
     #[test]
-    fn update_parent() {
-        let mut snapshot = Snapshot::default();
-        let node_id = handle_add_node(&mut snapshot);
-        let parent_id = handle_add_node(&mut snapshot);
-        snapshot.handle_event(&Event::UpdateParent {
-            node_id: node_id.clone(),
-            parent: Some(parent_id.clone()),
-        });
-
-        assert_eq!(
-            snapshot.flat_nodes,
-            [
-                (
-                    node_id,
-                    FlatNode::new(Content::String("a".into())).parent(Some(parent_id.clone()))
-                ),
-                (parent_id, FlatNode::new(Content::String("a".into())))
-            ]
-            .into_iter()
-            .collect()
-        )
-    }
-
-    #[test]
     fn update_space_rule() {
         let mut snapshot = Snapshot::default();
         snapshot.handle_event(&Event::UpdateSpaceRules {
             rules: Rules {
-                default: [SpaceOperation::AddNode].into_iter().collect(),
+                default: [SpaceOperation::AddSnapshot].into_iter().collect(),
                 users: Default::default(),
             },
         });
@@ -149,7 +117,7 @@ mod tests {
         assert_eq!(
             snapshot.rules,
             Rules {
-                default: [SpaceOperation::AddNode].into_iter().collect(),
+                default: [SpaceOperation::AddSnapshot].into_iter().collect(),
                 users: Default::default(),
             }
         );
@@ -162,7 +130,7 @@ mod tests {
         snapshot.handle_event(&Event::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
-                default: [NodeOperation::AddNode].into_iter().collect(),
+                default: [NodeOperation::UpdateInteger].into_iter().collect(),
                 users: Default::default(),
             },
         });
@@ -170,7 +138,28 @@ mod tests {
         assert_eq!(
             snapshot.flat_nodes.get(&node_id).unwrap().rules,
             Rules {
-                default: [NodeOperation::AddNode].into_iter().collect(),
+                default: [NodeOperation::UpdateInteger].into_iter().collect(),
+                users: Default::default(),
+            }
+        );
+    }
+
+    #[test]
+    fn update_operand_rules() {
+        let mut snapshot = Snapshot::default();
+        let node_id = handle_add_node(&mut snapshot);
+        snapshot.handle_event(&Event::UpdateOperandRules {
+            node_id: node_id.clone(),
+            rules: Rules {
+                default: [NodeOperation::UpdateInteger].into_iter().collect(),
+                users: Default::default(),
+            },
+        });
+
+        assert_eq!(
+            snapshot.flat_nodes.get(&node_id).unwrap().operand_rules,
+            Rules {
+                default: [NodeOperation::UpdateInteger].into_iter().collect(),
                 users: Default::default(),
             }
         );
@@ -178,8 +167,7 @@ mod tests {
 
     fn handle_add_node(snapshot: &mut Snapshot) -> NodeId {
         let node_id = NodeId::new();
-        let event = Event::AddNode {
-            parent: None,
+        let event = Event::CreateNode {
             node_id: node_id.clone(),
             content: Content::String("a".into()),
         };

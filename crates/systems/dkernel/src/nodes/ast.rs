@@ -22,7 +22,7 @@ pub(super) fn ast(db: &dyn NodeQueries, node_id: NodeId) -> QueryResult<WithSpan
 
 fn genast(node: &Node) -> Result<WithSpan<Expr>, QueryError> {
     let expr = match &node.content {
-        Content::Source(source) => {
+        Content::SourceCode { syntax: _, source } => {
             let tokens = scan(source)?;
             return Ok(parse(tokens)?);
         }
