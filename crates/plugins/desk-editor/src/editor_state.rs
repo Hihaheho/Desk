@@ -1,5 +1,5 @@
 use deskc_ids::NodeId;
-use dkernel::state::State;
+use dworkspace::state::State;
 
 #[derive(Default)]
 pub struct EditorState {
@@ -10,8 +10,8 @@ pub struct EditorState {
 impl State for EditorState {
     fn handle_event(
         &mut self,
-        _snapshot: &dkernel_components::snapshot::Snapshot,
-        _log: &dkernel_components::event::Event,
+        _snapshot: &dworkspace_components::snapshot::Snapshot,
+        _log: &dworkspace_components::event::Event,
     ) {
     }
 }

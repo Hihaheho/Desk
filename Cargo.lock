@@ -1542,8 +1542,8 @@ dependencies = [
  "desk-window",
  "deskc-ids",
  "deskc-types",
- "dkernel",
- "dkernel-components",
+ "dworkspace",
+ "dworkspace-components",
  "egui 0.19.0",
  "egui_cable",
  "uuid",
@@ -1558,7 +1558,7 @@ dependencies = [
  "desk-system-ordering",
  "desk-theme",
  "desk-window",
- "dkernel",
+ "dworkspace",
  "ron 0.8.0",
 ]
 
@@ -1601,8 +1601,8 @@ dependencies = [
  "desk-window",
  "deskc-ids",
  "deskc-types",
- "dkernel",
- "dkernel-components",
+ "dworkspace",
+ "dworkspace-components",
  "egui 0.19.0",
 ]
 
@@ -1630,8 +1630,8 @@ version = "0.0.0"
 dependencies = [
  "bevy_ecs",
  "deskc-ids",
- "dkernel",
- "dkernel-components",
+ "dworkspace",
+ "dworkspace-components",
  "uuid",
 ]
 
@@ -1650,9 +1650,9 @@ dependencies = [
  "desk-touchpanel",
  "desk-window",
  "deskc-ids",
- "dkernel",
- "dkernel-components",
- "dkernel-in-memory",
+ "dworkspace",
+ "dworkspace-components",
+ "dworkspace-in-memory",
  "egui 0.19.0",
  "web-sys",
 ]
@@ -1912,7 +1912,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 
 [[package]]
-name = "dkernel"
+name = "downcast-rs"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
+
+[[package]]
+name = "dson"
+version = "0.0.0"
+
+[[package]]
+name = "dworkspace"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
@@ -1924,8 +1934,8 @@ dependencies = [
  "deskc-parser",
  "deskc-typeinfer",
  "deskc-types",
- "dkernel-components",
  "downcast-rs",
+ "dworkspace-components",
  "mry",
  "parking_lot 0.12.1",
  "salsa",
@@ -1935,7 +1945,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dkernel-components"
+name = "dworkspace-components"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",
@@ -1945,26 +1955,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "dkernel-firestore"
+name = "dworkspace-firestore"
 version = "0.0.0"
 
 [[package]]
-name = "dkernel-in-memory"
+name = "dworkspace-in-memory"
 version = "0.0.0"
 dependencies = [
- "dkernel",
- "dkernel-components",
+ "dworkspace",
+ "dworkspace-components",
 ]
-
-[[package]]
-name = "downcast-rs"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
-
-[[package]]
-name = "dson"
-version = "0.0.0"
 
 [[package]]
 name = "egui"

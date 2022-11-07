@@ -1,5 +1,5 @@
-use dkernel::Kernel;
-use dkernel_components::event::Event;
+use dworkspace::Kernel;
+use dworkspace_components::event::Event;
 
 pub struct Ctx<'a, Backend> {
     pub events: Vec<Event>,

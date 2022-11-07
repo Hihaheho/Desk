@@ -30,7 +30,7 @@
 - **Desk X** -
   An official hosting of a Desk app
 - **Desk** -
-  The entire system consisting of desk-lang, dkernel, and a set of dplugins.
+  The entire system consisting of desk-lang, dworkspace, and a set of dplugins.
 - **Desk-lang** -
   Desk-lang (Desk language) is a minimal functional language with statical typing.
 - **Dkernel** -
@@ -102,7 +102,7 @@ Flowchart
 2. Parser
 3. HIR generator
 4. Type inference
-5. Typed HIR generator 
+5. Typed HIR generator
 6. Abstract MIR generator
 7. Concretizer (Concrere MIR generator)
 

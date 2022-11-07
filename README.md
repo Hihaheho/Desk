@@ -33,8 +33,8 @@ Desk apps (applications built on Desk) are inherently:
 Desk is powered by several systems:
 
 - Desk Programming Language (Desk-lang)
-- Desk Kernel (dkernel)
-- Desk Plugins (dplugins)
+- Desk-workspace (dworkspace)
+- Desk-plugins (dplugins)
 
 ### Desk Programming Language
 
@@ -48,11 +48,11 @@ Desk-lang is a programming language which has:
 
 Most of data and programs on Desk apps are finally evaluated as a snippet of Desk-lang.
 
-### Desk Kernel
+### Desk-workspace (dworkspace)
 
-Dkernel is a platform-agnostic environment for editing Desk-lang.
+Desk-workspace is a platform-agnostic environment for editing Desk-lang.
 
-Dkernel provides these features:
+Desk-workspace provides these features:
 
 - File system for Desk-lang
 - Permission management system
@@ -62,9 +62,9 @@ Dkernel provides these features:
 
 🚧 not yet implemented
 
-### Desk Plugins
+### Desk-plugins (dplugins)
 
-There are many dplugins. Each dplugin implements single feature for Desk.
+There are many Desk-plugins. Each Desk-plugin implements a single feature for the Desk Environment.
 
 - **Desk Editor** is an default editor for Desk-lang
 - **Desk Runtime** is an default runtime for Desk-lang

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use desk_window::window::{DefaultWindow, Window};
-use dkernel::Kernel;
-use dkernel_components::{event::Event, user::UserId};
-use dkernel_in_memory::InMemoryRepository;
+use dworkspace::Kernel;
+use dworkspace_components::{event::Event, user::UserId};
+use dworkspace_in_memory::InMemoryRepository;
 
 pub struct WindowsPlugin;
 

@@ -20,9 +20,9 @@ terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", pac
 
 desk-window = { package = "desk-window", path = "../../components/desk-window", version = "0.0.0" }
 desk-system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
-dkernel = { package = "dkernel", path = "../../systems/dkernel", version = "0.0.0" }
-dkernel-in-memory = { package = "dkernel-in-memory", path = "../../adapters/dkernel-in-memory", version = "0.0.0" }
-dkernel-components = { package = "dkernel-components", path = "../../components/dkernel-components", version = "0.0.0" }
+dworkspace = { package = "dworkspace", path = "../../systems/dworkspace", version = "0.0.0" }
+dworkspace-in-memory = { package = "dworkspace-in-memory", path = "../../adapters/dworkspace-in-memory", version = "0.0.0" }
+dworkspace-components = { package = "dworkspace-components", path = "../../components/dworkspace-components", version = "0.0.0" }
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 
 bevy = "0.8"

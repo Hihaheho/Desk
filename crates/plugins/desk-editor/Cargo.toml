@@ -11,8 +11,8 @@ edition = "2021"
 [dependencies]
 system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
 desk-window = { package = "desk-window", path = "../../components/desk-window", version = "0.0.0" }
-dkernel = { path = "../../systems/dkernel", version = "0.0.0", package = "dkernel" }
-dkernel-components = { path = "../../components/dkernel-components", version = "0.0.0", package = "dkernel-components" }
+dworkspace = { path = "../../systems/dworkspace", version = "0.0.0", package = "dworkspace" }
+dworkspace-components = { path = "../../components/dworkspace-components", version = "0.0.0", package = "dworkspace-components" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 

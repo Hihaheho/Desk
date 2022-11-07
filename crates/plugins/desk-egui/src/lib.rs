@@ -6,7 +6,7 @@ use bevy_egui::{
 use desk_system_ordering::DeskSystem;
 use desk_window::ctx::Ctx;
 use desk_window::window::Window;
-use dkernel::Kernel;
+use dworkspace::Kernel;
 use theme::Theme;
 
 pub struct EguiPlugin;

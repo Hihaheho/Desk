@@ -11,10 +11,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dkernel-components = { package = "dkernel-components", version = "0.0.0", path = "../dkernel-components" }
+dworkspace-components = { package = "dworkspace-components", version = "0.0.0", path = "../dworkspace-components" }
 deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 # FIXME: component depends system
-dkernel = { package = "dkernel", version = "0.0.0", path = "../../systems/dkernel" }
+dworkspace = { package = "dworkspace", version = "0.0.0", path = "../../systems/dworkspace" }
 
 bevy_ecs = "0.8"
 uuid = "1.2"

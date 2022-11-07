@@ -1,5 +1,5 @@
 [package]
-name = "dkernel-components"
+name = "dworkspace-firestore"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -11,8 +11,3 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-types = { path = "../deskc-types", version = "0.0.0", package = "deskc-types" }
-hir = { path = "../deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
-
-uuid = "1.2"

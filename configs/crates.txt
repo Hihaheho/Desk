@@ -31,14 +31,14 @@ dson
 serde-dson
 
 # kernel components
-dkernel-components
+dworkspace-components
 
 # kernel systems
-dkernel
+dworkspace
 
 # kernel adapters
-dkernel-firestore
-dkernel-in-memory
+dworkspace-firestore
+dworkspace-in-memory
 
 # desk components
 desk-theme

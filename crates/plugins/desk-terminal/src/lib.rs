@@ -7,8 +7,8 @@ use desk_window::{
 };
 use deskc_ids::{LinkName, NodeId};
 use deskc_types::Type;
-use dkernel::Kernel;
-use dkernel_components::{content::Content, event::Event};
+use dworkspace::Kernel;
+use dworkspace_components::{content::Content, event::Event};
 use system_ordering::DeskSystem;
 pub struct TerminalPlugin;
 
@@ -32,14 +32,12 @@ impl Widget<egui::Context> for TerminalWidget {
             ui.label("Hello World");
             if ui.button("Add number").clicked() {
                 ctx.add_event(Event::CreateNode {
-                    parent: None,
                     node_id: NodeId::new(),
                     content: Content::Integer(1),
                 });
             }
             if ui.button("Add apply").clicked() {
                 ctx.add_event(Event::CreateNode {
-                    parent: None,
                     node_id: NodeId::new(),
                     content: Content::Apply {
                         ty: Type::Function {

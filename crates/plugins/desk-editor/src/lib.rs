@@ -6,7 +6,7 @@ mod runtime;
 use bevy::prelude::*;
 use desk_window::window::Window;
 use desk_window::{widget::WidgetId, window::DefaultWindow};
-use dkernel::Kernel;
+use dworkspace::Kernel;
 use editor_state::EditorState;
 use editor_widget::EditorWidget;
 use system_ordering::DeskSystem;

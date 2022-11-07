@@ -1,9 +1,9 @@
 use desk_window::ctx::Ctx;
 use desk_window::widget::Widget;
 use deskc_ids::NodeId;
-use dkernel_components::content::Content;
-use dkernel_components::event::Event;
-use dkernel_components::patch::{ContentPatch, OperandPatch};
+use dworkspace_components::content::Content;
+use dworkspace_components::event::Event;
+use dworkspace_components::patch::{ContentPatch, OperandPatch};
 
 use crate::editor_state::EditorState;
 
@@ -17,17 +17,23 @@ impl Widget<egui::Context> for EditorWidget {
             ui.label("====");
             if let Some(node) = ctx.kernel.snapshot.flat_nodes.get(&self.node_id) {
                 match &node.content {
-                    dkernel_components::content::Content::SourceCode(original) => {
+                    dworkspace_components::content::Content::SourceCode {
+                        source: original,
+                        syntax,
+                    } => {
                         let mut source = original.clone();
                         ui.text_edit_multiline(&mut source);
                         if *original != source {
                             ctx.kernel.commit(Event::PatchContent {
                                 node_id: self.node_id.clone(),
-                                patch: ContentPatch::Replace(Content::SourceCode(source)),
+                                patch: ContentPatch::Replace(Content::SourceCode {
+                                    source,
+                                    syntax: syntax.clone(),
+                                }),
                             });
                         }
                     }
-                    dkernel_components::content::Content::String(original) => {
+                    dworkspace_components::content::Content::String(original) => {
                         let mut string = original.clone();
                         ui.text_edit_singleline(&mut string);
                         if *original != string {
@@ -37,7 +43,7 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dkernel_components::content::Content::Integer(original) => {
+                    dworkspace_components::content::Content::Integer(original) => {
                         let mut number = *original;
                         ui.add(egui::DragValue::new(&mut number));
                         if *original != number {
@@ -47,9 +53,9 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dkernel_components::content::Content::Rational(_a, _b) => todo!(),
-                    dkernel_components::content::Content::Float(_float) => todo!(),
-                    dkernel_components::content::Content::Apply { ty, .. } => {
+                    dworkspace_components::content::Content::Rational(_a, _b) => todo!(),
+                    dworkspace_components::content::Content::Float(_float) => todo!(),
+                    dworkspace_components::content::Content::Apply { ty, .. } => {
                         let mut clicked = None;
                         ui.label(format!("{:?}", ty));
                         for (index, child) in node.operands.iter().enumerate() {

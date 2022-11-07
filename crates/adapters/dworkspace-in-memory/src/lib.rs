@@ -1,5 +1,5 @@
-use dkernel::repository::Repository;
-use dkernel_components::{
+use dworkspace::repository::Repository;
+use dworkspace_components::{
     event::{Event, EventEntry},
     user::UserId,
 };

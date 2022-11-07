@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use desk_system_ordering::DeskSystem;
-use dkernel::Kernel;
+use dworkspace::Kernel;
 
 use desk_window::{
     ctx::Ctx,
