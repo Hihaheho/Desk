@@ -10,6 +10,9 @@ TODOs
 - [ ] Add a sample program of Desk-lang
 - [ ] Add a roadmap with target users
 - [ ] Add features of the first release
+- [ ] Add a section "Method" to explain how to achieve the goals.
+- [ ] "Goals" and "What's Desk" have too many technical terms.
+- [ ] Reconsider the order of sections especially "Related buzzwords" and "Stories of me and Desk".
 
 ## TL;DR
 
