@@ -12,7 +12,8 @@ TODOs
 - [ ] Add features of the first release
 - [ ] Add a section "Method" to explain how to achieve the goals.
 - [ ] "Goals" and "What's Desk" have too many technical terms. Add concrete examples.
-- [ ] Reconsider the order of sections especially "Related buzzwords" and "Stories of me and Desk".
+- [x] Reconsider the order of sections especially "Related buzzwords" and "Stories of me and Desk".
+- [ ] Add more concrete descriptions for coined related words.
 
 ## TL;DR
 
@@ -80,17 +81,6 @@ To achieve the goals, we have design philosophies.
   - Everything is minimalistic and written in simple codes.
 - Accessible to everyone
   - We don't forget about accessibility to make programming available to everyone.
-
-## Stories of me and Desk
-
-- [2008] I started programming when I was around ten years old. It looks exciting to me.
-- [2016] I want to create something like Minecraft.
-- [2018] As a core of my game engine, I designed and created [Cizen](https://github.com/Hihaheho/Cizen); then it's used for [Online Experiment System](https://xee.jp).
-- [2020-2021] I'm struggling with non programmable products.
-- [2021] I used Elixer for data processing, and I want more visualization.
-- [2021] I used Google Sheets, and I want more programable.
-- [2021] Also I think the programming is too hard and esoteric.
-- [2021] I've got a big picture of Desk.
 
 ## Features
 
@@ -167,6 +157,17 @@ TBA
 - code reviewer
 - community member
   - I want more discussion about Desk.
+
+## Stories of me and Desk
+
+- [2008] I started programming when I was around ten years old. It looks exciting to me.
+- [2016] I want to create something like Minecraft.
+- [2018] As a core of my game engine, I designed and created [Cizen](https://github.com/Hihaheho/Cizen); then it's used for [Online Experiment System](https://xee.jp).
+- [2020-2021] I'm struggling with non programmable products.
+- [2021] I used Elixer for data processing, and I want more visualization.
+- [2021] I used Google Sheets, and I want more programable.
+- [2021] Also I think the programming is too hard and esoteric.
+- [2021] I've got a big picture of Desk.
 
 ## Next month of Desk
 - I plan to take a rest as much as possible to avoid burnout.
