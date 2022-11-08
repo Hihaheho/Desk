@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use ids::LinkName;
 use types::{Effect, Type};
 
-use crate::{amir::AmirId, block::BlockId, var::VarId};
+use crate::{amir::ControlFlowGraphId, block::BlockId, var::VarId};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -41,7 +41,7 @@ pub enum AStmt {
 pub enum FnRef {
     Link(Type),
     Closure {
-        amir: AmirId,
+        amir: ControlFlowGraphId,
         /// Caputerd variables
         captured: Vec<VarId>,
         /// Used to create an effectful expression

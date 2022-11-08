@@ -8,7 +8,7 @@ use desk_window::{
 use deskc_ids::{LinkName, NodeId};
 use deskc_types::Type;
 use dworkspace::Workspace;
-use dworkspace_components::{content::Content, event::Event};
+use dworkspace_codebase::{content::Content, event::Event};
 use system_ordering::DeskSystem;
 pub struct TerminalPlugin;
 

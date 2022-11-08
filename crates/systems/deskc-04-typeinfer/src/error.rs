@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use crate::ty::{Effect, Id, Type};
 use hir::{expr::Expr, meta::Meta};
 use textual_diagnostics::{Report, TextualDiagnostics};
@@ -7,6 +9,18 @@ use thiserror::Error;
 pub struct ExprTypeError {
     pub meta: Meta,
     pub error: TypeError,
+}
+
+impl Display for ExprTypeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} {}", self.meta, self.error)
+    }
+}
+
+impl std::error::Error for ExprTypeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error)
+    }
 }
 
 #[derive(Error, Debug, PartialEq)]

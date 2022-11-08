@@ -1,42 +1,28 @@
-mod amir;
-mod amir_environment;
-mod hir;
-mod mir;
-mod mir_environment;
-mod thir;
+use std::sync::Arc;
 
-use amir::amir;
-use amir_environment::amir_environment;
-use hir::hir;
-use mir::mir;
-use thir::thir;
-
-use deskc_amir::{amir::Amirs, environment::AEnvironment};
-use deskc_ast::span::WithSpan;
-use deskc_hir::meta::WithMeta;
-use deskc_ids::CardId;
-use deskc_mir::{environment::Environment, mir::Mirs};
-use deskc_thir::TypedHir;
-use deskc_types::Type;
-use mir_environment::mir_environment;
-use uuid::Uuid;
+use amir::amir::Amir;
+use ast::span::WithSpan;
+use hir::meta::WithMeta;
+use ids::CardId;
+use mir::mir::Mir;
+use thir::TypedHir;
 
 use crate::query_result::QueryResult;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HirResult {
+    hir: WithMeta<hir::expr::Expr>,
+    next_id: usize,
+}
 
 #[salsa::query_group(CardStorage)]
 pub trait CardQueries {
     #[salsa::input]
-    fn ast(&self, id: CardId) -> Option<WithSpan<deskc_ast::expr::Expr>>;
-    fn hir(&self, id: CardId) -> QueryResult<WithMeta<deskc_hir::expr::Expr>>;
+    fn ast(&self, id: CardId) -> WithSpan<ast::expr::Expr>;
+    fn hir(&self, id: CardId) -> QueryResult<HirResult>;
     fn thir(&self, id: CardId) -> QueryResult<TypedHir>;
-    fn amir(&self, id: CardId) -> QueryResult<Amirs>;
-    fn mir(&self, id: CardId) -> QueryResult<Mirs>;
-    #[salsa::input]
-    fn definition(&self, ty: Type, uuid: Uuid) -> QueryResult<Amirs>;
-    #[salsa::input]
-    fn latest_definition(&self, id: CardId) -> Uuid;
-    fn amir_environment(&self, id: CardId) -> QueryResult<AEnvironment>;
-    fn mir_environment(&self, id: CardId) -> QueryResult<Environment>;
+    fn amir(&self, id: CardId) -> QueryResult<Amir>;
+    fn mir(&self, id: CardId) -> QueryResult<Mir>;
 }
 
 #[salsa::database(CardStorage)]
@@ -46,3 +32,31 @@ pub struct CardDatabase {
 }
 
 impl salsa::Database for CardDatabase {}
+
+pub(super) fn hir(db: &dyn CardQueries, id: CardId) -> QueryResult<HirResult> {
+    let ast = db.ast(id);
+    let (genhir, hir) = hirgen::gen_hir(&ast).unwrap();
+    Ok(Arc::new(HirResult {
+        hir,
+        next_id: genhir.next_id(),
+    }))
+}
+
+pub(super) fn thir(db: &dyn CardQueries, id: CardId) -> QueryResult<TypedHir> {
+    let hir_result = db.hir(id)?;
+    let (ctx, _ty) = typeinfer::synth(hir_result.next_id, &hir_result.hir)?;
+    let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir_result.hir);
+    Ok(Arc::new(thir))
+}
+
+pub(super) fn amir(db: &dyn CardQueries, id: CardId) -> QueryResult<Amir> {
+    let thir = db.thir(id)?;
+    let amir = amirgen::gen_abstract_mir(&thir).unwrap();
+    Ok(Arc::new(amir))
+}
+
+pub(super) fn mir(db: &dyn CardQueries, id: CardId) -> QueryResult<Mir> {
+    let amir = db.amir(id)?;
+    let mir = concretizer::concretize(&amir);
+    Ok(Arc::new(mir))
+}

@@ -22,13 +22,13 @@ impl State for Cards {
     fn handle_event(&mut self, _snapshot: &Snapshot, event: &Event) {
         match event {
             Event::PatchAttribute { node_id: _, patch } => match patch {
-                dworkspace_components::patch::AttributePatch::Update { key, value: _ } => {
+                dworkspace_codebase::patch::AttributePatch::Update { key, value: _ } => {
                     if *key == card_id_type() {
                         // let card_id = CardId();
                         // self.cards.insert(card_id, node_id.clone());
                     }
                 }
-                dworkspace_components::patch::AttributePatch::Remove { key: _ } => todo!(),
+                dworkspace_codebase::patch::AttributePatch::Remove { key: _ } => todo!(),
             },
             Event::AddSnapshot {
                 index: _,

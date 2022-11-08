@@ -6,7 +6,7 @@ pub mod value;
 use std::collections::{HashMap, VecDeque};
 
 use mir::{
-    mir::{Mir, Mirs},
+    mir::{ControlFlowGraph, Mir},
     ty::ConcEffect,
     BlockId, MirId,
 };
@@ -17,7 +17,7 @@ use crate::{
     value::Closure,
 };
 
-pub fn eval_mirs(mirs: Mirs) -> EvalMirs {
+pub fn eval_mirs(mirs: Mir) -> EvalMirs {
     let mir = mirs.mirs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMirs {
         mirs: mirs.mirs,
@@ -36,7 +36,7 @@ pub fn eval_mirs(mirs: Mirs) -> EvalMirs {
 
 #[derive(Clone, Debug)]
 pub struct EvalMirs {
-    mirs: Vec<Mir>,
+    mirs: Vec<ControlFlowGraph>,
     stack: Vec<EvalMir>,
 }
 
@@ -151,7 +151,7 @@ impl EvalMirs {
         self.stack.last_mut().unwrap()
     }
 
-    pub fn get_mir(&self, mir_id: &MirId) -> &Mir {
+    pub fn get_mir(&self, mir_id: &MirId) -> &ControlFlowGraph {
         &self.mirs[mir_id.0]
     }
 }

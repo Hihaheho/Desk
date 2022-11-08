@@ -12,4 +12,4 @@ edition = "2021"
 
 [dependencies]
 dworkspace = { package = "dworkspace", path = "../../systems/dworkspace", version = "0.0.0" }
-dworkspace-components = { package = "dworkspace-components", path = "../../components/dworkspace-components", version = "0.0.0" }
+dworkspace-codebase = { package = "dworkspace-codebase", path = "../../components/dworkspace-codebase", version = "0.0.0" }

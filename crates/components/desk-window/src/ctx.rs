@@ -1,5 +1,5 @@
 use dworkspace::Workspace;
-use dworkspace_components::event::Event;
+use dworkspace_codebase::event::Event;
 
 pub struct Ctx<'a, Backend> {
     pub events: Vec<Event>,

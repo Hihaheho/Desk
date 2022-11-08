@@ -6,7 +6,7 @@ mod scope_proto;
 use std::collections::HashMap;
 
 use amir::{
-    amir::{Amir, AmirId, Amirs},
+    amir::{Amir, ControlFlowGraph, ControlFlowGraphId},
     stmt::{AStmt, ATerminator, Const, FnRef, MatchCase},
     var::VarId,
 };
@@ -15,16 +15,16 @@ use thir::{Handler, LinkName, TypedHir};
 use thiserror::Error;
 use types::Type;
 
-pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amirs, GenAmirError> {
+pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amir, GenAmirError> {
     let mut gen = AmirGen::default();
-    gen.gen_amir(thir).map(|entrypoint_amir_id| Amirs {
+    gen.gen_amir(thir).map(|entrypoint_amir_id| Amir {
         entrypoint: entrypoint_amir_id,
         amirs: gen.amirs,
     })
 }
 
 pub struct AmirGen {
-    amirs: Vec<Amir>,
+    amirs: Vec<ControlFlowGraph>,
     protos: Vec<AmirProto>,
 }
 
@@ -59,7 +59,7 @@ impl AmirGen {
     pub fn amir_proto(&mut self) -> &mut AmirProto {
         amir_proto!(self)
     }
-    pub fn gen_amir(&mut self, thir: &TypedHir) -> Result<AmirId, GenAmirError> {
+    pub fn gen_amir(&mut self, thir: &TypedHir) -> Result<ControlFlowGraphId, GenAmirError> {
         self.begin_amir();
         let var = self.gen_stmt(thir)?;
         Ok(self.end_amir(var, thir.ty.clone()))
@@ -328,14 +328,14 @@ impl AmirGen {
         self.protos.push(AmirProto::default());
     }
 
-    fn end_amir(&mut self, var: VarId, ty: Type) -> AmirId {
+    fn end_amir(&mut self, var: VarId, ty: Type) -> ControlFlowGraphId {
         let proto = self.protos.pop().expect("amir must be started");
-        let id = AmirId(self.amirs.len());
+        let id = ControlFlowGraphId(self.amirs.len());
         self.amirs.push(proto.into_amir(var, ty));
         id
     }
 
-    fn get_amir(&self, id: &AmirId) -> &Amir {
+    fn get_amir(&self, id: &ControlFlowGraphId) -> &ControlFlowGraph {
         get_amir!(self, id)
     }
 }

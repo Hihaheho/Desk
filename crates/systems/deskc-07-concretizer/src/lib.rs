@@ -3,13 +3,13 @@ mod enumdef;
 mod type_concretizer;
 
 use amir::{
-    amir::{Amir, Amirs},
+    amir::{Amir, ControlFlowGraph as ACFG},
     var::AVar,
 };
 use block_concretizer::BlockConcretizer;
 use enumdef::EnumDefs;
 use mir::{
-    mir::{LinkId, Mir, Mirs},
+    mir::{ControlFlowGraph as CFG, LinkId, Mir},
     ty::ConcType,
     Vars,
 };
@@ -21,7 +21,7 @@ pub struct Concretizer {
     pub enum_defs: EnumDefs,
 }
 
-pub fn concretize(amirs: &Amirs) -> Mirs {
+pub fn concretize(amirs: &Amir) -> Mir {
     let mirs = amirs
         .amirs
         .iter()
@@ -34,15 +34,15 @@ pub fn concretize(amirs: &Amirs) -> Mirs {
             concretizer.concretize_mir(amir)
         })
         .collect();
-    Mirs {
+    Mir {
         entrypoint: amirs.entrypoint,
         mirs,
     }
 }
 
 impl Concretizer {
-    fn concretize_mir(&mut self, amir: &Amir) -> Mir {
-        let Amir {
+    fn concretize_mir(&mut self, amir: &ACFG) -> CFG {
+        let ACFG {
             parameters: _,
             output: _,
             vars,
@@ -83,7 +83,7 @@ impl Concretizer {
             })
             .collect();
 
-        Mir {
+        CFG {
             parameters: self.parameters.clone(),
             captured,
             output: self.output.clone(),

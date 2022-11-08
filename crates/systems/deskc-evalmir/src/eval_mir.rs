@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use mir::mir::Mir;
+use mir::mir::ControlFlowGraph;
 use mir::stmt::Stmt;
 use mir::ty::ConcEffect;
 use mir::BlockId;
@@ -13,7 +13,7 @@ use mir::{ty::ConcType, StmtBind, VarId};
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub struct EvalMir {
-    pub mir: Mir,
+    pub mir: ControlFlowGraph,
     pub registers: HashMap<VarId, Value>,
     pub parameters: HashMap<ConcType, Value>,
     pub captured: HashMap<ConcType, Value>,
@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn literal() {
-        let mir = Mir {
+        let mir = ControlFlowGraph {
             parameters: vec![],
             output: ConcType::Number,
             vars: Vars(vec![Var {

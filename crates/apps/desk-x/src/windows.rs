@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use desk_window::window::{DefaultWindow, Window};
 use dworkspace::Workspace;
-use dworkspace_components::{event::Event, user::UserId};
+use dworkspace_codebase::{event::Event, user::UserId};
 use dworkspace_in_memory::InMemoryRepository;
 
 pub struct WindowsPlugin;

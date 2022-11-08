@@ -11,7 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dworkspace-components = { package = "dworkspace-components", version = "0.0.0", path = "../dworkspace-components" }
+dworkspace-codebase = { package = "dworkspace-codebase", version = "0.0.0", path = "../dworkspace-codebase" }
 deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 # FIXME: component depends system
 dworkspace = { package = "dworkspace", version = "0.0.0", path = "../../systems/dworkspace" }

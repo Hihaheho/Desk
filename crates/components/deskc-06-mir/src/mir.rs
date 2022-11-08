@@ -1,6 +1,6 @@
 use crate::{stmt::Stmt, ty::ConcType};
 use amir::{
-    amir::AmirId,
+    amir::ControlFlowGraphId,
     scope::Scope,
     var::{AVar, Vars},
 };
@@ -11,7 +11,7 @@ pub type LinkId = ids::LinkId<ConcType>;
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mir {
+pub struct ControlFlowGraph {
     pub parameters: Vec<ConcType>,
     pub captured: Vec<ConcType>,
     pub output: ConcType,
@@ -22,7 +22,7 @@ pub struct Mir {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Mirs {
-    pub entrypoint: AmirId,
-    pub mirs: Vec<Mir>,
+pub struct Mir {
+    pub entrypoint: ControlFlowGraphId,
+    pub mirs: Vec<ControlFlowGraph>,
 }

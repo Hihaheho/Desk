@@ -13,7 +13,7 @@ desk-window = { package = "desk-window", path = "../../components/desk-window", 
 dworkspace = { package = "dworkspace", path = "../../systems/dworkspace", version = "0.0.0" }
 system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
 command = { package = "desk-command", path = "../../components/desk-command", version = "0.0.0" }
-dworkspace-components = { package = "dworkspace-components", path = "../../components/dworkspace-components", version = "0.0.0" }
+dworkspace-codebase = { package = "dworkspace-codebase", path = "../../components/dworkspace-codebase", version = "0.0.0" }
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 deskc-types = { package = "deskc-types", path = "../../components/deskc-types", version = "0.0.0" }
 

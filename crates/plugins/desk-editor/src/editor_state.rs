@@ -10,8 +10,8 @@ pub struct EditorState {
 impl State for EditorState {
     fn handle_event(
         &mut self,
-        _snapshot: &dworkspace_components::snapshot::Snapshot,
-        _log: &dworkspace_components::event::Event,
+        _snapshot: &dworkspace_codebase::snapshot::Snapshot,
+        _log: &dworkspace_codebase::event::Event,
     ) {
     }
 }

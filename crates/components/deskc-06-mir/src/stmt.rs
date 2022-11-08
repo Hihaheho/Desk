@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use amir::{
-    amir::AmirId,
+    amir::ControlFlowGraphId,
     stmt::{Const, Op},
     var::VarId,
 };
@@ -48,7 +48,7 @@ pub enum Stmt {
 pub enum FnRef {
     Link(ConcType),
     Clojure {
-        amir: AmirId,
+        amir: ControlFlowGraphId,
         captured: Vec<VarId>,
         handlers: HashMap<ConcEffect, VarId>,
     },

@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use amir::{
-    amir::Amir,
+    amir::ControlFlowGraph,
     block::{ABasicBlock, BlockId},
     scope::ScopeId,
     stmt::{AStmt, ATerminator, LinkId, StmtBind},
@@ -48,7 +48,7 @@ impl Default for AmirProto {
 }
 
 impl AmirProto {
-    pub fn into_amir(self, var: VarId, output: Type) -> Amir {
+    pub fn into_amir(self, var: VarId, output: Type) -> ControlFlowGraph {
         let current_block_id = self.current_block_id();
         let AmirProto {
             parameters,
@@ -87,7 +87,7 @@ impl AmirProto {
 
         let links = links.into_iter().collect();
 
-        Amir {
+        ControlFlowGraph {
             parameters,
             captured,
             output,

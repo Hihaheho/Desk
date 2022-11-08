@@ -1543,7 +1543,7 @@ dependencies = [
  "deskc-ids",
  "deskc-types",
  "dworkspace",
- "dworkspace-components",
+ "dworkspace-codebase",
  "egui 0.19.0",
  "egui_cable",
  "uuid",
@@ -1602,7 +1602,7 @@ dependencies = [
  "deskc-ids",
  "deskc-types",
  "dworkspace",
- "dworkspace-components",
+ "dworkspace-codebase",
  "egui 0.19.0",
 ]
 
@@ -1631,7 +1631,7 @@ dependencies = [
  "bevy_ecs",
  "deskc-ids",
  "dworkspace",
- "dworkspace-components",
+ "dworkspace-codebase",
  "uuid",
 ]
 
@@ -1651,7 +1651,7 @@ dependencies = [
  "desk-window",
  "deskc-ids",
  "dworkspace",
- "dworkspace-components",
+ "dworkspace-codebase",
  "dworkspace-in-memory",
  "egui 0.19.0",
  "web-sys",
@@ -1662,11 +1662,16 @@ name = "deskc"
 version = "0.0.0"
 dependencies = [
  "deskc-amir",
+ "deskc-amirgen",
  "deskc-ast",
+ "deskc-concretizer",
  "deskc-hir",
+ "deskc-hirgen",
  "deskc-ids",
  "deskc-mir",
  "deskc-thir",
+ "deskc-thirgen",
+ "deskc-typeinfer",
  "deskc-types",
  "salsa",
  "uuid",
@@ -1935,7 +1940,7 @@ dependencies = [
  "deskc-typeinfer",
  "deskc-types",
  "downcast-rs",
- "dworkspace-components",
+ "dworkspace-codebase",
  "mry",
  "parking_lot 0.12.1",
  "salsa",
@@ -1945,7 +1950,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dworkspace-components"
+name = "dworkspace-codebase"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",
@@ -1963,7 +1968,7 @@ name = "dworkspace-in-memory"
 version = "0.0.0"
 dependencies = [
  "dworkspace",
- "dworkspace-components",
+ "dworkspace-codebase",
 ]
 
 [[package]]

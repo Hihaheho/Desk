@@ -1,5 +1,5 @@
 use dworkspace::repository::Repository;
-use dworkspace_components::{
+use dworkspace_codebase::{
     event::{Event, EventEntry},
     user::UserId,
 };

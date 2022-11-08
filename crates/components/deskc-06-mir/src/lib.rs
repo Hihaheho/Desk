@@ -1,10 +1,10 @@
-pub mod environment;
+pub mod linked_mir;
 pub mod mir;
 pub mod region;
 pub mod stmt;
 pub mod ty;
 
-pub use amir::amir::AmirId as MirId;
+pub use amir::amir::ControlFlowGraphId as MirId;
 pub use amir::block::BlockId;
 pub use amir::scope::Scope;
 pub use amir::scope::ScopeId;
