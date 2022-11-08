@@ -3,6 +3,9 @@
 - Finally I, as a founder of Hihaheho Studio, released the first demo of software called Desk. In this post, I introduce Desk.
 
 TODOs
+- [ ] Write a description about Desk X and Desk-plugins
+- [ ] Write a clear difference between Desk-plugins and existing applications
+- [ ] Add a section about problems of current world to solve
 - [ ] Add a screenshot of Desk
 - [ ] Add a sample program of Desk-lang
 - [ ] Add a roadmap with target users
@@ -35,8 +38,8 @@ Desk is:
 
 - Make every software programmable
   - Make products open to users
-  - Desk is embeddable to any software.
-- Blur the line between living and coding.
+  - Desk is embeddable to any software
+- Blur the line between living and coding
   - Make programming more easy and funny and pragmatic
   - Make top boards of people's desks into touch panel displays that run Desk
 
@@ -90,7 +93,7 @@ To achieve the goals, we have design philosophies.
 
 TBA
 
-## Planned Desk Apps
+## Planned Desk-plugins
 
 **Desk Brain**: a code-oriented and unified version of:
   - Roam Research
