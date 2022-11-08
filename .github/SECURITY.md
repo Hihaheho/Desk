@@ -9,4 +9,4 @@
 
 ## Reporting a Vulnerability
 
-Email me at ryo12redstone@gmail.com
+Email me at ryo12redstone@gmail.com (Ryo Hirayama)
