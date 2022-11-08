@@ -1,9 +1,12 @@
 [package]
 name = "desk-command"
 version = "0.0.0"
-authors = ["Ryo Hirayama <ryo12redstone@gmail.com>"]
-edition = "2018"
 license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../README.md"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

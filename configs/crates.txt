@@ -1,6 +1,9 @@
+# if crate A depends on crate B, B must come before A in this list
+
 # deskc components
 deskc-ids
 deskc-types
+deskc-conc-types
 deskc-tokens
 deskc-ast
 deskc-hir
@@ -8,7 +11,6 @@ deskc-thir
 deskc-amir
 deskc-mir
 deskc-textual-diagnostics
-deskc-conc-types
 
 # deskc systems
 deskc-lexer
