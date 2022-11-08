@@ -38,7 +38,7 @@ Desk is:
 
 - Make every software programmable
   - Make products open to users
-  - Desk is embeddable to any software
+  - Desk is embeddable in any software
 - Blur the line between living and coding
   - Make programming more easy and funny and pragmatic
   - Make top boards of people's desks into touch panel displays that run Desk
