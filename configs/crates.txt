@@ -47,8 +47,8 @@ dworkspace-in-memory
 desk-theme
 desk-physics
 desk-system-ordering
-desk-terminal
 desk-command
+desk-terminal
 desk-window
 
 # desk plugins
