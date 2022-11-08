@@ -73,7 +73,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 Assertion::NotReferenced(operand_id),
                 Assertion::NoOperandLoop {
                     node_id,
-                    operand_id: operand_id,
+                    operand_id,
                 },
                 Assertion::OperandsHasSize {
                     node_id,
@@ -165,7 +165,6 @@ mod tests {
         content::{Content, ContentKind, SyntaxKind},
         patch::StringPatch,
         rules::Rules,
-        snapshot::Snapshot,
         user::UserId,
     };
     use deskc_hir::expr::{Expr, Literal};
@@ -611,7 +610,7 @@ mod tests {
     fn extract_assertion_for_add_snapshot() {
         let event = Event::AddSnapshot {
             index: 0,
-            snapshot: Box::new(Snapshot::default()),
+            snapshot: Default::default(),
         };
         assert_eq!(
             extract_assertion(&event),

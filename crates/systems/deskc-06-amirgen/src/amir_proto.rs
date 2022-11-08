@@ -83,10 +83,7 @@ impl AmirProto {
         let blocks = blocks.into_iter().map(|(_, b)| b).collect();
 
         // Handle captured variables, add to parameters
-        let captured = captured_values
-            .into_iter()
-            .map(|(ty, _var_id)| ty)
-            .collect();
+        let captured = captured_values.into_keys().collect();
 
         let links = links.into_iter().collect();
 

@@ -87,10 +87,7 @@ mod tests {
     #[test]
     fn returns_denied() {
         let rules = Rules::default();
-        assert_eq!(
-            rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner),
-            false
-        );
+        assert!(!rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
     }
 
     #[test]

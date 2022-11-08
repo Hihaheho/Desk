@@ -27,7 +27,7 @@ pub struct References {
 impl salsa::Database for References {}
 
 fn references(db: &dyn ReferencesQueries, node_id: NodeId) -> Arc<HashSet<NodeId>> {
-    let mut ret = db.node(node_id.clone()).as_ref().clone();
+    let mut ret = db.node(node_id).as_ref().clone();
     let mut node_ids: Vec<NodeId> = ret.iter().cloned().collect();
     let mut next_node_ids;
     while !node_ids.is_empty() {
@@ -37,7 +37,7 @@ fn references(db: &dyn ReferencesQueries, node_id: NodeId) -> Arc<HashSet<NodeId
             next_node_ids.extend(children.difference(&ret).cloned());
             ret = ret.union(&children).cloned().collect();
         }
-        node_ids = next_node_ids.iter().cloned().collect();
+        node_ids = next_node_ids.to_vec();
     }
     Arc::new(ret)
 }
@@ -77,8 +77,8 @@ impl References {
             } => {
                 let removed = snapshot.flat_nodes.get(node_id).unwrap().operands[*index].clone();
                 let mut references = self.node(removed.clone()).as_ref().clone();
-                references.remove(&node_id);
-                self.set_node(removed.clone(), Arc::new(references));
+                references.remove(node_id);
+                self.set_node(removed, Arc::new(references));
             }
             Event::UpdateOperandRules { node_id, rules } => {
                 self.set_operand_rules(node_id.clone(), Arc::new(rules.clone()));
@@ -104,10 +104,7 @@ mod tests {
         let node_d = NodeId::new();
         let node_e = NodeId::new();
         let mut db = References::default();
-        db.set_node(
-            node_a.clone(),
-            Arc::new([node_b.clone()].into_iter().collect()),
-        );
+        db.set_node(node_a, Arc::new([node_b.clone()].into_iter().collect()));
         db.set_node(
             node_b.clone(),
             Arc::new([node_c.clone()].into_iter().collect()),
@@ -119,7 +116,7 @@ mod tests {
         db.set_node(node_d.clone(), Arc::new([].into_iter().collect()));
         db.set_node(node_e.clone(), Arc::new([].into_iter().collect()));
         assert_eq!(
-            db.references(node_b.clone()),
+            db.references(node_b),
             Arc::new([node_c, node_d, node_e].into_iter().collect())
         );
     }
@@ -248,7 +245,7 @@ mod tests {
         db.handle_event(
             &snapshot,
             &Event::PatchOperand {
-                node_id: node_id.clone(),
+                node_id,
                 patch: OperandPatch::Remove { index: 0 },
             },
         );

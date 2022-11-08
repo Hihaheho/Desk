@@ -48,11 +48,11 @@ impl TypedHirGen {
                 definition,
                 expression,
             } => thir::Expr::Let {
-                definition: Box::new(self.gen(&*definition)),
-                body: Box::new(self.gen(&*expression)),
+                definition: Box::new(self.gen(definition)),
+                body: Box::new(self.gen(expression)),
             },
-            Expr::Perform { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(&*input))),
-            Expr::Continue { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(&*input))),
+            Expr::Perform { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(input))),
+            Expr::Continue { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(input))),
             Expr::Handle { handlers, expr } => thir::Expr::Handle {
                 handlers: handlers
                     .iter()
@@ -66,11 +66,11 @@ impl TypedHirGen {
                                 input: self.get_type(input),
                                 output: self.get_type(output),
                             },
-                            handler: self.gen(&*handler),
+                            handler: self.gen(handler),
                         },
                     )
                     .collect(),
-                expr: Box::new(self.gen(&*expr)),
+                expr: Box::new(self.gen(expr)),
             },
             Expr::Apply {
                 function,
@@ -100,7 +100,7 @@ impl TypedHirGen {
                 }
             }
             Expr::Product(values) => {
-                thir::Expr::Product(values.iter().map(|value| self.gen(&*value)).collect())
+                thir::Expr::Product(values.iter().map(|value| self.gen(value)).collect())
             }
             // one ID disappeared here, but fine
             Expr::Typed { ty: _, item: expr } => self.gen(expr).expr,
@@ -113,7 +113,7 @@ impl TypedHirGen {
                 } = function_ty
                 {
                     // Flatten the function
-                    match self.gen(&*body) {
+                    match self.gen(body) {
                         TypedHir {
                             expr: thir::Expr::Function { body, .. },
                             ..
@@ -128,13 +128,13 @@ impl TypedHirGen {
                 }
             }
             Expr::Vector(values) => {
-                thir::Expr::Vector(values.iter().map(|value| self.gen(&*value)).collect())
+                thir::Expr::Vector(values.iter().map(|value| self.gen(value)).collect())
             }
             Expr::Set(values) => {
-                thir::Expr::Set(values.iter().map(|value| self.gen(&*value)).collect())
+                thir::Expr::Set(values.iter().map(|value| self.gen(value)).collect())
             }
             Expr::Match { of, cases } => thir::Expr::Match {
-                input: Box::new(self.gen(&*of)),
+                input: Box::new(self.gen(of)),
                 cases: cases
                     .iter()
                     .map(|MatchCase { ty, expr }| thir::MatchCase {
@@ -152,7 +152,7 @@ impl TypedHirGen {
                 ..
             } => thir::Expr::Label {
                 label: label.clone(),
-                item: Box::new(self.gen(&*body)),
+                item: Box::new(self.gen(body)),
             },
         };
         TypedHir {

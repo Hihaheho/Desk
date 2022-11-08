@@ -36,7 +36,7 @@ pub(crate) fn move_cursor(
 
 fn translate_position(pos: Vec2, wnd: &Window, camera: &Transform) -> Vec2 {
     // get the size of the window
-    let size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
+    let size = Vec2::new(wnd.width(), wnd.height());
 
     // the default orthographic projection is in pixels from the center;
     // just undo the translation

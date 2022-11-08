@@ -52,7 +52,7 @@ impl EvalMir {
         if block.stmts.len() == self.pc_stmt_idx {
             match &block.terminator {
                 mir::ATerminator::Return(var) => InnerOutput::Return(
-                    (&mut self.registers)
+                    self.registers
                         .remove(var)
                         .expect("return value should be exists"),
                 ),

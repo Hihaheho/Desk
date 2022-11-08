@@ -66,18 +66,18 @@ impl Workspace {
                 {
                     return Err(AssertionError::NodeDenied {
                         node_id: node_id.clone(),
-                        operation: operation.clone(),
+                        operation,
                     });
                 }
                 if let Some(rules) = self.references.lock().parent_rules(node_id.clone()) {
                     if !rules.user_has_operation(user_id, &operation) {
                         return Err(AssertionError::ParentDenied {
                             node_id: node_id.clone(),
-                            operation: operation.clone(),
+                            operation,
                         });
                     }
                 }
-                return Ok(());
+                Ok(())
             }
             Assertion::Owner => {
                 if self.snapshot.owners.contains(user_id) {
@@ -297,7 +297,7 @@ mod tests {
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::PatchOperand {
-            node_id: parent_id.clone(),
+            node_id: parent_id,
             patch: OperandPatch::Insert {
                 index: 0,
                 node_id: node_id.clone(),
@@ -461,7 +461,7 @@ mod tests {
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::PatchOperand {
-            node_id: parent_id.clone(),
+            node_id: parent_id,
             patch: OperandPatch::Insert {
                 index: 0,
                 node_id: node_id.clone(),
@@ -484,7 +484,7 @@ mod tests {
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::CreateNode {
-            node_id: parent_id.clone(),
+            node_id: parent_id,
             content: Content::Integer(0),
         });
         let assertion = Assertion::NotReferenced(&node_id);
@@ -752,7 +752,7 @@ mod tests {
         assert_eq!(
             kernel.execute_assertion(&UserId("a".into()), assertion),
             Err(AssertionError::NodeDenied {
-                node_id: node_id.clone(),
+                node_id,
                 operation: NodeOperation::ReplaceContent,
             })
         );

@@ -88,24 +88,15 @@ mod tests {
             .operand
             .lock()
             .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
-        assert_eq!(
-            detector.does_make_loop_insert_operand(&node_a, &node_b),
-            false
-        );
-        assert_eq!(
-            detector.does_make_loop_insert_operand(&node_b, &node_a),
-            true
-        );
+        assert!(!detector.does_make_loop_insert_operand(&node_a, &node_b),);
+        assert!(detector.does_make_loop_insert_operand(&node_b, &node_a),);
     }
 
     #[test]
     fn detect_self_loop_by_operand() {
         let node_id = NodeId::new();
         let detector = LoopDetector::default();
-        assert_eq!(
-            detector.does_make_loop_insert_operand(&node_id, &node_id),
-            true
-        );
+        assert!(detector.does_make_loop_insert_operand(&node_id, &node_id));
     }
 
     #[test]
@@ -119,10 +110,7 @@ mod tests {
                 content: Content::Integer(0),
             },
         );
-        assert_eq!(
-            detector.operand.lock().node(node_id.clone()),
-            Default::default()
-        );
+        assert_eq!(detector.operand.lock().node(node_id), Default::default());
     }
 
     #[test]

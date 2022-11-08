@@ -107,7 +107,7 @@ impl AmirGen {
                         .bind_stmt(definition.ty.clone(), AStmt::Recursion);
                     self.amir_proto().create_named_var(recursion_var);
                     // gen definition
-                    let fn_ref = self.gen_closure(parameters, &*body)?;
+                    let fn_ref = self.gen_closure(parameters, body)?;
                     // finish recursion
                     self.amir_proto()
                         .bind_stmt(definition.ty.clone(), AStmt::Fn(fn_ref))
@@ -119,7 +119,7 @@ impl AmirGen {
                 // make it named
                 self.amir_proto().create_named_var(def_var);
                 // gen body
-                let var = self.gen_stmt(&**body)?;
+                let var = self.gen_stmt(body)?;
 
                 self.amir_proto().end_scope_then_return(var)
             }
@@ -232,7 +232,7 @@ impl AmirGen {
                     .bind_stmt(stmt_ty.clone(), AStmt::Product(values))
             }
             thir::Expr::Function { parameters, body } => {
-                let fn_ref = self.gen_closure(parameters, &*body)?;
+                let fn_ref = self.gen_closure(parameters, body)?;
                 self.amir_proto()
                     .bind_stmt(stmt_ty.clone(), AStmt::Fn(fn_ref))
             }

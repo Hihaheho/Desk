@@ -38,7 +38,7 @@ impl Ctx {
                 body: Box::new(self.gen_type(body)),
             },
             Type::Effectful { ty, effects } => types::Type::Effectful {
-                ty: Box::new(self.gen_type(&**ty)),
+                ty: Box::new(self.gen_type(ty)),
                 effects: self.gen_effect_expr(effects),
             },
             Type::Brand { brand, item } => types::Type::Brand {

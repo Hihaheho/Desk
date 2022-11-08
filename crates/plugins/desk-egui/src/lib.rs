@@ -57,7 +57,7 @@ fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Change
     if let Ok(theme) = theme.get_single() {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let theme_ron = ron::ser::to_string_pretty(&*theme, Default::default()).unwrap();
+            let theme_ron = ron::ser::to_string_pretty(theme, Default::default()).unwrap();
             std::fs::write("configs/theme.ron", theme_ron).unwrap();
         }
 

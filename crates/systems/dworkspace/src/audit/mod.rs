@@ -120,7 +120,7 @@ mod tests {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         index: 0,
-                        node_id: node_c.clone(),
+                        node_id: node_c,
                     },
                 },
             })
@@ -157,7 +157,7 @@ mod tests {
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::CreateNode {
-            node_id: node_c.clone(),
+            node_id: node_c,
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::CreateNode {
@@ -175,7 +175,7 @@ mod tests {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
                 index: 1,
-                node_id: node_b.clone(),
+                node_id: node_b,
             },
         });
         // insert at 2
@@ -202,7 +202,7 @@ mod tests {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         index: 3,
-                        node_id: node_d.clone(),
+                        node_id: node_d,
                     },
                 },
             }),
@@ -291,7 +291,7 @@ mod tests {
                 },
             }),
             Err(AssertionError::InsufficientOperands {
-                node_id: node_a.clone(),
+                node_id: node_a,
                 target: 3,
                 actual: 2
             })

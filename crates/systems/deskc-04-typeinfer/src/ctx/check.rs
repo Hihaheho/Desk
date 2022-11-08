@@ -35,7 +35,7 @@ impl Ctx {
             }
             (_, Type::ForAll { variable, body }) => self
                 .add(Log::Variable(*variable))
-                .check(expr, &*body)?
+                .check(expr, body)?
                 .recover_effects()
                 .truncate_from(&Log::Variable(*variable))
                 .recover_effects(),

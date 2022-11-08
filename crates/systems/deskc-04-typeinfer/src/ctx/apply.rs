@@ -15,7 +15,7 @@ impl Ctx {
             Type::Label { label: _, item } => self.apply(item, expr)?,
             Type::Brand { brand: _, item } => self.apply(item, expr)?,
             Type::Function { parameter, body } => {
-                let delta = self.check(expr, &*parameter)?.recover_effects();
+                let delta = self.check(expr, parameter)?.recover_effects();
                 // if a type of expr is synthed, output can be substituded with the type.
                 delta
                     .synth(expr)
@@ -48,7 +48,7 @@ impl Ctx {
             Type::ForAll { variable, body } => {
                 let a = self.fresh_existential();
                 self.add(Log::Existential(a))
-                    .apply(&substitute(&*body, variable, &Type::Existential(a)), expr)?
+                    .apply(&substitute(body, variable, &Type::Existential(a)), expr)?
             }
             _ => {
                 return Err(to_expr_type_error(

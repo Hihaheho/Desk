@@ -296,7 +296,7 @@ impl Ctx {
                     .unzip();
                 let ty = sum_all(self, ty);
                 let out = sum_all(self, out);
-                self.check(&*of, &ty)?.recover_effects().with_type(out)
+                self.check(of, &ty)?.recover_effects().with_type(out)
             }
             Expr::Label { label, item: body } => {
                 let (ctx, ty) = self.synth(body)?.recover_effects();

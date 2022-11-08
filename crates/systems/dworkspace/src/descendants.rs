@@ -19,7 +19,7 @@ pub struct Descendants {
 impl salsa::Database for Descendants {}
 
 fn descendants(db: &dyn DescendantsQueries, node_id: NodeId) -> Arc<HashSet<NodeId>> {
-    let mut ret = db.node(node_id.clone()).as_ref().clone();
+    let mut ret = db.node(node_id).as_ref().clone();
     let mut node_ids: Vec<NodeId> = ret.iter().cloned().collect();
     let mut next_node_ids;
     while !node_ids.is_empty() {
@@ -29,7 +29,7 @@ fn descendants(db: &dyn DescendantsQueries, node_id: NodeId) -> Arc<HashSet<Node
             next_node_ids.extend(children.difference(&ret).cloned());
             ret = ret.union(&children).cloned().collect();
         }
-        node_ids = next_node_ids.iter().cloned().collect();
+        node_ids = next_node_ids.to_vec();
     }
     Arc::new(ret)
 }
@@ -67,7 +67,7 @@ mod tests {
         );
         detector.set_node(node_e.clone(), Arc::new(vec![].into_iter().collect()));
         assert_eq!(
-            detector.descendants(node_a.clone()),
+            detector.descendants(node_a),
             Arc::new(
                 [node_b.clone(), node_c.clone(), node_d, node_e]
                     .into_iter()
