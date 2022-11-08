@@ -89,6 +89,7 @@ mod tests {
     fn prevent_loop() {
         let node_a = NodeId::new();
         let node_b = NodeId::new();
+        let node_c = NodeId::new();
         let mut kernel = Workspace::new(TestRepository::default());
         kernel.snapshot.owners.insert(UserId("a".into()));
 
@@ -98,6 +99,10 @@ mod tests {
         });
         kernel.handle_event(&Event::CreateNode {
             node_id: node_b.clone(),
+            content: Content::Integer(0),
+        });
+        kernel.handle_event(&Event::CreateNode {
+            node_id: node_c.clone(),
             content: Content::Integer(0),
         });
         kernel.handle_event(&Event::PatchOperand {
@@ -115,7 +120,7 @@ mod tests {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         index: 0,
-                        node_id: node_b.clone(),
+                        node_id: node_c.clone(),
                     },
                 },
             })

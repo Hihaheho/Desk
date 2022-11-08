@@ -70,6 +70,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 node_id: operand_id,
             } => Assertion::All(vec![
                 Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
                 Assertion::NoOperandLoop {
                     node_id,
                     operand_id: operand_id,
@@ -461,6 +462,7 @@ mod tests {
             extract_assertion(&event),
             Assertion::All(vec![
                 Assertion::NodeExists(&node_id),
+                Assertion::NotReferenced(&operand_id),
                 Assertion::NoOperandLoop {
                     node_id: &node_id,
                     operand_id: &operand_id,
