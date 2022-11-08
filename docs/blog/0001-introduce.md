@@ -2,10 +2,17 @@
 
 - Finally I, as a founder of Hihaheho Studio, released the first demo of software called Desk. In this post, I introduce Desk.
 
+TODOs
+- [ ] Add a screenshot of Desk
+- [ ] Add a sample program of Desk-lang
+- [ ] Add a roadmap with target users
+- [ ] Add features of the first release
+
 ## TL;DR
 
-- Excel but game
-- Smalltalk but functional and statically typed
+Desk is:
+- a reinvention of Excel to fascinate both hackers and gamers.
+- a reinvention of Smalltalk environments but with a functional and statically typed language.
 
 ## Related buzzwords (actually I don't like buzzwords).
 
