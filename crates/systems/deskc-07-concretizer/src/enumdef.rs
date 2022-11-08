@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use mir::ty::ConcType;
+use conc_types::ConcType;
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct EnumDef {

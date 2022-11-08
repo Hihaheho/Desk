@@ -7,10 +7,10 @@ use amir::{
     var::AVar,
 };
 use block_concretizer::BlockConcretizer;
+use conc_types::ConcType;
 use enumdef::EnumDefs;
 use mir::{
     mir::{ControlFlowGraph as CFG, LinkId, Mir},
-    ty::ConcType,
     Vars,
 };
 use type_concretizer::TypeConcretizer;
@@ -23,7 +23,7 @@ pub struct Concretizer {
 
 pub fn concretize(amirs: &Amir) -> Mir {
     let mirs = amirs
-        .amirs
+        .cfgs
         .iter()
         .map(|amir| {
             let mut concretizer = Concretizer {
@@ -36,7 +36,7 @@ pub fn concretize(amirs: &Amir) -> Mir {
         .collect();
     Mir {
         entrypoint: amirs.entrypoint,
-        mirs,
+        cfgs: mirs,
     }
 }
 

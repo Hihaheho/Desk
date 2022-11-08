@@ -12,12 +12,17 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+tokens = { path = "../../components/deskc-01-tokens", version = "0.0.0", package = "deskc-tokens" }
 ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 amir = { path = "../../components/deskc-05-amir", version = "0.0.0", package = "deskc-amir" }
 mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+conc-types = { path = "../../components/deskc-conc-types", version = "0.0.0", package = "deskc-conc-types" }
+codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
+lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
+parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
 hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 thirgen = { path = "../../systems/deskc-05-thirgen", version = "0.0.0", package = "deskc-thirgen" }

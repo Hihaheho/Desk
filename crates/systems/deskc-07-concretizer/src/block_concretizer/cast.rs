@@ -1,3 +1,4 @@
+use conc_types::ConcType;
 use mir::{stmt::Stmt, StmtBind, VarId};
 
 use super::BlockConcretizer;
@@ -11,8 +12,8 @@ impl<'a> BlockConcretizer<'a> {
                 stmt: Stmt::Move(from_var_id),
                 var: to_var_id,
             }),
-            (mir::ty::ConcType::Tuple(types), inner) if types.contains(inner) => todo!("index"),
-            (inner, mir::ty::ConcType::Enum(types)) if types.contains(inner) => {
+            (ConcType::Tuple(types), inner) if types.contains(inner) => todo!("index"),
+            (inner, ConcType::Enum(types)) if types.contains(inner) => {
                 let variant_id = self
                     .enum_defs
                     .get_enum_def(to.ty.clone())

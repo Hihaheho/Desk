@@ -1,9 +1,10 @@
-use crate::{stmt::Stmt, ty::ConcType};
+use crate::stmt::Stmt;
 use amir::{
     amir::ControlFlowGraphId,
     scope::Scope,
     var::{AVar, Vars},
 };
+use conc_types::ConcType;
 
 pub type Var = AVar<ConcType>;
 pub type BasicBlock = amir::block::ABasicBlock<Stmt, usize>;
@@ -24,5 +25,5 @@ pub struct ControlFlowGraph {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mir {
     pub entrypoint: ControlFlowGraphId,
-    pub mirs: Vec<ControlFlowGraph>,
+    pub cfgs: Vec<ControlFlowGraph>,
 }

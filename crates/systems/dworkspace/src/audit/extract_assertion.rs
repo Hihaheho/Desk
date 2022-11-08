@@ -162,7 +162,8 @@ pub fn extract_assertion(event: &Event) -> Assertion {
 #[cfg(test)]
 mod tests {
     use components::{
-        content::{Content, ContentKind, SyntaxKind},
+        code::SyntaxKind,
+        content::{Content, ContentKind},
         patch::StringPatch,
         rules::Rules,
         user::UserId,

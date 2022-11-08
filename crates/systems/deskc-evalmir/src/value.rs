@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use mir::{
-    ty::{ConcEffect, ConcType},
-    MirId,
-};
+use conc_types::{ConcEffect, ConcType};
+use mir::ControlFlowGraphId;
 
 use crate::eval_mir::Handler;
 
@@ -30,7 +28,7 @@ pub enum FnRef {
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
-    pub mir: MirId,
+    pub mir: ControlFlowGraphId,
     pub captured: HashMap<ConcType, Value>,
     pub handlers: HashMap<ConcEffect, Handler>,
 }

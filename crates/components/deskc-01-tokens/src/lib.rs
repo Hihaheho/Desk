@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -46,3 +48,5 @@ pub enum Token {
     A,
     Card,
 }
+
+pub type Tokens = Vec<(Token, Range<usize>)>;

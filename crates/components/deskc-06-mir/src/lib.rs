@@ -1,14 +1,13 @@
 pub mod linked_mir;
 pub mod mir;
-pub mod region;
 pub mod stmt;
 pub mod ty;
 
-pub use amir::amir::ControlFlowGraphId as MirId;
+pub use amir::amir::ControlFlowGraphId;
 pub use amir::block::BlockId;
 pub use amir::scope::Scope;
 pub use amir::scope::ScopeId;
-pub use amir::stmt::ATerminator;
+pub use amir::stmt::ATerminator as Terminator;
 pub use amir::stmt::Const;
 pub use amir::stmt::Op;
 pub use amir::stmt::StmtBind;

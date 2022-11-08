@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
+use conc_types::{ConcEffect, ConcType};
 use mir::mir::ControlFlowGraph;
 use mir::stmt::Stmt;
-use mir::ty::ConcEffect;
 use mir::BlockId;
 
 use crate::const_stmt;
 
 use crate::value::{Closure, FnRef, Value};
-use mir::{ty::ConcType, StmtBind, VarId};
+use mir::{StmtBind, VarId};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
@@ -51,12 +51,12 @@ impl EvalMir {
         // if reach to terminator
         if block.stmts.len() == self.pc_stmt_idx {
             match &block.terminator {
-                mir::ATerminator::Return(var) => InnerOutput::Return(
+                mir::Terminator::Return(var) => InnerOutput::Return(
                     self.registers
                         .remove(var)
                         .expect("return value should be exists"),
                 ),
-                mir::ATerminator::Match { var, cases } => {
+                mir::Terminator::Match { var, cases } => {
                     let value = self.load_value(var);
                     if let Value::Variant { id, value: _ } = value {
                         let case = cases.iter().find(|c| c.ty == *id).unwrap();
@@ -67,7 +67,7 @@ impl EvalMir {
                         panic!("should be variant")
                     }
                 }
-                mir::ATerminator::Goto(next) => {
+                mir::Terminator::Goto(next) => {
                     self.pc_block = *next;
                     self.pc_stmt_idx = 0;
                     InnerOutput::Running
@@ -227,7 +227,7 @@ mod tests {
     use mir::{
         mir::{BasicBlock, Var},
         stmt::Stmt,
-        ATerminator, BlockId, Const, Scope, ScopeId, StmtBind, Vars,
+        BlockId, Const, Scope, ScopeId, StmtBind, Terminator, Vars,
     };
 
     use super::*;
@@ -247,7 +247,7 @@ mod tests {
                     var: VarId(0),
                     stmt: Stmt::Const(Const::Int(1)),
                 }],
-                terminator: ATerminator::Return(VarId(0)),
+                terminator: Terminator::Return(VarId(0)),
             }],
             captured: vec![],
             links: vec![],

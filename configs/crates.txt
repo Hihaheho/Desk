@@ -8,6 +8,7 @@ deskc-thir
 deskc-amir
 deskc-mir
 deskc-textual-diagnostics
+deskc-conc-types
 
 # deskc systems
 deskc-lexer

@@ -5,9 +5,8 @@ use amir::{
     stmt::{Const, Op},
     var::VarId,
 };
+use conc_types::{ConcEffect, ConcType};
 use ids::LinkName;
-
-use crate::ty::{ConcEffect, ConcType};
 
 #[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]

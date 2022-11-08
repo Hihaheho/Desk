@@ -19,7 +19,7 @@ pub fn gen_abstract_mir(thir: &TypedHir) -> Result<Amir, GenAmirError> {
     let mut gen = AmirGen::default();
     gen.gen_amir(thir).map(|entrypoint_amir_id| Amir {
         entrypoint: entrypoint_amir_id,
-        amirs: gen.amirs,
+        cfgs: gen.amirs,
     })
 }
 

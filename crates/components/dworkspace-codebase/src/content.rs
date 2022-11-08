@@ -1,6 +1,8 @@
 use deskc_ids::LinkName;
 use types::Type;
 
+use crate::code::SyntaxKind;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Content {
     SourceCode { syntax: SyntaxKind, source: String },
@@ -22,14 +24,6 @@ pub enum ContentKind {
     Rational,
     Float,
     Apply,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum SyntaxKind {
-    Hacker,
-    TypeScriptLike,
-    OCamlLike,
-    RustLike,
 }
 
 impl Content {

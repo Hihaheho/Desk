@@ -1,4 +1,4 @@
-use mir::ty::{ConcEffect, ConcEffectExpr, ConcType};
+use conc_types::{ConcEffect, ConcEffectExpr, ConcType};
 use types::{Effect, EffectExpr, Type};
 
 pub struct TypeConcretizer {}

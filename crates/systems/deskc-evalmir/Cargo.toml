@@ -15,6 +15,7 @@ withserde = ["serde", "mir/withserde", "types/withserde"]
 [dependencies]
 mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+conc-types = { path = "../../components/deskc-conc-types", version = "0.0.0", package = "deskc-conc-types" }
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]

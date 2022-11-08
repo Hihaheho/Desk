@@ -4,14 +4,14 @@ use std::ops::Range;
 
 use chumsky::prelude::*;
 use error::LexerError;
-use tokens::Token;
+use tokens::{Token, Tokens};
 use uuid::Uuid;
 
-pub fn scan(input: &str) -> Result<Vec<(Token, Range<usize>)>, LexerError> {
+pub fn scan(input: &str) -> Result<Tokens, LexerError> {
     lexer().then_ignore(end()).parse(input).map_err(LexerError)
 }
 
-pub fn lexer() -> impl Parser<char, Vec<(Token, Range<usize>)>, Error = Simple<char>> {
+pub fn lexer() -> impl Parser<char, Tokens, Error = Simple<char>> {
     let comment = recursive(|comment| {
         none_of("()")
             .repeated()

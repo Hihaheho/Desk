@@ -3,7 +3,7 @@ use deskc_ids::{LinkName, NodeId};
 use hir::expr::Expr;
 use types::Type;
 
-use crate::content::{Content, SyntaxKind};
+use crate::{code::SyntaxKind, content::Content};
 
 use self::diff_match_patch::Patch;
 

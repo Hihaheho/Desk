@@ -4,11 +4,11 @@ use amir::{
     block::ABasicBlock,
     stmt::{AStmt, MatchCase},
 };
+use conc_types::ConcType;
 use mir::{
     mir::BasicBlock,
     stmt::{FnRef, Stmt},
-    ty::ConcType,
-    ATerminator, StmtBind, Vars,
+    StmtBind, Terminator, Vars,
 };
 use types::Type;
 
@@ -38,7 +38,7 @@ impl<'a> BlockConcretizer<'a> {
     fn concretize_block(
         &mut self,
         ABasicBlock { stmts, terminator }: &ABasicBlock<AStmt, Type>,
-    ) -> ATerminator<usize> {
+    ) -> Terminator<usize> {
         for StmtBind { stmt, var } in stmts {
             let mut bind = |stmt| self.stmts.push(StmtBind { var: *var, stmt });
             match stmt {
@@ -94,13 +94,13 @@ impl<'a> BlockConcretizer<'a> {
             };
         }
         match terminator {
-            ATerminator::Return(var) => ATerminator::Return(*var),
-            ATerminator::Match { var, cases } => {
+            Terminator::Return(var) => Terminator::Return(*var),
+            Terminator::Match { var, cases } => {
                 let def = self.enum_defs.get_enum_def(
                     self.type_concretizer
                         .gen_conc_type(&Type::sum(cases.iter().map(|c| c.ty.clone()).collect())),
                 );
-                ATerminator::<usize>::Match {
+                Terminator::<usize>::Match {
                     var: *var,
                     cases: cases
                         .iter()
@@ -111,7 +111,7 @@ impl<'a> BlockConcretizer<'a> {
                         .collect(),
                 }
             }
-            ATerminator::Goto(block_id) => ATerminator::Goto(*block_id),
+            Terminator::Goto(block_id) => Terminator::Goto(*block_id),
         }
     }
 }

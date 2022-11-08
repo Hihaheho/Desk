@@ -23,7 +23,7 @@ pub struct ControlFlowGraphId(pub usize);
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Amir {
     pub entrypoint: ControlFlowGraphId,
-    pub amirs: Vec<ControlFlowGraph>,
+    pub cfgs: Vec<ControlFlowGraph>,
 }
 
 impl ControlFlowGraph {
