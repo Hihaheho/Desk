@@ -20,12 +20,11 @@ deskc-typeinfer
 deskc-thirgen
 deskc-amirgen
 deskc-concretizer
-deskc-evalmir
 deskc-fmt
 deskc-thir2dson
+deskc
 
 # deskc apps
-deskc
 deskc-cli
 deskc-language-server
 
@@ -33,15 +32,22 @@ deskc-language-server
 dson
 serde-dson
 
-# kernel components
+# workspace components
 dworkspace-codebase
 
-# kernel systems
+# workspace systems
 dworkspace
 
-# kernel adapters
+# workspace adapters
 dworkspace-firestore
 dworkspace-in-memory
+
+# deskvm components
+deskvm-process
+
+# deskvm systems
+deskvm-miri
+deskvm
 
 # desk components
 desk-theme

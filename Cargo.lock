@@ -1732,21 +1732,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-evalmir"
-version = "0.0.0"
-dependencies = [
- "chumsky",
- "deskc-conc-types",
- "deskc-hirgen",
- "deskc-lexer",
- "deskc-mir",
- "deskc-parser",
- "deskc-typeinfer",
- "deskc-types",
- "serde",
-]
-
-[[package]]
 name = "deskc-fmt"
 version = "0.0.0"
 
@@ -1830,7 +1815,6 @@ dependencies = [
  "chumsky",
  "deskc-amirgen",
  "deskc-concretizer",
- "deskc-evalmir",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
@@ -1842,6 +1826,7 @@ dependencies = [
  "deskc-thirgen",
  "deskc-typeinfer",
  "deskc-types",
+ "deskvm-miri",
  "dson",
  "pretty_assertions",
  "serde",

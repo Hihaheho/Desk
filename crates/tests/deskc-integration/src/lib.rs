@@ -91,14 +91,14 @@ macro_rules! test {
             let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
             let amirs = amirgen::gen_abstract_mir(&thir).unwrap();
             let mirs = concretizer::concretize(&amirs);
-            let mut evalmir = evalmir::eval_mirs(mirs);
+            let mut miri = miri::eval_mirs(mirs);
             let value = loop {
-                match evalmir.eval_next() {
-                    evalmir::Output::Return(ret) => break ret,
-                    evalmir::Output::Perform { input, effect } => {
+                match miri.eval_next() {
+                    miri::Output::Return(ret) => break ret,
+                    miri::Output::Perform { input, effect } => {
                         panic!("perform {:?} {:?}", input, effect)
                     }
-                    evalmir::Output::Running => continue,
+                    miri::Output::Running => continue,
                 }
             };
             for assertion in test_case.assertions.iter() {

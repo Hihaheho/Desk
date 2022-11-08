@@ -1,4 +1,4 @@
-use evalmir::value::Value;
+use miri::value::Value;
 use serde::{Deserialize, Serialize};
 use types::Type;
 
