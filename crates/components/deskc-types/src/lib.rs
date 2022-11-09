@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
 use ids::NodeId;
+use serde::{Deserialize, Serialize};
 
 pub type Id = usize;
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Effect {
     pub input: Type,
     pub output: Type,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Type {
     Number,
     String,
@@ -43,8 +42,7 @@ pub enum Type {
     },
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum EffectExpr {
     Effects(Vec<Effect>),
     Add(Vec<EffectExpr>),

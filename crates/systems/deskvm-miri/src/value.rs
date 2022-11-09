@@ -5,8 +5,7 @@ use mir::ControlFlowGraphId;
 
 use crate::eval_mir::Handler;
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Value {
     String(String),
     Int(i64),
@@ -17,16 +16,14 @@ pub enum Value {
     FnRef(FnRef),
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum FnRef {
     Link(ConcType),
     Closure(Closure),
     Recursion,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Closure {
     pub mir: ControlFlowGraphId,
     pub captured: HashMap<ConcType, Value>,

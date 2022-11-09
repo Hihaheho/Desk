@@ -1,14 +1,13 @@
+use serde::{Deserialize, Serialize};
 use types::Type;
 
 use crate::stmt::{AStmt, ATerminator, StmtBind};
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ABasicBlock<S = AStmt, T = Type> {
     pub stmts: Vec<StmtBind<S>>,
     pub terminator: ATerminator<T>,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct BlockId(pub usize);

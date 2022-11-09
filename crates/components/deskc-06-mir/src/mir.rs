@@ -5,13 +5,13 @@ use amir::{
     var::{AVar, Vars},
 };
 use conc_types::ConcType;
+use serde::{Deserialize, Serialize};
 
 pub type Var = AVar<ConcType>;
 pub type BasicBlock = amir::block::ABasicBlock<Stmt, usize>;
 pub type LinkId = ids::LinkId<ConcType>;
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ControlFlowGraph {
     pub parameters: Vec<ConcType>,
     pub captured: Vec<ConcType>,

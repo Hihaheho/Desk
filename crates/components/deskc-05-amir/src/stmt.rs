@@ -1,19 +1,18 @@
 use std::collections::HashMap;
 
 use ids::LinkName;
+use serde::{Serialize, Deserialize};
 use types::{Effect, Type};
 
 use crate::{amir::ControlFlowGraphId, block::BlockId, var::VarId};
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StmtBind<T = AStmt> {
     pub var: VarId,
     pub stmt: T,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AStmt {
     Const(Const),
     Product(Vec<VarId>),
@@ -36,8 +35,7 @@ pub enum AStmt {
     Link(LinkName),
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FnRef {
     Link(Type),
     Closure {
@@ -49,8 +47,7 @@ pub enum FnRef {
     },
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Const {
     Int(i64),
     Rational(i64, i64),
@@ -61,8 +58,7 @@ pub enum Const {
 // Const::Float should not be NaN
 impl Eq for Const {}
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Op {
     Add,
     Sub,
@@ -88,15 +84,13 @@ pub enum Op {
     BitNot,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MatchCase<T = Type> {
     pub ty: T,
     pub next: BlockId,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ATerminator<T = Type> {
     Return(VarId),
     Match {

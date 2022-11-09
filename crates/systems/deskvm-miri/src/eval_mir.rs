@@ -10,8 +10,7 @@ use crate::const_stmt;
 use crate::value::{Closure, FnRef, Value};
 use mir::{StmtBind, VarId};
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EvalMir {
     pub mir: ControlFlowGraph,
     pub registers: HashMap<VarId, Value>,
@@ -24,8 +23,7 @@ pub struct EvalMir {
     pub handlers: HashMap<ConcEffect, Handler>,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Handler {
     Handler(Closure),
     Continuation(Vec<EvalMir>),

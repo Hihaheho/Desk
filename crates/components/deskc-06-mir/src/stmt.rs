@@ -7,9 +7,9 @@ use amir::{
 };
 use conc_types::{ConcEffect, ConcType};
 use ids::LinkName;
+use serde::{Serialize, Deserialize};
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Stmt {
     Const(Const),
     Tuple(Vec<VarId>),
@@ -42,8 +42,7 @@ pub enum Stmt {
     Link(LinkName),
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FnRef {
     Link(ConcType),
     Clojure {

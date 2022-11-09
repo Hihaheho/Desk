@@ -1,7 +1,7 @@
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum LinkName {
     None,
     Version(Uuid),
@@ -14,18 +14,16 @@ impl Default for LinkName {
     }
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct LinkId<Type> {
     pub ty: Type,
     pub name: LinkName,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Hash, Eq, PartialOrd, Ord, Default)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
 pub struct CardId(pub Uuid);
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize)]
 pub struct NodeId(pub Uuid);
 
 impl NodeId {

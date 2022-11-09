@@ -8,10 +8,6 @@ repository = "https://github.com/Hihaheho/Desk"
 readme = "../../../README.md"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[features]
-withserde = ["serde", "mir/withserde", "types/withserde"]
-
 [dependencies]
 mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }

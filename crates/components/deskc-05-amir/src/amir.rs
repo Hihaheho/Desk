@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use types::Type;
 
 use crate::{block::ABasicBlock, scope::Scope, stmt::LinkId, var::AVar};
@@ -16,8 +17,7 @@ pub struct ControlFlowGraph {
     pub links: Vec<LinkId>,
 }
 
-#[cfg_attr(feature = "withserde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ControlFlowGraphId(pub usize);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
