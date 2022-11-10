@@ -1,0 +1,13 @@
+[package]
+name = "deskvm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+
+anyhow = "1.0.66"
+parking_lot = "0.12.1"

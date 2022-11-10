@@ -1,0 +1,19 @@
+[package]
+name = "deskvm-dprocess"
+version = "0.0.0"
+license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../README.md"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+
+anyhow = "1.0.66"
+uuid = { version = "1.2.1", features = ["v4"] }
+parking_lot = "0.12.1"
+mry = "0.2.6"

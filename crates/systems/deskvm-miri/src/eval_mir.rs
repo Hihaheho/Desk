@@ -4,6 +4,7 @@ use conc_types::{ConcEffect, ConcType};
 use mir::mir::ControlFlowGraph;
 use mir::stmt::Stmt;
 use mir::BlockId;
+use serde::{Deserialize, Serialize};
 
 use crate::const_stmt;
 

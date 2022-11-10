@@ -6,11 +6,11 @@ pub mod value;
 use std::collections::{HashMap, VecDeque};
 
 use conc_types::ConcEffect;
+use dprocess::interpreter_output::InterpreterOutput;
 use mir::{
     mir::{ControlFlowGraph, Mir},
     BlockId, ControlFlowGraphId,
 };
-use value::Value;
 
 use crate::{
     eval_mir::{EvalMir, Handler, InnerOutput},
@@ -41,16 +41,16 @@ pub struct EvalMirs {
 }
 
 impl EvalMirs {
-    pub fn eval_next(&mut self) -> Output {
+    pub fn eval_next(&mut self) -> InterpreterOutput {
         match self.stack().eval_next() {
             InnerOutput::Return(value) => {
                 // When top level
                 if self.stack.len() == 1 {
-                    Output::Return(value)
+                    InterpreterOutput::Returned(value)
                 } else {
                     self.stack.pop().unwrap();
                     self.stack().return_or_continue_with_value(value);
-                    Output::Running
+                    InterpreterOutput::Running
                 }
             }
             InnerOutput::Perform { input, effect } => {
@@ -67,7 +67,7 @@ impl EvalMirs {
                     } else {
                         // When handler are not found, push back to continuation stack and perform
                         self.stack.extend(continuation_from_handler);
-                        return Output::Perform { input, effect };
+                        return InterpreterOutput::Performed { input, effect };
                     }
                 };
                 match handler {
@@ -97,14 +97,14 @@ impl EvalMirs {
                             .collect(),
                         };
                         self.stack.push(eval_mir);
-                        Output::Running
+                        InterpreterOutput::Running
                     }
                     eval_mir::Handler::Continuation(continuation) => {
                         self.stack.extend(continuation_from_handler);
                         self.stack.extend(continuation);
                         // path input to continuation
                         self.stack().return_or_continue_with_value(input);
-                        Output::Running
+                        InterpreterOutput::Running
                     }
                 }
             }
@@ -126,7 +126,7 @@ impl EvalMirs {
                         handlers,
                     };
                     self.stack.push(eval_mir);
-                    Output::Running
+                    InterpreterOutput::Running
                 }
                 value::FnRef::Recursion => {
                     let eval_mir = EvalMir {
@@ -140,10 +140,10 @@ impl EvalMirs {
                         handlers: self.stack().handlers.clone(),
                     };
                     self.stack.push(eval_mir);
-                    Output::Running
+                    InterpreterOutput::Running
                 }
             },
-            InnerOutput::Running => Output::Running,
+            InnerOutput::Running => InterpreterOutput::Running,
         }
     }
 
@@ -154,11 +154,4 @@ impl EvalMirs {
     pub fn get_mir(&self, mir_id: &ControlFlowGraphId) -> &ControlFlowGraph {
         &self.cfgs[mir_id.0]
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Output {
-    Return(Value),
-    Perform { input: Value, effect: ConcEffect },
-    Running,
 }
