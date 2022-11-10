@@ -98,7 +98,7 @@ TBA
 
 *Desk Craft* completely removes the boundary between developing and playing a game.
 It means:
-- in the developer view, we don't have any button like "▶️" in Unity. We don't need to switch the mode anymore.
+- in the developer view, we don't have any buttons like "▶️" in Unity. We don't need to switch the mode anymore.
 - updating a game state in a game logic is accomplished by updating the code itself.
 - releasing a game means publishing the development environment with some optimization.
 
