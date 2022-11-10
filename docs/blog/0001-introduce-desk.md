@@ -90,57 +90,88 @@ TBA
 
 ## Planned Desk-plugins
 
-**Desk Brain**: a code-oriented and unified version of:
-  - Roam Research
-  - Notion
-  - Miro
-  - Raindrop.io
-  - Kinopio.club
-  - Dynalist
-  - Inkdrop
+"(...)" shows the planned initial release date.
 
-**Desk Craft**: a code-oriented and unified version of:
-  - Minecraft
-  - Unity
-  - Photoshop
-  - Roblox
-  - RPG Maker
-  - Inkscape
+### Desk Craft (2022 Dec)
 
-**Desk Verse**: a code-oriented and unified version of:
-  - Gather.town
-  - Discord
-  - Reddit
-  - Twitter
+*Desk Craft* is a world-changing game development tools. It's a game engine but also a game.
+Also, *Desk Craft* removes the boundary between developing and playing a game made on Desk.
+It means:
+- in the developer view, we don't have any button like "▶️" in Unity. We don't need to switch the mode anymore.
+- updating a game state in a game logic is accomplished by updating the code itself.
+- releasing a game means publishing the same environment that is used for its development.
 
-**Desk Robot**: a code-oriented automation tool that references:
-  - IFTTT
-  - Zapier
+**Influenced by:**
+- Minecraft
+- Unity
+- Photoshop
+- Roblox
+- RPG Maker
+- Inkscape
 
-**Desk Grid**: a code-oriented spreadsheet app that references:
-  - Google Sheets
-  - Excel
-  - Tableau
+### Desk Brain (2023 Jan)
 
-**Desk Forms**: a code-oriented form app that references Google Form
+**Influenced by**
+- Roam Research
+- Notion
+- Miro
+- Raindrop.io
+- Kinopio.club
+- Dynalist
+- Inkdrop
 
-**Desk Docs**: a code-oriented document app that references Google Docs
+### Desk Verse (2023)
 
-**Desk Calendar**: a code-oriented event management app that references Google Calendar
+**Influenced by**
+- Discord
+- Reddit
+- Twitter
+- Gather.town
 
-**Desk Pages** a code-oriented and unified version of:
-  - Wix
-  - GitHub Pages
+### Desk Robot (2023)
 
-**Desk History**: like Git and GitHub for Desk-lang
+Desk Robot is a code-oriented automation tool.
 
-**Desk Run**: like Google Cloud Run for Desk-lang
+**Influenced by**
+- IFTTT
+- Zapier
 
-**Desk Board**: a code-oriented and unified version of:
-  - Trello
-  - Weekdone
+### Desk Board (2023 Earlier)
 
-**Desk Architect**: helps you to create well-architected software in Desk-lang
+Desk Grid is a code-oriented BI app.
+
+**Influenced by**
+- Google Sheets
+- Excel
+- Tableau
+- Metabase
+- Trello
+- Weekdone
+
+### Desk Calendar (2023)
+
+### Desk Pages (2023 Earlier)
+
+**Influenced by**
+- Wix
+- GitHub Pages
+
+### Desk History (2023)
+
+*Desk History* is like Git and GitHub for Desk-lang
+
+### Desk Run (2023)
+
+*Desk Run* is like Google Cloud Run for Desk-lang
+
+### Desk Architect (2024)
+
+*Desk Architect* helps you to create well-architected software in Desk-lang
+
+
+### Desk Forms (2023)
+
+### Desk Docs (2023)
 
 ## I (We) want:
 
