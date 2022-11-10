@@ -23,7 +23,7 @@ Desk is:
 - Excel but Minecraft: a reinvention of Excel to fascinate both hackers and gamers.
 - a reinvention of Smalltalk environments including the GUI and message passing but with a functional and statically typed language.
 
-## Related buzzwords (actually I don't like buzzwords).
+### Related buzzwords (actually I don't like buzzwords).
 
 - **Codification** (like **Datafication**)
 - **Code-oriented** (like **Data-oriented**)
@@ -39,6 +39,14 @@ Desk is:
 - **Big Code** (like **Big Data**)
 - **DevOps**
 - **Digital Disruption** (Yes, we'll make it!)
+
+### Related technologies
+
+- Written in **Rust** (100% safe)
+- Compiled to **WebAssembly** (for Web target)
+- Desk-plugins runs on **Bevy Engine**, a simple game engine
+- GUI is based on **egui**, an immediate-mode GUI library
+- Desk-craft uses **Rapier**, a physics engine
 
 ## Goals
 
