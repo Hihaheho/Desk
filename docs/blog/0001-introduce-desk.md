@@ -14,11 +14,13 @@ TODOs
 - [ ] "Goals" and "What's Desk" have too many technical terms. Add concrete examples.
 - [x] Reconsider the order of sections especially "Related buzzwords" and "Stories of me and Desk".
 - [ ] Add more concrete descriptions for coined related words.
+- [ ] Add acknowledgements
+- [ ] Add planned initial release date for each Desk-plugin
 
 ## TL;DR
 
 Desk is:
-- a reinvention of Excel to fascinate both hackers and gamers.
+- Excel but Minecraft: a reinvention of Excel to fascinate both hackers and gamers.
 - a reinvention of Smalltalk environments but with a functional and statically typed language.
 
 ## Related buzzwords (actually I don't like buzzwords).
@@ -97,9 +99,13 @@ TBA
   - Dynalist
   - Inkdrop
 
-**Desk Robot**: a code-oriented automation tool that references:
-  - IFTTT
-  - Zapier
+**Desk Craft**: a code-oriented and unified version of:
+  - Minecraft
+  - Unity
+  - Photoshop
+  - Roblox
+  - RPG Maker
+  - Inkscape
 
 **Desk Verse**: a code-oriented and unified version of:
   - Gather.town
@@ -107,11 +113,9 @@ TBA
   - Reddit
   - Twitter
 
-**Desk Craft**: a code-oriented and unified version of:
-  - Unity
-  - Photoshop
-  - Inkscape
-  - Roblox
+**Desk Robot**: a code-oriented automation tool that references:
+  - IFTTT
+  - Zapier
 
 **Desk Grid**: a code-oriented spreadsheet app that references:
   - Google Sheets
@@ -142,6 +146,7 @@ TBA
 
 - a new job
   - I want to work with a company that supports open-source works.
+  - Also, I plan to request a new offer from my current company.
 - more users
   - We need feed-backs to make Desk better.
 - financial supporter or sponsor
@@ -170,4 +175,5 @@ TBA
 - [2021] I've got a big picture of Desk.
 
 ## Next month of Desk
+
 - I plan to take a rest as much as possible to avoid burnout.
