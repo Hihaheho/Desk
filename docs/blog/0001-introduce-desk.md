@@ -21,7 +21,7 @@ TODOs
 
 Desk is:
 - Excel but Minecraft: a reinvention of Excel to fascinate both hackers and gamers.
-- a reinvention of Smalltalk environments but with a functional and statically typed language.
+- a reinvention of Smalltalk environments including the GUI and message passing but with a functional and statically typed language.
 
 ## Related buzzwords (actually I don't like buzzwords).
 
@@ -94,12 +94,13 @@ TBA
 
 ### Desk Craft (2022 Dec)
 
-*Desk Craft* is a world-changing game development tools. It's a game engine but also a game.
-Also, *Desk Craft* removes the boundary between developing and playing a game made on Desk.
+*Desk Craft* is a world-changing game development tool. It's a game engine but also a game.
+
+*Desk Craft* completely removes the boundary between developing and playing a game.
 It means:
 - in the developer view, we don't have any button like "▶️" in Unity. We don't need to switch the mode anymore.
 - updating a game state in a game logic is accomplished by updating the code itself.
-- releasing a game means publishing the same environment that is used for its development.
+- releasing a game means publishing the development environment with some optimization.
 
 **Influenced by:**
 - Minecraft
