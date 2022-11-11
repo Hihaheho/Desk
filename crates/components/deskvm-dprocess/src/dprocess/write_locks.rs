@@ -5,7 +5,10 @@ use std::{
 
 use types::Type;
 
-use crate::{interpreter::Interpreter, status::DProcessStatus, value::Value, flags::DProcessFlags};
+use crate::{
+    flags::DProcessFlags, interpreter::Interpreter, status::DProcessStatus, timer::Timer,
+    value::Value,
+};
 
 use super::DProcess;
 
@@ -31,6 +34,10 @@ impl DProcess {
         (self.status.write(), self.mailbox.write())
     }
 
+    pub(crate) fn lock_interpreter(&self) -> impl DerefMut<Target = Box<dyn Interpreter>> + '_ {
+        self.interpreter.write()
+    }
+
     pub(crate) fn lock_mailbox(
         &self,
     ) -> impl DerefMut<Target = HashMap<Type, VecDeque<Value>>> + '_ {
@@ -43,5 +50,9 @@ impl DProcess {
 
     pub(crate) fn lock_flags(&self) -> impl DerefMut<Target = DProcessFlags> + '_ {
         self.flags.write()
+    }
+
+    pub(crate) fn lock_timers(&self) -> impl DerefMut<Target = HashMap<String, Timer>> + '_ {
+        self.timers.write()
     }
 }

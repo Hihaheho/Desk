@@ -3,6 +3,7 @@ mod new;
 mod read_locks;
 mod receive_message;
 mod reduce;
+mod reset;
 mod write_locks;
 
 pub use id::DProcessId;
@@ -23,6 +24,7 @@ use crate::{
 // RwLock members are not public to prevent deadlocks.
 // Don't reorder members to keep the same order as in the lock methods.
 pub struct DProcess {
+    pub id: DProcessId,
     /// An interpreter.
     interpreter: RwLock<Box<dyn Interpreter>>,
     /// Metadatas mainly used by the scheduler.

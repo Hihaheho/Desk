@@ -3,12 +3,8 @@ use std::{collections::HashMap, sync::Arc};
 use types::{Effect, Type};
 
 use crate::{
-    dprocess::{DProcess, DProcessId},
-    dprocess_manifest::DProcessManifest,
-    flags::DProcessFlags,
-    name_registry::NameRegistry,
-    timer::TimerManifest,
-    value::Value,
+    dprocess::DProcessId, dprocess_info::DProcessInfo, dprocess_manifest::DProcessManifest,
+    flags::DProcessFlags, name_registry::NameRegistry, timer::TimerManifest, value::Value,
     vm_ref::VmRef,
 };
 
@@ -70,18 +66,9 @@ pub enum EffectHandler {
     ///
     /// One process can only access its own kv because Desk promotes the idea of message passing than shared memory.
     /// The output type of the effect must be `Sum` of the key type and `@not found *`.
-    Get,
-    /// Set a value into this process's kv.
-    Set,
-    /// List the this process's kv.
-    ///
-    /// The output type of the effect must be `Vec` of the key type.
-    List,
-    /// Delete a key from this process's kv.
-    ///
-    /// Returns the deleted value.
-    /// The output type of the effect must be `Sum` of the key type and `@not found *`.
-    Delete,
+    GetKv(Arc<dyn GetKvEffectHandler>),
+    /// Update this process's kv.
+    UpdateKv(Arc<dyn UpdateKvEffectHandler>),
 
     /// Get a process flag.
     GetFlags(Arc<dyn GetFlagsEffectHandler>),
@@ -162,16 +149,24 @@ pub trait SubscribeEffectHandler: std::fmt::Debug {
     fn subscribe(&self, input: &Value) -> Type;
 }
 
+pub trait GetKvEffectHandler: std::fmt::Debug {
+    fn to_output(&self, input: &Value, kv: &HashMap<Type, Value>) -> Value;
+}
+
+pub trait UpdateKvEffectHandler: std::fmt::Debug {
+    /// Returns the output.
+    fn update(&self, input: &Value, kv: &mut HashMap<Type, Value>) -> Value;
+}
+
 pub trait GetFlagsEffectHandler: std::fmt::Debug {
     fn target_dprocess_id(&self, input: &Value) -> DProcessId;
-    fn to_output(&self, input: &Value, flags: &DProcessFlags) -> Value;
+    fn to_output(&self, input: &Value, flags: Option<&DProcessFlags>) -> Value;
 }
 
 pub trait UpdateFlagsEffectHandler: std::fmt::Debug {
     fn target_dprocess_id(&self, input: &Value) -> DProcessId;
-    // flags is needed because the input might be a patch such as "increase the priority".
-    fn to_output(&self, input: &Value, flags: &DProcessFlags) -> Value;
-    fn update_flag(&self, input: &Value, flags: &mut DProcessFlags) -> DProcessFlags;
+    /// Returns the output.
+    fn update_flags(&self, input: &Value, flags: Option<&mut DProcessFlags>) -> Value;
 }
 
 pub trait AddTimerEffectHandler: std::fmt::Debug {
@@ -195,7 +190,7 @@ pub trait DemonitorEffectHandler: std::fmt::Debug {
 }
 
 pub trait ProcessInfoEffectHandler: std::fmt::Debug {
-    fn to_output(&self, input: &Value, info: &DProcess) -> Value;
+    fn to_output(&self, input: &Value, info: DProcessInfo) -> Value;
 }
 
 pub trait VmInfoEffectHandler: std::fmt::Debug {
@@ -228,5 +223,11 @@ pub trait WhereisEffectHandler: std::fmt::Debug {
 
 pub trait HaltEffectHandler: std::fmt::Debug {
     fn to_output(&self, input: &Value) -> Value;
-    fn halt(&self, input: &Value) -> DProcessId;
+    fn halt(&self, input: &Value) -> HaltProcess;
+}
+
+pub struct HaltProcess {
+    pub id: DProcessId,
+    pub ty: Type,
+    pub reason: Value,
 }

@@ -1,12 +1,15 @@
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use parking_lot::RwLock;
+use types::Type;
 
 use crate::{
     dprocess::{DProcess, DProcessId},
     dprocess_manifest::DProcessManifest,
+    flags::DProcessFlags,
     name_registry::NameRegistry,
     processor::ProcessorWithScheduler,
+    value::Value,
 };
 
 #[derive(Clone, Copy)]
@@ -33,6 +36,54 @@ impl<'a> VmRef<'a> {
 
 impl<'a> VmRef<'a> {
     pub fn spawn(&self, manifest: DProcessManifest) {
+        todo!()
+    }
+
+    pub fn subscribe(&self, dprocess_id: DProcessId, ty: Type) {
+        todo!()
+    }
+
+    pub fn publish(&self, ty: Type, value: Value) {
+        todo!()
+    }
+
+    pub fn get_flags(&self, dprocess_id: &DProcessId) -> Option<&DProcessFlags> {
+        todo!()
+    }
+
+    pub fn get_mut_flags(&self, dprocess_id: &DProcessId) -> Option<&mut DProcessFlags> {
+        todo!()
+    }
+
+    pub fn monitor(&self, dprocess_id: DProcessId, target: DProcessId) {
+        todo!()
+    }
+
+    pub fn demonitor(&self, dprocess_id: DProcessId, target: DProcessId) {
+        todo!()
+    }
+
+    pub fn link(&self, dprocess_id: DProcessId, target: DProcessId) {
+        todo!()
+    }
+
+    pub fn unlink(&self, dprocess_id: DProcessId, target: DProcessId) {
+        todo!()
+    }
+
+    pub fn register(&self, name: String, dprocess_id: DProcessId) {
+        todo!()
+    }
+
+    pub fn unregister(&self, name: String) {
+        todo!()
+    }
+
+    pub fn whereis(&self, name: String) -> Option<DProcessId> {
+        todo!()
+    }
+
+    pub fn halt_dprocess(&self, dprocess_id: DProcessId, ty: Type, reason: Value) {
         todo!()
     }
 }

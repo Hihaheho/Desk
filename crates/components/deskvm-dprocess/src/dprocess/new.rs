@@ -7,11 +7,12 @@ use crate::{
     processor_attachment::ProcessorAttachment, status::DProcessStatus,
 };
 
-use super::DProcess;
+use super::{DProcess, DProcessId};
 
 impl DProcess {
     pub fn new(manifest: &DProcessManifest) -> Self {
         Self {
+            id: DProcessId::new(),
             interpreter: RwLock::new(manifest.interpreter_builder.build()),
             metas: RwLock::new(manifest.metas.clone()),
             effect_handlers: RwLock::new(manifest.effect_handlers.clone()),

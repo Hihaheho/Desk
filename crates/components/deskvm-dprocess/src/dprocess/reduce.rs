@@ -3,10 +3,12 @@ use std::{ops::DerefMut, time::Duration};
 use types::{Effect, Type};
 
 use crate::{
-    effect_handler::{EffectHandler, SendMessage},
-    interpreter::{self, Interpreter},
+    dprocess_info::DProcessInfo,
+    effect_handler::{EffectHandler, HaltProcess, SendMessage},
+    interpreter::Interpreter,
     interpreter_output::InterpreterOutput,
     status::DProcessStatus,
+    timer::Timer,
     value::Value,
     vm_ref::VmRef,
 };
@@ -27,7 +29,7 @@ impl DProcess {
                 InterpreterOutput::Performed { input, effect } => {
                     self.handle_effect(vm, interpreter, status, effect, input)
                 }
-                InterpreterOutput::Running => todo!(),
+                InterpreterOutput::Running => ProcessOutput::Running,
             },
             Err(err) => ProcessOutput::Crashed(err),
         }
@@ -36,8 +38,8 @@ impl DProcess {
     pub fn handle_effect(
         &self,
         vm: VmRef,
-        interpreter: impl DerefMut<Target = Box<dyn Interpreter>>,
-        status: impl DerefMut<Target = DProcessStatus>,
+        mut interpreter: impl DerefMut<Target = Box<dyn Interpreter>>,
+        mut status: impl DerefMut<Target = DProcessStatus>,
         effect: Effect,
         input: Value,
     ) -> ProcessOutput {
@@ -47,7 +49,9 @@ impl DProcess {
         match handler {
             EffectHandler::Immediate(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::Delegation(handler) => {
@@ -57,7 +61,9 @@ impl DProcess {
             }
             EffectHandler::Spawn(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 let manifest = handler.spawn(&input);
                 vm.spawn(manifest);
                 ProcessOutput::Running
@@ -65,7 +71,9 @@ impl DProcess {
             EffectHandler::Defer => ProcessOutput::Performed { input, effect },
             EffectHandler::SendMessage(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 let SendMessage { to, ty, message } = handler.send_message(&input);
                 if let Some(to) = vm.read_dprocesses().get(&to) {
                     to.receive_message(ty, message);
@@ -80,7 +88,9 @@ impl DProcess {
                     .get_mut(&message_type)
                     .and_then(|queue| queue.pop_front())
                 {
-                    interpreter.effect_output(message);
+                    if let Err(err) = interpreter.effect_output(message) {
+                        return ProcessOutput::Crashed(err);
+                    }
                     ProcessOutput::Running
                 } else {
                     *status = DProcessStatus::WaitingForMessage(message_type);
@@ -95,76 +105,171 @@ impl DProcess {
                     .get_mut(&message_type)
                     .map(|queue| queue.drain(..).collect())
                     .unwrap_or_else(|| vec![]);
-                interpreter.effect_output(Value::Vector(messages));
+                if let Err(err) = interpreter.effect_output(Value::Vector(messages)) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::Subscribe(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
-                // ======================================
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let ty = handler.subscribe(&input);
+                vm.subscribe(self.id.clone(), ty);
                 ProcessOutput::Running
             }
-            EffectHandler::Publish => todo!(),
-            EffectHandler::Get => todo!(),
-            EffectHandler::Set => todo!(),
-            EffectHandler::List => todo!(),
-            EffectHandler::Delete => todo!(),
+            EffectHandler::Publish => {
+                let ty = effect.input;
+                if let Err(err) = interpreter.effect_output(Value::Unit) {
+                    return ProcessOutput::Crashed(err);
+                }
+                vm.publish(ty, input);
+                ProcessOutput::Running
+            }
+            EffectHandler::GetKv(handler) => {
+                // read lock KV after status is safe.
+                let output = handler.to_output(&input, &self.read_kv());
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                ProcessOutput::Running
+            }
+            EffectHandler::UpdateKv(handler) => {
+                // lock KV after status is safe.
+                let output = handler.update(&input, &mut self.lock_kv());
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                ProcessOutput::Running
+            }
             EffectHandler::GetFlags(handler) => {
-                let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                let dprocess_id = handler.target_dprocess_id(&input);
+                let flags = vm.get_flags(&dprocess_id);
+                let output = handler.to_output(&input, flags);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::UpdateFlags(handler) => {
-                let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                let dprocess_id = handler.target_dprocess_id(&input);
+                let flags = vm.get_mut_flags(&dprocess_id);
+                let output = handler.update_flags(&input, flags);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::AddTimer(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let manifest = handler.add_timer(&input);
+                // lock timers after status is safe.
+                self.lock_timers()
+                    // TODO: remove clone()
+                    .insert(manifest.name.clone(), Timer::new(manifest));
                 ProcessOutput::Running
             }
             EffectHandler::RemoveTimer(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let name = handler.remove_timer(&input);
+                // lock timers after status is safe.
+                self.lock_timers().remove(&name);
                 ProcessOutput::Running
             }
             EffectHandler::Monitor(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let target = handler.monitor(&input);
+                vm.monitor(self.id.clone(), target);
                 ProcessOutput::Running
             }
             EffectHandler::Demonitor(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let target = handler.demonitor(&input);
+                vm.demonitor(self.id.clone(), target);
                 ProcessOutput::Running
             }
             EffectHandler::ProcessInfo(handler) => {
-                let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                // Unlock is required because handler may need read locks of them.
+                drop(interpreter);
+                drop(status);
+                let info = DProcessInfo::new(&self);
+                let output = handler.to_output(&input, info);
+                // lock interpreter here is safe because we have dropped the locks.
+                if let Err(err) = self.lock_interpreter().effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::VmInfo(handler) => {
-                let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                let output = handler.to_output(&input, &vm);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
                 ProcessOutput::Running
             }
             EffectHandler::Link(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let (id1, id2) = handler.link(&input);
+                vm.link(id1, id2);
                 ProcessOutput::Running
             }
             EffectHandler::Unlink(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let (id1, id2) = handler.unlink(&input);
+                vm.unlink(id1, id2);
                 ProcessOutput::Running
             }
-            EffectHandler::Register(handler) => todo!(),
-            EffectHandler::Unregister(handler) => todo!(),
-            EffectHandler::Whereis(handler) => todo!(),
+            EffectHandler::Register(handler) => {
+                let output = handler.to_output(&input);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let (name, id) = handler.register(&input);
+                vm.register(name, id);
+                ProcessOutput::Running
+            }
+            EffectHandler::Unregister(handler) => {
+                let output = handler.to_output(&input);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let name = handler.unregister(&input);
+                vm.unregister(name);
+                ProcessOutput::Running
+            }
+            EffectHandler::Whereis(handler) => {
+                let output = handler.to_output(&input, &vm.read_name_registry());
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                ProcessOutput::Running
+            }
             EffectHandler::Halt(handler) => {
                 let output = handler.to_output(&input);
-                interpreter.effect_output(output);
+                if let Err(err) = interpreter.effect_output(output) {
+                    return ProcessOutput::Crashed(err);
+                }
+                let HaltProcess { id, ty, reason } = handler.halt(&input);
+                vm.halt_dprocess(id, ty, reason);
                 ProcessOutput::Running
             }
         }
