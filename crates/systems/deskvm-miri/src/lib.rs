@@ -5,20 +5,20 @@ pub mod value;
 
 use std::collections::{HashMap, VecDeque};
 
-use conc_types::ConcEffect;
-use dprocess::interpreter_output::InterpreterOutput;
+use dprocess::{interpreter_output::InterpreterOutput, value::Number};
 use mir::{
-    mir::{ControlFlowGraph, Mir},
-    BlockId, ControlFlowGraphId,
+    block::BlockId,
+    mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
 };
+use types::Effect;
 
 use crate::{
     eval_cfg::{EvalCfg, Handler, InnerOutput},
     value::Closure,
 };
 
-pub fn eval_mirs(mirs: Mir) -> EvalMirs {
-    let mir = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
+pub fn eval_mir(mirs: Mir) -> EvalMirs {
+    let cfg = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMirs {
         cfgs: mirs.cfgs,
         stack: vec![EvalCfg {
@@ -40,13 +40,34 @@ pub struct EvalMirs {
     stack: Vec<EvalCfg>,
 }
 
+fn to_sendable_value(value: crate::value::Value) -> dprocess::value::Value {
+    match value {
+        value::Value::Unit => dprocess::value::Value::Unit,
+        value::Value::String(string) => dprocess::value::Value::String(string),
+        value::Value::Int(int) => dprocess::value::Value::Number(Number::Integer(int)),
+        value::Value::Float(float) => dprocess::value::Value::Number(Number::Float(float)),
+        value::Value::Rational(a, b) => dprocess::value::Value::Number(Number::Rational(a, b)),
+        value::Value::Product(values) => dprocess::value::Value::Product(
+            values
+                .into_iter()
+                .map(|(ty, value)| (ty, to_sendable_value(value)))
+                .collect(),
+        ),
+        value::Value::Variant { ty, value } => dprocess::value::Value::Variant {
+            ty,
+            value: Box::new(to_sendable_value(*value)),
+        },
+        value::Value::FnRef(_) => panic!(),
+    }
+}
+
 impl EvalMirs {
     pub fn eval_next(&mut self) -> InterpreterOutput {
         match self.stack().eval_next() {
             InnerOutput::Return(value) => {
                 // When top level
                 if self.stack.len() == 1 {
-                    InterpreterOutput::Returned(value)
+                    InterpreterOutput::Returned(to_sendable_value(value))
                 } else {
                     self.stack.pop().unwrap();
                     self.stack().return_or_continue_with_value(value);
@@ -58,6 +79,8 @@ impl EvalMirs {
                 let handler = loop {
                     if let Some(eval_mir) = self.stack.pop() {
                         // find handler
+                        dbg!(&eval_mir.handlers);
+                        dbg!(&effect);
                         let handler = eval_mir.handlers.get(&effect).cloned();
                         // push eval_mir to continuation
                         continuation_from_handler.push_front(eval_mir);
@@ -67,7 +90,10 @@ impl EvalMirs {
                     } else {
                         // When handler are not found, push back to continuation stack and perform
                         self.stack.extend(continuation_from_handler);
-                        return InterpreterOutput::Performed { input, effect };
+                        return InterpreterOutput::Performed {
+                            input: to_sendable_value(input),
+                            effect,
+                        };
                     }
                 };
                 match handler {
@@ -87,7 +113,7 @@ impl EvalMirs {
                             pc_stmt_idx: 0,
                             return_register: None,
                             handlers: [(
-                                ConcEffect {
+                                Effect {
                                     input: effect.output,
                                     output: continuation_from_handler[0].cfg.output.clone(),
                                 },
@@ -151,7 +177,7 @@ impl EvalMirs {
         self.stack.last_mut().unwrap()
     }
 
-    pub fn get_mir(&self, mir_id: &ControlFlowGraphId) -> &ControlFlowGraph {
-        &self.cfgs[mir_id.0]
+    pub fn get_mir(&self, cfg_id: &ControlFlowGraphId) -> &ControlFlowGraph {
+        &self.cfgs[cfg_id.0]
     }
 }

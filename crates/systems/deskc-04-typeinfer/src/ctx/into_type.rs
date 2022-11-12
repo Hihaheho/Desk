@@ -30,7 +30,7 @@ impl Ctx {
                     types::Type::function(vec![self.gen_type(parameter)], self.gen_type(body))
                 }
             }
-            Type::Array(ty) => types::Type::Vector(Box::new(self.gen_type(ty))),
+            Type::Vector(ty) => types::Type::Vector(Box::new(self.gen_type(ty))),
             Type::Set(ty) => types::Type::Set(Box::new(self.gen_type(ty))),
             Type::Variable(id) => types::Type::Variable(self.get_ident_of(*id)),
             Type::ForAll { variable, body } => types::Type::ForAll {

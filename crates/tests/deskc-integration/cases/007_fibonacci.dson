@@ -37,7 +37,7 @@
   @entrypoint "main.ds",
   @assertions [
     @RunSuccess {
-      @result @Int 13
+      @result @Number @Integer 13
     }
   ]
 }

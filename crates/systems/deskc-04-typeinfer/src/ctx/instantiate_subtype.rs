@@ -60,13 +60,13 @@ impl Ctx {
                         ctx.instantiate_subtype(id, sup)
                     })?
                 }
-                Type::Array(ty) => {
+                Type::Vector(ty) => {
                     let a = self.fresh_existential();
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![
                             Log::Existential(a),
-                            Log::Solved(*id, Type::Array(Box::new(Type::Existential(a)))),
+                            Log::Solved(*id, Type::Vector(Box::new(Type::Existential(a)))),
                         ],
                     )
                     .instantiate_subtype(&a, ty)?

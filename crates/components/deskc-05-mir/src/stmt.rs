@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
 use ids::LinkName;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use types::{Effect, Type};
 
-use crate::{amir::ControlFlowGraphId, block::BlockId, var::VarId};
+use crate::{block::BlockId, mir::ControlFlowGraphId, var::VarId};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StmtBind<T = AStmt> {
+pub struct StmtBind<T = Stmt> {
     pub var: VarId,
     pub stmt: T,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AStmt {
+pub enum Stmt {
     Const(Const),
     Product(Vec<VarId>),
     Vector(Vec<VarId>),
@@ -29,6 +29,8 @@ pub enum AStmt {
         op: Op,
         operands: Vec<VarId>,
     },
+    /// Used when cast is required such as `* A, B` to `A` or `A` to `+ A, B`.
+    /// An implementation of MIR generator may generate redundant `Cast` stmt.
     Cast(VarId),
     Parameter,
     Recursion,
@@ -39,7 +41,7 @@ pub enum AStmt {
 pub enum FnRef {
     Link(Type),
     Closure {
-        amir: ControlFlowGraphId,
+        mir: ControlFlowGraphId,
         /// Caputerd variables
         captured: Vec<VarId>,
         /// Used to create an effectful expression
@@ -91,7 +93,7 @@ pub struct MatchCase<T = Type> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ATerminator<T = Type> {
+pub enum Terminator<T = Type> {
     Return(VarId),
     Match {
         var: VarId,

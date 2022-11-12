@@ -1,23 +1,23 @@
 use std::collections::{HashMap, HashSet};
 
-use amir::{
-    amir::ControlFlowGraph,
-    block::{ABasicBlock, BlockId},
+use mir::{
+    block::{BasicBlock, BlockId},
+    mir::ControlFlowGraph,
     scope::ScopeId,
-    stmt::{AStmt, ATerminator, LinkId, StmtBind},
-    var::{AVar, VarId},
+    stmt::{LinkId, Stmt, StmtBind, Terminator},
+    var::{Var, VarId, Vars},
 };
 use thir::LinkName;
 use types::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 
-pub struct AmirProto {
+pub struct MirProto {
     parameters: Vec<Type>,
     scopes: Vec<ScopeProto>,
     blocks_proto: HashMap<BlockId, BlockProto>,
-    blocks: HashMap<BlockId, ABasicBlock>,
-    vars: Vec<AVar>,
+    blocks: HashMap<BlockId, BasicBlock>,
+    vars: Vars,
     // Scope stack
     current_scope: Vec<ScopeId>,
     // Block stack
@@ -30,14 +30,14 @@ pub struct AmirProto {
     links: HashSet<LinkId>,
 }
 
-impl Default for AmirProto {
+impl Default for MirProto {
     fn default() -> Self {
         Self {
             parameters: vec![],
             current_scope: vec![ScopeId(0)],
             current_block: vec![BlockId(0)],
             deferred_block: vec![],
-            vars: vec![],
+            vars: Vars(vec![]),
             scopes: vec![ScopeProto::default()],
             blocks_proto: [(BlockId(0), BlockProto::default())].into_iter().collect(),
             blocks: HashMap::default(),
@@ -47,10 +47,10 @@ impl Default for AmirProto {
     }
 }
 
-impl AmirProto {
-    pub fn into_amir(self, var: VarId, output: Type) -> ControlFlowGraph {
+impl MirProto {
+    pub fn into_mir(self, var: VarId, output: Type) -> ControlFlowGraph {
         let current_block_id = self.current_block_id();
-        let AmirProto {
+        let MirProto {
             parameters,
             scopes,
             mut blocks,
@@ -67,9 +67,9 @@ impl AmirProto {
         let last_block = blocks_proto.remove(&current_block_id).unwrap();
         blocks.insert(
             current_block_id,
-            ABasicBlock {
+            BasicBlock {
                 stmts: last_block.stmts,
-                terminator: ATerminator::Return(var),
+                terminator: Terminator::Return(var),
             },
         );
 
@@ -130,7 +130,7 @@ impl AmirProto {
         self.captured_values.get(ty).cloned().unwrap_or_else(|| {
             let var = self.create_var(ty.clone());
             self.captured_values.insert(ty.clone(), var);
-            self.bind_to(var, AStmt::Parameter);
+            self.bind_to(var, Stmt::Parameter);
             var
         })
     }
@@ -140,15 +140,12 @@ impl AmirProto {
             ty: ty.clone(),
             name: name.clone(),
         });
-        self.bind_stmt(ty, AStmt::Link(name))
+        self.bind_stmt(ty, Stmt::Link(name))
     }
 
     pub fn create_var(&mut self, ty: Type) -> VarId {
-        let id = VarId(self.vars.len());
-        self.vars.push(AVar {
-            scope: self.current_scope_id(),
-            ty,
-        });
+        let id = VarId(self.vars.0.len());
+        self.vars.add_new_var(self.current_scope_id(), ty);
         id
     }
 
@@ -162,16 +159,16 @@ impl AmirProto {
         self.current_scope().named_vars.insert(ty, var);
     }
 
-    pub fn get_var(&mut self, var_id: &VarId) -> &mut AVar {
-        &mut self.vars[var_id.0]
+    pub fn get_var(&mut self, var_id: &VarId) -> &mut Var {
+        self.vars.get_mut(var_id)
     }
 
-    pub fn bind_stmt(&mut self, ty: Type, stmt: AStmt) -> VarId {
+    pub fn bind_stmt(&mut self, ty: Type, stmt: Stmt) -> VarId {
         let var = self.create_var(ty);
         self.bind_to(var, stmt)
     }
 
-    pub(crate) fn bind_to(&mut self, var: VarId, stmt: AStmt) -> VarId {
+    pub(crate) fn bind_to(&mut self, var: VarId, stmt: Stmt) -> VarId {
         let stmt_bind = StmtBind { var, stmt };
         self.block_proto().push_stmt_bind(stmt_bind);
         var
@@ -208,10 +205,10 @@ impl AmirProto {
         self.current_block.push(self.deferred_block.pop().unwrap());
     }
 
-    pub fn end_block(&mut self, terminator: ATerminator) -> BlockId {
+    pub fn end_block(&mut self, terminator: Terminator) -> BlockId {
         let id = self.current_block.pop().unwrap();
         let stmts = self.blocks_proto.remove(&id).unwrap().stmts;
-        self.blocks.insert(id, ABasicBlock { stmts, terminator });
+        self.blocks.insert(id, BasicBlock { stmts, terminator });
         id
     }
 }

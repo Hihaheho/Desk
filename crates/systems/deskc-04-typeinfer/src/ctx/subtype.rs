@@ -108,7 +108,7 @@ impl Ctx {
                     &theta.substitute_from_ctx(sub_body),
                 )?
             }
-            (Type::Array(sub), Type::Array(ty)) => self.subtype(sub, ty)?,
+            (Type::Vector(sub), Type::Vector(ty)) => self.subtype(sub, ty)?,
             (Type::Set(sub), Type::Set(ty)) => self.subtype(sub, ty)?,
             (Type::Variable(id), Type::Variable(id2)) => subtype_if(id == id2)?,
             (Type::ForAll { variable, body }, ty) => {

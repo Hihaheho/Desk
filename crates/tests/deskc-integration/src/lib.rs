@@ -89,16 +89,18 @@ macro_rules! test {
             }
 
             let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
-            let amirs = amirgen::gen_abstract_mir(&thir).unwrap();
-            let mirs = concretizer::concretize(&amirs);
-            let mut miri = miri::eval_mirs(mirs);
+            let mir = dbg!(mirgen::gen_mir(&thir).unwrap());
+            let mut miri = miri::eval_mir(mir);
             let value = loop {
                 match miri.eval_next() {
-                    miri::Output::Return(ret) => break ret,
-                    miri::Output::Perform { input, effect } => {
+                    dprocess::interpreter_output::InterpreterOutput::Returned(ret) => break ret,
+                    dprocess::interpreter_output::InterpreterOutput::Performed {
+                        input,
+                        effect,
+                    } => {
                         panic!("perform {:?} {:?}", input, effect)
                     }
-                    miri::Output::Running => continue,
+                    dprocess::interpreter_output::InterpreterOutput::Running => continue,
                 }
             };
             for assertion in test_case.assertions.iter() {

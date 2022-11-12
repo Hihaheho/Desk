@@ -1,7 +1,8 @@
 mod add;
 mod eq;
 mod sub;
-use mir::{Op, VarId};
+
+use mir::{stmt::Op, var::VarId};
 
 use crate::{eval_cfg::EvalCfg, value::Value};
 

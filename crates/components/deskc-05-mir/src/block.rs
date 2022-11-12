@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use types::Type;
 
-use crate::stmt::{AStmt, ATerminator, StmtBind};
+use crate::stmt::{Stmt, StmtBind, Terminator};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ABasicBlock<S = AStmt, T = Type> {
+pub struct BasicBlock<S = Stmt, T = Type> {
     pub stmts: Vec<StmtBind<S>>,
-    pub terminator: ATerminator<T>,
+    pub terminator: Terminator<T>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]

@@ -8,15 +8,15 @@
           >add &x, &x ~
         'string => 'number ->
           >add
-            ! 1 => 'number,
-            ! 2 => 'number
+            ! 1 => @sum 'number,
+            ! 2 => @sum 'number
       "
     }
   ],
   @entrypoint "main.ds",
   @assertions [
     @RunSuccess {
-      @result @Int 6
+      @result @Number @Integer 6
     }
   ]
 }

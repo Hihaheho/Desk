@@ -1,4 +1,4 @@
-use amir::stmt::Op;
+use mir::stmt::Op;
 
 pub(crate) fn into_op(op: &thir::BuiltinOp) -> Op {
     match op {

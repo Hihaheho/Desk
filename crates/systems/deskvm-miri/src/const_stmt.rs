@@ -1,4 +1,4 @@
-use mir::Const;
+use mir::stmt::Const;
 
 use crate::value::Value;
 

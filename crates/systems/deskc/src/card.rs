@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use amir::amir::Amir;
 use ast::span::WithSpan;
 use codebase::code::Code;
 use hir::meta::WithMeta;
@@ -32,7 +31,6 @@ pub trait CardQueries {
     fn ast(&self, id: CardId) -> QueryResult<WithSpan<ast::expr::Expr>>;
     fn hir(&self, id: CardId) -> QueryResult<HirResult>;
     fn thir(&self, id: CardId) -> QueryResult<TypedHir>;
-    fn amir(&self, id: CardId) -> QueryResult<Amir>;
     fn mir(&self, id: CardId) -> QueryResult<Mir>;
 }
 
@@ -85,14 +83,8 @@ fn thir(db: &dyn CardQueries, id: CardId) -> QueryResult<TypedHir> {
     Ok(Arc::new(thir))
 }
 
-fn amir(db: &dyn CardQueries, id: CardId) -> QueryResult<Amir> {
-    let thir = db.thir(id)?;
-    let amir = amirgen::gen_abstract_mir(&thir).unwrap();
-    Ok(Arc::new(amir))
-}
-
 fn mir(db: &dyn CardQueries, id: CardId) -> QueryResult<Mir> {
-    let amir = db.amir(id)?;
-    let mir = concretizer::concretize(&amir);
+    let thir = db.thir(id)?;
+    let mir = mirgen::gen_mir(&thir).unwrap();
     Ok(Arc::new(mir))
 }

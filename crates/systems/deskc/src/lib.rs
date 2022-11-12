@@ -10,13 +10,15 @@ mod tests {
         span::WithSpan,
     };
     use codebase::code::{Code, SyntaxKind};
-    use conc_types::ConcType;
     use ids::{CardId, NodeId};
     use mir::{
-        mir::{BasicBlock, ControlFlowGraph, Mir, Var},
-        stmt::Stmt,
-        Const, ControlFlowGraphId, Scope, ScopeId, StmtBind, Terminator, VarId, Vars,
+        block::BasicBlock,
+        mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
+        scope::{Scope, ScopeId},
+        stmt::{Const, Stmt, StmtBind, Terminator},
+        var::{Var, VarId, Vars},
     };
+    use types::Type;
 
     use crate::card::{CardQueries, CardsCompiler};
 
@@ -28,7 +30,7 @@ mod tests {
             card_id.clone(),
             Code::SourceCode {
                 syntax: SyntaxKind::Hacker,
-                source: Arc::new("* 1, 2".into()),
+                source: Arc::new("1".into()),
             },
         );
         assert_eq!(
@@ -38,38 +40,18 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: ConcType::Number,
-                    vars: Vars(vec![
-                        Var {
-                            ty: ConcType::Number,
-                            scope: ScopeId(0)
-                        },
-                        Var {
-                            ty: ConcType::Number,
-                            scope: ScopeId(0)
-                        },
-                        Var {
-                            ty: ConcType::Tuple(vec![ConcType::Number, ConcType::Number]),
-                            scope: ScopeId(0)
-                        }
-                    ]),
+                    output: Type::Number,
+                    vars: Vars(vec![Var {
+                        ty: Type::Number,
+                        scope: ScopeId(0)
+                    },]),
                     scopes: vec![Scope { super_scope: None }],
                     blocks: vec![BasicBlock {
-                        stmts: vec![
-                            StmtBind {
-                                var: VarId(0),
-                                stmt: Stmt::Const(Const::Int(1))
-                            },
-                            StmtBind {
-                                var: VarId(1),
-                                stmt: Stmt::Const(Const::Int(2))
-                            },
-                            StmtBind {
-                                var: VarId(2),
-                                stmt: Stmt::Tuple(vec![VarId(0), VarId(1)])
-                            }
-                        ],
-                        terminator: Terminator::Return(VarId(2))
+                        stmts: vec![StmtBind {
+                            var: VarId(0),
+                            stmt: Stmt::Const(Const::Int(1))
+                        },],
+                        terminator: Terminator::Return(VarId(0))
                     }],
                     links: vec![]
                 }]
@@ -86,18 +68,7 @@ mod tests {
             Code::Ast(Arc::new(WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
-                value: Expr::Product(vec![
-                    WithSpan {
-                        id: NodeId::new(),
-                        span: 0..0,
-                        value: Expr::Literal(Literal::Integer(1)),
-                    },
-                    WithSpan {
-                        id: NodeId::new(),
-                        span: 0..0,
-                        value: Expr::Literal(Literal::Integer(2)),
-                    },
-                ]),
+                value: Expr::Literal(Literal::Integer(1)),
             })),
         );
         assert_eq!(
@@ -107,38 +78,18 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: ConcType::Number,
-                    vars: Vars(vec![
-                        Var {
-                            ty: ConcType::Number,
-                            scope: ScopeId(0)
-                        },
-                        Var {
-                            ty: ConcType::Number,
-                            scope: ScopeId(0)
-                        },
-                        Var {
-                            ty: ConcType::Tuple(vec![ConcType::Number, ConcType::Number]),
-                            scope: ScopeId(0)
-                        }
-                    ]),
+                    output: Type::Number,
+                    vars: Vars(vec![Var {
+                        ty: Type::Number,
+                        scope: ScopeId(0)
+                    },]),
                     scopes: vec![Scope { super_scope: None }],
                     blocks: vec![BasicBlock {
-                        stmts: vec![
-                            StmtBind {
-                                var: VarId(0),
-                                stmt: Stmt::Const(Const::Int(1))
-                            },
-                            StmtBind {
-                                var: VarId(1),
-                                stmt: Stmt::Const(Const::Int(2))
-                            },
-                            StmtBind {
-                                var: VarId(2),
-                                stmt: Stmt::Tuple(vec![VarId(0), VarId(1)])
-                            }
-                        ],
-                        terminator: Terminator::Return(VarId(2))
+                        stmts: vec![StmtBind {
+                            var: VarId(0),
+                            stmt: Stmt::Const(Const::Int(1))
+                        },],
+                        terminator: Terminator::Return(VarId(0))
                     }],
                     links: vec![]
                 }]

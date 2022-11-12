@@ -29,7 +29,7 @@ impl Ctx {
                     parameter: Box::new(ty),
                     body: Box::new(acc),
                 }),
-            Vector(ty) => Type::Array(Box::new(self.gen_from_hir_type(ty))),
+            Vector(ty) => Type::Vector(Box::new(self.gen_from_hir_type(ty))),
             Set(ty) => Type::Set(Box::new(self.gen_from_hir_type(ty))),
             Let { variable, body } => Type::ForAll {
                 variable: self.get_id_of(variable.clone()),

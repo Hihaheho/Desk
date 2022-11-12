@@ -21,7 +21,7 @@
       * 2, @Number *
     ],
     @RunSuccess {
-      @result @Int 2
+      @result @Number @Integer 2
     }
   ]
 }

@@ -1794,6 +1794,7 @@ dependencies = [
  "deskc-thirgen",
  "deskc-typeinfer",
  "deskc-types",
+ "deskvm-dprocess",
  "deskvm-miri",
  "dson",
  "pretty_assertions",
@@ -1890,6 +1891,7 @@ dependencies = [
  "deskc-types",
  "mry",
  "parking_lot 0.12.1",
+ "serde",
  "uuid",
 ]
 

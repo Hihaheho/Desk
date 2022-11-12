@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use amir::{
+use mir::{
     scope::{Scope, ScopeId},
     var::VarId,
 };
@@ -9,7 +9,7 @@ use types::Type;
 #[derive(Debug, Default)]
 pub struct ScopeProto {
     pub super_id: Option<ScopeId>,
-    // Only used in amir generation
+    // Only used in mir generation
     pub named_vars: HashMap<Type, VarId>,
 }
 

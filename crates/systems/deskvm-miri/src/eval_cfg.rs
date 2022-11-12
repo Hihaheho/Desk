@@ -1,27 +1,28 @@
 use std::collections::HashMap;
 
-use conc_types::{ConcEffect, ConcType};
+use mir::block::BlockId;
 use mir::mir::ControlFlowGraph;
-use mir::stmt::Stmt;
-use mir::BlockId;
+use mir::stmt::{Stmt, Terminator};
 use serde::{Deserialize, Serialize};
+use types::{Effect, Type};
 
 use crate::const_stmt;
 
 use crate::value::{Closure, FnRef, Value};
-use mir::{StmtBind, VarId};
+use mir::stmt::StmtBind;
+use mir::var::VarId;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EvalCfg {
     pub cfg: ControlFlowGraph,
     pub registers: HashMap<VarId, Value>,
-    pub parameters: HashMap<ConcType, Value>,
-    pub captured: HashMap<ConcType, Value>,
+    pub parameters: HashMap<Type, Value>,
+    pub captured: HashMap<Type, Value>,
     pub pc_block: BlockId,
     pub pc_stmt_idx: usize,
     // Before handling apply stmt, save the var to here, and used when returned.
     pub return_register: Option<VarId>,
-    pub handlers: HashMap<ConcEffect, Handler>,
+    pub handlers: HashMap<Effect, Handler>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -35,11 +36,11 @@ pub enum InnerOutput {
     Return(Value),
     Perform {
         input: Value,
-        effect: ConcEffect,
+        effect: Effect,
     },
     RunOther {
         fn_ref: FnRef,
-        parameters: HashMap<ConcType, Value>,
+        parameters: HashMap<Type, Value>,
     },
     Running,
 }
@@ -50,15 +51,15 @@ impl EvalCfg {
         // if reach to terminator
         if block.stmts.len() == self.pc_stmt_idx {
             match &block.terminator {
-                mir::Terminator::Return(var) => InnerOutput::Return(
+                Terminator::Return(var) => InnerOutput::Return(
                     self.registers
                         .remove(var)
                         .expect("return value should be exists"),
                 ),
-                mir::Terminator::Match { var, cases } => {
+                Terminator::Match { var, cases } => {
                     let value = self.load_value(var);
-                    if let Value::Variant { id, value: _ } = value {
-                        let case = cases.iter().find(|c| c.ty == *id).unwrap();
+                    if let Value::Variant { ty, value: _ } = value {
+                        let case = cases.iter().find(|c| c.ty == *ty).unwrap();
                         self.pc_block = case.next;
                         self.pc_stmt_idx = 0;
                         InnerOutput::Running
@@ -66,7 +67,7 @@ impl EvalCfg {
                         panic!("should be variant")
                     }
                 }
-                mir::Terminator::Goto(next) => {
+                Terminator::Goto(next) => {
                     self.pc_block = *next;
                     self.pc_stmt_idx = 0;
                     InnerOutput::Running
@@ -79,23 +80,23 @@ impl EvalCfg {
             } = &block.stmts[self.pc_stmt_idx];
             let value = match stmt {
                 Stmt::Const(const_value) => const_stmt::eval(const_value),
-                Stmt::Tuple(values) => Value::Tuple(
+                Stmt::Product(values) => Value::Product(
                     values
                         .iter()
-                        .map(|var| self.load_value(var).clone())
+                        .map(|var| (self.get_var_ty(var).clone(), self.load_value(var).clone()))
                         .collect(),
                 ),
-                Stmt::Array(_) => todo!(),
+                Stmt::Vector(_) => todo!(),
                 Stmt::Set(_) => todo!(),
                 Stmt::Fn(fn_ref) => {
                     let fn_ref = match fn_ref {
                         mir::stmt::FnRef::Link(_) => todo!(),
-                        mir::stmt::FnRef::Clojure {
-                            amir,
+                        mir::stmt::FnRef::Closure {
+                            mir,
                             captured,
                             handlers,
                         } => FnRef::Closure(Closure {
-                            mir: *amir,
+                            mir: *mir,
                             captured: captured
                                 .iter()
                                 .map(|var| {
@@ -124,12 +125,12 @@ impl EvalCfg {
                 Stmt::Perform(var) => {
                     // Save the return register to get result from continuation.
                     self.return_register = Some(*bind_var);
-                    if let ConcType::Effectful {
+                    if let Type::Effectful {
                         ty: output,
                         effects: _,
                     } = self.get_var_ty(bind_var)
                     {
-                        let effect = ConcEffect {
+                        let effect = Effect {
                             input: self.get_var_ty(var).clone(),
                             output: *output.clone(),
                         };
@@ -164,17 +165,9 @@ impl EvalCfg {
                     }
                 }
                 Stmt::Op { op, operands } => self.eval_op(op, operands),
-                Stmt::Ref(_) => todo!(),
-                Stmt::RefMut(_) => todo!(),
-                Stmt::Index { tuple: _, index: _ } => todo!(),
-                // TODO remove old one because move
-                Stmt::Move(x) => self.load_value(x).clone(),
-                Stmt::Variant { id, value } => Value::Variant {
-                    id: *id,
-                    value: Box::new(self.load_value(value).clone()),
-                },
                 Stmt::Parameter => {
-                    let ty = &self.cfg.vars.get(bind_var).ty;
+                    // unwrap is safe because typeinfer ensures that a parameter must be exist.
+                    let ty = self.get_var_ty(bind_var);
                     self.parameters
                         .get(ty)
                         .or_else(|| self.captured.get(ty))
@@ -187,6 +180,8 @@ impl EvalCfg {
                 Stmt::Link(_link) => {
                     todo!()
                 }
+                Stmt::MatchResult(_) => todo!(),
+                Stmt::Cast(var) => self.cast(var, self.get_var_ty(bind_var)),
             };
             let var = *bind_var;
             self.store_value(var, value);
@@ -214,19 +209,40 @@ impl EvalCfg {
         self.registers.insert(var, value);
     }
 
-    pub fn get_var_ty(&self, var: &VarId) -> &ConcType {
+    pub fn get_var_ty(&self, var: &VarId) -> &Type {
         &self.cfg.vars.get(var).ty
+    }
+
+    // TODO: complete the implementation
+    pub fn cast(&self, var: &VarId, target: &Type) -> Value {
+        let value = self.load_value(var);
+        let ty = self.get_var_ty(var);
+        match (value, ty, target) {
+            (value, a, b) if a == b => value.clone(),
+            (value, ty, Type::Sum(_)) if !matches!(value, Value::Variant { .. }) => {
+                Value::Variant {
+                    ty: ty.clone(),
+                    value: Box::new(value.clone()),
+                }
+            }
+            (_value, Type::Product(_), Type::Product(_types)) => {
+                todo!()
+            }
+            (_value, Type::Product(_types), _ty) => {
+                todo!()
+            }
+            (_value, a, b) => panic!("unable to cast {:?} to {:?}", a, b),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use mir::{
-        mir::{BasicBlock, Var},
-        stmt::Stmt,
-        BlockId, Const, Scope, ScopeId, StmtBind, Terminator, Vars,
+        block::BasicBlock,
+        scope::{Scope, ScopeId},
+        stmt::Const,
+        var::{Var, Vars},
     };
 
     use super::*;
@@ -235,9 +251,9 @@ mod tests {
     fn literal() {
         let mir = ControlFlowGraph {
             parameters: vec![],
-            output: ConcType::Number,
+            output: Type::Number,
             vars: Vars(vec![Var {
-                ty: ConcType::Number,
+                ty: Type::Number,
                 scope: ScopeId(0),
             }]),
             scopes: vec![Scope { super_scope: None }],

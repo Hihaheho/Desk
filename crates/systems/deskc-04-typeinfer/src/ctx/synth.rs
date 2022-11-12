@@ -269,7 +269,7 @@ impl Ctx {
                         types.push(ty);
                         Ok(ctx)
                     })?
-                    .with_type(Type::Array(Box::new(Type::Sum(types))))
+                    .with_type(Type::Vector(Box::new(Type::Sum(types))))
             }
             Expr::Set(values) => {
                 let mut types = vec![];

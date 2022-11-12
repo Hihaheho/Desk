@@ -16,7 +16,7 @@ deskc-parser
 deskc-hirgen
 deskc-typeinfer
 deskc-thirgen
-deskc-amirgen
+deskc-mirgen
 deskc-fmt
 deskc-thir2dson
 deskc

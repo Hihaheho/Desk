@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
 use types::Type;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Sendable value between processes.
 ///
 /// Closure is not sendable in the following reasons:
@@ -25,10 +26,11 @@ pub enum Value {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Number {
     Integer(i64),
     Float(f64),
+    Rational(i64, i64),
 }
 
 // A float of should not be NaN.

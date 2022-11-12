@@ -1,4 +1,4 @@
-use amir::stmt::StmtBind;
+use mir::stmt::StmtBind;
 
 #[derive(Debug, Default)]
 pub struct BlockProto {

@@ -1,9 +1,9 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use types::Type;
 
-use crate::{block::ABasicBlock, scope::Scope, stmt::LinkId, var::AVar};
+use crate::{block::BasicBlock, scope::Scope, stmt::LinkId, var::Vars};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ControlFlowGraph {
     // function parameters
     pub parameters: Vec<Type>,
@@ -11,9 +11,9 @@ pub struct ControlFlowGraph {
     pub captured: Vec<Type>,
     pub output: Type,
     // first N items in vars are arguments.
-    pub vars: Vec<AVar>,
+    pub vars: Vars,
     pub scopes: Vec<Scope>,
-    pub blocks: Vec<ABasicBlock>,
+    pub blocks: Vec<BasicBlock>,
     pub links: Vec<LinkId>,
 }
 
@@ -21,7 +21,7 @@ pub struct ControlFlowGraph {
 pub struct ControlFlowGraphId(pub usize);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Amir {
+pub struct Mir {
     pub entrypoint: ControlFlowGraphId,
     pub cfgs: Vec<ControlFlowGraph>,
 }

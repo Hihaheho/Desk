@@ -17,6 +17,7 @@ hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = 
 thirgen = { path = "../../systems/deskc-05-thirgen", version = "0.0.0", package = "deskc-thirgen" }
 mirgen = { path = "../../systems/deskc-06-mirgen", version = "0.0.0", package = "deskc-mirgen" }
 miri = { path = "../../systems/deskvm-miri", version = "0.0.0", package = "deskvm-miri" }
+dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
 typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 thir2dson = { path = "../../systems/deskc-thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }

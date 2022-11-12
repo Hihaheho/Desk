@@ -1,16 +1,24 @@
+use types::Type;
+
 use crate::value::Value;
 
 pub(crate) fn calc(lhs: &Value, rhs: &Value) -> Value {
     let eq = |pred| {
         if pred {
             Value::Variant {
-                id: 0,
-                value: Box::new(Value::Tuple(vec![])),
+                ty: Type::Label {
+                    label: "equal".to_string(),
+                    item: Box::new(Type::Product(vec![])),
+                },
+                value: Box::new(Value::Unit),
             }
         } else {
             Value::Variant {
-                id: 1,
-                value: Box::new(Value::Tuple(vec![])),
+                ty: Type::Label {
+                    label: "unequal".to_string(),
+                    item: Box::new(Type::Product(vec![])),
+                },
+                value: Box::new(Value::Unit),
             }
         }
     };
