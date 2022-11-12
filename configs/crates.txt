@@ -3,12 +3,10 @@
 # deskc components
 deskc-ids
 deskc-types
-deskc-conc-types
 deskc-tokens
 deskc-ast
 deskc-hir
 deskc-thir
-deskc-amir
 deskc-mir
 deskc-textual-diagnostics
 
@@ -19,7 +17,6 @@ deskc-hirgen
 deskc-typeinfer
 deskc-thirgen
 deskc-amirgen
-deskc-concretizer
 deskc-fmt
 deskc-thir2dson
 deskc

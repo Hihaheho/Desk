@@ -1,5 +1,5 @@
 [package]
-name = "deskc-concretizer"
+name = "deskc-mirgen"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -11,7 +11,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-amir = { path = "../../components/deskc-05-amir", version = "0.0.0", package = "deskc-amir" }
-mir = { path = "../../components/deskc-06-mir", version = "0.0.0", package = "deskc-mir" }
+ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+mir = { path = "../../components/deskc-05-mir", version = "0.0.0", package = "deskc-mir" }
+thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
+thiserror = "1.0.37"
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-conc-types = { path = "../../components/deskc-conc-types", version = "0.0.0", package = "deskc-conc-types" }

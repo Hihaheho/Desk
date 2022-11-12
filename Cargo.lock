@@ -1661,16 +1661,13 @@ dependencies = [
 name = "deskc"
 version = "0.0.0"
 dependencies = [
- "deskc-amir",
- "deskc-amirgen",
  "deskc-ast",
- "deskc-conc-types",
- "deskc-concretizer",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
  "deskc-lexer",
  "deskc-mir",
+ "deskc-mirgen",
  "deskc-parser",
  "deskc-thir",
  "deskc-thirgen",
@@ -1680,26 +1677,6 @@ dependencies = [
  "dworkspace-codebase",
  "salsa",
  "uuid",
-]
-
-[[package]]
-name = "deskc-amir"
-version = "0.0.0"
-dependencies = [
- "deskc-ids",
- "deskc-types",
- "serde",
-]
-
-[[package]]
-name = "deskc-amirgen"
-version = "0.0.0"
-dependencies = [
- "deskc-amir",
- "deskc-ids",
- "deskc-thir",
- "deskc-types",
- "thiserror",
 ]
 
 [[package]]
@@ -1713,23 +1690,6 @@ dependencies = [
 [[package]]
 name = "deskc-cli"
 version = "0.0.0"
-
-[[package]]
-name = "deskc-conc-types"
-version = "0.0.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "deskc-concretizer"
-version = "0.0.0"
-dependencies = [
- "deskc-amir",
- "deskc-conc-types",
- "deskc-mir",
- "deskc-types",
-]
 
 [[package]]
 name = "deskc-fmt"
@@ -1786,11 +1746,20 @@ dependencies = [
 name = "deskc-mir"
 version = "0.0.0"
 dependencies = [
- "deskc-amir",
- "deskc-conc-types",
  "deskc-ids",
  "deskc-types",
  "serde",
+]
+
+[[package]]
+name = "deskc-mirgen"
+version = "0.0.0"
+dependencies = [
+ "deskc-ids",
+ "deskc-mir",
+ "deskc-thir",
+ "deskc-types",
+ "thiserror",
 ]
 
 [[package]]
@@ -1813,12 +1782,11 @@ version = "0.0.0"
 dependencies = [
  "ariadne",
  "chumsky",
- "deskc-amirgen",
- "deskc-concretizer",
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
  "deskc-lexer",
+ "deskc-mirgen",
  "deskc-parser",
  "deskc-textual-diagnostics",
  "deskc-thir",
@@ -1930,7 +1898,6 @@ name = "deskvm-miri"
 version = "0.0.0"
 dependencies = [
  "chumsky",
- "deskc-conc-types",
  "deskc-hirgen",
  "deskc-lexer",
  "deskc-mir",
