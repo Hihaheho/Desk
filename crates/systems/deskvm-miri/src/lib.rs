@@ -79,8 +79,6 @@ impl EvalMirs {
                 let handler = loop {
                     if let Some(eval_mir) = self.stack.pop() {
                         // find handler
-                        dbg!(&eval_mir.handlers);
-                        dbg!(&effect);
                         let handler = eval_mir.handlers.get(&effect).cloned();
                         // push eval_mir to continuation
                         continuation_from_handler.push_front(eval_mir);

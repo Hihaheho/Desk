@@ -40,7 +40,7 @@ dworkspace-firestore
 dworkspace-in-memory
 
 # deskvm components
-deskvm-process
+deskvm-dprocess
 
 # deskvm systems
 deskvm-miri

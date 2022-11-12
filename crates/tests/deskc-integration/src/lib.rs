@@ -89,7 +89,7 @@ macro_rules! test {
             }
 
             let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
-            let mir = dbg!(mirgen::gen_mir(&thir).unwrap());
+            let mir = mirgen::gen_mir(&thir).unwrap();
             let mut miri = miri::eval_mir(mir);
             let value = loop {
                 match miri.eval_next() {

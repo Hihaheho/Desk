@@ -102,7 +102,7 @@ impl DProcess {
                     .lock_mailbox()
                     .get_mut(&message_type)
                     .map(|queue| queue.drain(..).collect())
-                    .unwrap_or_else(|| vec![]);
+                    .unwrap_or_else(Vec::new);
                 interpreter.effect_output(Value::Vector(messages));
                 ProcessOutput::Running
             }
@@ -212,7 +212,7 @@ impl DProcess {
                 drop(interpreter);
                 drop(status);
 
-                let info = DProcessInfo::new(&self);
+                let info = DProcessInfo::new(self);
                 let output = handler.to_output(&input, info);
                 // lock interpreter here is safe because we have dropped the locks.
                 self.lock_interpreter().effect_output(output);
@@ -294,7 +294,7 @@ impl DProcess {
                 drop(status);
 
                 let HaltProcess { id, ty, reason } = handler.halt(&input);
-                vm.get_dprocess(&id).map(|dprocess| {
+                if let Some(dprocess) = vm.get_dprocess(&id) {
                     dprocess.update_status(
                         vm,
                         &mut dprocess.lock_status(),
@@ -303,7 +303,7 @@ impl DProcess {
                             reason: Arc::new(reason),
                         },
                     );
-                });
+                }
                 ProcessOutput::Running
             }
         }

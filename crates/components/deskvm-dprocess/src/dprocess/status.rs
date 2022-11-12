@@ -30,7 +30,7 @@ impl DProcess {
                 .filter_map(|id| vm.get_dprocess(id))
                 .for_each(|link| {
                     link.update_status(
-                        vm.clone(),
+                        vm,
                         &mut link.lock_status(),
                         DProcessStatus::HaltedByLink(link_exit.clone()),
                     );
@@ -65,6 +65,6 @@ impl DProcess {
             _ => {}
         }
         // Important! notify to VM's migration logic.
-        vm.notify_status(&self.id, &locked);
+        vm.notify_status(&self.id, locked);
     }
 }

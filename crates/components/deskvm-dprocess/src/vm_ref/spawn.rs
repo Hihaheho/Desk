@@ -6,7 +6,7 @@ use super::VmRef;
 
 impl<'a> VmRef<'a> {
     pub fn spawn(&self, manifest: &DProcessManifest) {
-        let dprocess = DProcess::new(&manifest);
+        let dprocess = DProcess::new(manifest);
         let dprocess_id = dprocess.id.clone();
         self.lock_dprocesses()
             .insert(dprocess_id.clone(), Arc::new(dprocess));
