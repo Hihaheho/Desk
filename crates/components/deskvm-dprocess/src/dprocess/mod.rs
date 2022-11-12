@@ -1,13 +1,16 @@
 mod id;
+mod links;
+mod monitors;
 mod new;
 mod read_locks;
 mod receive_message;
 mod reduce;
 mod reset;
+mod status;
 mod write_locks;
 
 pub use id::DProcessId;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use parking_lot::RwLock;
 use types::Type;
@@ -43,4 +46,7 @@ pub struct DProcess {
     flags: RwLock<DProcessFlags>,
     /// Attached timers with the name of the counter used for the label of the event.
     timers: RwLock<HashMap<String, Timer>>,
+    /// A set of d-process ids that are monitoring this process.
+    monitors: RwLock<HashSet<DProcessId>>,
+    links: RwLock<HashSet<DProcessId>>,
 }

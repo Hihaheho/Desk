@@ -6,3 +6,9 @@ pub enum ProcessorAttachment {
     Attached(ProcessorId),
     Detached,
 }
+
+impl Default for ProcessorAttachment {
+    fn default() -> Self {
+        Self::Detached
+    }
+}

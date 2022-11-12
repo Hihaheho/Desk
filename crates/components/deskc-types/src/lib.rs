@@ -67,6 +67,7 @@ impl Type {
         }
     }
     pub fn product(mut types: Vec<Self>) -> Self {
+        // Sort is required to make the type comparable.
         types.sort();
         Type::Product(types)
     }

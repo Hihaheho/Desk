@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     ops::DerefMut,
 };
 
@@ -10,7 +10,7 @@ use crate::{
     value::Value,
 };
 
-use super::DProcess;
+use super::{DProcess, DProcessId};
 
 // These must be private to prevent deadlocks.
 impl DProcess {
@@ -24,18 +24,27 @@ impl DProcess {
         (self.interpreter.write(), self.status.write())
     }
 
-    pub(crate) fn lock_status_and_mailbox(
+    pub(crate) fn lock_interpreter_status_mailbox(
         &self,
     ) -> (
+        impl DerefMut<Target = Box<dyn Interpreter>> + '_,
         impl DerefMut<Target = DProcessStatus> + '_,
         impl DerefMut<Target = HashMap<Type, VecDeque<Value>>> + '_,
     ) {
         // This order must be the same as DProcess's definition to avoid deadlock.
-        (self.status.write(), self.mailbox.write())
+        (
+            self.interpreter.write(),
+            self.status.write(),
+            self.mailbox.write(),
+        )
     }
 
     pub(crate) fn lock_interpreter(&self) -> impl DerefMut<Target = Box<dyn Interpreter>> + '_ {
         self.interpreter.write()
+    }
+
+    pub(crate) fn lock_status(&self) -> impl DerefMut<Target = DProcessStatus> + '_ {
+        self.status.write()
     }
 
     pub(crate) fn lock_mailbox(
@@ -54,5 +63,13 @@ impl DProcess {
 
     pub(crate) fn lock_timers(&self) -> impl DerefMut<Target = HashMap<String, Timer>> + '_ {
         self.timers.write()
+    }
+
+    pub(crate) fn lock_monitors(&self) -> impl DerefMut<Target = HashSet<DProcessId>> + '_ {
+        self.monitors.write()
+    }
+
+    pub(crate) fn lock_links(&self) -> impl DerefMut<Target = HashSet<DProcessId>> + '_ {
+        self.links.write()
     }
 }

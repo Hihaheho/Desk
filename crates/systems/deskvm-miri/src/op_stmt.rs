@@ -3,9 +3,9 @@ mod eq;
 mod sub;
 use mir::{Op, VarId};
 
-use crate::{eval_mir::EvalMir, value::Value};
+use crate::{eval_cfg::EvalCfg, value::Value};
 
-impl EvalMir {
+impl EvalCfg {
     pub fn eval_op(&self, op: &Op, operands: &[VarId]) -> Value {
         match op {
             Op::Add => {

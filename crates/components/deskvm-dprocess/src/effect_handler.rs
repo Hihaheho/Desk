@@ -25,14 +25,10 @@ pub enum EffectHandler {
     /// This is useful for side-effect only effects such as `print a log`.
     Immediate(Arc<dyn ImmediateEffectHandler>),
 
-    /// Spawns a process, and it handles the effect.
-    ///
-    /// This is useful for computational effects such as `matrix multiplication`.
-    Delegation(Arc<dyn DelegationEffectHandler>),
-
     /// Immediately computes an output and spawns a process.
     ///
     /// This is useful for asynchronous effects such as `spawn a process`.
+    /// Also, this is useful for delegation effects such as `matrix multiplication` with monitor.
     /// Returns spawned process id.
     Spawn(Arc<dyn SpawnEffectHandler>),
 
@@ -122,10 +118,6 @@ pub enum EffectHandler {
 
 pub trait ImmediateEffectHandler: std::fmt::Debug {
     fn to_output(&self, input: &Value) -> Value;
-}
-
-pub trait DelegationEffectHandler: std::fmt::Debug {
-    fn spawn(&self, input: &Value) -> DProcessManifest;
 }
 
 pub trait SpawnEffectHandler: std::fmt::Debug {

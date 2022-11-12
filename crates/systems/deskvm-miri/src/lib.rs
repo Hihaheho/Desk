@@ -1,5 +1,5 @@
 pub mod const_stmt;
-pub mod eval_mir;
+pub mod eval_cfg;
 pub mod op_stmt;
 pub mod value;
 
@@ -13,7 +13,7 @@ use mir::{
 };
 
 use crate::{
-    eval_mir::{EvalMir, Handler, InnerOutput},
+    eval_cfg::{EvalCfg, Handler, InnerOutput},
     value::Closure,
 };
 
@@ -21,8 +21,8 @@ pub fn eval_mirs(mirs: Mir) -> EvalMirs {
     let mir = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMirs {
         cfgs: mirs.cfgs,
-        stack: vec![EvalMir {
-            mir,
+        stack: vec![EvalCfg {
+            cfg,
             registers: HashMap::new(),
             parameters: HashMap::new(),
             captured: HashMap::new(),
@@ -37,7 +37,7 @@ pub fn eval_mirs(mirs: Mir) -> EvalMirs {
 #[derive(Clone, Debug)]
 pub struct EvalMirs {
     cfgs: Vec<ControlFlowGraph>,
-    stack: Vec<EvalMir>,
+    stack: Vec<EvalCfg>,
 }
 
 impl EvalMirs {
@@ -71,15 +71,15 @@ impl EvalMirs {
                     }
                 };
                 match handler {
-                    eval_mir::Handler::Handler(Closure {
+                    eval_cfg::Handler::Handler(Closure {
                         mir,
                         mut captured,
                         // Really ignorable??
                         handlers: _,
                     }) => {
                         captured.insert(effect.input.clone(), input);
-                        let eval_mir = EvalMir {
-                            mir: self.get_mir(&mir).clone(),
+                        let eval_mir = EvalCfg {
+                            cfg: self.get_mir(&mir).clone(),
                             registers: Default::default(),
                             parameters: Default::default(),
                             captured,
@@ -89,7 +89,7 @@ impl EvalMirs {
                             handlers: [(
                                 ConcEffect {
                                     input: effect.output,
-                                    output: continuation_from_handler[0].mir.output.clone(),
+                                    output: continuation_from_handler[0].cfg.output.clone(),
                                 },
                                 Handler::Continuation(continuation_from_handler.into()),
                             )]
@@ -99,7 +99,7 @@ impl EvalMirs {
                         self.stack.push(eval_mir);
                         InterpreterOutput::Running
                     }
-                    eval_mir::Handler::Continuation(continuation) => {
+                    eval_cfg::Handler::Continuation(continuation) => {
                         self.stack.extend(continuation_from_handler);
                         self.stack.extend(continuation);
                         // path input to continuation
@@ -115,8 +115,8 @@ impl EvalMirs {
                     captured,
                     handlers,
                 }) => {
-                    let eval_mir = EvalMir {
-                        mir: self.get_mir(&mir).clone(),
+                    let eval_mir = EvalCfg {
+                        cfg: self.get_mir(&mir).clone(),
                         registers: Default::default(),
                         parameters,
                         captured,
@@ -129,8 +129,8 @@ impl EvalMirs {
                     InterpreterOutput::Running
                 }
                 value::FnRef::Recursion => {
-                    let eval_mir = EvalMir {
-                        mir: self.stack().mir.clone(),
+                    let eval_mir = EvalCfg {
+                        cfg: self.stack().cfg.clone(),
                         registers: Default::default(),
                         parameters,
                         captured: self.stack().captured.clone(),
@@ -147,7 +147,7 @@ impl EvalMirs {
         }
     }
 
-    pub fn stack(&mut self) -> &mut EvalMir {
+    pub fn stack(&mut self) -> &mut EvalCfg {
         self.stack.last_mut().unwrap()
     }
 

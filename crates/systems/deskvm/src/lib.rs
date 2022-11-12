@@ -6,8 +6,8 @@ use dprocess::{
     name_registry::NameRegistry,
     processor::ProcessorWithScheduler,
     processor_attachment::ProcessorAttachment,
-    vm_ref::VmRef,
     vm_output::VmOutputs,
+    vm_ref::VmRef,
 };
 use parking_lot::RwLock;
 
@@ -20,7 +20,7 @@ pub struct DeskVm {
     // uses Arc to make the process ownable by a processor.
     pub dprocesses: RwLock<HashMap<DProcessId, Arc<DProcess>>>,
     pub processors: RwLock<Vec<ProcessorWithScheduler>>,
-    pub process_attacher: RwLock<Box<dyn MigrationLogic>>,
+    pub migration_logic: RwLock<Box<dyn MigrationLogic>>,
     pub name_registry: RwLock<NameRegistry>,
 }
 
@@ -29,17 +29,17 @@ impl DeskVm {
     /// An API for single-threaded platform such as the Web or realtime application like games.
     pub fn reduce(&mut self, target_duration: &Duration) -> VmOutputs {
         // This is a single threaded version.
-        let divided_duration = target_duration / self.processors.read().len() as u32;
+        let divided_duration = *target_duration / self.processors.read().len() as u32;
         VmOutputs::merge(self.processors.read().iter().map(|pws| {
             pws.scheduler
                 .write()
-                .reduce(&pws.processor.read(), divided_duration)
+                .reduce(&pws.processor.read(), &divided_duration)
         }))
     }
 
     pub fn run_migration_logic(&self) {
         for suggestion in self
-            .process_attacher
+            .migration_logic
             .write()
             .suggest_migration(&self.vm_info())
         {
@@ -52,10 +52,7 @@ impl DeskVm {
             match to {
                 ProcessorAttachment::Attached(processor_id) => {
                     if let Some(processor) = self.processors.read().get(processor_id.0) {
-                        processor
-                            .scheduler
-                            .write()
-                            .attach(process_id, process.clone());
+                        processor.scheduler.write().attach(process.clone());
                     }
                 }
                 ProcessorAttachment::Detached => todo!(),
@@ -64,11 +61,12 @@ impl DeskVm {
     }
 
     pub fn vm_info(&self) -> VmRef {
-        VmRef {
-            dprocesses: &self.dprocesses,
-            processors: &self.processors,
-            name_registry: &self.name_registry,
-        }
+        VmRef::new(
+            &self.dprocesses,
+            &self.processors,
+            &self.name_registry,
+            &self.migration_logic,
+        )
     }
 }
 

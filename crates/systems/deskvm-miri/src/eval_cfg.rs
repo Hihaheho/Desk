@@ -12,8 +12,8 @@ use crate::value::{Closure, FnRef, Value};
 use mir::{StmtBind, VarId};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EvalMir {
-    pub mir: ControlFlowGraph,
+pub struct EvalCfg {
+    pub cfg: ControlFlowGraph,
     pub registers: HashMap<VarId, Value>,
     pub parameters: HashMap<ConcType, Value>,
     pub captured: HashMap<ConcType, Value>,
@@ -27,7 +27,7 @@ pub struct EvalMir {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Handler {
     Handler(Closure),
-    Continuation(Vec<EvalMir>),
+    Continuation(Vec<EvalCfg>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,9 +44,9 @@ pub enum InnerOutput {
     Running,
 }
 
-impl EvalMir {
+impl EvalCfg {
     pub fn eval_next(&mut self) -> InnerOutput {
-        let block = &self.mir.blocks[self.pc_block.0];
+        let block = &self.cfg.blocks[self.pc_block.0];
         // if reach to terminator
         if block.stmts.len() == self.pc_stmt_idx {
             match &block.terminator {
@@ -174,7 +174,7 @@ impl EvalMir {
                     value: Box::new(self.load_value(value).clone()),
                 },
                 Stmt::Parameter => {
-                    let ty = &self.mir.vars.get(bind_var).ty;
+                    let ty = &self.cfg.vars.get(bind_var).ty;
                     self.parameters
                         .get(ty)
                         .or_else(|| self.captured.get(ty))
@@ -215,7 +215,7 @@ impl EvalMir {
     }
 
     pub fn get_var_ty(&self, var: &VarId) -> &ConcType {
-        &self.mir.vars.get(var).ty
+        &self.cfg.vars.get(var).ty
     }
 }
 
@@ -252,8 +252,8 @@ mod tests {
             links: vec![],
         };
 
-        let mut eval = EvalMir {
-            mir,
+        let mut eval = EvalCfg {
+            cfg: mir,
             pc_block: BlockId(0),
             pc_stmt_idx: 0,
             registers: HashMap::new(),

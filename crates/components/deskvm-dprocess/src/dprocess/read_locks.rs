@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     ops::Deref,
 };
 
@@ -10,7 +10,7 @@ use crate::{
     processor_attachment::ProcessorAttachment, status::DProcessStatus, timer::Timer, value::Value,
 };
 
-use super::DProcess;
+use super::{DProcess, DProcessId};
 
 /// Read locks.
 impl DProcess {
@@ -57,5 +57,15 @@ impl DProcess {
     /// Locks the timers for reading.
     pub fn read_timers(&self) -> impl Deref<Target = HashMap<String, Timer>> + '_ {
         self.timers.read()
+    }
+
+    /// Locks the monitors for reading.
+    pub fn read_monitors(&self) -> impl Deref<Target = HashSet<DProcessId>> + '_ {
+        self.monitors.read()
+    }
+
+    /// Locks the links for reading.
+    pub fn read_links(&self) -> impl Deref<Target = HashSet<DProcessId>> + '_ {
+        self.links.read()
     }
 }

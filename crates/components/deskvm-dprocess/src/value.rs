@@ -19,6 +19,10 @@ pub enum Value {
         value: Box<Value>,
     },
     Vector(Vec<Self>),
+    TraitObject {
+        ty: Type,
+        value: Box<Value>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

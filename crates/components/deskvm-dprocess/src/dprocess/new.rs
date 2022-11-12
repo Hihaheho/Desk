@@ -1,11 +1,6 @@
-use std::collections::HashMap;
-
 use parking_lot::RwLock;
 
-use crate::{
-    dprocess_manifest::DProcessManifest, flags::DProcessFlags,
-    processor_attachment::ProcessorAttachment, status::DProcessStatus,
-};
+use crate::dprocess_manifest::DProcessManifest;
 
 use super::{DProcess, DProcessId};
 
@@ -16,12 +11,14 @@ impl DProcess {
             interpreter: RwLock::new(manifest.interpreter_builder.build()),
             metas: RwLock::new(manifest.metas.clone()),
             effect_handlers: RwLock::new(manifest.effect_handlers.clone()),
-            status: RwLock::new(DProcessStatus::Running),
-            mailbox: RwLock::new(HashMap::new()),
-            processor_attachment: RwLock::new(ProcessorAttachment::Detached),
-            kv: RwLock::new(HashMap::new()),
-            flags: RwLock::new(DProcessFlags::default()),
-            timers: RwLock::new(HashMap::new()),
+            status: Default::default(),
+            mailbox: Default::default(),
+            processor_attachment: Default::default(),
+            kv: Default::default(),
+            flags: Default::default(),
+            timers: Default::default(),
+            monitors: Default::default(),
+            links: Default::default(),
         }
     }
 }

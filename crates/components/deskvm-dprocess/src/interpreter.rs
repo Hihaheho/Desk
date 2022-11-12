@@ -14,7 +14,7 @@ pub trait Interpreter: std::fmt::Debug {
     /// Receive an output of performing effect.
     ///
     /// It must do nothing other than receiving.
-    fn effect_output(&mut self, value: Value) -> Result<()>;
+    fn effect_output(&mut self, value: Value);
 
     /// Returns the current processing kind.
     fn current_processing_kind(&self) -> Result<SchedulingHint<ProcessingKind>>;
