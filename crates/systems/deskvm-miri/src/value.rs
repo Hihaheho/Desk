@@ -16,7 +16,9 @@ pub enum Value {
     Rational(i64, i64),
     Product(HashMap<Type, Value>),
     Variant { ty: Type, value: Box<Value> },
+    Vector(Vec<Self>),
     FnRef(FnRef),
+    TraitObject { ty: Type, value: Box<Value> },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

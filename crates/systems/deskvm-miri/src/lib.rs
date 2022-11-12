@@ -3,9 +3,18 @@ pub mod eval_cfg;
 pub mod op_stmt;
 pub mod value;
 
-use std::collections::{HashMap, VecDeque};
+use anyhow::Result;
 
-use dprocess::{interpreter_output::InterpreterOutput, value::Number};
+use std::{
+    collections::{HashMap, VecDeque},
+    time::Duration,
+};
+
+use dprocess::{
+    interpreter::Interpreter,
+    interpreter_output::InterpreterOutput,
+    value::{Number, Value},
+};
 use mir::{
     block::BlockId,
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
@@ -17,9 +26,9 @@ use crate::{
     value::Closure,
 };
 
-pub fn eval_mir(mirs: Mir) -> EvalMirs {
+pub fn eval_mir(mirs: Mir) -> EvalMir {
     let cfg = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
-    EvalMirs {
+    EvalMir {
         cfgs: mirs.cfgs,
         stack: vec![EvalCfg {
             cfg,
@@ -35,39 +44,28 @@ pub fn eval_mir(mirs: Mir) -> EvalMirs {
 }
 
 #[derive(Clone, Debug)]
-pub struct EvalMirs {
+pub struct EvalMir {
     cfgs: Vec<ControlFlowGraph>,
     stack: Vec<EvalCfg>,
 }
 
-fn to_sendable_value(value: crate::value::Value) -> dprocess::value::Value {
-    match value {
-        value::Value::Unit => dprocess::value::Value::Unit,
-        value::Value::String(string) => dprocess::value::Value::String(string),
-        value::Value::Int(int) => dprocess::value::Value::Number(Number::Integer(int)),
-        value::Value::Float(float) => dprocess::value::Value::Number(Number::Float(float)),
-        value::Value::Rational(a, b) => dprocess::value::Value::Number(Number::Rational(a, b)),
-        value::Value::Product(values) => dprocess::value::Value::Product(
-            values
-                .into_iter()
-                .map(|(ty, value)| (ty, to_sendable_value(value)))
-                .collect(),
-        ),
-        value::Value::Variant { ty, value } => dprocess::value::Value::Variant {
-            ty,
-            value: Box::new(to_sendable_value(*value)),
-        },
-        value::Value::FnRef(_) => panic!(),
+impl EvalMir {
+    pub fn stack(&mut self) -> &mut EvalCfg {
+        self.stack.last_mut().unwrap()
+    }
+
+    pub fn get_mir(&self, cfg_id: &ControlFlowGraphId) -> &ControlFlowGraph {
+        &self.cfgs[cfg_id.0]
     }
 }
 
-impl EvalMirs {
-    pub fn eval_next(&mut self) -> InterpreterOutput {
-        match self.stack().eval_next() {
+impl Interpreter for EvalMir {
+    fn reduce(&mut self, _target_duration: &Duration) -> Result<InterpreterOutput> {
+        let output = match self.stack().eval_next() {
             InnerOutput::Return(value) => {
                 // When top level
                 if self.stack.len() == 1 {
-                    InterpreterOutput::Returned(to_sendable_value(value))
+                    InterpreterOutput::Returned(to_sendable(value))
                 } else {
                     self.stack.pop().unwrap();
                     self.stack().return_or_continue_with_value(value);
@@ -88,10 +86,10 @@ impl EvalMirs {
                     } else {
                         // When handler are not found, push back to continuation stack and perform
                         self.stack.extend(continuation_from_handler);
-                        return InterpreterOutput::Performed {
-                            input: to_sendable_value(input),
+                        return Ok(InterpreterOutput::Performed {
+                            input: to_sendable(input),
                             effect,
-                        };
+                        });
                     }
                 };
                 match handler {
@@ -168,14 +166,72 @@ impl EvalMirs {
                 }
             },
             InnerOutput::Running => InterpreterOutput::Running,
-        }
+        };
+        Ok(output)
     }
 
-    pub fn stack(&mut self) -> &mut EvalCfg {
-        self.stack.last_mut().unwrap()
+    fn effect_output(&mut self, value: Value) {
+        self.stack()
+            .return_or_continue_with_value(from_sendable(value));
     }
+}
 
-    pub fn get_mir(&self, cfg_id: &ControlFlowGraphId) -> &ControlFlowGraph {
-        &self.cfgs[cfg_id.0]
+fn to_sendable(value: crate::value::Value) -> dprocess::value::Value {
+    match value {
+        value::Value::Unit => dprocess::value::Value::Unit,
+        value::Value::String(string) => dprocess::value::Value::String(string),
+        value::Value::Int(int) => dprocess::value::Value::Number(Number::Integer(int)),
+        value::Value::Float(float) => dprocess::value::Value::Number(Number::Float(float)),
+        value::Value::Rational(a, b) => dprocess::value::Value::Number(Number::Rational(a, b)),
+        value::Value::Product(values) => dprocess::value::Value::Product(
+            values
+                .into_iter()
+                .map(|(ty, value)| (ty, to_sendable(value)))
+                .collect(),
+        ),
+        value::Value::Variant { ty, value } => dprocess::value::Value::Variant {
+            ty,
+            value: Box::new(to_sendable(*value)),
+        },
+        value::Value::Vector(values) => dprocess::value::Value::Vector(
+            values.into_iter().map(|value| to_sendable(value)).collect(),
+        ),
+        value::Value::FnRef(_) => panic!(),
+        value::Value::TraitObject { ty, value } => dprocess::value::Value::TraitObject {
+            ty,
+            value: Box::new(to_sendable(*value)),
+        },
+    }
+}
+
+fn from_sendable(value: Value) -> value::Value {
+    match value {
+        Value::Unit => value::Value::Unit,
+        Value::Number(number) => match number {
+            Number::Integer(int) => value::Value::Int(int),
+            Number::Float(float) => value::Value::Float(float),
+            Number::Rational(a, b) => value::Value::Rational(a, b),
+        },
+        Value::String(string) => value::Value::String(string),
+        Value::Product(values) => value::Value::Product(
+            values
+                .into_iter()
+                .map(|(ty, value)| (ty, from_sendable(value)))
+                .collect(),
+        ),
+        Value::Variant { ty, value } => value::Value::Variant {
+            ty,
+            value: Box::new(from_sendable(*value)),
+        },
+        Value::Vector(values) => value::Value::Vector(
+            values
+                .into_iter()
+                .map(|value| from_sendable(value))
+                .collect(),
+        ),
+        Value::TraitObject { ty, value } => value::Value::TraitObject {
+            ty,
+            value: Box::new(from_sendable(*value)),
+        },
     }
 }

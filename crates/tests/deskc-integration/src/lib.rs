@@ -91,8 +91,9 @@ macro_rules! test {
             let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &entrypoint);
             let mir = mirgen::gen_mir(&thir).unwrap();
             let mut miri = miri::eval_mir(mir);
+            use dprocess::interpreter::Interpreter;
             let value = loop {
-                match miri.eval_next() {
+                match miri.reduce(&std::time::Duration::from_secs(1)).unwrap() {
                     dprocess::interpreter_output::InterpreterOutput::Returned(ret) => break ret,
                     dprocess::interpreter_output::InterpreterOutput::Performed {
                         input,
