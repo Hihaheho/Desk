@@ -17,7 +17,9 @@ pub trait Interpreter: std::fmt::Debug {
     fn effect_output(&mut self, value: Value);
 
     /// Returns the current processing kind.
-    fn current_processing_kind(&self) -> Result<SchedulingHint<ProcessingKind>>;
+    fn current_processing_kind(&self) -> Result<SchedulingHint<ProcessingKind>> {
+        Ok(SchedulingHint::NotSupported)
+    }
 
     /// Returns estimated time to finish the current processing kind.
     ///

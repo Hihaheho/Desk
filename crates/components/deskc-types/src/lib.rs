@@ -100,7 +100,7 @@ impl Types {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct IdGen {
     pub next_id: Id,
 }
