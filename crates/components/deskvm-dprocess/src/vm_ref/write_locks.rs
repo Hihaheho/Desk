@@ -3,6 +3,7 @@ use std::{collections::HashMap, ops::DerefMut, sync::Arc};
 use crate::{
     dprocess::{DProcess, DProcessId},
     migration_logic::MigrationLogic,
+    status_update::StatusUpdate,
 };
 
 use super::VmRef;
@@ -19,5 +20,9 @@ impl<'a> VmRef<'a> {
         &self,
     ) -> impl DerefMut<Target = Box<dyn MigrationLogic>> + '_ {
         self.migration_logic.write()
+    }
+
+    pub(crate) fn lock_status_update(&self) -> impl DerefMut<Target = Vec<StatusUpdate>> + '_ {
+        self.status_update.write()
     }
 }

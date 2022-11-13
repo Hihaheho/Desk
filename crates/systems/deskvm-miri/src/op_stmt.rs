@@ -7,7 +7,7 @@ use mir::{stmt::Op, var::VarId};
 use crate::{eval_cfg::EvalCfg, value::Value};
 
 impl EvalCfg {
-    pub fn eval_op(&self, op: &Op, operands: &[VarId]) -> Value {
+    pub(crate) fn eval_op(&self, op: &Op, operands: &[VarId]) -> Value {
         match op {
             Op::Add => {
                 assert!(operands.len() == 2);

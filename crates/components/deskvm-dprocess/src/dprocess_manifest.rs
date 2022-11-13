@@ -10,3 +10,17 @@ pub struct DProcessManifest {
     pub effect_handlers: EffectHandlers,
     pub metas: Metas,
 }
+
+impl DProcessManifest {
+    pub fn new(
+        interpreter_builder: impl InterpreterBuilder + 'static,
+        effect_handlers: EffectHandlers,
+        metas: Metas,
+    ) -> Self {
+        Self {
+            interpreter_builder: Arc::new(interpreter_builder),
+            effect_handlers,
+            metas,
+        }
+    }
+}

@@ -1,6 +1,6 @@
 use crate::{
-    dprocess::DProcessId, processor_attachment::ProcessorAttachment, status::DProcessStatus,
-    vm_ref::VmRef,
+    dprocess::DProcessId, processor::ProcessorName, processor_attachment::ProcessorAttachment,
+    status_update::StatusUpdate, vm_ref::VmRef,
 };
 
 // TODO: This name should be more descriptive.
@@ -9,14 +9,28 @@ use crate::{
 /// Influenced by the Migration Logic of Erlang VM's scheduler.
 /// Implementation never fails.
 pub trait MigrationLogic: std::fmt::Debug {
-    /// DeskVM respects the suggestions in best-effort.
-    fn suggest_migration<'a>(&mut self, vm: &'a VmRef) -> Vec<MigrateSuggestion>;
-    /// DeskVM calls this method when a new process is created.
-    fn notify_new_process(&mut self, _dprocess_id: DProcessId) {}
-    /// DeskVM calls this method when a status of a process is updated.
-    fn notify_status(&mut self, _dprocess_id: &DProcessId, _status: &DProcessStatus) {}
+    /// DeskVM completely respects the suggestions.
+    fn suggest_migration<'a>(&mut self, vm: VmRef) -> Vec<MigrateSuggestion>;
+
+    /// DeskVM calls this method when a new d-process is created.
+    fn notify_new_dprocess(&mut self, dprocess_id: &DProcessId);
+
+    /// DeskVM calls this method when a d-process is deleted.
+    fn notify_deleted_dprocess(&mut self, dprocess_id: &DProcessId);
+
+    /// DeskVM calls this method when a status of a d-process is updated.
+    ///
+    /// DeskVM does not calls this method for d-process creation.
+    fn notify_status(&mut self, status_update: &StatusUpdate);
+
+    /// DeskVM calls this method when a new processor is created.
+    fn notify_new_processor(&mut self, processor_name: &ProcessorName);
+
+    /// DeskVM calls this method when a processor is deleted.
+    fn notify_deleted_processor(&mut self, processor_name: &ProcessorName);
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MigrateSuggestion {
     pub process_id: DProcessId,
     pub to: ProcessorAttachment,

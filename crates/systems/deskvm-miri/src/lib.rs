@@ -1,5 +1,6 @@
 pub mod const_stmt;
 pub mod eval_cfg;
+pub mod interpreter_builder;
 pub mod op_stmt;
 pub mod value;
 
@@ -50,7 +51,7 @@ pub struct EvalMir {
 }
 
 impl EvalMir {
-    pub fn stack(&mut self) -> &mut EvalCfg {
+    pub(crate) fn stack(&mut self) -> &mut EvalCfg {
         self.stack.last_mut().unwrap()
     }
 

@@ -1,6 +1,6 @@
 use std::{ops::DerefMut, sync::Arc, time::Duration};
 
-use types::{Effect, Type};
+use types::Effect;
 
 use crate::{
     dprocess_info::DProcessInfo,
@@ -17,26 +17,32 @@ use super::DProcess;
 
 impl DProcess {
     /// Execute the interpreter.
-    pub fn reduce(&self, vm: VmRef, target_duration: &Duration) -> ProcessOutput {
+    ///
+    /// A scheduler can call this method when the status may not be `Running`.
+    pub fn reduce(&self, vm: VmRef, target_duration: &Duration) {
         // lock both to prevent invalid state.
         let (mut interpreter, mut status) = self.lock_interpreter_and_status();
+        match &*status {
+            DProcessStatus::Running => {}
+            _ => {
+                // No need to run.
+                return;
+            }
+        }
         match interpreter.reduce(target_duration) {
             Ok(output) => match output {
                 InterpreterOutput::Returned(value) => {
                     let value = Arc::new(value);
                     // Don't update status like `*status = new_status`.
                     self.update_status(vm, &mut status, DProcessStatus::Returned(value.clone()));
-                    ProcessOutput::Returned(value)
                 }
                 InterpreterOutput::Performed { input, effect } => {
                     self.handle_effect(vm, interpreter, status, effect, input)
                 }
-                InterpreterOutput::Running => ProcessOutput::Running,
+                InterpreterOutput::Running => {}
             },
             Err(err) => {
-                let err = Arc::new(err);
-                self.update_status(vm, &mut status, DProcessStatus::Crashed(err.clone()));
-                ProcessOutput::Crashed(err)
+                self.update_status(vm, &mut status, DProcessStatus::Crashed(err.into()));
             }
         }
     }
@@ -48,7 +54,7 @@ impl DProcess {
         mut status: impl DerefMut<Target = DProcessStatus>,
         effect: Effect,
         input: Value,
-    ) -> ProcessOutput {
+    ) {
         // unwrap is safe because Desk plugins must ensure to .
         // clone is cheap.
         let handler = self.read_effect_handlers().0.get(&effect).unwrap().clone();
@@ -56,16 +62,24 @@ impl DProcess {
             EffectHandler::Immediate(handler) => {
                 let output = handler.to_output(&input);
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::Spawn(handler) => {
                 let output = handler.to_output(&input);
                 interpreter.effect_output(output);
                 let manifest = handler.spawn(&input);
                 vm.spawn(&manifest);
-                ProcessOutput::Running
             }
-            EffectHandler::Defer => ProcessOutput::Performed { input, effect },
+            EffectHandler::Defer => {
+                // Don't update status like `*status = new_status`.
+                self.update_status(
+                    vm,
+                    &mut status,
+                    DProcessStatus::Deferred {
+                        input: Arc::new(input),
+                        effect: Arc::new(effect),
+                    },
+                );
+            }
             EffectHandler::SendMessage(handler) => {
                 let output = handler.to_output(&input);
                 interpreter.effect_output(output);
@@ -73,7 +87,6 @@ impl DProcess {
                 if let Some(to) = vm.read_dprocesses().get(&to) {
                     to.receive_message(vm, ty, message);
                 }
-                ProcessOutput::Running
             }
             EffectHandler::ReceiveMessage => {
                 let message_type = effect.output;
@@ -84,15 +97,13 @@ impl DProcess {
                     .and_then(|queue| queue.pop_front())
                 {
                     interpreter.effect_output(message);
-                    ProcessOutput::Running
                 } else {
                     // Don't update status like `*status = new_status`.
                     self.update_status(
                         vm,
                         &mut status,
-                        DProcessStatus::WaitingForMessage(message_type),
+                        DProcessStatus::WaitingForMessage(Arc::new(message_type)),
                     );
-                    ProcessOutput::WaitingForMessage
                 }
             }
             EffectHandler::FlushMailbox => {
@@ -104,14 +115,12 @@ impl DProcess {
                     .map(|queue| queue.drain(..).collect())
                     .unwrap_or_else(Vec::new);
                 interpreter.effect_output(Value::Vector(messages));
-                ProcessOutput::Running
             }
             EffectHandler::Subscribe(handler) => {
                 let output = handler.to_output(&input);
                 interpreter.effect_output(output);
                 let ty = handler.subscribe(&input);
                 vm.subscribe(self.id.clone(), ty);
-                ProcessOutput::Running
             }
             EffectHandler::Publish => {
                 let ty = effect.input;
@@ -122,19 +131,16 @@ impl DProcess {
                 drop(status);
 
                 vm.publish(ty, input);
-                ProcessOutput::Running
             }
             EffectHandler::GetKv(handler) => {
                 // read lock KV after status is safe.
                 let output = handler.to_output(&input, &self.read_kv());
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::UpdateKv(handler) => {
                 // lock KV after status is safe.
                 let output = handler.update(&input, &mut self.lock_kv());
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::GetFlags(handler) => {
                 // no need to release or keep the lock, so release them.
@@ -146,7 +152,6 @@ impl DProcess {
                     None => handler.to_output(&input, None),
                 };
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::UpdateFlags(handler) => {
                 // no need to release or keep the lock, so release them.
@@ -160,7 +165,6 @@ impl DProcess {
                     None => handler.update_flags(&input, None),
                 };
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::AddTimer(handler) => {
                 let output = handler.to_output(&input);
@@ -175,7 +179,6 @@ impl DProcess {
                 self.lock_timers()
                     // TODO: remove clone()
                     .insert(manifest.name.clone(), Timer::new(manifest));
-                ProcessOutput::Running
             }
             EffectHandler::RemoveTimer(handler) => {
                 let output = handler.to_output(&input);
@@ -183,7 +186,6 @@ impl DProcess {
                 let name = handler.remove_timer(&input);
                 // lock timers after status is safe.
                 self.lock_timers().remove(&name);
-                ProcessOutput::Running
             }
             EffectHandler::Monitor(handler) => {
                 let output = handler.to_output(&input);
@@ -194,7 +196,6 @@ impl DProcess {
                     target.add_monitor(self);
                 } else {
                 }
-                ProcessOutput::Running
             }
             EffectHandler::Demonitor(handler) => {
                 let output = handler.to_output(&input);
@@ -205,7 +206,6 @@ impl DProcess {
                     target.remove_monitor(&self.id);
                 } else {
                 }
-                ProcessOutput::Running
             }
             EffectHandler::ProcessInfo(handler) => {
                 // Unlock is required because handler may need read locks of them.
@@ -216,12 +216,10 @@ impl DProcess {
                 let output = handler.to_output(&input, info);
                 // lock interpreter here is safe because we have dropped the locks.
                 self.lock_interpreter().effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::VmInfo(handler) => {
                 let output = handler.to_output(&input, &vm);
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::Link(handler) => {
                 let output = handler.to_output(&input);
@@ -244,7 +242,6 @@ impl DProcess {
                     }
                     _ => {}
                 }
-                ProcessOutput::Running
             }
             EffectHandler::Unlink(handler) => {
                 let output = handler.to_output(&input);
@@ -260,7 +257,6 @@ impl DProcess {
                 {
                     dprocess1.remove_link(&dprocess2);
                 }
-                ProcessOutput::Running
             }
             EffectHandler::Register(handler) => {
                 let output = handler.to_output(&input);
@@ -268,8 +264,6 @@ impl DProcess {
 
                 let (name, id) = handler.register(&input);
                 vm.register(name, id);
-
-                ProcessOutput::Running
             }
             EffectHandler::Unregister(handler) => {
                 let output = handler.to_output(&input);
@@ -277,13 +271,10 @@ impl DProcess {
 
                 let name = handler.unregister(&input);
                 vm.unregister(name);
-
-                ProcessOutput::Running
             }
             EffectHandler::Whereis(handler) => {
                 let output = handler.to_output(&input, &vm.read_name_registry());
                 interpreter.effect_output(output);
-                ProcessOutput::Running
             }
             EffectHandler::Halt(handler) => {
                 let output = handler.to_output(&input);
@@ -304,18 +295,7 @@ impl DProcess {
                         },
                     );
                 }
-                ProcessOutput::Running
             }
         }
     }
-}
-
-#[derive(Debug)]
-pub enum ProcessOutput {
-    Running,
-    WaitingForMessage,
-    Performed { input: Value, effect: Effect },
-    Returned(Arc<Value>),
-    Halted { ty: Type, reason: Value },
-    Crashed(Arc<anyhow::Error>),
 }

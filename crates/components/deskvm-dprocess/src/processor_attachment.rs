@@ -1,9 +1,8 @@
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ProcessorId(pub usize);
+use crate::processor::ProcessorName;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProcessorAttachment {
-    Attached(ProcessorId),
+    Attached(ProcessorName),
     Detached,
 }
 

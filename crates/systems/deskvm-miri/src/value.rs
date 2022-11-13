@@ -7,7 +7,7 @@ use types::{Effect, Type};
 use crate::eval_cfg::Handler;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum Value {
+pub(crate) enum Value {
     // empty product
     Unit,
     String(String),
@@ -22,14 +22,14 @@ pub enum Value {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum FnRef {
+pub(crate) enum FnRef {
     Link(Type),
     Closure(Closure),
     Recursion,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Closure {
+pub(crate) struct Closure {
     pub mir: ControlFlowGraphId,
     pub captured: HashMap<Type, Value>,
     pub handlers: HashMap<Effect, Handler>,

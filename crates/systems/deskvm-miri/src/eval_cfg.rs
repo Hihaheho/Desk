@@ -13,7 +13,7 @@ use mir::stmt::StmtBind;
 use mir::var::VarId;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EvalCfg {
+pub(crate) struct EvalCfg {
     pub cfg: ControlFlowGraph,
     pub registers: HashMap<VarId, Value>,
     pub parameters: HashMap<Type, Value>,
@@ -26,13 +26,13 @@ pub struct EvalCfg {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum Handler {
+pub(crate) enum Handler {
     Handler(Closure),
     Continuation(Vec<EvalCfg>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum InnerOutput {
+pub(crate) enum InnerOutput {
     Return(Value),
     Perform {
         input: Value,
@@ -188,11 +188,6 @@ impl EvalCfg {
             self.pc_stmt_idx += 1;
             InnerOutput::Running
         }
-    }
-
-    // After perform, continue with this function.
-    pub fn eval_continue(&mut self, _output: Value) {
-        todo!()
     }
 
     // After call another mir, continue with this function.

@@ -1,22 +1,26 @@
 use types::Type;
 
-use crate::value::Value;
+use crate::{status::LinkExit, value::Value};
 
 #[derive(Debug)]
 pub enum ExitStatus {
     /// All codes are reduced.
-    Finished,
+    Returned,
     /// The process is halted with the reason.
-    Halted { ty: Type, reason: Value },
+    Halted {
+        ty: Type,
+        reason: Value,
+    },
     /// The process is crashed with the error.
     /// any crash equals to any crash in PartialEq.
     Crashed(anyhow::Error),
+    HaltedByLink(LinkExit),
 }
 
 impl PartialEq for ExitStatus {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (ExitStatus::Finished, ExitStatus::Finished) => true,
+            (ExitStatus::Returned, ExitStatus::Returned) => true,
             (
                 ExitStatus::Halted {
                     ty: ty1,
@@ -41,7 +45,7 @@ mod tests {
 
     #[test]
     fn exit_status_equals() {
-        assert_eq!(ExitStatus::Finished, ExitStatus::Finished);
+        assert_eq!(ExitStatus::Returned, ExitStatus::Returned);
         assert_eq!(
             ExitStatus::Halted {
                 ty: Type::Number,
@@ -61,14 +65,14 @@ mod tests {
     #[test]
     fn exit_status_not_equals() {
         assert_ne!(
-            ExitStatus::Finished,
+            ExitStatus::Returned,
             ExitStatus::Halted {
                 ty: Type::Number,
                 reason: Value::String("a".into())
             }
         );
         assert_ne!(
-            ExitStatus::Finished,
+            ExitStatus::Returned,
             ExitStatus::Crashed(anyhow::anyhow!(""))
         );
         assert_ne!(

@@ -1,18 +1,26 @@
 use std::sync::Arc;
 
-use anyhow::Error;
 use types::{Effect, Type};
 
 use crate::{dprocess::DProcessId, value::Value};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// A status of process.
+///
+/// It's cheap to clone.
 pub enum DProcessStatus {
     Running,
-    SuspendedWithEffect(Effect),
-    WaitingForMessage(Type),
+    Deferred {
+        effect: Arc<Effect>,
+        input: Arc<Value>,
+    },
+    WaitingForMessage(Arc<Type>),
     Returned(Arc<Value>),
-    Halted { ty: Arc<Type>, reason: Arc<Value> },
-    Crashed(Arc<Error>),
+    Halted {
+        ty: Arc<Type>,
+        reason: Arc<Value>,
+    },
+    Crashed(CrashError),
     HaltedByLink(LinkExit),
 }
 
@@ -22,7 +30,7 @@ impl Default for DProcessStatus {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LinkExit {
     Halted {
         dprocess_id: DProcessId,
@@ -31,7 +39,24 @@ pub enum LinkExit {
     },
     Crashed {
         dprocess_id: DProcessId,
-        error: Arc<Error>,
+        error: CrashError,
     },
     NotFound(DProcessId),
+}
+
+#[derive(Debug, Clone)]
+pub struct CrashError(pub Arc<anyhow::Error>);
+
+impl PartialEq for CrashError {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_string() == other.0.to_string()
+    }
+}
+
+impl Eq for CrashError {}
+
+impl From<anyhow::Error> for CrashError {
+    fn from(error: anyhow::Error) -> Self {
+        Self(Arc::new(error))
+    }
 }

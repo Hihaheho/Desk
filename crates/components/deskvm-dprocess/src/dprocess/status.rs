@@ -65,6 +65,6 @@ impl DProcess {
             _ => {}
         }
         // Important! notify to VM's migration logic.
-        vm.notify_status(&self.id, locked);
+        vm.notify_status(&self, locked);
     }
 }

@@ -1563,6 +1563,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "desk-firebase-auth"
+version = "0.1.0"
+
+[[package]]
 name = "desk-guide"
 version = "0.0.0"
 
@@ -1878,9 +1882,12 @@ name = "deskvm"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "deskc-mir",
  "deskc-types",
  "deskvm-dprocess",
+ "deskvm-miri",
  "parking_lot 0.12.1",
+ "uuid",
 ]
 
 [[package]]

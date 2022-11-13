@@ -4,15 +4,15 @@ use std::{
     sync::Arc,
 };
 
-use crate::{
+use dprocess::{
     dprocess::{DProcess, DProcessId},
     name_registry::NameRegistry,
     processor::{ProcessorName, ProcessorWithScheduler},
 };
 
-use super::VmRef;
+use super::DeskVm;
 
-impl<'a> VmRef<'a> {
+impl DeskVm {
     pub fn read_dprocesses(&self) -> impl Deref<Target = HashMap<DProcessId, Arc<DProcess>>> + '_ {
         self.dprocesses.read()
     }

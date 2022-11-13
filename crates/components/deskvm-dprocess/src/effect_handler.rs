@@ -8,7 +8,7 @@ use crate::{
     vm_ref::VmRef,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 /// Effect handlers attached to a d-process.
 ///
 /// Clone is cheap.

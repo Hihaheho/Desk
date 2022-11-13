@@ -17,5 +17,5 @@ pub mod scheduler;
 pub mod status;
 pub mod timer;
 pub mod value;
-pub mod vm_output;
 pub mod vm_ref;
+pub mod status_update;
