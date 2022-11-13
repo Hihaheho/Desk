@@ -61,8 +61,11 @@ impl MigrationLogic for OfficialMigrationLogic {
 
         // Caluculate a number of d-processes that should be attached to each processor.
         let mut assignments = vec![running_dprocess_count / processors.len(); processors.len()];
-        for i in 0..running_dprocess_count % processors.len() {
-            assignments[i] += 1;
+        for assignment in assignments
+            .iter_mut()
+            .take(running_dprocess_count % processors.len())
+        {
+            *assignment += 1;
         }
         debug_assert_eq!(assignments.iter().sum::<usize>(), running_dprocess_count);
 
@@ -100,7 +103,7 @@ impl MigrationLogic for OfficialMigrationLogic {
         }
         debug_assert!(to_be_attached.is_empty());
 
-        dbg!(suggestions)
+        suggestions
     }
 
     fn notify_new_dprocess(&mut self, dprocess_id: &DProcessId) {
@@ -195,8 +198,8 @@ mod tests {
         assert_eq!(
             attatchments,
             vec![
-                ProcessorAttachment::Attached(processor_1.clone()),
-                ProcessorAttachment::Attached(processor_2.clone()),
+                ProcessorAttachment::Attached(processor_1),
+                ProcessorAttachment::Attached(processor_2),
             ]
         );
     }
@@ -218,7 +221,7 @@ mod tests {
         let dprocess = vm.read_dprocesses().get(&dprocess_id).unwrap().clone();
         assert_eq!(
             *dprocess.read_processor_attachment(),
-            ProcessorAttachment::Attached(processor.clone())
+            ProcessorAttachment::Attached(processor)
         );
 
         vm.vm_ref()
@@ -310,9 +313,9 @@ mod tests {
         assert_eq!(
             attatchments,
             vec![
-                ProcessorAttachment::Attached(processor_1.clone()),
-                ProcessorAttachment::Attached(processor_2.clone()),
-                ProcessorAttachment::Attached(processor_3.clone()),
+                ProcessorAttachment::Attached(processor_1),
+                ProcessorAttachment::Attached(processor_2),
+                ProcessorAttachment::Attached(processor_3),
             ]
         );
     }

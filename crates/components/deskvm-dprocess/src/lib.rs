@@ -15,7 +15,7 @@ pub mod processor;
 pub mod processor_attachment;
 pub mod scheduler;
 pub mod status;
+pub mod status_update;
 pub mod timer;
 pub mod value;
 pub mod vm_ref;
-pub mod status_update;

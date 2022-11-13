@@ -10,7 +10,7 @@ use crate::{
 /// Implementation never fails.
 pub trait MigrationLogic: std::fmt::Debug {
     /// DeskVM completely respects the suggestions.
-    fn suggest_migration<'a>(&mut self, vm: VmRef) -> Vec<MigrateSuggestion>;
+    fn suggest_migration(&mut self, vm: VmRef) -> Vec<MigrateSuggestion>;
 
     /// DeskVM calls this method when a new d-process is created.
     fn notify_new_dprocess(&mut self, dprocess_id: &DProcessId);

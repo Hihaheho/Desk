@@ -9,7 +9,7 @@ use super::DeskVm;
 
 impl DeskVm {
     pub fn spawn(&self, manifest: &DProcessManifest) -> DProcessId {
-        let process = Arc::new(DProcess::new(&manifest));
+        let process = Arc::new(DProcess::new(manifest));
         self.dprocesses
             .write()
             .insert(process.id.clone(), process.clone());

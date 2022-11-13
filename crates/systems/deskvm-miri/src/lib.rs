@@ -194,9 +194,9 @@ fn to_sendable(value: crate::value::Value) -> dprocess::value::Value {
             ty,
             value: Box::new(to_sendable(*value)),
         },
-        value::Value::Vector(values) => dprocess::value::Value::Vector(
-            values.into_iter().map(|value| to_sendable(value)).collect(),
-        ),
+        value::Value::Vector(values) => {
+            dprocess::value::Value::Vector(values.into_iter().map(to_sendable).collect())
+        }
         value::Value::FnRef(_) => panic!(),
         value::Value::TraitObject { ty, value } => dprocess::value::Value::TraitObject {
             ty,
@@ -224,12 +224,9 @@ fn from_sendable(value: Value) -> value::Value {
             ty,
             value: Box::new(from_sendable(*value)),
         },
-        Value::Vector(values) => value::Value::Vector(
-            values
-                .into_iter()
-                .map(|value| from_sendable(value))
-                .collect(),
-        ),
+        Value::Vector(values) => {
+            value::Value::Vector(values.into_iter().map(from_sendable).collect())
+        }
         Value::TraitObject { ty, value } => value::Value::TraitObject {
             ty,
             value: Box::new(from_sendable(*value)),

@@ -1,8 +1,8 @@
+mod dprocesses;
 mod processors;
 mod read_locks;
 mod reduce;
 mod run_migration_logic;
-mod dprocesses;
 mod status_updates;
 
 use std::{

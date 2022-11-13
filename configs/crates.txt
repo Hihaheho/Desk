@@ -60,6 +60,7 @@ desk-rapier2d
 desk-touchpanel
 desk-guide
 desk-editor
+desk-firebase-auth
 
 # desk apps
 desk-x

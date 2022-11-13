@@ -7,8 +7,8 @@ mod receive_message;
 mod reduce;
 mod reset;
 mod status;
-mod write_locks;
 mod update_processor_attachment;
+mod write_locks;
 
 pub use id::DProcessId;
 use std::collections::{HashMap, HashSet, VecDeque};

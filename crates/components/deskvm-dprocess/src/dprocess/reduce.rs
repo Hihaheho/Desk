@@ -34,7 +34,7 @@ impl DProcess {
                 InterpreterOutput::Returned(value) => {
                     let value = Arc::new(value);
                     // Don't update status like `*status = new_status`.
-                    self.update_status(vm, &mut status, DProcessStatus::Returned(value.clone()));
+                    self.update_status(vm, &mut status, DProcessStatus::Returned(value));
                 }
                 InterpreterOutput::Performed { input, effect } => {
                     self.handle_effect(vm, interpreter, status, effect, input)
