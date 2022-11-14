@@ -1,6 +1,6 @@
 use bevy_ecs::schedule::SystemLabel;
 
-#[derive(SystemLabel, Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(SystemLabel, Clone)]
 pub enum DeskSystem {
     UpdateWidget,
     RenderWidget,
@@ -8,7 +8,7 @@ pub enum DeskSystem {
     PrePhysics,
 }
 
-#[derive(SystemLabel, PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(SystemLabel, Clone)]
 pub enum ShellSystem {
     Add,
     UpdateComponent,

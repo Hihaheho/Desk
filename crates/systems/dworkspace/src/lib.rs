@@ -5,7 +5,7 @@ mod history;
 mod loop_detector;
 mod nodes;
 pub mod prelude;
-pub mod query_result;
+pub mod query_error;
 mod references;
 pub mod repository;
 pub mod state;
@@ -91,6 +91,7 @@ impl Workspace {
 
 #[cfg(test)]
 mod tests {
+    use components::code::Code;
     use components::event::{Event, EventEntry};
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
@@ -209,8 +210,13 @@ mod tests {
 
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
+        let ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap().clone() {
+            ast.as_ref().clone()
+        } else {
+            panic!();
+        };
         assert_eq!(
-            remove_node_id(kernel.nodes.lock().ast(node_a).unwrap().as_ref().clone()),
+            remove_node_id(ast),
             WithSpan {
                 id: NodeId::default(),
                 span: 0..0,

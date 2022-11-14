@@ -1531,6 +1531,7 @@ dependencies = [
 name = "deskc"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "deskc-ast",
  "deskc-hir",
  "deskc-hirgen",
@@ -1816,7 +1817,9 @@ version = "0.0.0"
 name = "dworkspace"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "bevy_ecs",
+ "deskc",
  "deskc-ast",
  "deskc-hir",
  "deskc-hirgen",

@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-pub type QueryResult<T> = Result<Arc<T>, QueryError>;
-
 #[derive(Debug, Clone)]
-pub struct QueryError(pub Arc<Box<dyn std::error::Error + Send + Sync + 'static>>);
+/// `Arc<anyhow::Error>`
+pub struct QueryError(pub Arc<anyhow::Error>);
 
 impl PartialEq for QueryError {
     fn eq(&self, _other: &Self) -> bool {
@@ -14,11 +13,8 @@ impl PartialEq for QueryError {
 }
 impl Eq for QueryError {}
 
-impl<T> From<T> for QueryError
-where
-    T: std::error::Error + Send + Sync + 'static,
-{
+impl<T: Into<anyhow::Error>> From<T> for QueryError {
     fn from(error: T) -> Self {
-        QueryError(Arc::new(Box::new(error)))
+        QueryError(Arc::new(error.into()))
     }
 }

@@ -1,30 +1,31 @@
 use std::sync::Arc;
 
-use components::{content::Content, node::Node};
+use components::{code::Code, content::Content, node::Node};
+use deskc::parse_source_code;
 use deskc_ast::{
     expr::{Expr, Literal},
     span::WithSpan,
     ty::{Effect, EffectExpr, Type},
 };
 use deskc_ids::NodeId;
-use deskc_lexer::scan;
-use deskc_parser::parse;
 
-use crate::query_result::{QueryError, QueryResult};
+use crate::query_error::QueryError;
 
 use super::NodeQueries;
 
-pub(super) fn ast(db: &dyn NodeQueries, node_id: NodeId) -> QueryResult<WithSpan<Expr>> {
+pub(super) fn ast(db: &dyn NodeQueries, node_id: NodeId) -> Result<Code, QueryError> {
     let ast = db.node(node_id);
 
-    Ok(Arc::new(genast(&ast)?))
+    Ok(genast(&ast)?)
 }
 
-fn genast(node: &Node) -> Result<WithSpan<Expr>, QueryError> {
+fn genast(node: &Node) -> Result<Code, anyhow::Error> {
     let expr = match &node.content {
-        Content::SourceCode { syntax: _, source } => {
-            let tokens = scan(source)?;
-            return Ok(parse(tokens)?);
+        Content::SourceCode { syntax, source } => {
+            return Ok(Code::SourceCode {
+                syntax: syntax.clone(),
+                source: Arc::new(source.clone()),
+            })
         }
         Content::String(string) => Expr::Literal(Literal::String(string.clone())),
         Content::Integer(integer) => Expr::Literal(Literal::Integer(*integer)),
@@ -36,15 +37,18 @@ fn genast(node: &Node) -> Result<WithSpan<Expr>, QueryError> {
             arguments: node
                 .operands
                 .iter()
-                .map(genast)
-                .collect::<Result<Vec<_>, _>>()?,
+                .map(|node| match genast(node)? {
+                    Code::SourceCode { syntax, source } => Ok(parse_source_code(&syntax, &source)?),
+                    Code::Ast(ast) => Ok(ast.as_ref().clone()),
+                })
+                .collect::<Result<Vec<_>, anyhow::Error>>()?,
         },
     };
-    Ok(WithSpan {
+    Ok(Code::Ast(Arc::new(WithSpan {
         id: node.id.clone(),
         value: expr,
         span: 0..0,
-    })
+    })))
 }
 
 fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {

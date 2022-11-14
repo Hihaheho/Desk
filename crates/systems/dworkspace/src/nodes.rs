@@ -4,20 +4,19 @@ mod node;
 use std::sync::Arc;
 
 use ast::ast;
-use deskc_ast::{expr::Expr, span::WithSpan};
 use node::node;
 
-use components::{event::Event, flat_node::FlatNode, node::Node};
+use components::{code::Code, event::Event, flat_node::FlatNode, node::Node};
 use deskc_ids::NodeId;
 
-use crate::query_result::QueryResult;
+use crate::query_error::QueryError;
 
 #[salsa::query_group(KernelStorage)]
 pub trait NodeQueries {
     #[salsa::input]
     fn flat_node(&self, id: NodeId) -> Arc<FlatNode>;
     fn node(&self, id: NodeId) -> Arc<Node>;
-    fn ast(&self, id: NodeId) -> QueryResult<WithSpan<Expr>>;
+    fn ast(&self, id: NodeId) -> Result<Code, QueryError>;
 }
 
 #[salsa::database(KernelStorage)]
