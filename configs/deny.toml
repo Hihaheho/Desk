@@ -5,9 +5,7 @@ vulnerability = "deny"
 unmaintained = "allow"
 yanked = "deny"
 notice = "deny"
-ignore = [
-    "RUSTSEC-2021-0119", # Out-of-bounds write in nix::unistd::getgrouplist
-]
+ignore = []
 
 [licenses]
 unlicensed = "deny"
@@ -23,6 +21,9 @@ allow = [
     "BSD-2-Clause",
     "CC0-1.0",
     "BSL-1.0",
+]
+exceptions = [
+    { name = "unicode-ident", allow = ["Unicode-DFS-2016"] },
 ]
 default = "deny"
 

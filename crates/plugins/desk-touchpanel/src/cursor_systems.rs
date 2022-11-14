@@ -2,9 +2,7 @@ use bevy::{prelude::*, render::camera::Camera};
 use command::cursor::Cursor;
 
 pub(crate) fn add_cursor(mut commands: Commands) {
-    commands
-        .spawn()
-        .insert_bundle((Cursor, Transform::default()));
+    commands.spawn((Cursor, Transform::default()));
 }
 
 #[allow(clippy::type_complexity)]

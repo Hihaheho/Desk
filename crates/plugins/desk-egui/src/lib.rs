@@ -39,9 +39,7 @@ fn render(
 }
 
 fn add_theme(mut commands: Commands) {
-    commands
-        .spawn()
-        .insert(ron::from_str::<Theme>(include_str!("../../../../configs/theme.ron")).unwrap());
+    commands.spawn(ron::from_str::<Theme>(include_str!("../../../../configs/theme.ron")).unwrap());
 }
 
 fn color(color: &Color) -> Color32 {

@@ -89,23 +89,20 @@ impl Ctx {
                         output,
                     )
                 };
-                // FIXME: why we need this redundant let?
-                let x = ctx
-                    .subtype(
-                        &input_ty,
-                        ctx.continue_input
-                            .borrow()
-                            .last()
-                            .ok_or(TypeError::ContinueOutOfHandle)
-                            .map_err(|error| to_expr_type_error(expr, error))?,
-                    )
-                    .map_err(|error| to_expr_type_error(expr, error))?
-                    .add(Log::Effect(EffectExpr::Effects(vec![Effect {
-                        input: input_ty,
-                        output: output.clone(),
-                    }])))
-                    .with_type(output);
-                x
+                let continue_input = ctx.continue_input.borrow();
+                ctx.subtype(
+                    &input_ty,
+                    continue_input
+                        .last()
+                        .ok_or(TypeError::ContinueOutOfHandle)
+                        .map_err(|error| to_expr_type_error(expr, error))?,
+                )
+                .map_err(|error| to_expr_type_error(expr, error))?
+                .add(Log::Effect(EffectExpr::Effects(vec![Effect {
+                    input: input_ty,
+                    output: output.clone(),
+                }])))
+                .with_type(output)
             }
             Expr::Handle { expr, handlers } => {
                 // synth expr

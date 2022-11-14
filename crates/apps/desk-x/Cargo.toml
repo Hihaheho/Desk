@@ -13,7 +13,8 @@ inspector = ["bevy-inspector-egui"]
 
 [dependencies]
 egui-plugin = { path = "../../plugins/desk-egui", version = "0.0.0", package = "desk-egui" }
-rapier2d-plugin = { path = "../../plugins/desk-rapier2d", version = "0.0.0", package = "desk-rapier2d" }
+# wait for rapier2d supports bevy 0.9
+# rapier2d-plugin = { path = "../../plugins/desk-rapier2d", version = "0.0.0", package = "desk-rapier2d" }
 touchpanel-plugin = { path = "../../plugins/desk-touchpanel", version = "0.0.0", package = "desk-touchpanel" }
 editor-plugin = { path = "../../plugins/desk-editor", version = "0.0.0", package = "desk-editor" }
 terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", package = "desk-terminal" }

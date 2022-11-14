@@ -9,6 +9,10 @@ members = [
   "crates/adapters/*",
   "crates/tests/*",
 ]
+# wait for rapier2d supports bevy 0.9
+exclude = [
+  "crates/plugins/desk-rapier2d",
+]
 
 # for smaller build size
 [profile.release]
