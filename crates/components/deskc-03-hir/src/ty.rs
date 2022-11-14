@@ -1,6 +1,6 @@
 use crate::meta::WithMeta;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,

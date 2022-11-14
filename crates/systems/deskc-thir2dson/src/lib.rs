@@ -2,7 +2,7 @@ use dson::Dson;
 use thir::{Expr, Literal, TypedHir};
 use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq, Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum HirToJsonError {
     #[error("{0} not allowed")]
     NotAllowed(String),

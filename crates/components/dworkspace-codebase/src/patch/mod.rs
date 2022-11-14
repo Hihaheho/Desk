@@ -19,7 +19,7 @@ pub enum ContentPatch {
     UpdateApply { ty: Type, link_name: LinkName },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StringPatch {
     Replace(String),
     DiffMatchPatch(Vec<Patch>),

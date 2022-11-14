@@ -5,7 +5,7 @@ use hir::{expr::Expr, meta::Meta};
 use textual_diagnostics::{Report, TextualDiagnostics};
 use thiserror::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ExprTypeError {
     pub meta: Meta,
     pub error: TypeError,
@@ -23,7 +23,7 @@ impl std::error::Error for ExprTypeError {
     }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum TypeError {
     #[error("not applicable")]
     NotApplicable { expr: Box<Expr>, ty: Type },
