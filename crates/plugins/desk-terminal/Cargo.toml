@@ -17,5 +17,5 @@ dworkspace-codebase = { package = "dworkspace-codebase", path = "../../component
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 deskc-types = { package = "deskc-types", path = "../../components/deskc-types", version = "0.0.0" }
 
-bevy = "0.8"
+bevy = "0.9"
 egui = "0.19.0"

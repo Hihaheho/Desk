@@ -12,5 +12,5 @@ edition = "2021"
 
 [dependencies]
 
-bevy_math = "0.8"
-bevy_ecs = "0.8"
+bevy_math = "0.9"
+bevy_ecs = "0.9"

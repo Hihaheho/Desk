@@ -14,6 +14,6 @@ desk-system-ordering = { package = "desk-system-ordering", path = "../../compone
 theme = { path = "../../components/desk-theme", version = "0.0.0", package = "desk-theme" }
 dworkspace = { path = "../../systems/dworkspace", version = "0.0.0", package = "dworkspace" }
 
-bevy = "0.8"
+bevy = "0.9"
 ron = "0.8"
-bevy_egui = "0.16"
+bevy_egui = "0.17"
