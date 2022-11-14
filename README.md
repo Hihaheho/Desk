@@ -7,69 +7,127 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)
 
+## Release soon!
 
-## Goal and philosophy
+### Pre-release (planned for this month)
 
-🎯 **We want to make top boards of people's desks into touch panel displays that run Desk.**
+Pre-release includes:
+
+- [x] incremental Desk-lang compiler
+- [x] DeskVM with an official scheduler
+- [x] a file system for Desk-lang
+- [ ] an alternative syntax for Desk-lang like Rust
+- [ ] Desk-lang visual editor
+- [ ] A web demo like Rust Playground for Desk-lang
+
+### The first release (planned for this year)
+
+The first release includes:
+
+- [ ] MVP of Desk Craft, a game engine
+- [ ] a platformer game demo
+- [ ] a space to publish created games
+- [ ] real-time collaboration on Web
+- [ ] paid plans for Desk X (official hosting)
+
+## Goals and Philosophy
+
+🎯 **Blur the line between living and coding**
+🎯 **Make every software programmable**
 
 - 🎮 **Intuitive** like games
 - 🥼 **Pragmatic** like professional tools
-- 🗺️️ **Versatile** like spreadsheet
+- 🗺️️ **Versatile** like spreadsheets
 - 💗 **Accessible** to everyone
 - 🛹 **Minimalist** design
 
 ## Why Desk?
 
-Desk apps (applications built on Desk) are inherently:
+Desk apps are inherently:
 
-- 🎼 **Data-oriented**
-- 🔒 **Statically-typed** (data and UI)
-- 🤖 **Programmable** (extensible by code)
-- 🧲 **Interoperable** with other Desk apps
-- 📱 Running on **everywhere** (web, desktop, mobile)
+- 🎼 **code-oriented** like data-oriented
+- 🔒 **statically-typed** (data and UI)
+- 🤖 **programmable** (extensible by code)
+- 🧲 **interoperable** with other Desk apps
+- 📱 running on **everywhere** (web, desktop, mobile)
 
-## How does it work?
+## How does Desk work?
 
-Desk is powered by several systems:
+Desk is consist of:
 
-- Desk Programming Language (Desk-lang)
-- Desk-workspace (dworkspace)
+- Desk Programming Language and Desk Compiler (deskc)
+- Desk Workspace System (dworkspace)
+- DeskVM (deskvm)
 - Desk-plugins (dplugins)
 
-### Desk Programming Language
+## Desk Programming Language (Desk-lang)
 
-Desk-lang is a programming language which has:
+Desk-lang is a programming language that has:
 
-- Minimalistic syntax and semantics
-- Type system with inference
-- Algebraic effects
-- Content-addressable by type and UUID
-- Incremental compilation
+- minimalistic syntax and semantics
+- type system with inference
+- algebraic effects
+- content-addressable by type and UUID
+- incremental compilation
 
-Most of data and programs on Desk apps are finally evaluated as a snippet of Desk-lang.
+Most of the data and programs on Desk apps are finally evaluated as a snippet of Desk-lang.
 
-### Desk-workspace (dworkspace)
+## Desk Compiler (deskc)
+
+Desk compiler is an incremental compiler for Desk-lang.
+
+**Crates**
+
+- [deskc](/crates/systems/deskc/src): the incremental compiler
+- [deskc-lexer](/crates/systems/deskc-01-lexer/src) scans Desk-lang source code and generates tokens
+- [deskc-parser](/crates/systems/deskc-02-parser/src) parses tokens and generates an AST
+- [deskc-typeinfer](/crates/systems/deskc-04-typeinfer/src) infers types of expressions.
+- [deskc-mirgen](/crates/systems/deskc-06-mirgen/src) generates [MIR](/crates/components/deskc-05-mir/src)
+
+## Desk-workspace (dworkspace)
 
 Desk-workspace is a platform-agnostic environment for editing Desk-lang.
 
 Desk-workspace provides these features:
 
-- File system for Desk-lang
-- Permission management system
-- Realtime collaboration support
-- 🚧 Package management system
-- 🚧 Version control system
+- file system for Desk-lang
+- permission management system
+- realtime collaboration support
 
-🚧 not yet implemented
+**Crates**
 
-### Desk-plugins (dplugins)
+- [dworkspace](/crates/systems/dworkspace/src): the implementation
+- [dworkspace-codebase](/crates/components/dworkspace-codebase/src) defines structs for a codebase
 
-There are many Desk-plugins. Each Desk-plugin implements a single feature for the Desk Environment.
+## DeskVM (deskvm)
 
-- **Desk Editor** is an default editor for Desk-lang
-- **Desk Runtime** is an default runtime for Desk-lang
-- **Desk Guide** provides 🚧 interactive tutorials of Desk
-- **Desk Craft** provides 🚧 3D/2D rendering with meshes
+DeskVM is a runtime for Desk-lang influenced by Erlang VM.
+
+**Features**
+
+- platform-agnostic
+- capable of running many programs as a d-process
+- type-driven message passing and pub/sub
+- interpreter-agnostic: DeskVM can run anything as a d-process
+- preemptive scheduling
+- custom scheduler support
+
+**Crates**
+
+- [deskvm](/crates/systems/deskvm/src): the implementation
+- [deskvm-dprocess](/crates/components/deskvm-dprocess/src) defines structs of such as d-process
+
+## Desk-plugins (dplugins)
+
+There are many Desk-plugins. Each Desk-plugin implements a single feature as a Bevy Plugin.
+
+- 🚧 **Desk Craft** for game development
+- 🚧 **Desk Brain** for productivity
+- 🚧 **Desk Verse** for communication
+- 🚧 **Desk Robot** for automation
+- 🚧 **Desk Board** for BI
+- 🚧 **Desk Calendar** for scheduling
+- 🚧 **Desk Pages** for hosting
 
 🚧 not yet implemented
 
