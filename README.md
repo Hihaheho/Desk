@@ -30,6 +30,8 @@ The first release includes:
 - [ ] real-time collaboration on Web
 - [ ] paid plans for Desk X (official hosting)
 
+[See the draft of the first release](/docs/blog/0001-introduce-desk.md)
+
 ## Goals and Philosophy
 
 🎯 **Blur the line between living and coding**
