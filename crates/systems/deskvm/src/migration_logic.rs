@@ -93,7 +93,10 @@ impl MigrationLogic for OfficialMigrationLogic {
         {
             let running_count = running_counts.get(name).unwrap();
             for _ in 0..*assignment - running_count {
-                let id = to_be_attached.pop_first().unwrap();
+                // TODO: use pop_first() instead when it is stabilized.
+                let id = to_be_attached.iter().next().unwrap().clone();
+                to_be_attached.remove(&id);
+
                 attachments.insert(id.clone());
                 suggestions.push(MigrateSuggestion {
                     process_id: id,
