@@ -92,6 +92,7 @@ macro_rules! test {
             let mir = mirgen::gen_mir(&thir).unwrap();
             let mut miri = miri::eval_mir(mir);
             use dprocess::interpreter::Interpreter;
+            let start = std::time::Instant::now();
             let value = loop {
                 match miri.reduce(&std::time::Duration::from_secs(1)).unwrap() {
                     dprocess::interpreter_output::InterpreterOutput::Returned(ret) => break ret,
@@ -104,6 +105,8 @@ macro_rules! test {
                     dprocess::interpreter_output::InterpreterOutput::Running => continue,
                 }
             };
+            let end = std::time::Instant::now();
+            println!("{:?}", end - start);
             for assertion in test_case.assertions.iter() {
                 match assertion {
                     Assertion::RunSuccess { result } => {

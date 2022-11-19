@@ -20,6 +20,7 @@ pub struct Timer {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TimerType {
+    /// Repeated(0) is one-shot timer.
     Repeated(u64),
     Infinite,
 }
@@ -79,14 +80,14 @@ impl Timer {
             match self.ty {
                 TimerType::Repeated(time) => {
                     let count = self.ellapsed.as_nanos() / self.duration.as_nanos();
-                    let max_rings = time - self.counter;
+                    let max_rings = (time + 1) - self.counter;
                     let rings = count.min(max_rings as u128);
                     if rings != 0 {
                         for _ in 0..rings {
                             self.unhandled_events.push(TimerEvent::Ring(self.counter));
                             self.counter += 1;
                         }
-                        if self.counter >= time {
+                        if self.counter > time {
                             self.unhandled_events.push(TimerEvent::Finished);
                         }
                     }
@@ -118,7 +119,7 @@ mod tests {
     fn new() {
         let timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(1),
+            ty: TimerType::Repeated(0),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -129,7 +130,7 @@ mod tests {
     fn dequeue_events() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(1),
+            ty: TimerType::Repeated(0),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -146,7 +147,7 @@ mod tests {
     fn tick_adds_ellapsed() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(1),
+            ty: TimerType::Repeated(0),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -160,7 +161,7 @@ mod tests {
     fn tick_finishes_oneshot() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(1),
+            ty: TimerType::Repeated(0),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -175,7 +176,7 @@ mod tests {
     fn ring_and_finish_occurs_once_for_oneshot() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(1),
+            ty: TimerType::Repeated(0),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -213,7 +214,7 @@ mod tests {
     fn repeated_rings() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(3),
+            ty: TimerType::Repeated(2),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -233,7 +234,7 @@ mod tests {
     fn repeated_does_not_exceed_the_time() {
         let mut timer = Timer::new(TimerManifest {
             name: "test".to_string(),
-            ty: TimerType::Repeated(3),
+            ty: TimerType::Repeated(2),
             duration: Duration::from_secs(1),
             time_kind: TimeKind::Interpreter,
         });
@@ -247,17 +248,5 @@ mod tests {
                 TimerEvent::Finished
             ]
         );
-    }
-
-    #[test]
-    fn repeated_0_does_nothing() {
-        let mut timer = Timer::new(TimerManifest {
-            name: "test".to_string(),
-            ty: TimerType::Repeated(0),
-            duration: Duration::from_secs(1),
-            time_kind: TimeKind::Interpreter,
-        });
-        timer.tick(Duration::from_secs(5));
-        assert_eq!(timer.dequeue_events(), vec![]);
     }
 }

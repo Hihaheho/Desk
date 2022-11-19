@@ -12,7 +12,7 @@ pub enum Priority {
     Low,
     // Normal priority.
     Default,
-    // Low priority than default.
+    // High priority than default.
     High,
     /// The process should be scheduled always.
     Max,

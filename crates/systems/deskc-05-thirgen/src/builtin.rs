@@ -94,6 +94,7 @@ fn labeled(label: &str, item: Type) -> Type {
     }
 }
 
+// FIXME: This logic should be in miri.
 fn divide(thirgen: &TypedHirGen, args: &[WithMeta<hir::expr::Expr>], op: BuiltinOp) -> Expr {
     assert_eq!(args.len(), 2, "args for div must be 2");
     let dividend = thirgen.gen(&args[0]);

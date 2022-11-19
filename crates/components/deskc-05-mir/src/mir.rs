@@ -21,6 +21,7 @@ pub struct ControlFlowGraph {
 pub struct ControlFlowGraphId(pub usize);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Mir -> CFGs -> Blocks -> Stmts
 pub struct Mir {
     pub entrypoint: ControlFlowGraphId,
     pub cfgs: Vec<ControlFlowGraph>,
