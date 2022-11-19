@@ -50,7 +50,7 @@ pub fn parse(input: &str) -> anyhow::Result<WithSpan<Expr>> {
 
 impl From<grammar_trait::Expr<'_>> for WithSpan<Expr> {
     fn from(expr: grammar_trait::Expr) -> Self {
-        ma
+        todo!()
     }
 }
 
