@@ -29,14 +29,14 @@ Expr: Comment Expr
     | Handle
     | Product
     | Vector
-    | Set
+    | Map
     | Attributed
     | Match
     | Function
     | Apply
     | Reference
     | Labeled
-    | NewTipe
+    | NewType
     | Card
     | Brand
     ;
@@ -51,21 +51,22 @@ Expr: Comment Expr
         String: "\u{0022}([^\\]|\\.)*\u{0022}";
     Let: LetKey^ Expr [ TyAnno^ Ty ] StmtEnd^ Expr;
     Perform: PerformSym^ [ EArrow^ Ty ] Expr;
-    Continue: ContinueSym^ Expr;
+    Continue: ContinueSym^ [ EArrow^ Ty ] Expr;
     Handle: HandleKey^ Expr BlockBegin^ { Handler } BlockEnd^;
         Handler: Ty EArrow^ Ty MatchArrow^ CaseBlock;
     Product: ProductKey^ BlockBegin^ [ Exprs ] BlockEnd^;
     Vector: VecBegin^ [ Exprs ] VecEnd^;
-    Set: SetKey^ BlockBegin^ [ Exprs ] BlockEnd^;
+    Map: MapKey^ BlockBegin^ [ MapElems ] BlockEnd^;
+        MapElems: Expr Arrow^ Expr { Comma^ Expr Arrow^ Expr };
     Attributed: Attribute Expr;
     Match: MatchKey^ Expr BlockBegin^ { Case } BlockEnd^;
         Case: Expr MatchArrow^ CaseBlock;
-    Function: FunctionSig FunctionBlock;
+    Function: FunctionKey^ ParamsBegin^ [ Tys ] ParamsEnd^ Arrow^ FunctionBlock;
         FunctionBlock: Expr | BlockBegin^ Expr BlockEnd^;
     Apply: ApplySym^ Ty [ Uuid ] ParamsBegin^ Exprs ParamsEnd^;
     Reference: ReferenceSym^ Ty;
     Labeled: Label Expr;
-    NewTipe: TyKey^ Ident Equal^ Ty StmtEnd^ Expr;
+    NewType: TyKey^ Ident Equal^ Ty StmtEnd^ Expr;
     Card: CardKey^ Uuid Expr StmtEnd^ Expr;
     Brand: BrandKey^ Expr StmtEnd^ Expr;
 
@@ -79,7 +80,7 @@ Ty: Infer
     | ProductTy
     | Sum
     | VecTy
-    | SetTy
+    | MapTy
     | FunctionTy
     | LabeledTy
     | AttributedTy
@@ -91,16 +92,16 @@ Ty: Infer
     Effectful: PerformSym^ EffectExpr Ty;
         EffectExpr: Effects | AddEffects | SubEffects| ApplyEffects;
         Effects: BlockBegin^ [ Effect { Comma^ Effect } ] BlockEnd^;
-        AddEffects: SumSym^ EffectExpr { Comma^ EffectExpr } Dot^;
-        SubEffects: Minus^ EffectExpr Comma^ EffectExpr Dot^;
-        ApplyEffects: Ty ParamsBegin^ Tys ParamsEnd^;
+        AddEffects: SumSym^ GenericsBegin^ EffectExpr { Comma^ EffectExpr } GenericsEnd^;
+        SubEffects: Minus^ GenericsBegin EffectExpr Comma^ EffectExpr GenericsEnd^;
+        ApplyEffects: ApplySym^ Ty ParamsBegin^ Tys ParamsEnd^;
     Trait: TraitKey^ BlockBegin^ { TraitMember } BlockEnd^;
-        TraitMember: FunctionSig StmtEnd^;
+        TraitMember:  FunctionKey^ ParamsBegin^ [ Tys ] ParamsEnd^ Arrow^ Ty StmtEnd^;
     ProductTy: ProductKey^ BlockBegin^ [ Tys ] BlockEnd^;
     Sum: SumKey^ BlockBegin^ [ Tys ] BlockEnd^;
     VecTy: VecBegin^ Ty VecEnd^;
-    SetTy: SetKey^ BlockBegin^ Ty BlockEnd^;
-    FunctionTy: FunctionSig;
+    MapTy: MapKey^ BlockBegin^ Ty Arrow^ Ty BlockEnd^;
+    FunctionTy: FunctionKey^ ParamsBegin^ [ Tys ] ParamsEnd^ Arrow^ Ty;
     LabeledTy: Label Ty;
     AttributedTy: Attribute Ty;
     Variable: Ident;
@@ -109,9 +110,8 @@ Ty: Infer
     Exist: ExistKey^ GenericsBegin^ Ident [ TyAnno^ Trait ] GenericsEnd^ Ty;
 
 // Utilities
-Exprs: Expr { Comma^ Expr } [ Comma^ ];
-Tys: Ty { Comma^ Ty } [ Comma^ ];
-FunctionSig: FunctionKey^ ParamsBegin^ [ Tys ] ParamsEnd^ [ Arrow^ Ty ];
+Exprs: Expr { Comma^ Expr };
+Tys: Ty { Comma^ Ty };
 CaseBlock: BlockBegin^ Expr BlockBegin^
          | Expr [ Comma^ ];
 Comment: InlineCommentBegin^ ".*"
@@ -157,7 +157,7 @@ Minus: "\-";
 // Keywords
 DoKey: "do";
 LetKey: "let";
-SetKey: "set";
+MapKey: "map";
 HandleKey: "handle";
 MatchKey: "match";
 FunctionKey: "fn";
