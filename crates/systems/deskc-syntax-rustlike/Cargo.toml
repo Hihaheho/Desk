@@ -19,7 +19,7 @@ parol_runtime = { git = "https://github.com/jsinger67/parol_runtime", rev = "b33
 anyhow = "1.0.66"
 
 [build-dependencies]
-parol = { git = "https://github.com/jsinger67/parol", rev = "de87205408d4240f83c5711eff3f9c6b7b2d38d9" }
+parol = { git = "https://github.com/jsinger67/parol", rev = "8e176890d244834cde63cbbcbabf888dd203daf8" }
 
 [dev-dependencies]
-parol = { git = "https://github.com/jsinger67/parol", rev = "de87205408d4240f83c5711eff3f9c6b7b2d38d9" }
+parol = { git = "https://github.com/jsinger67/parol", rev = "8e176890d244834cde63cbbcbabf888dd203daf8" }

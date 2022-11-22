@@ -2,18 +2,8 @@
 %title "Rust-like syntax for Desk-lang"
 %comment ""
 
-%scanner String {
-    %auto_newline_off
-    %auto_ws_off
-}
-
-%scanner InlineComment {
-    %auto_ws_off
-}
-
 %scanner BlockComment {
     %auto_newline_off
-    %auto_ws_off
 }
 
 %%
@@ -43,12 +33,12 @@ Expr: Comment Expr
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: ParamsBegin^ Ty ParamsEnd^ Expr;
     Literal: Integer | Float | String;
-        Integer: "\-?\p{Nd}+"
-               | "\-?0x[0-9a-fA-F]+"
-               | "\-?0o[0-7]+"
-               | "\-?0b[01]+";
-        Float: "\-?\p{Nd}+\.\p{Nd}";
-        String: "\u{0022}([^\\]|\\.)*\u{0022}";
+        Integer: /\-?\p{Nd}+/
+               | /\-?0x[0-9a-fA-F]+/
+               | /\-?0o[0-7]+/
+               | /\-?0b[01]+/;
+        Float: /\-?\p{Nd}+\.\p{Nd}/;
+        String: /"([^\\]|\\.)*"/;
     Let: LetKey^ Expr [ TyAnno^ Ty ] StmtEnd^ Expr;
     Perform: PerformSym^ [ EArrow^ Ty ] Expr;
     Continue: ContinueSym^ [ EArrow^ Ty ] Expr;
@@ -118,58 +108,57 @@ Comment: InlineCommentBegin^ ".*"
        | BlockCommentBegin^ %push(BlockComment) "([^\*](\*[^/])?)*\*?" %pop() BlockCommentEnd^;
 Attribute: AttributeSym^ Expr;
 Label: LabelSym^ Expr;
-Ident: "[^!-@\[-`\{-~\w][^\w]*"
-     | "`[^!-@\[-`\{-~\w][^\w]*([\w]*[^!-@\[-`\{-~\w][^\w]*)*`";
-Uuid: UuidKey^ "[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}";
+Ident: /[^!-@\[-`\{-~\w][^\w]*/
+     | /`[^!-@\[-`\{-~\w][^\w]*([\w]*[^!-@\[-`\{-~\w][^\w]*)*`/;
+Uuid: UuidKey^ /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
 
 // Tokens
-Comma: ",";
-Dot: ".";
-StmtEnd: ";";
-TyAnno: ":";
-BlockBegin: "\{";
-BlockEnd: "\}";
-Arrow: "\->";
-EArrow: "\~>";
-MatchArrow: "=>";
-Hole: "\?";
-VecBegin: "\[";
-VecEnd: "\]";
-AttributeSym: "#";
-ParamsBegin: "\(";
-ParamsEnd: "\)";
-LabelSym: "@";
-Equal: "=";
-Infer: "_";
-BlockCommentBegin: "/\*";
-BlockCommentEnd: "\*/";
-InlineCommentBegin: "//";
-GenericsBegin: "<";
-GenericsEnd: ">";
-PerformSym: "!";
-ContinueSym: "<\~";
-ReferenceSym: "&";
-ApplySym: "\^";
-SumSym: "\+";
-Minus: "\-";
+Comma: ',';
+StmtEnd: ';';
+TyAnno: ':';
+BlockBegin: '{';
+BlockEnd: '}';
+Arrow: '->';
+EArrow: '~>';
+MatchArrow: '=>';
+Hole: '?';
+VecBegin: '[';
+VecEnd: ']';
+AttributeSym: '#';
+ParamsBegin: '(';
+ParamsEnd: ')';
+LabelSym: '@';
+Equal: '=';
+Infer: '_';
+BlockCommentBegin: '\*';
+BlockCommentEnd: '*/';
+InlineCommentBegin: '//';
+GenericsBegin: '<';
+GenericsEnd: '>';
+PerformSym: '!';
+ContinueSym: '<~';
+ReferenceSym: '&';
+ApplySym: '^';
+SumSym: '+';
+Minus: '-';
 
 // Keywords
-DoKey: "do";
-LetKey: "let";
-MapKey: "map";
-HandleKey: "handle";
-MatchKey: "match";
-FunctionKey: "fn";
-TyKey: "type";
-UuidKey: "uuid";
-This: "self";
-AllKey: "forall";
-ExistKey: "exists";
-TraitKey: "trait";
-CardKey: "card";
-BrandKey: "brand";
-StringKey: "string";
-NumberKey: "number";
-SumKey: "enum";
-ProductKey: "struct";
+DoKey: 'do';
+LetKey: 'let';
+MapKey: 'map';
+HandleKey: 'handle';
+MatchKey: 'match';
+FunctionKey: 'fn';
+TyKey: 'type';
+UuidKey: 'uuid';
+This: 'self';
+AllKey: 'forall';
+ExistKey: 'exists';
+TraitKey: 'trait';
+CardKey: 'card';
+BrandKey: 'brand';
+StringKey: 'string';
+NumberKey: 'number';
+SumKey: 'enum';
+ProductKey: 'struct';

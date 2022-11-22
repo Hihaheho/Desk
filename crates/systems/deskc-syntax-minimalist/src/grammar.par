@@ -2,11 +2,6 @@
 %title "Minimalist syntax for Desk-lang"
 %comment ""
 
-%scanner String {
-    %auto_newline_off
-    %auto_ws_off
-}
-
 %%
 
 Expr: Comment Expr
@@ -34,12 +29,12 @@ Expr: Comment Expr
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: TyAnno^ Ty Expr;
     Literal: Integer | Float | String;
-        Integer: "\-?\p{Nd}+"
-               | "\-?0x[0-9a-fA-F]+"
-               | "\-?0o[0-7]+"
-               | "\-?0b[01]+";
-        Float: "\-?\p{Nd}+\.\p{Nd}";
-        String: "\u{0022}([^\\]|\\.)*\u{0022}";
+        Integer: /\-?\p{Nd}+/
+               | /\-?0x[0-9a-fA-F]+/
+               | /\-?0o[0-7]+/
+               | /\-?0b[01]+/;
+        Float: /\-?\p{Nd}+\.\p{Nd}/;
+        String: /"([^\\]|\\.)*"/;
     Let: LetSym^ Expr [ TyAnno^ Ty ] StmtEnd^ Expr;
     Perform: PerformSym^ [ EArrow^ Ty ] Expr;
     Continue: ContinueSym^ [ EArrow^ Ty ] Expr;
@@ -82,7 +77,7 @@ Ty: Infer
         EffectExpr: Effects | AddEffects | SubEffects| ApplyEffects;
         Effects: MapBegin^ { Effect } MapEnd^;
         AddEffects: SumSym^ TypeBegin^ { EffectExpr } TypeEnd^;
-        SubEffects: Minus^ EffectExpr EffectExpr;
+        SubEffects: Minus^ TypeBegin^ EffectExpr EffectExpr TypeEnd^;
         ApplyEffects: ApplySym^ Ty ParamsBegin^ { Ty } ParamsEnd^;
     Trait: TraitSym^ TypeBegin^ { Function } TypeEnd^;
     ProductTy: ProductSym^ TypeBegin^ { Ty } TypeEnd^;
@@ -98,46 +93,45 @@ Ty: Infer
     Exist: ExistKey^ Ident [ TyAnno^ Trait ] Ty;
 
 // Utilities
-Comment: "\(\("^ "[^\)]*(\)[^\)][^\)]*)*" "\)\)"^;
+Comment: '(('^ /[^\)]*(\)[^\)][^\)]*)*/ '))'^;
 Attribute: AttributeSym^ Expr;
 Label: LabelSym^ Expr;
-Ident: "[^!-@\[-`\{-~\w][^\w]*"
-     | "`[^!-@\[-`\{-~\w][^\w]*([\w]*[^!-@\[-`\{-~\w][^\w]*)*`";
-Uuid: UuidKey^ "[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}";
+Ident: /[^!-@\[-`\{-~\w][^\w]*(\w*[^!-@\[-`\{-~\w][^\w]*)*/;
+Uuid: UuidKey^ /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
 
 // Tokens
 // "," "." "~" is not used.
-StmtEnd: ";";
-TyAnno: ":";
-MapBegin: "\{";
-MapEnd: "\}";
-Arrow: "\->";
-EArrow: "\~>";
-MatchArrow: "=>";
-Hole: "\?";
-VecBegin: "\[";
-VecEnd: "\]";
-TypeBegin: "\<";
-TypeEnd: "\>";
-ParamsBegin: "\(";
-ParamsEnd: "\)";
-LabelSym: "@";
-Infer: "_";
-PerformSym: "!";
-ContinueSym: "<\~";
-ReferenceSym: "&";
-ApplySym: "\^";
-ProductSym: "\*";
-SumSym: "\+";
-Minus: "\-";
-LetSym: "\$";
-This: "'self";
-TraitSym: "%";
-AttributeSym: "#";
+StmtEnd: ';';
+TyAnno: ':';
+MapBegin: '{';
+MapEnd: '}';
+Arrow: '->';
+EArrow: '~>';
+MatchArrow: '=>';
+Hole: '?';
+VecBegin: '[';
+VecEnd: ']';
+TypeBegin: '<';
+TypeEnd: '>';
+ParamsBegin: '(';
+ParamsEnd: ')';
+LabelSym: '@';
+Infer: '_';
+PerformSym: '!';
+ContinueSym: '<~';
+ReferenceSym: '&';
+ApplySym: '^';
+ProductSym: '*';
+SumSym: '+';
+Minus: '-';
+LetSym: '$';
+TraitSym: '%';
+AttributeSym: '#';
 FunctionSym: "\\";
 
 // Keywords
+This: "'this";
 DoKey: "'do";
 TyKey: "'type";
 UuidKey: "'uuid";
