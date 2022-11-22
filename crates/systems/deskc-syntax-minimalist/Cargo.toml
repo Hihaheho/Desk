@@ -1,0 +1,25 @@
+[package]
+name = "deskc-syntax-minimalist"
+version = "0.0.0"
+license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../README.md"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
+textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+
+parol_runtime = { git = "https://github.com/jsinger67/parol_runtime", rev = "b3377abf1582411664e2e4d290bd946e62075c8b", features = ["auto_generation"] }
+anyhow = "1.0.66"
+
+[build-dependencies]
+parol = { git = "https://github.com/jsinger67/parol", rev = "de87205408d4240f83c5711eff3f9c6b7b2d38d9" }
+
+[dev-dependencies]
+parol = { git = "https://github.com/jsinger67/parol", rev = "de87205408d4240f83c5711eff3f9c6b7b2d38d9" }
