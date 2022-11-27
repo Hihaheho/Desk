@@ -18,6 +18,6 @@ anyhow = "1.0.66"
 parking_lot = "0.12.1"
 
 [dev-dependencies]
-uuid = { version = "1.2.1", features = ["v4"] }
+uuid = { version = "1.2.2", features = ["v4"] }
 mir = { path = "../../components/deskc-05-mir", version = "0.0.0", package = "deskc-mir" }
 miri = { path = "../deskvm-miri", version = "0.0.0", package = "deskvm-miri" }
