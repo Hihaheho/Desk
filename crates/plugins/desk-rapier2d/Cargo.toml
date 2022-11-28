@@ -14,5 +14,5 @@ edition = "2021"
 system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
 physics = { package = "desk-physics", path = "../../components/desk-physics", version = "0.0.0" }
 
-bevy = "0.8"
-bevy_rapier2d = { version = "0.18", features = ["wasm-bindgen", "debug-render"] }
+bevy = "0.9"
+bevy_rapier2d = { version = "0.19", features = ["wasm-bindgen", "debug-render"] }
