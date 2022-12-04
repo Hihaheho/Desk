@@ -12,7 +12,8 @@ pub enum Literal {
     String(String),
     Int(i64),
     Float(f64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
 }
 
 // Literal::Float should not be NaN

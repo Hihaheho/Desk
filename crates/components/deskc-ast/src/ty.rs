@@ -16,7 +16,7 @@ pub enum Type {
     },
     Number,
     String,
-    Trait(Trait),
+    Trait(Vec<WithSpan<Function>>),
     Effectful {
         ty: Box<WithSpan<Self>>,
         effects: WithSpan<EffectExpr>,
@@ -80,6 +80,3 @@ pub enum EffectExpr {
         arguments: Vec<WithSpan<Type>>,
     },
 }
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Trait(pub Vec<WithSpan<Function>>);

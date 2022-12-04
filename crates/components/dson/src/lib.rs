@@ -22,7 +22,8 @@ impl Ord for Float {
 pub enum Literal {
     String(String),
     Integer(i64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Float(Float),
     Hole,
 }
@@ -76,7 +77,7 @@ pub enum Type {
     Variable(String),
 }
 
-impl <T: ToString> From<T> for Dson {
+impl<T: ToString> From<T> for Dson {
     fn from(s: T) -> Self {
         Dson::Literal(Literal::String(s.to_string()))
     }

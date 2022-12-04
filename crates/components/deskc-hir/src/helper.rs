@@ -47,17 +47,13 @@ pub trait HirVisitor {
         self.visit_expr(definition);
         self.visit_expr(expression);
     }
-    fn visit_perform(&mut self, input: &WithMeta<Expr>, output: &Option<WithMeta<Type>>) {
+    fn visit_perform(&mut self, input: &WithMeta<Expr>, output: &WithMeta<Type>) {
         self.visit_expr(input);
-        if let Some(output) = output {
-            self.visit_type(output);
-        }
+        self.visit_type(output);
     }
-    fn visit_continue(&mut self, input: &WithMeta<Expr>, output: &Option<WithMeta<Type>>) {
+    fn visit_continue(&mut self, input: &WithMeta<Expr>, output: &WithMeta<Type>) {
         self.visit_expr(input);
-        if let Some(output) = output {
-            self.visit_type(output);
-        }
+        self.visit_type(output);
     }
     fn visit_handle(&mut self, handlers: &[Handler], expr: &WithMeta<Expr>) {
         for handler in handlers {
@@ -205,11 +201,11 @@ pub fn remove_meta(expr: WithMeta<Expr>) -> WithMeta<Expr> {
         },
         Expr::Perform { input, output } => Expr::Perform {
             input: Box::new(remove_meta(*input)),
-            output: output.map(remove_meta_ty),
+            output: remove_meta_ty(output),
         },
         Expr::Continue { input, output } => Expr::Continue {
             input: Box::new(remove_meta(*input)),
-            output: output.map(remove_meta_ty),
+            output: remove_meta_ty(output),
         },
         Expr::Handle { handlers, expr } => Expr::Handle {
             handlers: handlers

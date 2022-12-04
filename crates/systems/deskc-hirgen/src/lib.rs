@@ -58,7 +58,6 @@ impl HirGen {
             ast::ty::Type::String => self.with_meta(Type::String),
             ast::ty::Type::Trait(trait_) => self.with_meta(Type::Trait(
                 trait_
-                    .0
                     .iter()
                     .map(|function| {
                         self.push_span(function.id.clone(), function.span.clone());
@@ -200,14 +199,11 @@ impl HirGen {
             }),
             ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
                 input: Box::new(self.gen_card(input)?),
-                output: output.as_ref().map(|ty| self.gen_type(ty)).transpose()?,
+                output: self.gen_type(output)?,
             }),
             ast::expr::Expr::Continue { input, output } => self.with_meta(Expr::Continue {
                 input: Box::new(self.gen_card(input)?),
-                output: output
-                    .as_ref()
-                    .map(|output| self.gen_type(output))
-                    .transpose()?,
+                output: self.gen_type(output)?,
             }),
             ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
                 handlers: handlers

@@ -7,7 +7,8 @@ use crate::{meta::WithMeta, ty::Type};
 pub enum Literal {
     String(String),
     Integer(i64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Float(f64),
     Hole,
 }
@@ -35,11 +36,11 @@ pub enum Expr {
     },
     Perform {
         input: Box<WithMeta<Self>>,
-        output: Option<WithMeta<Type>>,
+        output: WithMeta<Type>,
     },
     Continue {
         input: Box<WithMeta<Self>>,
-        output: Option<WithMeta<Type>>,
+        output: WithMeta<Type>,
     },
     Handle {
         handlers: Vec<Handler>,

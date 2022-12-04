@@ -30,7 +30,8 @@ pub enum Value {
 pub enum Number {
     Integer(i64),
     Float(f64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
 }
 
 // A float of should not be NaN.

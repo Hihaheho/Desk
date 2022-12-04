@@ -8,7 +8,8 @@ pub enum Content {
     SourceCode { syntax: SyntaxKind, source: String },
     String(String),
     Integer(i64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Float(f64),
     Apply { ty: Type, link_name: LinkName },
 }

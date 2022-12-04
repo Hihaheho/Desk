@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     span::WithSpan,
-    ty::{Effect, EffectExpr, Trait, Type},
+    ty::{Effect, EffectExpr, Function, Type},
 };
 
 pub trait ExprVisitorMut {
@@ -51,17 +51,13 @@ pub trait ExprVisitorMut {
         self.visit_expr(definition);
         self.visit_expr(body);
     }
-    fn visit_perform(&mut self, input: &mut WithSpan<Expr>, output: &mut Option<WithSpan<Type>>) {
+    fn visit_perform(&mut self, input: &mut WithSpan<Expr>, output: &mut WithSpan<Type>) {
         self.visit_expr(input);
-        if let Some(output) = output {
-            self.visit_type(output);
-        }
+        self.visit_type(output);
     }
-    fn visit_continue(&mut self, input: &mut WithSpan<Expr>, output: &mut Option<WithSpan<Type>>) {
+    fn visit_continue(&mut self, input: &mut WithSpan<Expr>, output: &mut WithSpan<Type>) {
         self.visit_expr(input);
-        if let Some(output) = output {
-            self.visit_type(output);
-        }
+        self.visit_type(output);
     }
     fn visit_handle(&mut self, expr: &mut WithSpan<Expr>, handlers: &mut Vec<Handler>) {
         self.visit_expr(expr);
@@ -209,8 +205,8 @@ pub trait TypeVisitorMut {
     }
     fn visit_number(&mut self) {}
     fn visit_string(&mut self) {}
-    fn visit_trait(&mut self, types: &mut Trait) {
-        for ty in &mut types.0 {
+    fn visit_trait(&mut self, types: &mut [WithSpan<Function>]) {
+        for ty in types {
             self.visit_type(&mut ty.value.parameter);
             self.visit_type(&mut ty.value.body);
         }

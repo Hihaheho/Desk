@@ -2,14 +2,19 @@
 %title "Minimalist syntax for Desk-lang"
 %comment ""
 
-%scanner BlockComment {
-    %auto_newline_off
-}
-
 %scanner String {
     %auto_ws_off
     %auto_newline_off
 }
+%scanner BlockComment {
+    %auto_ws_off
+    %auto_newline_off
+}
+%scanner InlineComment {
+    %auto_ws_off
+}
+%scanner Uuid {}
+%scanner Ident {}
 
 %%
 
@@ -37,28 +42,32 @@ Expr: Comment Expr
     ;
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: TyAnno^ Ty Expr;
-    Literal: Integer | Float | Rational | String;
-        Integer: Dec | Hex | Oct | Bin;
+    Literal: Rational | Integer | Float | String;
+        // Rational must be before Integer for higher priority.
+        Rational: "\-?\p{Nd}+\s*/\s*\p{Nd}+";
+        Integer: Hex | Oct | Bin | Dec;
+            // Dec must be the last for lower priority.
+            Hex: /0x[0-9a-fA-F]+/;
+            Oct: /0o[0-7]+/;
+            Bin: /0b[01]+/;
             Dec: /\-?\p{Nd}+/;
-            Hex: /\-?0x[0-9a-fA-F]+/;
-            Oct: /\-?0o[0-7]+/;
-            Bin: /\-?0b[01]+/;
         Float: /\-?\p{Nd}+\.\p{Nd}+/;
-        Rational: /\-?\p{Nd}+\u{47}\p{Nd}/;
-        // TODO: use %push(String) and %pop()
-        String: '"'^ { /\\[n\\]/ | /[^\\]*/ | /\\n*/ } '"'^;
+        String: StringDelimiter^ %push(String) { Escaped | Characters | Newlines } StringDelimiter^ %pop();
+            Escaped: <String> /\\[nt"\\]/;
+            Characters: <String> /[^\\"]+/;
+            Newlines: <String> /\\n+/;
     Let: LetSym^ Expr StmtEnd^ Expr;
-    Perform: PerformSym^ [ EArrow^ Ty ] Expr;
-    Continue: ContinueSym^ [ EArrow^ Ty ] Expr;
+    Perform: PerformSym^ Expr EArrow^ Ty;
+    Continue: ContinueSym^ Expr EArrow^ Ty;
     Handle: HandleKey^ Expr MapBegin^ { Handler [ Comma^ ] } MapEnd^;
-        Handler: Ty EArrow^ Ty MatchArrow^ Expr;
+        Handler: Ty EArrow^ Ty Arrow^ Expr;
     Product: ProductSym^ TypeBegin^ { Expr [ Comma^ ] } TypeEnd^;
     Vector: VecBegin^ { Expr [ Comma^ ] } VecEnd^;
     Map: MapBegin^ { Expr Arrow^ Expr [ Comma^ ] } MapEnd^;
     Attributed: Attribute Expr;
     Match: MatchKey^ Expr MapBegin^ { Case [ Comma^ ] } MapEnd^;
-        Case: Ty MatchArrow^ Expr;
-    Function: FunctionSym^ Ty Arrow^ Expr;
+        Case: Ty Arrow^ Expr;
+    Function: FunctionSym^ Ty FArrow^ Expr;
     Apply: ApplySym^ [ LinkName ] Ty ParamsBegin^ { Expr [ Comma^ ] } ParamsEnd^;
     Reference: ReferenceSym^ [ LinkName ] Ty;
     Labeled: Label Expr;
@@ -96,7 +105,7 @@ Ty: Infer
     Sum: SumSym^ TypeBegin^ { Ty [ Comma^ ] } TypeEnd^;
     VecTy: VecBegin^ Ty VecEnd^;
     MapTy: MapBegin^ Ty Arrow^ Ty MapEnd^;
-    FunctionTy: FunctionSym^ Ty Arrow^ Ty;
+    FunctionTy: FunctionSym^ Ty FArrow^ Ty;
     LabeledTy: Label Ty;
     AttributedTy: Attribute Ty;
     Variable: Ident;
@@ -105,30 +114,41 @@ Ty: Infer
     Exist: ExistKey^ Ident [ TyAnno^ Ty ] Ty;
 
 // Utilities
-Comment: '(~'^ %push(BlockComment) BlockCommentContent '~)'^ %pop()
-       | '~' /.*/;
-    BlockCommentContent: /[^~]*(~[^\)][^~]*)*/;
+Comment: CommentBegin^ %push(BlockComment) { BlockCommentContent } { ParenEnd } CommentEnd ^ %pop()
+       | CommentPrefix^ %push(InlineComment) CommentCharacters %pop();
+    // This must come before ParenEnd for higher priority.
+    CommentEnd: <BlockComment> ')~';
+    BlockCommentContent: <BlockComment> /[^\)]+(\)[^~\)])?/;
+    ParenEnd: <BlockComment> ')';
+    CommentCharacters: <InlineComment> /.*/;
 Attribute: AttributeSym^ Expr;
 Label: LabelSym^ Expr;
-Ident: IdentNoSpace
-     | IdentWrapped;
-    IdentNoSpace: /[^!-@\[-`\{-~\w][^\w]*/;
-    IdentWrapped: /`[^!-@\[-`\{-~\w][^\w]*([\w]*[^!-@\[-`\{-~\w][^\w]*)*`/;
-Uuid: UuidKey^ UuidText;
-    UuidText: /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
+Ident: IdentRaw
+     | IdentDelimiter^ %push(Ident) IdentPart { IdentPart } IdentDelimiter^ %pop();
+    IdentRaw: /[^!-@\[-`\{-~\s]+/;
+    IdentPart: <Ident> /([^`\s]|\\`)+/;
+    IdentDelimiter: <INITIAL, Ident> '`';
+Uuid: UuidKey^ %push(Uuid) UuidText %pop();
+    UuidText: <Uuid> /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
 LinkName: CardKey Uuid | Uuid;
 
+// Composite tokens
+// These must be listed first for higher priority.
+Arrow: '=>';
+FArrow: '->';
+EArrow: '~>';
+ContinueSym: '<~';
+CommentBegin: '~(';
+
 // Tokens
-// "." "~" is not used.
+// ".", "=" is not used.
+CommentPrefix: '~';
 Comma: ',';
 StmtEnd: ';';
 TyAnno: ':';
 MapBegin: '{';
 MapEnd: '}';
-Arrow: 'a->';
-EArrow: 'a~>';
-MatchArrow: '=>';
 Hole: '?';
 VecBegin: '[';
 VecEnd: ']';
@@ -139,16 +159,17 @@ ParamsEnd: ')';
 LabelSym: '@';
 Infer: '_';
 PerformSym: '!';
-ContinueSym: 'a!<~';
 ReferenceSym: '&';
 ApplySym: '^';
 ProductSym: '*';
 SumSym: '+';
-Minus: 'a-';
+Minus: '-';
 LetSym: '$';
 TraitSym: '%';
 AttributeSym: '#';
-FunctionSym: "\\";
+// \u{5c} is '\'.
+FunctionSym: /\u{5c}/;
+StringDelimiter: <INITIAL, String>'"';
 
 // Keywords
 This: "'this";

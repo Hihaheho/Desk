@@ -8,7 +8,8 @@ use crate::{span::WithSpan, ty::Type};
 pub enum Literal {
     String(String),
     Integer(i64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Float(f64),
 }
 
@@ -35,11 +36,11 @@ pub enum Expr {
     },
     Perform {
         input: Box<WithSpan<Self>>,
-        output: Option<WithSpan<Type>>,
+        output: WithSpan<Type>,
     },
     Continue {
         input: Box<WithSpan<Self>>,
-        output: Option<WithSpan<Type>>,
+        output: WithSpan<Type>,
     },
     Handle {
         expr: Box<WithSpan<Self>>,

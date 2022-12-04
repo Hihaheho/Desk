@@ -54,7 +54,8 @@ pub enum FnRef {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Const {
     Int(i64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Float(f64),
     String(String),
 }

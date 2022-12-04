@@ -12,7 +12,7 @@ use crate::{grammar_trait, MinimalistSyntaxError};
 use ast::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     span::WithSpan,
-    ty::{Function, Trait},
+    ty::Function,
 };
 use dson::Dson;
 
@@ -54,21 +54,45 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Literal(match *literal {
-                    grammar_trait::Literal::Literal0(Literal0 { integer }) => {
-                        let string = match *integer {
-                            Integer::Integer0(integer) => integer.dec.dec.text().to_string(),
-                            Integer::Integer1(integer) => integer.hex.hex.text().to_string(),
-                            Integer::Integer2(integer) => integer.oct.oct.text().to_string(),
-                            Integer::Integer3(integer) => integer.bin.bin.text().to_string(),
-                        };
-                        Literal::Integer(string.parse().map_err(|_| {
+                    grammar_trait::Literal::Literal0(Literal0 { rational }) => {
+                        let text = rational.rational.text().to_string();
+                        let splitted: Vec<_> = text.split("/").collect();
+                        let a = splitted[0].trim_end().parse().map_err(|_| {
                             MinimalistSyntaxError::ParseError(format!(
-                                "Could not parse integer: {}",
-                                string
+                                "Could not parse numerator of rational: {}",
+                                rational.rational.text()
                             ))
-                        })?)
+                        })?;
+                        let b = splitted[1].trim_start().parse().map_err(|_| {
+                            MinimalistSyntaxError::ParseError(format!(
+                                "Could not parse denominator of rational: {}",
+                                rational.rational.text()
+                            ))
+                        })?;
+                        Literal::Rational(a, b)
                     }
-                    grammar_trait::Literal::Literal1(Literal1 { float }) => {
+                    grammar_trait::Literal::Literal1(Literal1 { integer }) => {
+                        let integer = match *integer {
+                            Integer::Integer0(integer) => i64::from_str_radix(
+                                integer.hex.hex.text().to_string().get(2..).unwrap(),
+                                16,
+                            ),
+                            Integer::Integer1(integer) => i64::from_str_radix(
+                                integer.oct.oct.text().to_string().get(2..).unwrap(),
+                                8,
+                            ),
+                            Integer::Integer2(integer) => i64::from_str_radix(
+                                integer.bin.bin.text().to_string().get(2..).unwrap(),
+                                2,
+                            ),
+                            Integer::Integer3(integer) => integer.dec.dec.text().parse::<i64>(),
+                        }
+                        .map_err(|_| {
+                            MinimalistSyntaxError::ParseError(format!("Could not parse integer",))
+                        })?;
+                        Literal::Integer(integer)
+                    }
+                    grammar_trait::Literal::Literal2(Literal2 { float }) => {
                         Literal::Float(float.float.to_string().parse().map_err(|_| {
                             MinimalistSyntaxError::ParseError(format!(
                                 "Could not parse float: {}",
@@ -76,41 +100,27 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                             ))
                         })?)
                     }
-                    grammar_trait::Literal::Literal2(Literal2 { rational }) => {
-                        let rational = rational
-                            .rational
-                            .to_string()
-                            .split("/")
-                            .map(|s| {
-                                str::parse(s).map_err(|_| {
-                                    MinimalistSyntaxError::ParseError(format!(
-                                        "Could not parse rational: {}",
-                                        rational.rational.text().to_string()
-                                    ))
-                                })
-                            })
-                            .collect::<Result<Vec<_>, _>>()?;
-                        Literal::Rational(rational[0], rational[1])
-                    }
                     grammar_trait::Literal::Literal3(Literal3 { string }) => {
                         let string = string
                             .string_list
                             .into_iter()
                             .map(|s| match *s.string_list_group {
                                 grammar_trait::StringListGroup::StringListGroup0(escaped) => {
-                                    escaped
-                                        .l_bracket_n_r_bracket
-                                        .text()
-                                        .to_string()
-                                        .pop()
-                                        .unwrap()
-                                        .to_string()
+                                    match escaped.escaped.escaped.text().to_string().pop().unwrap()
+                                    {
+                                        't' => "\t",
+                                        'n' => "\n",
+                                        '"' => "\"",
+                                        '\\' => "\\",
+                                        other => panic!("invalid escape sequence {}", other),
+                                    }
+                                    .into()
                                 }
                                 grammar_trait::StringListGroup::StringListGroup1(other) => {
-                                    other.l_bracket_circumflex_r_bracket_star.text().to_string()
+                                    other.characters.characters.text().to_string()
                                 }
                                 grammar_trait::StringListGroup::StringListGroup2(newline) => {
-                                    newline.n_star.text().to_string()
+                                    newline.newlines.newlines.text().to_string()
                                 }
                             })
                             .collect::<String>();
@@ -131,10 +141,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                 span: 0..0,
                 value: Expr::Perform {
                     input: Box::new((*perform.expr).try_into()?),
-                    output: perform
-                        .perform_opt
-                        .map(|output| (*output.ty).try_into())
-                        .transpose()?,
+                    output: (*perform.ty).try_into()?,
                 },
             },
             grammar_trait::Expr::Expr7(Expr7 { r#continue }) => WithSpan {
@@ -142,10 +149,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                 span: 0..0,
                 value: Expr::Continue {
                     input: Box::new((*r#continue.expr).try_into()?),
-                    output: r#continue
-                        .continue_opt
-                        .map(|output| (*output.ty).try_into())
-                        .transpose()?,
+                    output: (*r#continue.ty).try_into()?,
                 },
             },
             grammar_trait::Expr::Expr8(Expr8 { handle }) => WithSpan {
@@ -339,14 +343,26 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     item: Box::new((*ty).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty6(Ty6 { r#trait }) => {
-                let WithSpan { id, span, value } = (*r#trait).try_into()?;
-                WithSpan {
-                    id,
-                    span,
-                    value: ast::ty::Type::Trait(value),
-                }
-            }
+            grammar_trait::Ty::Ty6(Ty6 { r#trait }) => WithSpan {
+                id: NodeId::new(),
+                span: 0..0,
+                value: ast::ty::Type::Trait(
+                    r#trait
+                        .trait_list
+                        .into_iter()
+                        .map(|t| {
+                            Ok(WithSpan {
+                                id: NodeId::new(),
+                                span: 0..0,
+                                value: Function {
+                                    parameter: (*t.function_ty.ty).try_into()?,
+                                    body: (*t.function_ty.ty0).try_into()?,
+                                },
+                            })
+                        })
+                        .collect::<Result<_, MinimalistSyntaxError>>()?,
+                ),
+            },
             grammar_trait::Ty::Ty7(Ty7 { product_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
@@ -537,54 +553,64 @@ impl TryFrom<grammar_trait::Uuid<'_>> for Uuid {
 }
 
 impl From<grammar_trait::Ident<'_>> for String {
-    fn from(value: grammar_trait::Ident<'_>) -> Self {
-        match value {
-            grammar_trait::Ident::Ident0(ident) => {
-                ident.ident_no_space.ident_no_space.text().to_string()
-            }
-            // TODO: remove backtick and repeated whitespace
-            grammar_trait::Ident::Ident1(ident) => {
-                ident.ident_wrapped.ident_wrapped.text().to_string()
-            }
+    fn from(ident: grammar_trait::Ident<'_>) -> Self {
+        match ident {
+            grammar_trait::Ident::Ident0(raw) => raw.ident_raw.ident_raw.text().to_string(),
+            grammar_trait::Ident::Ident1(parts) => [*parts.ident_part]
+                .into_iter()
+                .chain(parts.ident_list.into_iter().map(|list| *list.ident_part))
+                .map(|part| part.ident_part.text().to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
         }
     }
 }
 
-impl TryFrom<grammar_trait::Trait<'_>> for WithSpan<Trait> {
+impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithSpan<Function>> {
     type Error = MinimalistSyntaxError;
 
     fn try_from(value: grammar_trait::Trait<'_>) -> Result<Self, Self::Error> {
-        Ok(WithSpan {
-            id: NodeId::new(),
-            span: 0..0,
-            value: Trait(
-                value
-                    .trait_list
-                    .into_iter()
-                    .map(|t| {
-                        Ok(WithSpan {
-                            id: NodeId::new(),
-                            span: 0..0,
-                            value: Function {
-                                parameter: (*t.function_ty.ty).try_into()?,
-                                body: (*t.function_ty.ty0).try_into()?,
-                            },
-                        })
-                    })
-                    .collect::<Result<_, MinimalistSyntaxError>>()?,
-            ),
-        })
+        Ok(value
+            .trait_list
+            .into_iter()
+            .map(|t| {
+                Ok(WithSpan {
+                    id: NodeId::new(),
+                    span: 0..0,
+                    value: Function {
+                        parameter: (*t.function_ty.ty).try_into()?,
+                        body: (*t.function_ty.ty0).try_into()?,
+                    },
+                })
+            })
+            .collect::<Result<_, MinimalistSyntaxError>>()?)
     }
 }
 
 impl From<Comment<'_>> for String {
     fn from(comment: Comment) -> Self {
         match comment {
-            grammar_trait::Comment::Comment0(comment) => comment
-                .block_comment_content
-                .block_comment_content
-                .to_string(),
-            grammar_trait::Comment::Comment1(comment) => comment.dot_star.to_string(),
+            grammar_trait::Comment::Comment0(comment) => {
+                comment
+                    .comment_list
+                    .into_iter()
+                    .map(|content| {
+                        content
+                            .block_comment_content
+                            .block_comment_content
+                            .text()
+                            .to_string()
+                    })
+                    .collect::<String>()
+                    + &comment
+                        .comment_list0
+                        .into_iter()
+                        .map(|_| ")")
+                        .collect::<String>()
+            }
+            grammar_trait::Comment::Comment1(comment) => {
+                comment.comment_characters.comment_characters.to_string()
+            }
         }
     }
 }

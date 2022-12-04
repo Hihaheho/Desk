@@ -17,15 +17,11 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
         }
         Expr::Perform { input, output } => {
             remove_span(input);
-            if let Some(output) = output {
-                remove_span_ty(output);
-            }
+            remove_span_ty(output);
         }
         Expr::Continue { input, output } => {
             remove_span(input);
-            if let Some(output) = output {
-                remove_span_ty(output);
-            }
+            remove_span_ty(output);
         }
         Expr::Handle { expr, handlers } => {
             remove_span(expr);
@@ -122,7 +118,9 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
         Type::Number => {}
         Type::String => {}
         Type::Trait(trait_) => {
-            for ty in &mut trait_.0 {
+            for ty in trait_ {
+                ty.id = Default::default();
+                ty.span = Default::default();
                 remove_span_ty(&mut ty.value.parameter);
                 remove_span_ty(&mut ty.value.body);
             }

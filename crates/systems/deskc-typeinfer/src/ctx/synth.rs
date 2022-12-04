@@ -40,23 +40,19 @@ impl Ctx {
                 ctx.with_type(ty)
             }
             Expr::Perform { input, output } => {
-                if let Some(output) = output {
-                    let WithType(ctx, ty) = self.synth(input)?.recover_effects();
-                    let output = ctx.save_from_hir_type(output);
-                    ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
-                        input: ty,
-                        output: output.clone(),
-                    }])))
-                    .with_type(output)
-                } else {
-                    todo!("omission of output in perform is not supported yet")
-                }
+                let WithType(ctx, ty) = self.synth(input)?.recover_effects();
+                let output = ctx.save_from_hir_type(output);
+                ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
+                    input: ty,
+                    output: output.clone(),
+                }])))
+                .with_type(output)
             }
             Expr::Continue { input, output } => {
                 let WithType(ctx, input_ty) = self.synth(input)?.recover_effects();
-                let WithType(ctx, output) = if let Some(output) = output {
-                    let output = ctx.save_from_hir_type(output);
-                    ctx.subtype(
+                let output = ctx.save_from_hir_type(output);
+                let ctx = ctx
+                    .subtype(
                         ctx.continue_output
                             .borrow()
                             .last()
@@ -64,23 +60,7 @@ impl Ctx {
                             .map_err(|error| to_expr_type_error(expr, error))?,
                         &output,
                     )
-                    .map_err(|error| to_expr_type_error(expr, error))?
-                    .with_type(output)
-                } else {
-                    let a = self.fresh_existential();
-                    let output = Type::Existential(a);
-                    ctx.add(Log::Existential(a))
-                        .subtype(
-                            ctx.continue_output
-                                .borrow()
-                                .last()
-                                .ok_or(TypeError::ContinueOutOfHandle)
-                                .map_err(|error| to_expr_type_error(expr, error))?,
-                            &output,
-                        )
-                        .map_err(|error| to_expr_type_error(expr, error))?
-                        .with_type(output)
-                };
+                    .map_err(|error| to_expr_type_error(expr, error))?;
                 let continue_input = ctx.continue_input.borrow();
                 ctx.subtype(
                     &input_ty,

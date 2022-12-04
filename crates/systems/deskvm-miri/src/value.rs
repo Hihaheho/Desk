@@ -13,7 +13,8 @@ pub(crate) enum Value {
     String(String),
     Int(i64),
     Float(f64),
-    Rational(i64, i64),
+    // b must be unsigned to avoid ambiguity.
+    Rational(i64, u64),
     Product(HashMap<Type, Value>),
     Variant { ty: Type, value: Box<Value> },
     Vector(Vec<Self>),
