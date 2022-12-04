@@ -41,7 +41,7 @@ impl Widget<egui::Context> for TerminalWidget {
                     node_id: NodeId::new(),
                     content: Content::Apply {
                         ty: Type::Function {
-                            parameters: vec![Type::Number, Type::Number],
+                            parameter: Box::new(Type::Number),
                             body: Box::new(Type::Label {
                                 label: "sum".into(),
                                 item: Box::new(Type::Number),

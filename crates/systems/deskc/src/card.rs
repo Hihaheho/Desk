@@ -11,8 +11,8 @@ use crate::{parse_source_code, query_result::QueryResult};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HirResult {
-    hir: WithMeta<hir::expr::Expr>,
-    next_id: usize,
+    pub hir: WithMeta<hir::expr::Expr>,
+    pub next_id: usize,
 }
 
 #[salsa::query_group(CardStorage)]
@@ -20,6 +20,7 @@ pub trait CardQueries {
     #[salsa::input]
     fn code(&self, card_id: CardId) -> Code;
     fn ast(&self, id: CardId) -> QueryResult<WithSpan<ast::expr::Expr>>;
+    fn typeinfer(&self, id: CardId) -> QueryResult<typeinfer::ctx::Ctx>;
     fn hir(&self, id: CardId) -> QueryResult<HirResult>;
     fn thir(&self, id: CardId) -> QueryResult<TypedHir>;
     fn mir(&self, id: CardId) -> QueryResult<Mir>;
@@ -53,9 +54,15 @@ fn hir(db: &dyn CardQueries, id: CardId) -> QueryResult<HirResult> {
     }))
 }
 
-fn thir(db: &dyn CardQueries, id: CardId) -> QueryResult<TypedHir> {
+fn typeinfer(db: &dyn CardQueries, id: CardId) -> QueryResult<typeinfer::ctx::Ctx> {
     let hir_result = db.hir(id)?;
     let (ctx, _ty) = typeinfer::synth(hir_result.next_id, &hir_result.hir)?;
+    Ok(Arc::new(ctx))
+}
+
+fn thir(db: &dyn CardQueries, id: CardId) -> QueryResult<TypedHir> {
+    let hir_result = db.hir(id.clone())?;
+    let ctx = db.typeinfer(id)?;
     let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir_result.hir);
     Ok(Arc::new(thir))
 }

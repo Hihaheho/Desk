@@ -1,7 +1,8 @@
+use errors::typeinfer::TypeError;
+
 use crate::{
     ctx::Ctx,
     ctx::Log,
-    error::TypeError,
     occurs_in::occurs_in,
     substitute::substitute,
     ty::{effect_expr::EffectExpr, Type},
@@ -14,8 +15,8 @@ impl Ctx {
                 Ok(self.clone())
             } else {
                 Err(TypeError::NotSubtype {
-                    sub: sub.clone(),
-                    ty: ty.clone(),
+                    sub: self.gen_type(sub),
+                    ty: self.gen_type(ty),
                 })
             }
         };
@@ -28,7 +29,7 @@ impl Ctx {
                 if occurs_in(id, ty) {
                     return Err(TypeError::CircularExistential {
                         id: *id,
-                        ty: ty.clone(),
+                        ty: self.gen_type(ty),
                     });
                 } else {
                     self.instantiate_subtype(id, ty)?
@@ -38,7 +39,7 @@ impl Ctx {
                 if occurs_in(id, sub) {
                     return Err(TypeError::CircularExistential {
                         id: *id,
-                        ty: ty.clone(),
+                        ty: self.gen_type(ty),
                     });
                 } else {
                     self.instantiate_supertype(sub, id)?
@@ -54,8 +55,8 @@ impl Ctx {
                     self.clone()
                 } else {
                     return Err(TypeError::NotSubtype {
-                        sub: sub.clone(),
-                        ty: ty.clone(),
+                        sub: self.gen_type(sub),
+                        ty: self.gen_type(ty),
                     });
                 }
             }
@@ -67,8 +68,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                    sub: sub.clone(),
-                    ty: ty.clone(),
+                        sub: self.gen_type(sub),
+                        ty: self.gen_type(ty),
                 })?,
             (Type::Sum(sub_types), Type::Sum(types)) => {
                 if types.iter().all(|ty| {
@@ -79,8 +80,8 @@ impl Ctx {
                     self.clone()
                 } else {
                     return Err(TypeError::NotSubtype {
-                        sub: sub.clone(),
-                        ty: ty.clone(),
+                        sub: self.gen_type(sub),
+                        ty: self.gen_type(ty),
                     });
                 }
             }
@@ -92,8 +93,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                    sub: sub.clone(),
-                    ty: ty.clone(),
+                        sub: self.gen_type(sub),
+                        ty: self.gen_type(ty),
                 })?,
             (
                 Type::Function {
@@ -109,19 +110,46 @@ impl Ctx {
                 )?
             }
             (Type::Vector(sub), Type::Vector(ty)) => self.subtype(sub, ty)?,
-            (Type::Set(sub), Type::Set(ty)) => self.subtype(sub, ty)?,
+            (
+                Type::Map {
+                    key: sub_key,
+                    value: sub_value,
+                },
+                Type::Map { key, value },
+            ) => {
+                let ctx = self.subtype(sub_key, key)?;
+                ctx.subtype(sub_value, value)?
+            }
             (Type::Variable(id), Type::Variable(id2)) => subtype_if(id == id2)?,
-            (Type::ForAll { variable, body }, ty) => {
+            (
+                Type::ForAll {
+                    variable,
+                    bound,
+                    body,
+                },
+                ty,
+            ) => {
                 let a = self.fresh_existential();
                 self.add(Log::Marker(a))
                     .add(Log::Existential(a))
                     .subtype(&substitute(body, variable, &Type::Existential(a)), ty)?
+                    // TODO: is this correct bound check?
+                    .bound_check(&Type::Existential(a), bound)?
                     .truncate_from(&Log::Marker(a))
                     .recover_effects()
             }
-            (sub, Type::ForAll { variable, body }) => self
+            (
+                sub,
+                Type::ForAll {
+                    variable,
+                    bound,
+                    body,
+                },
+            ) => self
                 .add(Log::Variable(*variable))
                 .subtype(sub, body)?
+                // TODO: is this correct bound check?
+                .bound_check(&Type::Variable(*variable), bound)?
                 .truncate_from(&Log::Variable(*variable))
                 .recover_effects(),
 
@@ -158,11 +186,20 @@ impl Ctx {
             (sub, Type::Effectful { ty, effects: _ }) => self.subtype(sub, ty)?,
             (_, _) => {
                 return Err(TypeError::NotSubtype {
-                    sub: sub.clone(),
-                    ty: ty.clone(),
+                        sub: self.gen_type(sub),
+                        ty: self.gen_type(ty),
                 })
             }
         };
         Ok(ctx)
+    }
+
+    // This is a helper function for bound check.
+    pub fn bound_check(&self, sub: &Type, bound: &Option<Box<Type>>) -> Result<Self, TypeError> {
+        if let Some(bound) = bound {
+            self.subtype(sub, &bound)
+        } else {
+            Ok(self.clone())
+        }
     }
 }

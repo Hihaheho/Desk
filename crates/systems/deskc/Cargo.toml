@@ -19,8 +19,7 @@ thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "
 mir = { path = "../../components/deskc-05-mir", version = "0.0.0", package = "deskc-mir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
-lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+minimalist = { path = "../deskc-syntax-minimalist", version = "0.0.0", package = "deskc-syntax-minimalist" }
 hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
 typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 thirgen = { path = "../../systems/deskc-05-thirgen", version = "0.0.0", package = "deskc-thirgen" }

@@ -15,26 +15,21 @@ impl Ctx {
             }
             Type::Sum(types) => types::Type::sum(types.iter().map(|t| self.gen_type(t)).collect()),
             Type::Function { parameter, body } => {
-                if let Type::Function { .. } = **body {
-                    match self.gen_type(body) {
-                        types::Type::Function {
-                            mut parameters,
-                            body,
-                        } => {
-                            parameters.insert(0, self.gen_type(parameter));
-                            types::Type::function(parameters, *body)
-                        }
-                        _ => panic!(),
-                    }
-                } else {
-                    types::Type::function(vec![self.gen_type(parameter)], self.gen_type(body))
-                }
+                types::Type::function(self.gen_type(parameter), self.gen_type(body))
             }
             Type::Vector(ty) => types::Type::Vector(Box::new(self.gen_type(ty))),
-            Type::Set(ty) => types::Type::Set(Box::new(self.gen_type(ty))),
+            Type::Map { key, value } => types::Type::Map {
+                key: Box::new(self.gen_type(key)),
+                value: Box::new(self.gen_type(value)),
+            },
             Type::Variable(id) => types::Type::Variable(self.get_ident_of(*id)),
-            Type::ForAll { variable, body } => types::Type::ForAll {
+            Type::ForAll {
+                variable,
+                bound,
+                body,
+            } => types::Type::ForAll {
                 variable: self.get_ident_of(*variable),
+                bound: bound.as_ref().map(|bound| Box::new(self.gen_type(&bound))),
                 body: Box::new(self.gen_type(body)),
             },
             Type::Effectful { ty, effects } => types::Type::Effectful {

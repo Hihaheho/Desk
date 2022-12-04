@@ -1695,10 +1695,9 @@ dependencies = [
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
- "deskc-lexer",
  "deskc-mir",
  "deskc-mirgen",
- "deskc-parser",
+ "deskc-syntax-minimalist",
  "deskc-thir",
  "deskc-thirgen",
  "deskc-tokens",
@@ -1714,12 +1713,23 @@ name = "deskc-ast"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
+ "dson",
+ "thiserror",
  "uuid",
 ]
 
 [[package]]
 name = "deskc-cli"
 version = "0.0.0"
+
+[[package]]
+name = "deskc-errors"
+version = "0.0.0"
+dependencies = [
+ "deskc-hir",
+ "deskc-types",
+ "thiserror",
+]
 
 [[package]]
 name = "deskc-fmt"
@@ -1730,6 +1740,7 @@ name = "deskc-hir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
+ "dson",
  "uuid",
 ]
 
@@ -1738,11 +1749,11 @@ name = "deskc-hirgen"
 version = "0.0.0"
 dependencies = [
  "chumsky",
+ "deskc",
  "deskc-ast",
  "deskc-hir",
  "deskc-ids",
- "deskc-lexer",
- "deskc-parser",
+ "dson",
  "pretty_assertions",
  "thiserror",
  "uuid",
@@ -1759,18 +1770,6 @@ dependencies = [
 [[package]]
 name = "deskc-language-server"
 version = "0.0.0"
-
-[[package]]
-name = "deskc-lexer"
-version = "0.0.0"
-dependencies = [
- "chumsky",
- "deskc-ids",
- "deskc-textual-diagnostics",
- "deskc-tokens",
- "thiserror",
- "uuid",
-]
 
 [[package]]
 name = "deskc-mir"
@@ -1793,48 +1792,34 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-parser"
-version = "0.0.0"
-dependencies = [
- "chumsky",
- "deskc-ast",
- "deskc-ids",
- "deskc-lexer",
- "deskc-textual-diagnostics",
- "deskc-tokens",
- "thiserror",
- "uuid",
-]
-
-[[package]]
-name = "deskc-syntax-rustlike"
+name = "deskc-syntax-minimalist"
 version = "0.0.0"
 dependencies = [
  "anyhow",
  "deskc-ast",
+ "deskc-errors",
  "deskc-ids",
- "deskc-textual-diagnostics",
+ "dson",
  "parol",
  "parol_runtime 0.9.0 (git+https://github.com/jsinger67/parol_runtime?rev=b3377abf1582411664e2e4d290bd946e62075c8b)",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]
 name = "deskc-test-integration"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "ariadne",
  "chumsky",
+ "deskc",
+ "deskc-ast",
+ "deskc-errors",
  "deskc-hir",
- "deskc-hirgen",
  "deskc-ids",
- "deskc-lexer",
- "deskc-mirgen",
- "deskc-parser",
- "deskc-textual-diagnostics",
  "deskc-thir",
  "deskc-thir2dson",
- "deskc-thirgen",
- "deskc-typeinfer",
  "deskc-types",
  "deskvm-dprocess",
  "deskvm-miri",
@@ -1845,15 +1830,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "deskc-textual-diagnostics"
-version = "0.0.0"
-
-[[package]]
 name = "deskc-thir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
  "deskc-types",
+ "dson",
 ]
 
 [[package]]
@@ -1871,14 +1853,13 @@ name = "deskc-thirgen"
 version = "0.0.0"
 dependencies = [
  "chumsky",
+ "deskc",
  "deskc-hir",
- "deskc-hirgen",
  "deskc-ids",
- "deskc-lexer",
- "deskc-parser",
  "deskc-thir",
  "deskc-typeinfer",
  "deskc-types",
+ "dson",
  "pretty_assertions",
  "thiserror",
 ]
@@ -1896,13 +1877,12 @@ version = "0.0.0"
 dependencies = [
  "ariadne",
  "chumsky",
+ "deskc",
+ "deskc-errors",
  "deskc-hir",
- "deskc-hirgen",
  "deskc-ids",
- "deskc-lexer",
- "deskc-parser",
- "deskc-textual-diagnostics",
  "deskc-types",
+ "dson",
  "pretty_assertions",
  "thiserror",
 ]
@@ -1912,6 +1892,7 @@ name = "deskc-types"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
+ "dson",
  "serde",
 ]
 
@@ -1947,9 +1928,7 @@ dependencies = [
  "anyhow",
  "chumsky",
  "deskc-hirgen",
- "deskc-lexer",
  "deskc-mir",
- "deskc-parser",
  "deskc-typeinfer",
  "deskc-types",
  "deskvm-dprocess",
@@ -1983,6 +1962,9 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 [[package]]
 name = "dson"
 version = "0.0.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "dworkspace"
@@ -1995,8 +1977,6 @@ dependencies = [
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
- "deskc-lexer",
- "deskc-parser",
  "deskc-typeinfer",
  "deskc-types",
  "downcast-rs",
@@ -3543,8 +3523,8 @@ dependencies = [
 
 [[package]]
 name = "parol"
-version = "0.14.0-alpah.1"
-source = "git+https://github.com/jsinger67/parol?rev=de87205408d4240f83c5711eff3f9c6b7b2d38d9#de87205408d4240f83c5711eff3f9c6b7b2d38d9"
+version = "0.14.0-alpah.2"
+source = "git+https://github.com/jsinger67/parol?rev=8e176890d244834cde63cbbcbabf888dd203daf8#8e176890d244834cde63cbbcbabf888dd203daf8"
 dependencies = [
  "bart",
  "bart_derive",
@@ -4533,9 +4513,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.2.1"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
+checksum = "422ee0de9031b5b948b97a8fc04e3aa35230001a722ddd27943e0be31564ce4c"
 dependencies = [
  "getrandom",
  "serde",

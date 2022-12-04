@@ -16,7 +16,7 @@ pub(crate) struct MonoType {
 }
 
 impl TypeVisitor for MonoType {
-    fn visit_forall(&mut self, _variable: &Id, _body: &Type) {
+    fn visit_forall(&mut self, _variable: &Id, _bound: &Option<Box<Type>>, _body: &Type) {
         self.is_monotype = false;
     }
     fn visit_infer(&mut self, _id: &NodeId) {

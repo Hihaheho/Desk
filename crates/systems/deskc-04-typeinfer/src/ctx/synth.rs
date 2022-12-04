@@ -1,3 +1,4 @@
+use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{
     expr::{Expr, Handler, Literal, MatchCase},
     meta::WithMeta,
@@ -6,62 +7,70 @@ use hir::{
 use crate::{
     ctx::Ctx,
     ctx::Log,
-    error::{ExprTypeError, TypeError},
     to_expr_type_error,
     ty::{effect_expr::EffectExpr, Effect, Type},
     utils::sum_all,
-    with_effects::WithEffects,
 };
 
+use super::{with_effects::WithEffects, with_type::WithType};
+
 impl Ctx {
-    pub fn synth(&self, expr: &WithMeta<Expr>) -> Result<WithEffects<(Ctx, Type)>, ExprTypeError> {
+    pub fn synth(
+        &self,
+        expr: &WithMeta<Expr>,
+    ) -> Result<WithEffects<WithType<Ctx>>, ExprTypeError> {
         let scope = self.begin_scope();
-        let (ctx, ty) = match &expr.value {
-            Expr::Literal(Literal::Integer(_)) => (self.clone(), Type::Number),
-            Expr::Literal(Literal::Float(_)) => (self.clone(), Type::Number),
-            Expr::Literal(Literal::Rational(_, _)) => (self.clone(), Type::Number),
-            Expr::Literal(Literal::String(_)) => (self.clone(), Type::String),
+        let WithType(ctx, ty) = match &expr.value {
+            Expr::Literal(Literal::Integer(_)) => self.clone().with_type(Type::Number),
+            Expr::Literal(Literal::Float(_)) => self.clone().with_type(Type::Number),
+            Expr::Literal(Literal::Rational(_, _)) => self.clone().with_type(Type::Number),
+            Expr::Literal(Literal::String(_)) => self.clone().with_type(Type::String),
             Expr::Literal(Literal::Hole) => todo!(),
+            Expr::Do { stmt, expr } => {
+                let WithType(ctx, _) = self.synth(stmt)?.recover_effects();
+                ctx.synth(expr)?.recover_effects()
+            }
             Expr::Let {
-                ty,
                 definition,
                 expression,
             } => {
-                if let WithMeta {
-                    value: hir::ty::Type::Variable(var),
-                    ..
-                } = &ty
-                {
-                    let (ctx, def_ty) = self.synth(definition)?.recover_effects();
-                    let def_ty = ctx.make_polymorphic(def_ty);
-                    let var_id = ctx.get_id_of(var.clone());
-                    let (ctx, ty) = ctx
-                        .add(Log::TypedVariable(var_id, def_ty.clone()))
-                        .synth(expression)?
-                        .recover_effects();
-                    ctx.insert_in_place(&Log::TypedVariable(var_id, def_ty), vec![])
-                        .with_type(ty)
-                } else {
-                    let (ctx, _def_ty) = self.synth(definition)?.recover_effects();
-                    let (ctx, ty) = ctx.synth(expression)?.recover_effects();
-                    ctx.with_type(ty)
-                }
+                let WithType(ctx, def_ty) = self.synth(definition)?.recover_effects();
+                let ctx = ctx.make_polymorphic(expr, def_ty);
+                let WithType(ctx, ty) = ctx.synth(expression)?.recover_effects();
+                ctx.with_type(ty)
             }
             Expr::Perform { input, output } => {
-                let (ctx, ty) = self.synth(input)?.recover_effects();
-                let output = ctx.save_from_hir_type(output);
-                ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
-                    input: ty,
-                    output: output.clone(),
-                }])))
-                .with_type(output)
+                if let Some(output) = output {
+                    let WithType(ctx, ty) = self.synth(input)?.recover_effects();
+                    let output = ctx.save_from_hir_type(output);
+                    ctx.add(Log::Effect(EffectExpr::Effects(vec![Effect {
+                        input: ty,
+                        output: output.clone(),
+                    }])))
+                    .with_type(output)
+                } else {
+                    todo!("omission of output in perform is not supported yet")
+                }
             }
             Expr::Continue { input, output } => {
-                let (ctx, input_ty) = self.synth(input)?.recover_effects();
-                let (ctx, output) = if let Some(output) = output {
+                let WithType(ctx, input_ty) = self.synth(input)?.recover_effects();
+                let WithType(ctx, output) = if let Some(output) = output {
                     let output = ctx.save_from_hir_type(output);
-                    (
-                        ctx.subtype(
+                    ctx.subtype(
+                        ctx.continue_output
+                            .borrow()
+                            .last()
+                            .ok_or(TypeError::ContinueOutOfHandle)
+                            .map_err(|error| to_expr_type_error(expr, error))?,
+                        &output,
+                    )
+                    .map_err(|error| to_expr_type_error(expr, error))?
+                    .with_type(output)
+                } else {
+                    let a = self.fresh_existential();
+                    let output = Type::Existential(a);
+                    ctx.add(Log::Existential(a))
+                        .subtype(
                             ctx.continue_output
                                 .borrow()
                                 .last()
@@ -69,25 +78,8 @@ impl Ctx {
                                 .map_err(|error| to_expr_type_error(expr, error))?,
                             &output,
                         )
-                        .map_err(|error| to_expr_type_error(expr, error))?,
-                        output,
-                    )
-                } else {
-                    let a = self.fresh_existential();
-                    let output = Type::Existential(a);
-                    (
-                        ctx.add(Log::Existential(a))
-                            .subtype(
-                                ctx.continue_output
-                                    .borrow()
-                                    .last()
-                                    .ok_or(TypeError::ContinueOutOfHandle)
-                                    .map_err(|error| to_expr_type_error(expr, error))?,
-                                &output,
-                            )
-                            .map_err(|error| to_expr_type_error(expr, error))?,
-                        output,
-                    )
+                        .map_err(|error| to_expr_type_error(expr, error))?
+                        .with_type(output)
                 };
                 let continue_input = ctx.continue_input.borrow();
                 ctx.subtype(
@@ -106,7 +98,7 @@ impl Ctx {
             }
             Expr::Handle { expr, handlers } => {
                 // synth expr
-                let WithEffects((mut ctx, expr_ty), mut expr_effects) = self.synth(expr)?;
+                let WithEffects(WithType(mut ctx, expr_ty), mut expr_effects) = self.synth(expr)?;
 
                 // push continue output type.
                 ctx.continue_output.borrow_mut().push(expr_ty.clone());
@@ -127,7 +119,7 @@ impl Ctx {
                             // push handler input type
                             ctx.continue_input.borrow_mut().push(output.clone());
 
-                            let WithEffects((next_ctx, handler_type), effects) =
+                            let WithEffects(WithType(next_ctx, handler_type), effects) =
                                 ctx.synth(handler)?;
                             ctx = next_ctx;
 
@@ -206,11 +198,10 @@ impl Ctx {
                             .map_err(|error| to_expr_type_error(expr, error))?,
                         ty => ty,
                     };
-                    let (ctx, ty) = arguments
-                        .iter()
-                        .try_fold((self.clone(), fun.clone()), |(ctx, fun), arg| {
-                            ctx.apply(&fun, arg)
-                        })?;
+                    let WithType(ctx, ty) = arguments.iter().try_fold(
+                        WithType(self.clone(), fun.clone()),
+                        |WithType(ctx, fun), arg| ctx.apply(&fun, arg),
+                    )?;
 
                     ctx.add_effects(&EffectExpr::Apply {
                         function: Box::new(fun),
@@ -223,7 +214,7 @@ impl Ctx {
                 let mut ctx = self.clone();
                 let mut types = Vec::with_capacity(exprs.len());
                 for expr in exprs {
-                    let (delta, ty) = ctx.synth(expr)?.recover_effects();
+                    let WithType(delta, ty) = ctx.synth(expr)?.recover_effects();
                     ctx = delta;
                     types.push(ty);
                 }
@@ -250,7 +241,7 @@ impl Ctx {
                         body: Box::new(self.with_effects(Type::Existential(b), effects)),
                     })
                 } else {
-                    let (ctx, ty) = self.synth(body)?.recover_effects();
+                    let WithType(ctx, ty) = self.synth(body)?.recover_effects();
                     ctx.with_type(Type::Function {
                         parameter: Box::new(self.save_from_hir_type(parameter)),
                         body: Box::new(ty),
@@ -262,22 +253,28 @@ impl Ctx {
                 values
                     .iter()
                     .try_fold(self.clone(), |ctx, value| {
-                        let (ctx, ty) = ctx.synth(value)?.recover_effects();
+                        let WithType(ctx, ty) = ctx.synth(value)?.recover_effects();
                         types.push(ty);
                         Ok(ctx)
                     })?
                     .with_type(Type::Vector(Box::new(Type::Sum(types))))
             }
-            Expr::Set(values) => {
-                let mut types = vec![];
-                values
+            Expr::Map(elems) => {
+                let mut keys = vec![];
+                let mut values = vec![];
+                elems
                     .iter()
-                    .try_fold(self.clone(), |ctx, value| {
-                        let (ctx, ty) = ctx.synth(value)?.recover_effects();
-                        types.push(ty);
+                    .try_fold(self.clone(), |ctx, elem| {
+                        let WithType(ctx, key) = ctx.synth(&elem.key)?.recover_effects();
+                        keys.push(key);
+                        let WithType(ctx, value) = ctx.synth(&elem.value)?.recover_effects();
+                        values.push(value);
                         Ok(ctx)
                     })?
-                    .with_type(Type::Set(Box::new(Type::Sum(types))))
+                    .with_type(Type::Map {
+                        key: Box::new(Type::Sum(keys)),
+                        value: Box::new(Type::Sum(values)),
+                    })
             }
             Expr::Match { of, cases } => {
                 let (ty, out): (Vec<_>, Vec<_>) = cases
@@ -296,16 +293,16 @@ impl Ctx {
                 self.check(of, &ty)?.recover_effects().with_type(out)
             }
             Expr::Label { label, item: body } => {
-                let (ctx, ty) = self.synth(body)?.recover_effects();
+                let WithType(ctx, ty) = self.synth(body)?.recover_effects();
                 ctx.with_type(Type::Label {
-                    label: label.into(),
+                    label: label.clone(),
                     item: Box::new(ty),
                 })
             }
             Expr::Brand { brand, item: body } => {
-                let (ctx, ty) = self.synth(body)?.recover_effects();
+                let WithType(ctx, ty) = self.synth(body)?.recover_effects();
                 ctx.with_type(Type::Brand {
-                    brand: brand.into(),
+                    brand: brand.clone(),
                     item: Box::new(ty),
                 })
             }
@@ -313,6 +310,6 @@ impl Ctx {
         let effects = ctx.end_scope(scope);
         let ty = ctx.substitute_from_ctx(&ty);
         ctx.store_type_and_effects(expr.id.clone(), ty.clone(), effects.clone());
-        Ok(WithEffects((ctx, ty), effects))
+        Ok(WithEffects(WithType(ctx, ty), effects))
     }
 }

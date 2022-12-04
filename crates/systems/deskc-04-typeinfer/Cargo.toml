@@ -14,14 +14,13 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
+errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
 thiserror = "1.0.37"
 
 [dev-dependencies]
-lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
+deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
 chumsky = "0.8.0"
 ariadne = "0.1"
 pretty_assertions = "1.3.0"

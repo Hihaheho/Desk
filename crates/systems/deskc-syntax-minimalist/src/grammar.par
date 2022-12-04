@@ -2,6 +2,15 @@
 %title "Minimalist syntax for Desk-lang"
 %comment ""
 
+%scanner BlockComment {
+    %auto_newline_off
+}
+
+%scanner String {
+    %auto_ws_off
+    %auto_newline_off
+}
+
 %%
 
 Expr: Comment Expr
@@ -28,27 +37,30 @@ Expr: Comment Expr
     ;
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: TyAnno^ Ty Expr;
-    Literal: Integer | Float | String;
-        Integer: /\-?\p{Nd}+/
-               | /\-?0x[0-9a-fA-F]+/
-               | /\-?0o[0-7]+/
-               | /\-?0b[01]+/;
-        Float: /\-?\p{Nd}+\.\p{Nd}/;
-        String: /"([^\\]|\\.)*"/;
-    Let: LetSym^ Expr [ TyAnno^ Ty ] StmtEnd^ Expr;
+    Literal: Integer | Float | Rational | String;
+        Integer: Dec | Hex | Oct | Bin;
+            Dec: /\-?\p{Nd}+/;
+            Hex: /\-?0x[0-9a-fA-F]+/;
+            Oct: /\-?0o[0-7]+/;
+            Bin: /\-?0b[01]+/;
+        Float: /\-?\p{Nd}+\.\p{Nd}+/;
+        Rational: /\-?\p{Nd}+\u{47}\p{Nd}/;
+        // TODO: use %push(String) and %pop()
+        String: '"'^ { /\\[n\\]/ | /[^\\]*/ | /\\n*/ } '"'^;
+    Let: LetSym^ Expr StmtEnd^ Expr;
     Perform: PerformSym^ [ EArrow^ Ty ] Expr;
     Continue: ContinueSym^ [ EArrow^ Ty ] Expr;
-    Handle: HandleKey^ Expr MapBegin^ { Handler } MapEnd^;
+    Handle: HandleKey^ Expr MapBegin^ { Handler [ Comma^ ] } MapEnd^;
         Handler: Ty EArrow^ Ty MatchArrow^ Expr;
-    Product: ProductSym^ TypeBegin^ { Expr } TypeEnd^;
-    Vector: VecBegin^ { Expr } VecEnd^;
-    Map: MapBegin^ { Expr Arrow^ Expr } MapEnd^;
+    Product: ProductSym^ TypeBegin^ { Expr [ Comma^ ] } TypeEnd^;
+    Vector: VecBegin^ { Expr [ Comma^ ] } VecEnd^;
+    Map: MapBegin^ { Expr Arrow^ Expr [ Comma^ ] } MapEnd^;
     Attributed: Attribute Expr;
-    Match: MatchKey^ Expr MapBegin^ { Case } MapEnd^;
-        Case: Expr MatchArrow^ Expr;
-    Function: FunctionSym^ ParamsBegin^ { Ty } ParamsEnd^ Arrow^ Expr;
-    Apply: ApplySym^ Ty [ Uuid ] ParamsBegin^ { Expr } ParamsEnd^;
-    Reference: ReferenceSym^ Ty;
+    Match: MatchKey^ Expr MapBegin^ { Case [ Comma^ ] } MapEnd^;
+        Case: Ty MatchArrow^ Expr;
+    Function: FunctionSym^ Ty Arrow^ Expr;
+    Apply: ApplySym^ [ LinkName ] Ty ParamsBegin^ { Expr [ Comma^ ] } ParamsEnd^;
+    Reference: ReferenceSym^ [ LinkName ] Ty;
     Labeled: Label Expr;
     NewType: TyKey^ Ident Ty StmtEnd^ Expr;
     Card: CardKey^ Uuid Expr StmtEnd^ Expr;
@@ -75,39 +87,47 @@ Ty: Infer
     ;
     Effectful: PerformSym^ EffectExpr Ty;
         EffectExpr: Effects | AddEffects | SubEffects| ApplyEffects;
-        Effects: MapBegin^ { Effect } MapEnd^;
-        AddEffects: SumSym^ TypeBegin^ { EffectExpr } TypeEnd^;
-        SubEffects: Minus^ TypeBegin^ EffectExpr EffectExpr TypeEnd^;
-        ApplyEffects: ApplySym^ Ty ParamsBegin^ { Ty } ParamsEnd^;
-    Trait: TraitSym^ TypeBegin^ { Function } TypeEnd^;
-    ProductTy: ProductSym^ TypeBegin^ { Ty } TypeEnd^;
-    Sum: SumSym^ TypeBegin^ { Ty } TypeEnd^;
+        Effects: MapBegin^ { Effect [ Comma^ ] } MapEnd^;
+        AddEffects: SumSym^ TypeBegin^ { EffectExpr [ Comma^ ] } TypeEnd^;
+        SubEffects: Minus^ TypeBegin^ EffectExpr [ Comma^ ] EffectExpr TypeEnd^;
+        ApplyEffects: ApplySym^ Ty ParamsBegin^ { Ty [ Comma^ ] } ParamsEnd^;
+    Trait: TraitSym^ TypeBegin^ { FunctionTy [ Comma^ ] } TypeEnd^;
+    ProductTy: ProductSym^ TypeBegin^ { Ty [ Comma^ ] } TypeEnd^;
+    Sum: SumSym^ TypeBegin^ { Ty [ Comma^ ] } TypeEnd^;
     VecTy: VecBegin^ Ty VecEnd^;
     MapTy: MapBegin^ Ty Arrow^ Ty MapEnd^;
-    FunctionTy: FunctionSym^ ParamsBegin^ { Ty } ParamsEnd^ Arrow^ Ty;
+    FunctionTy: FunctionSym^ Ty Arrow^ Ty;
     LabeledTy: Label Ty;
     AttributedTy: Attribute Ty;
     Variable: Ident;
     LetTy: LetSym^ Ident Ty StmtEnd^ Ty;
-    All: AllKey^ Ident [ TyAnno^ Trait ] Ty;
-    Exist: ExistKey^ Ident [ TyAnno^ Trait ] Ty;
+    All: AllKey^ Ident [ TyAnno^ Ty ] Ty;
+    Exist: ExistKey^ Ident [ TyAnno^ Ty ] Ty;
 
 // Utilities
-Comment: '(('^ /[^\)]*(\)[^\)][^\)]*)*/ '))'^;
+Comment: '(~'^ %push(BlockComment) BlockCommentContent '~)'^ %pop()
+       | '~' /.*/;
+    BlockCommentContent: /[^~]*(~[^\)][^~]*)*/;
 Attribute: AttributeSym^ Expr;
 Label: LabelSym^ Expr;
-Ident: /[^!-@\[-`\{-~\w][^\w]*(\w*[^!-@\[-`\{-~\w][^\w]*)*/;
-Uuid: UuidKey^ /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
+Ident: IdentNoSpace
+     | IdentWrapped;
+    IdentNoSpace: /[^!-@\[-`\{-~\w][^\w]*/;
+    IdentWrapped: /`[^!-@\[-`\{-~\w][^\w]*([\w]*[^!-@\[-`\{-~\w][^\w]*)*`/;
+Uuid: UuidKey^ UuidText;
+    UuidText: /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
+LinkName: CardKey Uuid | Uuid;
 
 // Tokens
-// "," "." "~" is not used.
+// "." "~" is not used.
+Comma: ',';
 StmtEnd: ';';
 TyAnno: ':';
 MapBegin: '{';
 MapEnd: '}';
-Arrow: '->';
-EArrow: '~>';
+Arrow: 'a->';
+EArrow: 'a~>';
 MatchArrow: '=>';
 Hole: '?';
 VecBegin: '[';
@@ -119,12 +139,12 @@ ParamsEnd: ')';
 LabelSym: '@';
 Infer: '_';
 PerformSym: '!';
-ContinueSym: '<~';
+ContinueSym: 'a!<~';
 ReferenceSym: '&';
 ApplySym: '^';
 ProductSym: '*';
 SumSym: '+';
-Minus: '-';
+Minus: 'a-';
 LetSym: '$';
 TraitSym: '%';
 AttributeSym: '#';
@@ -135,8 +155,8 @@ This: "'this";
 DoKey: "'do";
 TyKey: "'type";
 UuidKey: "'uuid";
-AllKey: "'A";
-ExistKey: "'E";
+AllKey: "'forall";
+ExistKey: "'exists";
 CardKey: "'card";
 BrandKey: "'brand";
 StringKey: "'string";

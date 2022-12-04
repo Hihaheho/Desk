@@ -87,7 +87,7 @@ impl EvalCfg {
                         .collect(),
                 ),
                 Stmt::Vector(_) => todo!(),
-                Stmt::Set(_) => todo!(),
+                Stmt::Map(_) => todo!(),
                 Stmt::Fn(fn_ref) => {
                     let fn_ref = match fn_ref {
                         mir::stmt::FnRef::Link(_) => todo!(),
@@ -164,7 +164,6 @@ impl EvalCfg {
                         panic!("fn_ref");
                     }
                 }
-                Stmt::Op { op, operands } => self.eval_op(op, operands),
                 Stmt::Parameter => {
                     // unwrap is safe because typeinfer ensures that a parameter must be exist.
                     let ty = self.get_var_ty(bind_var);

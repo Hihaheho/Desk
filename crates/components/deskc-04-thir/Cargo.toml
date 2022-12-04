@@ -13,3 +13,4 @@ edition = "2021"
 [dependencies]
 types = { path = "../deskc-types", version = "0.0.0", package = "deskc-types" }
 ids = { path = "../deskc-ids", version = "0.0.0", package = "deskc-ids" }
+dson = { path = "../dson", version = "0.0.0", package = "dson" }

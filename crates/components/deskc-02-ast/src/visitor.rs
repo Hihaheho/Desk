@@ -1,10 +1,11 @@
+use dson::Dson;
 use ids::LinkName;
 use uuid::Uuid;
 
 use crate::{
-    expr::{Expr, Handler, Literal, MatchCase},
+    expr::{Expr, Handler, Literal, MapElem, MatchCase},
     span::WithSpan,
-    ty::{CommentPosition, Effect, EffectExpr, Type},
+    ty::{Effect, EffectExpr, Trait, Type},
 };
 
 pub trait ExprVisitorMut {
@@ -14,11 +15,8 @@ pub trait ExprVisitorMut {
     fn super_visit_expr(&mut self, expr: &mut WithSpan<Expr>) {
         match &mut expr.value {
             Expr::Literal(literal) => self.visit_literal(literal),
-            Expr::Let {
-                ty,
-                definition,
-                body,
-            } => self.visit_let(ty, definition, body),
+            Expr::Do { stmt, expr } => self.visit_do(stmt, expr),
+            Expr::Let { definition, body } => self.visit_let(definition, body),
             Expr::Perform { input, output } => self.visit_perform(input, output),
             Expr::Continue { input, output } => self.visit_continue(input, output),
             Expr::Handle { expr, handlers } => self.visit_handle(expr, handlers),
@@ -31,37 +29,33 @@ pub trait ExprVisitorMut {
             Expr::Match { of, cases } => self.visit_match(of, cases),
             Expr::Typed { ty, item } => self.visit_typed(ty, item),
             Expr::Hole => self.visit_hole(),
-            Expr::Function { parameters, body } => self.visit_function(parameters, body),
+            Expr::Function { parameter, body } => self.visit_function(parameter, body),
             Expr::Vector(exprs) => self.visit_vector(exprs),
-            Expr::Set(exprs) => self.visit_set(exprs),
+            Expr::Map(exprs) => self.visit_map(exprs),
             Expr::Import { ty, uuid } => self.visit_import(ty, uuid),
             Expr::Export { ty } => self.visit_export(ty),
-            Expr::Attribute { attr, item } => self.visit_attribute(attr, item),
-            Expr::Brand { brands, item } => self.visit_brand(brands, item),
+            Expr::Attributed { attr, item } => self.visit_attribute(attr, item),
+            Expr::Brand { brand, item } => self.visit_brand(brand, item),
             Expr::Label { label, item } => self.visit_label(label, item),
             Expr::NewType { ident, ty, expr } => self.visit_new_type(ident, ty, expr),
-            Expr::Comment {
-                position,
-                text,
-                item,
-            } => self.visit_comment(position, text, item),
+            Expr::Comment { text, item } => self.visit_comment(text, item),
             Expr::Card { uuid, item, next } => self.visit_card(uuid, item, next),
         }
     }
     fn visit_literal(&mut self, _literal: &mut Literal) {}
-    fn visit_let(
-        &mut self,
-        ty: &mut WithSpan<Type>,
-        definition: &mut WithSpan<Expr>,
-        body: &mut WithSpan<Expr>,
-    ) {
-        self.visit_type(ty);
+    fn visit_do(&mut self, stmt: &mut WithSpan<Expr>, expr: &mut WithSpan<Expr>) {
+        self.visit_expr(stmt);
+        self.visit_expr(expr);
+    }
+    fn visit_let(&mut self, definition: &mut WithSpan<Expr>, body: &mut WithSpan<Expr>) {
         self.visit_expr(definition);
         self.visit_expr(body);
     }
-    fn visit_perform(&mut self, input: &mut WithSpan<Expr>, output: &mut WithSpan<Type>) {
+    fn visit_perform(&mut self, input: &mut WithSpan<Expr>, output: &mut Option<WithSpan<Type>>) {
         self.visit_expr(input);
-        self.visit_type(output);
+        if let Some(output) = output {
+            self.visit_type(output);
+        }
     }
     fn visit_continue(&mut self, input: &mut WithSpan<Expr>, output: &mut Option<WithSpan<Type>>) {
         self.visit_expr(input);
@@ -111,10 +105,8 @@ pub trait ExprVisitorMut {
         self.visit_expr(item);
     }
     fn visit_hole(&mut self) {}
-    fn visit_function(&mut self, parameters: &mut Vec<WithSpan<Type>>, body: &mut WithSpan<Expr>) {
-        for parameter in parameters {
-            self.visit_type(parameter);
-        }
+    fn visit_function(&mut self, parameter: &mut WithSpan<Type>, body: &mut WithSpan<Expr>) {
+        self.visit_type(parameter);
         self.visit_expr(body);
     }
     fn visit_vector(&mut self, exprs: &mut Vec<WithSpan<Expr>>) {
@@ -122,9 +114,10 @@ pub trait ExprVisitorMut {
             self.visit_expr(expr);
         }
     }
-    fn visit_set(&mut self, exprs: &mut Vec<WithSpan<Expr>>) {
-        for expr in exprs {
-            self.visit_expr(expr);
+    fn visit_map(&mut self, exprs: &mut Vec<MapElem>) {
+        for elem in exprs {
+            self.visit_expr(&mut elem.key);
+            self.visit_expr(&mut elem.value);
         }
     }
     fn visit_import(&mut self, ty: &mut WithSpan<Type>, _uuid: &mut Option<Uuid>) {
@@ -133,14 +126,13 @@ pub trait ExprVisitorMut {
     fn visit_export(&mut self, ty: &mut WithSpan<Type>) {
         self.visit_type(ty);
     }
-    fn visit_attribute(&mut self, attr: &mut WithSpan<Expr>, item: &mut WithSpan<Expr>) {
-        self.visit_expr(attr);
+    fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
     }
-    fn visit_brand(&mut self, _brands: &mut Vec<String>, item: &mut WithSpan<Expr>) {
+    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
     }
-    fn visit_label(&mut self, _label: &mut String, item: &mut WithSpan<Expr>) {
+    fn visit_label(&mut self, _label: &mut Dson, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
     }
     fn visit_new_type(
@@ -152,12 +144,7 @@ pub trait ExprVisitorMut {
         self.visit_type(ty);
         self.visit_expr(expr);
     }
-    fn visit_comment(
-        &mut self,
-        _position: &mut CommentPosition,
-        _text: &mut String,
-        item: &mut WithSpan<Expr>,
-    ) {
+    fn visit_comment(&mut self, _text: &mut String, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
     }
     fn visit_card(
@@ -189,30 +176,43 @@ pub trait TypeVisitorMut {
             Type::This => self.visit_this(),
             Type::Product(types) => self.visit_product(types),
             Type::Sum(types) => self.visit_sum(types),
-            Type::Function { parameters, body } => self.visit_function(parameters, body),
+            Type::Function(function) => {
+                self.visit_function(&mut function.parameter, &mut function.body)
+            }
             Type::Vector(ty) => self.visit_vector(ty),
-            Type::Set(ty) => self.visit_set(ty),
-            Type::Let { variable, body } => self.visit_let(variable, body),
+            Type::Map { key, value } => self.visit_map(key, value),
+            Type::Let {
+                variable,
+                definition,
+                body,
+            } => self.visit_let(variable, definition, body),
             Type::Variable(ident) => self.visit_variable(ident),
             Type::BoundedVariable { bound, identifier } => {
                 self.visit_bounded_variable(bound, identifier)
             }
-            Type::Attribute { attr, ty } => self.visit_attribute(attr, ty),
-            Type::Comment {
-                position,
-                text,
-                item,
-            } => self.visit_comment(position, text, item),
+            Type::Attributed { attr, ty } => self.visit_attribute(attr, ty),
+            Type::Comment { text, item } => self.visit_comment(text, item),
+            Type::Forall {
+                variable,
+                bound,
+                body,
+            } => self.visit_all(variable, bound, body),
+            Type::Exists {
+                variable,
+                bound,
+                body,
+            } => self.visit_exists(variable, bound, body),
         }
     }
-    fn visit_brand(&mut self, _brand: &mut String, item: &mut WithSpan<Type>) {
+    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithSpan<Type>) {
         self.visit_type(item);
     }
     fn visit_number(&mut self) {}
     fn visit_string(&mut self) {}
-    fn visit_trait(&mut self, types: &mut Vec<WithSpan<Type>>) {
-        for ty in types {
-            self.visit_type(ty);
+    fn visit_trait(&mut self, types: &mut Trait) {
+        for ty in &mut types.0 {
+            self.visit_type(&mut ty.value.parameter);
+            self.visit_type(&mut ty.value.body);
         }
     }
     fn visit_effectful(&mut self, ty: &mut WithSpan<Type>, effects: &mut WithSpan<EffectExpr>) {
@@ -231,17 +231,16 @@ pub trait TypeVisitorMut {
             self.visit_type(ty);
         }
     }
-    fn visit_function(&mut self, parameters: &mut Vec<WithSpan<Type>>, body: &mut WithSpan<Type>) {
-        for parameter in parameters {
-            self.visit_type(parameter);
-        }
+    fn visit_function(&mut self, parameter: &mut WithSpan<Type>, body: &mut WithSpan<Type>) {
+        self.visit_type(parameter);
         self.visit_type(body);
     }
     fn visit_vector(&mut self, ty: &mut WithSpan<Type>) {
         self.visit_type(ty);
     }
-    fn visit_set(&mut self, ty: &mut WithSpan<Type>) {
-        self.visit_type(ty);
+    fn visit_map(&mut self, key: &mut WithSpan<Type>, value: &mut WithSpan<Type>) {
+        self.visit_type(key);
+        self.visit_type(value);
     }
     fn visit_import(&mut self, ty: &mut WithSpan<Type>, _uuid: &mut Option<Uuid>) {
         self.visit_type(ty);
@@ -249,21 +248,21 @@ pub trait TypeVisitorMut {
     fn visit_export(&mut self, ty: &mut WithSpan<Type>) {
         self.visit_type(ty);
     }
-    fn visit_let(&mut self, _variable: &mut String, body: &mut WithSpan<Type>) {
+    fn visit_let(
+        &mut self,
+        _variable: &mut String,
+        definition: &mut WithSpan<Type>,
+        body: &mut WithSpan<Type>,
+    ) {
+        self.visit_type(definition);
         self.visit_type(body);
     }
     fn visit_variable(&mut self, _ident: &mut String) {}
     fn visit_bounded_variable(&mut self, _bound: &mut WithSpan<Type>, _identifier: &mut String) {}
-    fn visit_attribute(&mut self, attr: &mut WithSpan<Expr>, item: &mut WithSpan<Type>) {
-        self.visit_expr(attr);
+    fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithSpan<Type>) {
         self.visit_type(item);
     }
-    fn visit_comment(
-        &mut self,
-        _position: &mut CommentPosition,
-        _text: &mut String,
-        item: &mut WithSpan<Type>,
-    ) {
+    fn visit_comment(&mut self, _text: &mut String, item: &mut WithSpan<Type>) {
         self.visit_type(item);
     }
     fn visit_expr(&mut self, _item: &mut WithSpan<Expr>) {}
@@ -308,6 +307,28 @@ pub trait TypeVisitorMut {
         for argument in arguments {
             self.visit_type(argument);
         }
+    }
+    fn visit_all(
+        &mut self,
+        _variable: &mut String,
+        bound: &mut Option<Box<WithSpan<Type>>>,
+        body: &mut WithSpan<Type>,
+    ) {
+        if let Some(bound) = bound {
+            self.visit_type(bound);
+        }
+        self.visit_type(body);
+    }
+    fn visit_exists(
+        &mut self,
+        _variable: &mut String,
+        bound: &mut Option<Box<WithSpan<Type>>>,
+        body: &mut WithSpan<Type>,
+    ) {
+        if let Some(bound) = bound {
+            self.visit_type(bound);
+        }
+        self.visit_type(body);
     }
 }
 

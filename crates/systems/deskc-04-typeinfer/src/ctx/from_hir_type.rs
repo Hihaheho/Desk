@@ -22,18 +22,14 @@ impl Ctx {
                 Type::Product(types.iter().map(|t| self.gen_from_hir_type(t)).collect())
             }
             Sum(types) => Type::Sum(types.iter().map(|t| self.gen_from_hir_type(t)).collect()),
-            Function { parameters, body } => parameters
-                .iter()
-                .map(|parameter| self.gen_from_hir_type(parameter))
-                .rfold(self.gen_from_hir_type(body), |acc, ty| Type::Function {
-                    parameter: Box::new(ty),
-                    body: Box::new(acc),
-                }),
+            Function(function) => Type::Function {
+                parameter: Box::new(self.gen_from_hir_type(&function.parameter)),
+                body: Box::new(self.gen_from_hir_type(&function.body)),
+            },
             Vector(ty) => Type::Vector(Box::new(self.gen_from_hir_type(ty))),
-            Set(ty) => Type::Set(Box::new(self.gen_from_hir_type(ty))),
-            Let { variable, body } => Type::ForAll {
-                variable: self.get_id_of(variable.clone()),
-                body: Box::new(self.gen_from_hir_type(body)),
+            Map { key, value } => Type::Map {
+                key: Box::new(self.gen_from_hir_type(key)),
+                value: Box::new(self.gen_from_hir_type(value)),
             },
             Variable(id) => Type::Variable(self.get_id_of(id.clone())),
             BoundedVariable {
@@ -48,6 +44,19 @@ impl Ctx {
                 label: label.clone(),
                 item: Box::new(self.gen_from_hir_type(item)),
             },
+            Let { .. } => todo!(),
+            Forall {
+                variable,
+                bound,
+                body,
+            } => Type::ForAll {
+                variable: self.get_id_of(variable.clone()),
+                bound: bound
+                    .as_ref()
+                    .map(|bound| Box::new(self.gen_from_hir_type(&bound))),
+                body: Box::new(self.gen_from_hir_type(body)),
+            },
+            Exists { .. } => todo!(),
         }
     }
 

@@ -1,3 +1,4 @@
+use dson::Dson;
 pub use ids::LinkName;
 
 use crate::{meta::WithMeta, ty::Type};
@@ -24,14 +25,17 @@ pub struct Handler {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
+    Do {
+        stmt: Box<WithMeta<Self>>,
+        expr: Box<WithMeta<Self>>,
+    },
     Let {
-        ty: WithMeta<Type>,
         definition: Box<WithMeta<Self>>,
         expression: Box<WithMeta<Self>>,
     },
     Perform {
         input: Box<WithMeta<Self>>,
-        output: WithMeta<Type>,
+        output: Option<WithMeta<Type>>,
     },
     Continue {
         input: Box<WithMeta<Self>>,
@@ -60,13 +64,13 @@ pub enum Expr {
         body: Box<WithMeta<Self>>,
     },
     Vector(Vec<WithMeta<Self>>),
-    Set(Vec<WithMeta<Self>>),
+    Map(Vec<MapElem>),
     Label {
-        label: String,
+        label: Dson,
         item: Box<WithMeta<Self>>,
     },
     Brand {
-        brand: String,
+        brand: Dson,
         item: Box<WithMeta<Self>>,
     },
 }
@@ -75,4 +79,10 @@ pub enum Expr {
 pub struct MatchCase {
     pub ty: WithMeta<Type>,
     pub expr: WithMeta<Expr>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MapElem {
+    pub key: WithMeta<Expr>,
+    pub value: WithMeta<Expr>,
 }

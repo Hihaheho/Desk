@@ -1,1 +1,5 @@
-!*.par
+!grammar.par
+
+# generated files
+grammar_trait.rs
+parser.rs

@@ -1,8 +1,10 @@
-mod card;
-mod parse_source_code;
-mod query_result;
+pub mod card;
+pub mod parse_source_code;
+pub mod query_result;
 
 pub use parse_source_code::*;
+
+pub use codebase::code::{Code, SyntaxKind};
 
 #[cfg(test)]
 mod tests {
@@ -32,7 +34,7 @@ mod tests {
         cards.set_code(
             card_id.clone(),
             Code::SourceCode {
-                syntax: SyntaxKind::Hacker,
+                syntax: SyntaxKind::Minimalist,
                 source: Arc::new("1".into()),
             },
         );

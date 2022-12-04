@@ -7,18 +7,19 @@ use crate::{
 pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
     match value {
         Expr::Literal(_) => {}
-        Expr::Let {
-            ty,
-            definition,
-            body,
-        } => {
-            remove_span_ty(ty);
+        Expr::Do { stmt, expr } => {
+            remove_span(stmt);
+            remove_span(expr);
+        }
+        Expr::Let { definition, body } => {
             remove_span(definition);
             remove_span(body);
         }
         Expr::Perform { input, output } => {
             remove_span(input);
-            remove_span_ty(output);
+            if let Some(output) = output {
+                remove_span_ty(output);
+            }
         }
         Expr::Continue { input, output } => {
             remove_span(input);
@@ -61,10 +62,8 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
             remove_span(item);
         }
         Expr::Hole => {}
-        Expr::Function { parameters, body } => {
-            for param in parameters {
-                remove_span_ty(param);
-            }
+        Expr::Function { parameter, body } => {
+            remove_span_ty(parameter);
             remove_span(body);
         }
         Expr::Vector(exprs) => {
@@ -72,9 +71,10 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
                 remove_span(expr);
             }
         }
-        Expr::Set(exprs) => {
-            for expr in exprs {
-                remove_span(expr);
+        Expr::Map(exprs) => {
+            for elem in exprs {
+                remove_span(&mut elem.key);
+                remove_span(&mut elem.value);
             }
         }
         Expr::Import { ty, .. } => {
@@ -83,11 +83,10 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
         Expr::Export { ty } => {
             remove_span_ty(ty);
         }
-        Expr::Attribute { attr, item } => {
-            remove_span(attr);
+        Expr::Attributed { attr: _, item } => {
             remove_span(item);
         }
-        Expr::Brand { brands: _, item } => {
+        Expr::Brand { brand: _, item } => {
             remove_span(item);
         }
         Expr::Label { label: _, item } => {
@@ -97,11 +96,7 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
             remove_span_ty(ty);
             remove_span(expr);
         }
-        Expr::Comment {
-            position: _,
-            text: _,
-            item,
-        } => {
+        Expr::Comment { text: _, item } => {
             remove_span(item);
         }
         Expr::Card {
@@ -126,9 +121,10 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
         }
         Type::Number => {}
         Type::String => {}
-        Type::Trait(types) => {
-            for ty in types {
-                remove_span_ty(ty);
+        Type::Trait(trait_) => {
+            for ty in &mut trait_.0 {
+                remove_span_ty(&mut ty.value.parameter);
+                remove_span_ty(&mut ty.value.body);
             }
         }
         Type::Effectful { ty, effects } => {
@@ -147,19 +143,23 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
                 remove_span_ty(ty);
             }
         }
-        Type::Function { parameters, body } => {
-            for param in parameters {
-                remove_span_ty(param);
-            }
-            remove_span_ty(body);
+        Type::Function(function) => {
+            remove_span_ty(&mut function.parameter);
+            remove_span_ty(&mut function.body);
         }
         Type::Vector(ty) => {
             remove_span_ty(ty);
         }
-        Type::Set(ty) => {
-            remove_span_ty(ty);
+        Type::Map { key, value } => {
+            remove_span_ty(key);
+            remove_span_ty(value);
         }
-        Type::Let { variable: _, body } => {
+        Type::Let {
+            variable: _,
+            definition,
+            body,
+        } => {
+            remove_span_ty(definition);
             remove_span_ty(body);
         }
         Type::Variable(_) => {}
@@ -169,16 +169,31 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
         } => {
             remove_span_ty(bound);
         }
-        Type::Attribute { attr, ty } => {
-            remove_span(attr);
+        Type::Attributed { attr: _, ty } => {
             remove_span_ty(ty);
         }
-        Type::Comment {
-            position: _,
-            text: _,
-            item,
-        } => {
+        Type::Comment { text: _, item } => {
             remove_span_ty(item);
+        }
+        Type::Forall {
+            variable: _,
+            bound,
+            body,
+        } => {
+            if let Some(bound) = bound {
+                remove_span_ty(bound);
+            }
+            remove_span_ty(body);
+        }
+        Type::Exists {
+            variable: _,
+            bound,
+            body,
+        } => {
+            if let Some(bound) = bound {
+                remove_span_ty(bound);
+            }
+            remove_span_ty(body);
         }
     }
     *id = Default::default();

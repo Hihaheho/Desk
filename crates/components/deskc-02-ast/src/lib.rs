@@ -1,3 +1,4 @@
+pub mod dson;
 pub mod expr;
 pub mod remove_span;
 pub mod span;

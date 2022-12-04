@@ -1,10 +1,8 @@
+use dson::Dson;
 pub use ids::LinkName;
 use uuid::Uuid;
 
-use crate::{
-    span::WithSpan,
-    ty::{CommentPosition, Type},
-};
+use crate::{span::WithSpan, ty::Type};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -27,14 +25,17 @@ pub struct Handler {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
+    Do {
+        stmt: Box<WithSpan<Self>>,
+        expr: Box<WithSpan<Self>>,
+    },
     Let {
-        ty: WithSpan<Type>,
         definition: Box<WithSpan<Self>>,
         body: Box<WithSpan<Self>>,
     },
     Perform {
         input: Box<WithSpan<Self>>,
-        output: WithSpan<Type>,
+        output: Option<WithSpan<Type>>,
     },
     Continue {
         input: Box<WithSpan<Self>>,
@@ -60,11 +61,11 @@ pub enum Expr {
     },
     Hole,
     Function {
-        parameters: Vec<WithSpan<Type>>,
+        parameter: WithSpan<Type>,
         body: Box<WithSpan<Self>>,
     },
     Vector(Vec<WithSpan<Self>>),
-    Set(Vec<WithSpan<Self>>),
+    Map(Vec<MapElem>),
     Import {
         ty: WithSpan<Type>,
         uuid: Option<Uuid>,
@@ -72,16 +73,16 @@ pub enum Expr {
     Export {
         ty: WithSpan<Type>,
     },
-    Attribute {
-        attr: Box<WithSpan<Self>>,
+    Attributed {
+        attr: Dson,
         item: Box<WithSpan<Self>>,
     },
     Brand {
-        brands: Vec<String>,
+        brand: Dson,
         item: Box<WithSpan<Self>>,
     },
     Label {
-        label: String,
+        label: Dson,
         item: Box<WithSpan<Self>>,
     },
     NewType {
@@ -90,7 +91,6 @@ pub enum Expr {
         expr: Box<WithSpan<Self>>,
     },
     Comment {
-        position: CommentPosition,
         text: String,
         item: Box<WithSpan<Self>>,
     },
@@ -105,4 +105,10 @@ pub enum Expr {
 pub struct MatchCase {
     pub ty: WithSpan<Type>,
     pub expr: WithSpan<Expr>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MapElem {
+    pub key: WithSpan<Expr>,
+    pub value: WithSpan<Expr>,
 }

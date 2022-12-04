@@ -1,3 +1,5 @@
+use dson::Dson;
+
 use crate::meta::WithMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -16,7 +18,7 @@ pub struct Effect {
 pub enum Type {
     Number,
     String,
-    Trait(Vec<WithMeta<Self>>),
+    Trait(Vec<WithMeta<Function>>),
     Effectful {
         ty: Box<WithMeta<Self>>,
         effects: WithMeta<EffectExpr>,
@@ -25,16 +27,17 @@ pub enum Type {
     This,
     Product(Vec<WithMeta<Self>>),
     Sum(Vec<WithMeta<Self>>),
-    Function {
-        parameters: Vec<WithMeta<Self>>,
-        body: Box<WithMeta<Self>>,
-    },
+    Function(Box<Function>),
     Vector(Box<WithMeta<Self>>),
-    Set(Box<WithMeta<Self>>),
+    Map {
+        key: Box<WithMeta<Self>>,
+        value: Box<WithMeta<Self>>,
+    },
     Let {
         variable: String,
         // definition: Box<WithMeta<Self>>,
         body: Box<WithMeta<Self>>,
+        definition: Box<WithMeta<Type>>,
     },
     Variable(String),
     BoundedVariable {
@@ -42,14 +45,30 @@ pub enum Type {
         identifier: String,
     },
     Brand {
-        brand: String,
+        brand: Dson,
         item: Box<WithMeta<Self>>,
     },
     // just label brand
     Label {
-        label: String,
+        label: Dson,
         item: Box<WithMeta<Self>>,
     },
+    Forall {
+        variable: String,
+        bound: Option<Box<WithMeta<Self>>>,
+        body: Box<WithMeta<Self>>,
+    },
+    Exists {
+        variable: String,
+        bound: Option<Box<WithMeta<Self>>>,
+        body: Box<WithMeta<Self>>,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Function {
+    pub parameter: WithMeta<Type>,
+    pub body: WithMeta<Type>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

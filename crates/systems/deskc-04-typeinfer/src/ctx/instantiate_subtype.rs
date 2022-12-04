@@ -1,6 +1,7 @@
+use errors::typeinfer::TypeError;
+
 use crate::{
     ctx::{Ctx, Id, Log},
-    error::TypeError,
     mono_type::is_monotype,
     ty::{effect_expr::EffectExpr, Type},
 };
@@ -40,9 +41,14 @@ impl Ctx {
                         .instantiate_supertype(parameter, &a1)?;
                     theta.instantiate_subtype(&a2, &theta.substitute_from_ctx(body))?
                 }
-                Type::ForAll { variable, body } => self
+                Type::ForAll {
+                    variable,
+                    bound,
+                    body,
+                } => self
                     .add(Log::Variable(*variable))
                     .instantiate_subtype(id, body)?
+                    .bound_check(&Type::Variable(*variable), bound)?
                     .truncate_from(&Log::Variable(*variable))
                     .recover_effects(),
                 Type::Existential(b) => self.insert_in_place(
@@ -71,16 +77,25 @@ impl Ctx {
                     )
                     .instantiate_subtype(&a, ty)?
                 }
-                Type::Set(ty) => {
-                    let a = self.fresh_existential();
+                Type::Map { key, value } => {
+                    let k = self.fresh_existential();
+                    let v = self.fresh_existential();
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![
-                            Log::Existential(a),
-                            Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
+                            Log::Existential(k),
+                            Log::Existential(v),
+                            Log::Solved(
+                                *id,
+                                Type::Map {
+                                    key: Box::new(Type::Existential(k)),
+                                    value: Box::new(Type::Existential(v)),
+                                },
+                            ),
                         ],
                     )
-                    .instantiate_subtype(&a, ty)?
+                    .instantiate_subtype(&k, key)?
+                    .instantiate_subtype(&v, value)?
                 }
                 Type::Label { item, label } => {
                     let a = self.fresh_existential();
@@ -123,7 +138,7 @@ impl Ctx {
                         vec![Log::Solved(*id, sup.clone())],
                     )
                 }
-                ty => return Err(TypeError::NotInstantiableSubtype { ty: ty.clone() }),
+                ty => return Err(TypeError::NotInstantiableSubtype { ty: self.gen_type(ty) }),
             }
         };
         self.store_solved_type_and_effects(*id, sup.clone(), EffectExpr::Effects(vec![]));

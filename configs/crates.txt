@@ -13,6 +13,8 @@ deskc-textual-diagnostics
 # deskc systems
 deskc-lexer
 deskc-parser
+deskc-syntax-rustlike
+deskc-syntax-minimalist
 deskc-hirgen
 deskc-typeinfer
 deskc-thirgen

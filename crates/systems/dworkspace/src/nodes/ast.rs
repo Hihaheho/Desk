@@ -5,7 +5,7 @@ use deskc::parse_source_code;
 use deskc_ast::{
     expr::{Expr, Literal},
     span::WithSpan,
-    ty::{Effect, EffectExpr, Type},
+    ty::{Effect, EffectExpr, Function, Type},
 };
 use deskc_ids::NodeId;
 
@@ -52,29 +52,32 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
 }
 
 fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
-    use deskc_types::Type::*;
+    use deskc_types::Type as DeskcType;
     let value = match ty {
-        Number => Type::Number,
-        String => Type::String,
-        Product(types) => Type::Product(types.iter().map(from_types).collect()),
-        Sum(types) => Type::Sum(types.iter().map(from_types).collect()),
-        Function { parameters, body } => Type::Function {
-            parameters: parameters.iter().map(from_types).collect(),
-            body: Box::new(from_types(body)),
+        DeskcType::Number => Type::Number,
+        DeskcType::String => Type::String,
+        DeskcType::Product(types) => Type::Product(types.iter().map(from_types).collect()),
+        DeskcType::Sum(types) => Type::Sum(types.iter().map(from_types).collect()),
+        DeskcType::Function { parameter, body } => Type::Function(Box::new(Function {
+            parameter: from_types(parameter),
+            body: from_types(body),
+        })),
+        DeskcType::Vector(ty) => Type::Vector(Box::new(from_types(ty))),
+        DeskcType::Map { key, value } => Type::Map {
+            key: Box::new(from_types(key)),
+            value: Box::new(from_types(value)),
         },
-        Vector(ty) => Type::Vector(Box::new(from_types(ty))),
-        Set(ty) => Type::Set(Box::new(from_types(ty))),
-        Variable(ident) => Type::Variable(ident.clone()),
-        ForAll { .. } => todo!(),
-        Effectful { ty, effects } => Type::Effectful {
+        DeskcType::Variable(ident) => Type::Variable(ident.clone()),
+        DeskcType::ForAll { .. } => todo!(),
+        DeskcType::Effectful { ty, effects } => Type::Effectful {
             ty: Box::new(from_types(ty)),
             effects: from_types_effects(effects),
         },
-        Brand { brand, item } => Type::Brand {
+        DeskcType::Brand { brand, item } => Type::Brand {
             brand: brand.clone(),
             item: Box::new(from_types(item)),
         },
-        Label { label, item } => Type::Brand {
+        DeskcType::Label { label, item } => Type::Brand {
             brand: label.clone(),
             item: Box::new(from_types(item)),
         },

@@ -1,5 +1,6 @@
 mod error;
 mod gen_effect_expr;
+use dson::Dson;
 use ids::{CardId, NodeId};
 
 use std::{
@@ -10,9 +11,9 @@ use std::{
 use ast::span::{Span, WithSpan};
 use error::HirGenError;
 use hir::{
-    expr::{Expr, Handler, Literal, MatchCase},
+    expr::{Expr, Handler, Literal, MapElem, MatchCase},
     meta::{Meta, WithMeta},
-    ty::Type,
+    ty::{Function, Type},
     Hir,
 };
 
@@ -36,9 +37,9 @@ pub fn gen_hir(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, WithMeta<Expr
 pub struct HirGen {
     next_id: RefCell<usize>,
     next_span: RefCell<Vec<(NodeId, Span)>>,
-    pub attrs: RefCell<HashMap<NodeId, Vec<Expr>>>,
+    pub attrs: RefCell<HashMap<NodeId, Vec<Dson>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
-    brands: RefCell<HashSet<String>>,
+    brands: RefCell<HashSet<Dson>>,
     cards: Vec<(CardId, WithMeta<Expr>)>,
     entrypoint: Option<WithMeta<Expr>>,
 }
@@ -55,10 +56,17 @@ impl HirGen {
         let with_meta = match ty {
             ast::ty::Type::Number => self.with_meta(Type::Number),
             ast::ty::Type::String => self.with_meta(Type::String),
-            ast::ty::Type::Trait(types) => self.with_meta(Type::Trait(
-                types
+            ast::ty::Type::Trait(trait_) => self.with_meta(Type::Trait(
+                trait_
+                    .0
                     .iter()
-                    .map(|ty| self.gen_type(ty))
+                    .map(|function| {
+                        self.push_span(function.id.clone(), function.span.clone());
+                        Ok(self.with_meta(Function {
+                            parameter: self.gen_type(&function.value.parameter)?,
+                            body: self.gen_type(&function.value.body)?,
+                        }))
+                    })
                     .collect::<Result<_, _>>()?,
             )),
             ast::ty::Type::Effectful { ty, effects } => self.with_meta(Type::Effectful {
@@ -86,17 +94,24 @@ impl HirGen {
                     .map(|ty| self.gen_type(ty))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::ty::Type::Function { parameters, body } => self.with_meta(Type::Function {
-                parameters: parameters
-                    .iter()
-                    .map(|ty| self.gen_type(ty))
-                    .collect::<Result<_, _>>()?,
-                body: Box::new(self.gen_type(body)?),
-            }),
+            ast::ty::Type::Function(function) => {
+                self.with_meta(Type::Function(Box::new(Function {
+                    parameter: self.gen_type(&function.parameter)?,
+                    body: self.gen_type(&function.body)?,
+                })))
+            }
             ast::ty::Type::Vector(ty) => self.with_meta(Type::Vector(Box::new(self.gen_type(ty)?))),
-            ast::ty::Type::Set(ty) => self.with_meta(Type::Set(Box::new(self.gen_type(ty)?))),
-            ast::ty::Type::Let { variable, body } => self.with_meta(Type::Let {
+            ast::ty::Type::Map { key, value } => self.with_meta(Type::Map {
+                key: Box::new(self.gen_type(key)?),
+                value: Box::new(self.gen_type(value)?),
+            }),
+            ast::ty::Type::Let {
+                variable,
+                definition,
+                body,
+            } => self.with_meta(Type::Let {
                 variable: variable.clone(),
+                definition: Box::new(self.gen_type(definition)?),
                 body: Box::new(self.gen_type(body)?),
             }),
             ast::ty::Type::BoundedVariable { bound, identifier } => {
@@ -118,17 +133,40 @@ impl HirGen {
                     })
                 }
             }
-            ast::ty::Type::Attribute { attr, ty } => {
+            ast::ty::Type::Attributed { attr, ty } => {
                 self.pop_span();
                 let mut ret = self.gen_type(ty)?;
-                let attr = self.gen_card(attr)?.value;
-                ret.meta.attrs.push(attr);
+                ret.meta.attrs.push(attr.clone());
                 self.attrs
                     .borrow_mut()
                     .insert(ret.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
+            ast::ty::Type::Forall {
+                variable,
+                bound,
+                body,
+            } => self.with_meta(Type::Forall {
+                variable: variable.clone(),
+                bound: bound
+                    .as_ref()
+                    .map(|bound| Ok(Box::new(self.gen_type(&bound)?)))
+                    .transpose()?,
+                body: Box::new(self.gen_type(body)?),
+            }),
+            ast::ty::Type::Exists {
+                variable,
+                bound,
+                body,
+            } => self.with_meta(Type::Exists {
+                variable: variable.clone(),
+                bound: bound
+                    .as_ref()
+                    .map(|bound| Ok(Box::new(self.gen_type(&bound)?)))
+                    .transpose()?,
+                body: Box::new(self.gen_type(body)?),
+            }),
         };
         Ok(with_meta)
     }
@@ -149,18 +187,20 @@ impl HirGen {
                 ast::expr::Literal::Float(value) => Literal::Float(*value),
             })),
             ast::expr::Expr::Hole => self.with_meta(Expr::Literal(Literal::Hole)),
+            ast::expr::Expr::Do { stmt, expr } => self.with_meta(Expr::Do {
+                stmt: Box::new(self.gen_card(stmt)?),
+                expr: Box::new(self.gen_card(expr)?),
+            }),
             ast::expr::Expr::Let {
-                ty: variable,
                 definition,
                 body: expression,
             } => self.with_meta(Expr::Let {
-                ty: self.gen_type(variable)?,
                 definition: Box::new(self.gen_card(definition)?),
                 expression: Box::new(self.gen_card(expression)?),
             }),
             ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
                 input: Box::new(self.gen_card(input)?),
-                output: self.gen_type(output)?,
+                output: output.as_ref().map(|ty| self.gen_type(ty)).transpose()?,
             }),
             ast::expr::Expr::Continue { input, output } => self.with_meta(Expr::Continue {
                 input: Box::new(self.gen_card(input)?),
@@ -210,49 +250,40 @@ impl HirGen {
                 ty: self.gen_type(ty)?,
                 item: Box::new(self.gen_card(expr)?),
             }),
-            ast::expr::Expr::Function { parameters, body } => {
-                let (node_id, span) = self.pop_span().unwrap();
-                parameters
-                    .iter()
-                    .map(|parameter| self.gen_type(parameter))
-                    .collect::<Result<Vec<_>, _>>()?
-                    .into_iter()
-                    .try_rfold(self.gen_card(body)?, |body, parameter| {
-                        self.push_span(node_id.clone(), span.clone());
-                        Ok(self.with_meta(Expr::Function {
-                            parameter,
-                            body: Box::new(body),
-                        }))
-                    })?
-            }
+            ast::expr::Expr::Function { parameter, body } => self.with_meta(Expr::Function {
+                parameter: self.gen_type(parameter)?,
+                body: Box::new(self.gen_card(body)?),
+            }),
             ast::expr::Expr::Vector(items) => self.with_meta(Expr::Vector(
                 items
                     .iter()
                     .map(|item| self.gen_card(item))
                     .collect::<Result<_, _>>()?,
             )),
-            ast::expr::Expr::Set(items) => self.with_meta(Expr::Set(
-                items
+            ast::expr::Expr::Map(elems) => self.with_meta(Expr::Map(
+                elems
                     .iter()
-                    .map(|item| self.gen_card(item))
+                    .map(|elem| {
+                        Ok(MapElem {
+                            key: self.gen_card(&elem.key)?,
+                            value: self.gen_card(&elem.value)?,
+                        })
+                    })
                     .collect::<Result<_, _>>()?,
             )),
             ast::expr::Expr::Import { ty: _, uuid: _ } => todo!(),
             ast::expr::Expr::Export { ty: _ } => todo!(),
-            ast::expr::Expr::Attribute { attr, item: expr } => {
+            ast::expr::Expr::Attributed { attr, item: expr } => {
                 self.pop_span();
                 let mut ret = self.gen_card(expr)?;
-                let attr = self.gen_card(attr)?.value;
-                ret.meta.attrs.push(attr);
+                ret.meta.attrs.push(attr.clone());
                 self.attrs
                     .borrow_mut()
                     .insert(ret.id.clone(), ret.meta.attrs.clone());
                 ret
             }
-            ast::expr::Expr::Brand { brands, item: expr } => {
-                brands.iter().for_each(|brand| {
-                    self.brands.borrow_mut().insert(brand.clone());
-                });
+            ast::expr::Expr::Brand { brand, item: expr } => {
+                self.brands.borrow_mut().insert(brand.clone());
                 self.gen_card(expr)?
             }
             ast::expr::Expr::Match { of, cases } => self.with_meta(Expr::Match {
@@ -328,7 +359,11 @@ impl HirGen {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use ast::span::dummy_span;
+    use deskc::card::CardQueries;
+    use deskc::{Code, SyntaxKind};
     use hir::{
         helper::remove_meta,
         meta::{dummy_meta, Meta},
@@ -338,8 +373,17 @@ mod tests {
 
     use super::*;
 
-    fn parse(input: &str) -> WithSpan<ast::expr::Expr> {
-        parser::parse(lexer::scan(input).unwrap()).unwrap()
+    fn parse(input: &str) -> Arc<WithSpan<ast::expr::Expr>> {
+        let card_id = CardId::new();
+        let mut compiler = deskc::card::CardsCompiler::default();
+        compiler.set_code(
+            card_id.clone(),
+            Code::SourceCode {
+                syntax: SyntaxKind::Minimalist,
+                source: Arc::new(input.to_string()),
+            },
+        );
+        compiler.ast(card_id).unwrap()
     }
 
     #[test]
@@ -350,14 +394,10 @@ mod tests {
                 gen.gen_card(&dummy_span(ast::expr::Expr::Apply {
                     function: dummy_span(ast::ty::Type::Number),
                     link_name: Default::default(),
-                    arguments: vec![dummy_span(ast::expr::Expr::Attribute {
-                        attr: Box::new(dummy_span(ast::expr::Expr::Literal(
-                            ast::expr::Literal::Integer(1)
-                        ),)),
-                        item: Box::new(dummy_span(ast::expr::Expr::Attribute {
-                            attr: Box::new(dummy_span(ast::expr::Expr::Literal(
-                                ast::expr::Literal::Integer(2)
-                            ),)),
+                    arguments: vec![dummy_span(ast::expr::Expr::Attributed {
+                        attr: Dson::Literal(dson::Literal::Integer(1)),
+                        item: Box::new(dummy_span(ast::expr::Expr::Attributed {
+                            attr: Dson::Literal(dson::Literal::Integer(2)),
                             item: Box::new(dummy_span(ast::expr::Expr::Hole)),
                         },)),
                     },)],
@@ -378,8 +418,8 @@ mod tests {
                         id: Default::default(),
                         meta: Meta {
                             attrs: vec![
-                                Expr::Literal(Literal::Integer(2)),
-                                Expr::Literal(Literal::Integer(1))
+                                Dson::Literal(dson::Literal::Integer(2)),
+                                Dson::Literal(dson::Literal::Integer(1)),
                             ],
                             span: Default::default()
                         },
@@ -393,8 +433,8 @@ mod tests {
         assert_eq!(
             gen.attrs.borrow().iter().next().unwrap().1,
             &vec![
-                Expr::Literal(Literal::Integer(2)),
-                Expr::Literal(Literal::Integer(1))
+                Dson::Literal(dson::Literal::Integer(2)),
+                Dson::Literal(dson::Literal::Integer(1)),
             ]
         );
     }
@@ -403,10 +443,10 @@ mod tests {
     fn label_and_brand() {
         let expr = parse(
             r#"
-        $ & @brand 'number ~
-        'brand brand ~
-        $ & @brand 'number ~
-        & @label 'number
+        $ & @"brand" 'number;
+        'brand "brand";
+        $ & @"brand" 'number;
+        & @"label" 'number
         "#,
         );
 
@@ -414,20 +454,18 @@ mod tests {
         assert_eq!(
             remove_meta(gen.gen_card(&expr).unwrap()),
             dummy_meta(Expr::Let {
-                ty: dummy_meta(Type::Infer),
                 definition: Box::new(dummy_meta(Expr::Apply {
                     function: dummy_meta(Type::Label {
-                        label: "brand".into(),
+                        label: Dson::Literal(dson::Literal::String("brand".into())),
                         item: Box::new(dummy_meta(Type::Number)),
                     }),
                     link_name: Default::default(),
                     arguments: vec![],
                 })),
                 expression: Box::new(dummy_meta(Expr::Let {
-                    ty: dummy_meta(Type::Infer),
                     definition: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Brand {
-                            brand: "brand".into(),
+                            brand: Dson::Literal(dson::Literal::String("brand".into())),
                             item: Box::new(dummy_meta(Type::Number)),
                         }),
                         link_name: Default::default(),
@@ -435,7 +473,7 @@ mod tests {
                     })),
                     expression: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Label {
-                            label: "label".into(),
+                            label: Dson::Literal(dson::Literal::String("label".into())),
                             item: Box::new(dummy_meta(Type::Number)),
                         }),
                         link_name: Default::default(),
@@ -448,11 +486,7 @@ mod tests {
 
     #[test]
     fn gen_entrypoint() {
-        let expr = parse(
-            r#"
-        1
-        "#,
-        );
+        let expr = parse("1");
         let (_, hir) = gen_cards(&expr).unwrap();
         assert!(hir.cards.is_empty());
         assert_eq!(

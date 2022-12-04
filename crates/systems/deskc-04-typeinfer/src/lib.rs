@@ -1,5 +1,4 @@
 pub mod ctx;
-pub mod error;
 mod mono_type;
 mod occurs_in;
 mod polymorphic_function;
@@ -8,16 +7,14 @@ mod substitute_from_ctx;
 mod ty;
 mod utils;
 mod well_formed;
-mod with_effects;
 
 use std::{cell::RefCell, rc::Rc};
 
-use ctx::Ctx;
-use error::{ExprTypeError, TypeError};
+use ctx::{with_effects::WithEffects, with_type::WithType, Ctx};
+use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
 use ty::Type;
 use types::IdGen;
-use with_effects::WithEffects;
 
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
     Ctx {
@@ -25,7 +22,7 @@ pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprT
         ..Default::default()
     }
     .synth(expr)
-    .map(|WithEffects((ctx, ty), effects)| {
+    .map(|WithEffects(WithType(ctx, ty), effects)| {
         assert!(ctx.continue_input.borrow().is_empty());
         assert!(ctx.continue_output.borrow().is_empty());
         let ty = ctx.substitute_from_ctx(&ty);
@@ -43,11 +40,14 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use ariadne::{Label, Report, ReportKind, Source};
-    use hir::{expr::Literal, meta::dummy_meta};
-    use hirgen::HirGen;
+    use dson::Dson;
+    use errors::textual_diagnostics::TextualDiagnostics;
+    use hir::{expr::Literal, helper::HirVisitor, meta::dummy_meta, ty::Function};
+    use ids::{CardId, NodeId};
     use pretty_assertions::assert_eq;
-    use textual_diagnostics::TextualDiagnostics;
 
     use crate::{
         ctx::Ctx,
@@ -61,27 +61,39 @@ mod tests {
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        parse_inner(input).1
+        use deskc::card::CardQueries;
+        use deskc::{Code, SyntaxKind};
+        let card_id = CardId::new();
+        let mut compiler = deskc::card::CardsCompiler::default();
+        compiler.set_code(
+            card_id.clone(),
+            Code::SourceCode {
+                syntax: SyntaxKind::Minimalist,
+                source: Arc::new(input.to_string()),
+            },
+        );
+        compiler.hir(card_id).unwrap().hir.clone()
     }
 
-    fn parse_inner(input: &str) -> (HirGen, WithMeta<Expr>) {
-        let tokens = lexer::scan(input).unwrap();
-        let ast = parser::parse(tokens).unwrap();
-        let (hirgen, hir) = hirgen::gen_hir(&ast).unwrap();
-        (hirgen, hir)
-    }
+    fn get_types(hir: &WithMeta<Expr>, ctx: &Ctx) -> Vec<(usize, Type)> {
+        #[derive(Default)]
+        struct HirIds {
+            ids: Vec<(usize, NodeId)>,
+        }
+        impl HirVisitor for HirIds {
+            fn visit_expr(&mut self, expr: &WithMeta<Expr>) {
+                if let Some(Dson::Literal(dson::Literal::Integer(int))) = expr.meta.attrs.first() {
+                    self.ids.push((*int as usize, expr.id.clone()));
+                }
+                self.super_visit_expr(expr);
+            }
+        }
+        let mut hir_ids = HirIds::default();
+        hir_ids.visit_expr(hir);
 
-    fn get_types(hirgen: &HirGen, ctx: &Ctx) -> Vec<(usize, Type)> {
-        let mut vec: Vec<_> = hirgen
-            .attrs
-            .borrow()
-            .iter()
-            .flat_map(|(id, attrs)| {
-                attrs.iter().map(|attr| match attr {
-                    Expr::Literal(Literal::Integer(attr)) => (*attr as usize, id.clone()),
-                    _ => todo!(),
-                })
-            })
+        let mut vec: Vec<_> = hir_ids
+            .ids
+            .into_iter()
             .map(|(attr, id)| (attr, ctx.get_type(&id)))
             .collect();
 
@@ -90,14 +102,14 @@ mod tests {
     }
 
     fn print_error<T>(input: &str, error: ExprTypeError) -> T {
-        let diagnostics: TextualDiagnostics = error.into();
+        let diagnostics: TextualDiagnostics = (&error).into();
         let report = Report::build(ReportKind::Error, (), 0).with_message(diagnostics.title);
         diagnostics
             .reports
             .into_iter()
             .fold(
                 report,
-                |report, textual_diagnostics::Report { span, text }| {
+                |report, errors::textual_diagnostics::Report { span, text }| {
                     report.with_label(Label::new(span).with_message(text))
                 },
             )
@@ -119,10 +131,10 @@ mod tests {
     fn function() {
         assert_eq!(
             synth(dummy_meta(Expr::Apply {
-                function: dummy_meta(hir::ty::Type::Function {
-                    parameters: vec![dummy_meta(hir::ty::Type::Number)],
-                    body: Box::new(dummy_meta(hir::ty::Type::String)),
-                }),
+                function: dummy_meta(hir::ty::Type::Function(Box::new(Function {
+                    parameter: dummy_meta(hir::ty::Type::Number),
+                    body: dummy_meta(hir::ty::Type::String),
+                }))),
                 link_name: Default::default(),
                 arguments: vec![dummy_meta(Expr::Literal(Literal::Integer(1))),]
             })),
@@ -190,11 +202,11 @@ mod tests {
             $ #4 >'a id #5 1 ~
             #6 >'a id #7 "a"
         "#;
-        let (hirgen, expr) = parse_inner(input);
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
+        let expr = &parse(input);
+        let (ctx, _ty) = crate::synth(100, expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (1, Type::String),
                 (
@@ -215,7 +227,7 @@ mod tests {
 
     #[test]
     fn subtyping_sum_in_product() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             $ #1 \ + 'number, * -> 1: 'a fun ~
             #3 >'a fun #2 * 1, "a"
@@ -224,7 +236,7 @@ mod tests {
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -241,7 +253,7 @@ mod tests {
 
     #[test]
     fn perform() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             $ #3 \ x -> #2 > \ 'number -> 'string ~ #1 ! &x => 'number: fun ~
             #4 >fun "a"
@@ -251,7 +263,7 @@ mod tests {
 
         let x = 103;
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -302,7 +314,7 @@ mod tests {
 
     #[test]
     fn handle() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
                     \ x, y, z ->
                       #3 'handle #2 > \y -> z ! &x => y ~
@@ -317,7 +329,7 @@ mod tests {
         let y = 107;
         let z = 112;
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -355,7 +367,7 @@ mod tests {
 
     #[test]
     fn test_continue() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             \x, y ->
               #3 'handle #2 > \'number -> 'string ! &x => 'number ~
@@ -367,7 +379,7 @@ mod tests {
 
         let x = 102;
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -396,7 +408,7 @@ mod tests {
 
     #[test]
     fn test_continue_with_output() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             \x, y ->
               #3 'handle #2 > \'number -> y ! &x => 'number ~
@@ -407,7 +419,7 @@ mod tests {
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -452,11 +464,11 @@ mod tests {
                 $ ! "a" => 'number ~
                 ! @b * => 'number
             "#;
-        let (hirgen, expr) = parse_inner(input);
+        let expr = parse(input);
         let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (
                     1,
@@ -481,14 +493,14 @@ mod tests {
                         effects: EffectExpr::Effects(vec![
                             Effect {
                                 input: Type::Label {
-                                    label: "a".into(),
+                                    label: Dson::Literal(dson::Literal::String("a".into())),
                                     item: Box::new(Type::Product(vec![]))
                                 },
                                 output: Type::Number,
                             },
                             Effect {
                                 input: Type::Label {
-                                    label: "b".into(),
+                                    label: Dson::Literal(dson::Literal::String("b".into())),
                                     item: Box::new(Type::Product(vec![]))
                                 },
                                 output: Type::Number,
@@ -510,7 +522,7 @@ mod tests {
         assert_eq!(
             synth(expr),
             Ok(Type::Label {
-                label: "labeled".into(),
+                label: Dson::Literal(dson::Literal::String("labeled".into())),
                 item: Box::new(Type::Number),
             })
         );
@@ -527,11 +539,11 @@ mod tests {
             synth(expr),
             Ok(Type::Function {
                 parameter: Box::new(Type::Label {
-                    label: "labeled".into(),
+                    label: Dson::Literal(dson::Literal::String("labeled".into())),
                     item: Box::new(Type::Number),
                 }),
                 body: Box::new(Type::Label {
-                    label: "labeled".into(),
+                    label: Dson::Literal(dson::Literal::String("labeled".into())),
                     item: Box::new(Type::Number),
                 })
             })
@@ -549,10 +561,10 @@ mod tests {
         assert_eq!(
             synth(expr).map_err(|e| e.error),
             Err(TypeError::NotSubtype {
-                sub: Type::Number,
-                ty: Type::Brand {
-                    brand: "brand".into(),
-                    item: Box::new(Type::Number),
+                sub: types::Type::Number,
+                ty: types::Type::Brand {
+                    brand: Dson::Literal(dson::Literal::String("brand".into())),
+                    item: Box::new(types::Type::Number),
                 },
             })
         );
@@ -571,7 +583,7 @@ mod tests {
 
     #[test]
     fn infer() {
-        let (_hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             ^> \ _ -> 'number "a": _
             "#,
@@ -583,7 +595,7 @@ mod tests {
 
     #[test]
     fn test_match() {
-        let (hirgen, expr) = parse_inner(
+        let expr = parse(
             r#"
             \ 'a x ->
               #2 + #1 &'a x ~
@@ -594,18 +606,18 @@ mod tests {
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
-            get_types(&hirgen, &ctx),
+            get_types(&expr, &ctx),
             vec![
                 (1, Type::Sum(vec![Type::Number, Type::String])),
                 (
                     2,
                     Type::Sum(vec![
                         Type::Label {
-                            label: "a".into(),
+                            label: Dson::Literal(dson::Literal::String("a".into())),
                             item: Box::new(Type::Number)
                         },
                         Type::Label {
-                            label: "b".into(),
+                            label: Dson::Literal(dson::Literal::String("b".into())),
                             item: Box::new(Type::Number)
                         }
                     ])

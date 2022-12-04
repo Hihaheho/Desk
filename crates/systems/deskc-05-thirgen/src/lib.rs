@@ -1,15 +1,11 @@
-mod builtin;
-
 use std::cell::RefCell;
 
 use hir::{
     expr::{Expr, Literal, MatchCase},
     meta::WithMeta,
 };
-use thir::{Handler, TypedHir};
+use thir::{Handler, MapElem, TypedHir};
 use types::{Effect, IdGen, Type, Types};
-
-use crate::builtin::find_builtin;
 
 pub fn gen_typed_hir(next_id: usize, types: Types, expr: &WithMeta<Expr>) -> TypedHir {
     TypedHirGen {
@@ -43,8 +39,11 @@ impl TypedHirGen {
             Expr::Literal(Literal::String(value)) => {
                 thir::Expr::Literal(thir::Literal::String(value.clone()))
             }
+            Expr::Do { stmt, expr } => thir::Expr::Do {
+                stmt: Box::new(self.gen(stmt)),
+                expr: Box::new(self.gen(expr)),
+            },
             Expr::Let {
-                ty: _,
                 definition,
                 expression,
             } => thir::Expr::Let {
@@ -78,25 +77,10 @@ impl TypedHirGen {
                 arguments,
             } => {
                 // TODO: lookup imported uuid to allow overwrite the builtin functions
-                if let Some(builtin) = find_builtin(&self.get_type(function)) {
-                    match builtin {
-                        builtin::Builtin::Normal { op, params } => {
-                            let op = thir::Expr::Op {
-                                op,
-                                operands: arguments.iter().map(|arg| self.gen(arg)).collect(),
-                            };
-                            // TODO wrap by function
-                            if arguments.len() < params {}
-                            op
-                        }
-                        builtin::Builtin::Custom(expr) => expr(self, arguments),
-                    }
-                } else {
-                    thir::Expr::Apply {
-                        function: self.get_type(function),
-                        link_name: link_name.clone(),
-                        arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
-                    }
+                thir::Expr::Apply {
+                    function: self.get_type(function),
+                    link_name: link_name.clone(),
+                    arguments: arguments.iter().map(|arg| self.gen(arg)).collect(),
                 }
             }
             Expr::Product(values) => {
@@ -107,21 +91,11 @@ impl TypedHirGen {
             Expr::Function { parameter: _, body } => {
                 // get type from whole function is more accurate than from parameter.
                 let function_ty = self.get_type(expr);
-                if let Type::Function {
-                    parameters,
-                    body: _,
-                } = function_ty
-                {
+                if let Type::Function { parameter, body: _ } = function_ty {
                     // Flatten the function
-                    match self.gen(body) {
-                        TypedHir {
-                            expr: thir::Expr::Function { body, .. },
-                            ..
-                        } => thir::Expr::Function { parameters, body },
-                        inner => thir::Expr::Function {
-                            parameters,
-                            body: Box::new(inner),
-                        },
+                    thir::Expr::Function {
+                        parameter: *parameter,
+                        body: Box::new(self.gen(body)),
                     }
                 } else {
                     panic!("function is inferred to not function??");
@@ -130,9 +104,15 @@ impl TypedHirGen {
             Expr::Vector(values) => {
                 thir::Expr::Vector(values.iter().map(|value| self.gen(value)).collect())
             }
-            Expr::Set(values) => {
-                thir::Expr::Set(values.iter().map(|value| self.gen(value)).collect())
-            }
+            Expr::Map(elems) => thir::Expr::Map(
+                elems
+                    .iter()
+                    .map(|elem| MapElem {
+                        key: self.gen(&elem.key),
+                        value: self.gen(&elem.value),
+                    })
+                    .collect(),
+            ),
             Expr::Match { of, cases } => thir::Expr::Match {
                 input: Box::new(self.gen(of)),
                 cases: cases
@@ -173,16 +153,27 @@ impl TypedHirGen {
 
 #[cfg(test)]
 mod tests {
-    use ids::NodeId;
-    use thir::{visitor::TypedHirVisitorMut, BuiltinOp};
+    use std::sync::Arc;
+
+    use ids::{CardId, NodeId};
+    use thir::visitor::TypedHirVisitorMut;
 
     use super::*;
     use pretty_assertions::assert_eq;
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        let tokens = lexer::scan(input).unwrap();
-        let ast = parser::parse(tokens).unwrap();
-        hirgen::gen_hir(&ast).unwrap().1
+        use deskc::card::CardQueries;
+        use deskc::{Code, SyntaxKind};
+        let card_id = CardId::new();
+        let mut compiler = deskc::card::CardsCompiler::default();
+        compiler.set_code(
+            card_id.clone(),
+            Code::SourceCode {
+                syntax: SyntaxKind::Minimalist,
+                source: Arc::new(input.to_string()),
+            },
+        );
+        compiler.hir(card_id).unwrap().hir.clone()
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {
@@ -222,7 +213,7 @@ mod tests {
 
     #[test]
     fn function_and_reference() {
-        let expr = parse(r#"\ 'number, 'string -> &'number"#);
+        let expr = parse(r#"\ 'number -> \ 'string -> &'number"#);
         let gen = TypedHirGen {
             types: infer(&expr),
             ..Default::default()
@@ -232,11 +223,14 @@ mod tests {
             TypedHir {
                 id: NodeId::default(),
                 ty: Type::Function {
-                    parameters: vec![Type::Number, Type::String],
-                    body: Box::new(Type::Number),
+                    parameter: Box::new(Type::Number),
+                    body: Box::new(Type::Function {
+                        parameter: Box::new(Type::String),
+                        body: Box::new(Type::Number)
+                    }),
                 },
                 expr: thir::Expr::Function {
-                    parameters: vec![Type::Number, Type::String],
+                    parameter: Type::Number,
                     body: Box::new(TypedHir {
                         id: NodeId::default(),
                         ty: Type::Number,
@@ -249,100 +243,6 @@ mod tests {
                 },
             }
         );
-    }
-
-    #[test]
-    fn builtin() {
-        let expr = parse(r#"> \'number, 'number -> @sum 'number ~ 1, 2"#);
-        let gen = TypedHirGen {
-            types: infer(&expr),
-            ..Default::default()
-        };
-        assert_eq!(
-            remove_id(gen.gen(&expr)),
-            TypedHir {
-                id: NodeId::default(),
-                ty: Type::Label {
-                    label: "sum".to_string(),
-                    item: Box::new(Type::Number),
-                },
-                expr: thir::Expr::Op {
-                    op: BuiltinOp::Add,
-                    operands: vec![
-                        TypedHir {
-                            id: NodeId::default(),
-                            ty: Type::Number,
-                            expr: thir::Expr::Literal(thir::Literal::Int(1)),
-                        },
-                        TypedHir {
-                            id: NodeId::default(),
-                            ty: Type::Number,
-                            expr: thir::Expr::Literal(thir::Literal::Int(2)),
-                        }
-                    ]
-                },
-            }
-        );
-    }
-
-    #[test]
-    fn builtin_curried() {
-        let expr = parse(r#"> \'number, 'number -> @sum 'number ~ 1"#);
-        let _gen = TypedHirGen {
-            types: infer(&expr),
-            id_gen: RefCell::new(IdGen { next_id: 100 }),
-        };
-        // TODO
-        // assert_eq!(
-        //     gen.gen(&expr),
-        //     TypedHir {
-        //         id: 8,
-        //         ty: Type::Label {
-        //             label: "sum".to_string(),
-        //             item: Box::new(Type::Number),
-        //         },
-        //         expr: thir::Expr::Function {
-        //             parameters: vec![
-        //                 Type::Label {
-        //                     label: "$$deskc 1".to_string(),
-        //                     item: Box::new(Type::Number)
-        //                 },
-        //                 Type::Label {
-        //                     label: "$$deskc 2".to_string(),
-        //                     item: Box::new(Type::Number)
-        //                 },
-        //             ],
-        //             body: Box::new(TypedHir {
-        //                 id: 100,
-        //                 ty: Type::Label {
-        //                     label: "sum".to_string(),
-        //                     item: Box::new(Type::Number),
-        //                 },
-        //                 expr: thir::Expr::BuiltinOp {
-        //                     op: BuiltinOp::Add,
-        //                     arguments: vec![
-        //                         TypedHir {
-        //                             id: 6,
-        //                             ty: Type::Label {
-        //                                 label: "$$deskc 1".to_string(),
-        //                                 item: Box::new(Type::Number)
-        //                             },
-        //                             expr: thir::Expr::Reference,
-        //                         },
-        //                         TypedHir {
-        //                             id: 7,
-        //                             ty: Type::Label {
-        //                                 label: "$$deskc 2".to_string(),
-        //                                 item: Box::new(Type::Number)
-        //                             },
-        //                             expr: thir::Expr::Reference,
-        //                         }
-        //                     ]
-        //                 }
-        //             })
-        //         },
-        //     }
-        // );
     }
 
     #[test]

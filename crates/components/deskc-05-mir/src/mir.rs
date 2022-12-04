@@ -29,9 +29,6 @@ pub struct Mir {
 
 impl ControlFlowGraph {
     pub fn get_type(&self) -> Type {
-        Type::Function {
-            parameters: self.parameters.clone(),
-            body: Box::new(self.output.clone()),
-        }
+        todo!()
     }
 }

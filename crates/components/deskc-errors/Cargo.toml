@@ -1,5 +1,5 @@
 [package]
-name = "deskc-textual-diagnostics"
+name = "deskc-errors"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -11,3 +11,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+types = { path = "../deskc-types", version = "0.0.0", package = "deskc-types" }
+hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+
+thiserror = "1.0.37"

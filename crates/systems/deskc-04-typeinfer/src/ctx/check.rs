@@ -1,12 +1,12 @@
+use errors::typeinfer::ExprTypeError;
 use hir::{
     expr::{Expr, Literal},
     meta::WithMeta,
 };
 
-use crate::{
-    ctx::Ctx, ctx::Log, error::ExprTypeError, to_expr_type_error, ty::Type,
-    with_effects::WithEffects,
-};
+use crate::{ctx::Ctx, ctx::Log, to_expr_type_error, ty::Type};
+
+use super::{with_effects::WithEffects, with_type::WithType};
 
 impl Ctx {
     pub fn check(
@@ -33,14 +33,23 @@ impl Ctx {
             ) => {
                 todo!()
             }
-            (_, Type::ForAll { variable, body }) => self
+            (
+                _,
+                Type::ForAll {
+                    variable,
+                    bound,
+                    body,
+                },
+            ) => self
                 .add(Log::Variable(*variable))
                 .check(expr, body)?
                 .recover_effects()
+                .bound_check(&Type::Variable(*variable), bound)
+                .map_err(|error| to_expr_type_error(expr, error))?
                 .truncate_from(&Log::Variable(*variable))
                 .recover_effects(),
             (_, _) => {
-                let (ctx, synthed) = self.synth(expr)?.recover_effects();
+                let WithType(ctx, synthed) = self.synth(expr)?.recover_effects();
                 synthed_ty = Some(synthed.clone());
                 ctx.subtype(
                     &ctx.substitute_from_ctx(&synthed),

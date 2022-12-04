@@ -1,5 +1,4 @@
 mod block_proto;
-mod into_op;
 mod mir_proto;
 mod scope_proto;
 
@@ -7,7 +6,7 @@ use std::collections::HashMap;
 
 use mir::{
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
-    stmt::{Const, FnRef, MatchCase, Stmt, Terminator},
+    stmt::{Const, FnRef, MapElem, MatchCase, Stmt, Terminator},
     var::VarId,
 };
 use mir_proto::MirProto;
@@ -88,26 +87,35 @@ impl MirGen {
                 self.mir_proto()
                     .bind_stmt(stmt_ty.clone(), Stmt::Vector(values))
             }
-            thir::Expr::Set(values) => {
+            thir::Expr::Map(values) => {
                 let values = values
                     .iter()
-                    .map(|value| self.gen_stmt(value))
+                    .map(|elem| {
+                        Ok(MapElem {
+                            key: self.gen_stmt(&elem.key)?,
+                            value: self.gen_stmt(&elem.value)?,
+                        })
+                    })
                     .collect::<Result<Vec<_>, _>>()?;
                 self.mir_proto()
-                    .bind_stmt(stmt_ty.clone(), Stmt::Set(values))
+                    .bind_stmt(stmt_ty.clone(), Stmt::Map(values))
+            }
+            thir::Expr::Do { stmt, expr } => {
+                self.gen_stmt(stmt)?;
+                self.gen_stmt(expr)?
             }
             thir::Expr::Let { definition, body } => {
                 self.mir_proto().begin_scope();
 
                 // gen definition
-                let def_var = if let thir::Expr::Function { parameters, body } = &definition.expr {
+                let def_var = if let thir::Expr::Function { parameter, body } = &definition.expr {
                     // prepare recursion
                     let recursion_var = self
                         .mir_proto()
                         .bind_stmt(definition.ty.clone(), Stmt::Recursion);
                     self.mir_proto().create_named_var(recursion_var);
                     // gen definition
-                    let fn_ref = self.gen_closure(parameters, body)?;
+                    let fn_ref = self.gen_closure(parameter, body)?;
                     // finish recursion
                     self.mir_proto()
                         .bind_stmt(definition.ty.clone(), Stmt::Fn(fn_ref))
@@ -172,30 +180,6 @@ impl MirGen {
                     },
                 )
             }
-            thir::Expr::Op {
-                op,
-                operands: arguments,
-            } => match op {
-                thir::BuiltinOp::And => {
-                    todo!()
-                }
-                thir::BuiltinOp::Or => {
-                    todo!()
-                }
-                op => {
-                    let arguments = arguments
-                        .iter()
-                        .map(|arg| self.gen_stmt(arg))
-                        .collect::<Result<Vec<_>, _>>()?;
-                    self.mir_proto().bind_stmt(
-                        stmt_ty.clone(),
-                        Stmt::Op {
-                            op: into_op::into_op(op),
-                            operands: arguments,
-                        },
-                    )
-                }
-            },
             thir::Expr::Apply {
                 function,
                 link_name,
@@ -231,8 +215,8 @@ impl MirGen {
                 self.mir_proto()
                     .bind_stmt(stmt_ty.clone(), Stmt::Product(values))
             }
-            thir::Expr::Function { parameters, body } => {
-                let fn_ref = self.gen_closure(parameters, body)?;
+            thir::Expr::Function { parameter, body } => {
+                let fn_ref = self.gen_closure(parameter, body)?;
                 self.mir_proto()
                     .bind_stmt(stmt_ty.clone(), Stmt::Fn(fn_ref))
             }
@@ -293,16 +277,14 @@ impl MirGen {
         Ok(var_id)
     }
 
-    fn gen_closure(&mut self, parameters: &[Type], body: &TypedHir) -> Result<FnRef, GenMirError> {
+    fn gen_closure(&mut self, parameter: &Type, body: &TypedHir) -> Result<FnRef, GenMirError> {
         // Begin new mir
         self.begin_mir();
 
-        // make parameters named
-        parameters.iter().for_each(|param| {
-            let param_var = self.mir_proto().create_var(param.clone());
-            self.mir_proto().bind_to(param_var, Stmt::Parameter);
-            self.mir_proto().create_named_var(param_var);
-        });
+        // make the parameter named
+        let param_var = self.mir_proto().create_var(parameter.clone());
+        self.mir_proto().bind_to(param_var, Stmt::Parameter);
+        self.mir_proto().create_named_var(param_var);
 
         let var = self.gen_stmt(body)?;
 

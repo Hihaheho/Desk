@@ -2,10 +2,13 @@ use ast::{expr::Expr, span::WithSpan};
 use codebase::code::SyntaxKind;
 
 pub fn parse_source_code(
-    _syntax: &SyntaxKind,
+    syntax: &SyntaxKind,
     source: &str,
 ) -> Result<WithSpan<Expr>, anyhow::Error> {
-    let tokens = lexer::scan(source)?;
-    let ast = parser::parse(tokens)?;
-    Ok(ast)
+    match syntax {
+        SyntaxKind::Minimalist => Ok(minimalist::parse(source)?),
+        SyntaxKind::TypeScriptLike => todo!(),
+        SyntaxKind::OCamlLike => todo!(),
+        SyntaxKind::RustLike => todo!(),
+    }
 }

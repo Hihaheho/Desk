@@ -1,4 +1,6 @@
-use crate::{expr::Expr, span::WithSpan};
+use dson::Dson;
+
+use crate::span::WithSpan;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Effect {
@@ -9,12 +11,12 @@ pub struct Effect {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Brand {
-        brand: String,
+        brand: Dson,
         item: Box<WithSpan<Type>>,
     },
     Number,
     String,
-    Trait(Vec<WithSpan<Self>>),
+    Trait(Trait),
     Effectful {
         ty: Box<WithSpan<Self>>,
         effects: WithSpan<EffectExpr>,
@@ -23,14 +25,15 @@ pub enum Type {
     This,
     Product(Vec<WithSpan<Self>>),
     Sum(Vec<WithSpan<Self>>),
-    Function {
-        parameters: Vec<WithSpan<Self>>,
-        body: Box<WithSpan<Self>>,
-    },
+    Function(Box<Function>),
     Vector(Box<WithSpan<Self>>),
-    Set(Box<WithSpan<Self>>),
+    Map {
+        key: Box<WithSpan<Self>>,
+        value: Box<WithSpan<Self>>,
+    },
     Let {
         variable: String,
+        definition: Box<WithSpan<Self>>,
         body: Box<WithSpan<Self>>,
     },
     Variable(String),
@@ -38,21 +41,30 @@ pub enum Type {
         bound: Box<WithSpan<Self>>,
         identifier: String,
     },
-    Attribute {
-        attr: Box<WithSpan<Expr>>,
+    Attributed {
+        attr: Dson,
         ty: Box<WithSpan<Self>>,
     },
     Comment {
-        position: CommentPosition,
         text: String,
         item: Box<WithSpan<Self>>,
+    },
+    Forall {
+        variable: String,
+        bound: Option<Box<WithSpan<Self>>>,
+        body: Box<WithSpan<Self>>,
+    },
+    Exists {
+        variable: String,
+        bound: Option<Box<WithSpan<Self>>>,
+        body: Box<WithSpan<Self>>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum CommentPosition {
-    Prefix,
-    Suffix,
+pub struct Function {
+    pub parameter: WithSpan<Type>,
+    pub body: WithSpan<Type>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -68,3 +80,6 @@ pub enum EffectExpr {
         arguments: Vec<WithSpan<Type>>,
     },
 }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Trait(pub Vec<WithSpan<Function>>);

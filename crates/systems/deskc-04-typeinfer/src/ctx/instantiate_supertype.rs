@@ -1,6 +1,7 @@
+use errors::typeinfer::TypeError;
+
 use crate::{
     ctx::{Ctx, Id, Log},
-    error::TypeError,
     mono_type::is_monotype,
     substitute::substitute,
     ty::{effect_expr::EffectExpr, Type},
@@ -43,13 +44,18 @@ impl Ctx {
                         .instantiate_subtype(&a1, parameter)?;
                     theta.instantiate_supertype(&theta.substitute_from_ctx(body), &a2)?
                 }
-                Type::ForAll { variable, body } => self
+                Type::ForAll {
+                    variable,
+                    bound,
+                    body,
+                } => self
                     .add(Log::Marker(*variable))
                     .add(Log::Existential(*variable))
                     .instantiate_supertype(
                         &substitute(body, variable, &Type::Existential(*variable)),
                         id,
                     )?
+                    .bound_check(&Type::Variable(*variable), bound)?
                     .truncate_from(&Log::Marker(*variable))
                     .recover_effects(),
                 Type::Existential(a) => self.insert_in_place(
@@ -78,16 +84,25 @@ impl Ctx {
                     )
                     .instantiate_supertype(ty, &a)?
                 }
-                Type::Set(ty) => {
-                    let a = self.fresh_existential();
+                Type::Map { key, value } => {
+                    let k = self.fresh_existential();
+                    let v = self.fresh_existential();
                     self.insert_in_place(
                         &Log::Existential(*id),
                         vec![
-                            Log::Existential(a),
-                            Log::Solved(*id, Type::Set(Box::new(Type::Existential(a)))),
+                            Log::Existential(k),
+                            Log::Existential(v),
+                            Log::Solved(
+                                *id,
+                                Type::Map {
+                                    key: Box::new(Type::Existential(k)),
+                                    value: Box::new(Type::Existential(v)),
+                                },
+                            ),
                         ],
                     )
-                    .instantiate_supertype(ty, &a)?
+                    .instantiate_supertype(key, &k)?
+                    .instantiate_supertype(value, &v)?
                 }
                 Type::Label { item, label } => {
                     let a = self.fresh_existential();
@@ -130,7 +145,7 @@ impl Ctx {
                         vec![Log::Solved(*id, sub.clone())],
                     )
                 }
-                ty => return Err(TypeError::NotInstantiableSupertype { ty: ty.clone() }),
+                ty => return Err(TypeError::NotInstantiableSupertype { ty: self.gen_type(ty) }),
             }
         };
         self.store_solved_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));

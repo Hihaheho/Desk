@@ -291,7 +291,7 @@ mod tests {
         let event = Event::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::ChangeSourceCodeSyntax {
-                syntax: SyntaxKind::Hacker,
+                syntax: SyntaxKind::Minimalist,
                 source: "1".into(),
             },
         };

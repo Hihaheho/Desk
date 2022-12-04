@@ -1,5 +1,6 @@
 pub mod visitor;
 
+use dson::Dson;
 pub use ids::LinkName;
 use ids::NodeId;
 use types::{Effect, Type};
@@ -39,6 +40,10 @@ pub struct Handler {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
+    Do {
+        stmt: Box<TypedHir>,
+        expr: Box<TypedHir>,
+    },
     Match {
         input: Box<TypedHir>,
         cases: Vec<MatchCase>,
@@ -52,10 +57,6 @@ pub enum Expr {
         handlers: Vec<Handler>,
         expr: Box<TypedHir>,
     },
-    Op {
-        op: BuiltinOp,
-        operands: Vec<TypedHir>,
-    },
     Apply {
         function: Type,
         link_name: LinkName,
@@ -63,39 +64,19 @@ pub enum Expr {
     },
     Product(Vec<TypedHir>),
     Function {
-        parameters: Vec<Type>,
+        parameter: Type,
         body: Box<TypedHir>,
     },
     Vector(Vec<TypedHir>),
-    Set(Vec<TypedHir>),
+    Map(Vec<MapElem>),
     Label {
-        label: String,
+        label: Dson,
         item: Box<TypedHir>,
     },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BuiltinOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Rem,
-    Mod,
-    Eq,
-    Neq,
-    Lt,
-    Le,
-    Gt,
-    Ge,
-    And,
-    Or,
-    Not,
-    Neg,
-    BitAnd,
-    BitOr,
-    BitXor,
-    BitNot,
-    Shl,
-    Shr,
+pub struct MapElem {
+    pub key: TypedHir,
+    pub value: TypedHir,
 }

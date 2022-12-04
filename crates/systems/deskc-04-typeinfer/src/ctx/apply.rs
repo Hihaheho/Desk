@@ -1,16 +1,18 @@
+use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
 
 use crate::{
     ctx::Ctx,
     ctx::Log,
-    error::{ExprTypeError, TypeError},
     substitute::substitute,
     to_expr_type_error,
     ty::Type,
 };
 
+use super::with_type::WithType;
+
 impl Ctx {
-    pub fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
+    pub fn apply(&self, ty: &Type, expr: &WithMeta<Expr>) -> Result<WithType<Ctx>, ExprTypeError> {
         let ret = match ty {
             Type::Label { label: _, item } => self.apply(item, expr)?,
             Type::Brand { brand: _, item } => self.apply(item, expr)?,
@@ -21,13 +23,13 @@ impl Ctx {
                     .synth(expr)
                     .ok()
                     .map(|with| with.recover_effects())
-                    .and_then(|(ctx, ty)| {
+                    .and_then(|WithType(ctx, ty)| {
                         ctx.subtype(&ty, parameter).ok().map(|ctx| {
                             let ty = ctx.substitute_from_ctx(body);
-                            (ctx, ty)
+                            ctx.with_type(ty)
                         })
                     })
-                    .unwrap_or((delta, *body.clone()))
+                    .unwrap_or(WithType(delta, *body.clone()))
             }
             Type::Existential(id) => {
                 let a1 = self.fresh_existential();
@@ -45,16 +47,22 @@ impl Ctx {
                     .recover_effects()
                     .with_type(Type::Existential(a2))
             }
-            Type::ForAll { variable, body } => {
+            Type::ForAll {
+                variable,
+                bound,
+                body,
+            } => {
                 let a = self.fresh_existential();
                 self.add(Log::Existential(a))
                     .apply(&substitute(body, variable, &Type::Existential(a)), expr)?
+                    .ctx_do(|ctx| ctx.bound_check(&Type::Existential(a), bound))
+                    .map_err(|err| to_expr_type_error(expr, err))?
             }
             _ => {
                 return Err(to_expr_type_error(
                     expr,
                     TypeError::NotApplicable {
-                        ty: ty.clone(),
+                        ty: self.gen_type(ty),
                         expr: Box::new(expr.value.clone()),
                     },
                 ))

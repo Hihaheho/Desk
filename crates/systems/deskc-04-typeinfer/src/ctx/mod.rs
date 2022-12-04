@@ -6,23 +6,26 @@ mod instantiate_supertype;
 mod into_type;
 mod subtype;
 mod synth;
+pub mod with_effects;
+pub mod with_type;
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+use errors::typeinfer::TypeError;
 use hir::meta::WithMeta;
 use ids::NodeId;
 use types::{IdGen, Types};
 
 use crate::{
-    error::TypeError,
     substitute_from_ctx::SubstituteFromCtx,
     ty::{
         effect_expr::{simplify, simplify_effect_expr, EffectExpr},
         Type, TypeVisitor, TypeVisitorMut,
     },
     well_formed::WellFormed,
-    with_effects::WithEffects,
 };
+
+use self::{with_effects::WithEffects, with_type::WithType};
 
 pub type Id = usize;
 
@@ -37,7 +40,7 @@ pub enum Log {
 }
 
 #[must_use]
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Ctx {
     pub(crate) id_gen: Rc<RefCell<IdGen>>,
     pub(crate) logs: RefCell<Vec<Log>>,
@@ -156,8 +159,8 @@ impl Ctx {
         self.id_gen.borrow_mut().next_id()
     }
 
-    fn with_type(self, ty: Type) -> (Self, Type) {
-        (self, ty)
+    fn with_type(self, ty: Type) -> WithType<Ctx> {
+        WithType(self, ty)
     }
 
     fn add(&self, log: Log) -> Ctx {

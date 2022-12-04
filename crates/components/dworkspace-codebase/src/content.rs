@@ -47,7 +47,7 @@ mod tests {
     fn test_content_kind() {
         assert_eq!(
             Content::SourceCode {
-                syntax: SyntaxKind::Hacker,
+                syntax: SyntaxKind::Minimalist,
                 source: String::new()
             }
             .kind(),

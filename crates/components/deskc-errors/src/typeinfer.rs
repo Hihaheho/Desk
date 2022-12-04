@@ -1,9 +1,10 @@
 use std::fmt::{Display, Formatter};
 
-use crate::ty::{Effect, Id, Type};
 use hir::{expr::Expr, meta::Meta};
-use textual_diagnostics::{Report, TextualDiagnostics};
 use thiserror::Error;
+use types::{Type, Effect};
+
+use crate::textual_diagnostics::{TextualDiagnostics, Report};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ExprTypeError {
@@ -30,25 +31,25 @@ pub enum TypeError {
     #[error("not subtype")]
     NotSubtype { sub: Type, ty: Type },
     #[error("circular existential")]
-    CircularExistential { id: Id, ty: Type },
+    CircularExistential { id: usize, ty: Type },
     #[error("not instantiable subtype")]
     NotInstantiableSubtype { ty: Type },
     #[error("not instantiable supertype")]
     NotInstantiableSupertype { ty: Type },
     #[error("variable not typed {id}")]
-    VariableNotTyped { id: Id },
+    VariableNotTyped { id: usize },
     #[error("unknown effect handled: {effect:?}")]
     UnknownEffectHandled { effect: Effect },
     #[error("continue out of handle")]
     ContinueOutOfHandle,
 }
 
-impl From<ExprTypeError> for TextualDiagnostics {
-    fn from(error: ExprTypeError) -> TextualDiagnostics {
+impl From<&ExprTypeError> for TextualDiagnostics {
+    fn from(error: &ExprTypeError) -> TextualDiagnostics {
         TextualDiagnostics {
             title: "Typeinfer error".into(),
             reports: vec![Report {
-                span: error.meta.span.unwrap_or(0..0),
+                span: error.meta.span.clone().unwrap_or(0..0),
                 text: format!("{:?}", error.error),
             }],
         }

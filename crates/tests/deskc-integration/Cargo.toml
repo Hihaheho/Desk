@@ -11,23 +11,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
-hirgen = { path = "../../systems/deskc-03-hirgen", version = "0.0.0", package = "deskc-hirgen" }
-thirgen = { path = "../../systems/deskc-05-thirgen", version = "0.0.0", package = "deskc-thirgen" }
-mirgen = { path = "../../systems/deskc-06-mirgen", version = "0.0.0", package = "deskc-mirgen" }
+deskc = { path = "../../systems/deskc", version = "0.0.0", package = "deskc" }
 miri = { path = "../../systems/deskvm-miri", version = "0.0.0", package = "deskvm-miri" }
 dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
-typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 thir2dson = { path = "../../systems/deskc-thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-textual-diagnostics = { path = "../../components/deskc-textual-diagnostics", version = "0.0.0", package = "deskc-textual-diagnostics" }
+errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 serde-dson = { path = "../../libs/serde-dson", version = "0.0.0" }
 chumsky = "0.8.0"
 pretty_assertions = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
 ariadne = "0.1.5"
+anyhow = "1.0.66"

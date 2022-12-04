@@ -17,7 +17,7 @@ pub enum Stmt {
     Const(Const),
     Product(Vec<VarId>),
     Vector(Vec<VarId>),
-    Set(Vec<VarId>),
+    Map(Vec<MapElem>),
     Fn(FnRef),
     Perform(VarId),
     MatchResult(VarId),
@@ -25,16 +25,18 @@ pub enum Stmt {
         function: VarId,
         arguments: Vec<VarId>,
     },
-    Op {
-        op: Op,
-        operands: Vec<VarId>,
-    },
     /// Used when cast is required such as `* A, B` to `A` or `A` to `+ A, B`.
     /// An implementation of MIR generator may generate redundant `Cast` stmt.
     Cast(VarId),
     Parameter,
     Recursion,
     Link(LinkName),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MapElem {
+    pub key: VarId,
+    pub value: VarId,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

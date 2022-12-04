@@ -14,12 +14,12 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 
 pretty_assertions = "1.3.0"
 thiserror = "1.0.37"
 uuid = { version = "1.2", features = ["v4"] }
 
 [dev-dependencies]
-lexer = { path = "../../systems/deskc-01-lexer", version = "0.0.0", package = "deskc-lexer" }
-parser = { path = "../../systems/deskc-02-parser", version = "0.0.0", package = "deskc-parser" }
+deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
 chumsky = "0.8.0"

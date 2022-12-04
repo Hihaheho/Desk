@@ -96,6 +96,7 @@ mod tests {
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
     use components::{content::Content, patch::OperandPatch};
+    use deskc_ast::ty::Function;
     use deskc_ast::visitor::remove_node_id;
     use deskc_ast::{
         expr::{Expr, Literal},
@@ -162,7 +163,7 @@ mod tests {
                     node_id: node_a.clone(),
                     content: Content::Apply {
                         ty: Type::Function {
-                            parameters: vec![Type::String],
+                            parameter: Box::new(Type::String),
                             body: Box::new(Type::Number),
                         },
                         link_name: Default::default(),
@@ -224,18 +225,18 @@ mod tests {
                     function: WithSpan {
                         id: NodeId::default(),
                         span: 0..0,
-                        value: AstType::Function {
-                            parameters: vec![WithSpan {
+                        value: AstType::Function(Box::new(Function {
+                            parameter: WithSpan {
                                 id: NodeId::default(),
                                 span: 0..0,
                                 value: AstType::String
-                            }],
-                            body: Box::new(WithSpan {
+                            },
+                            body: WithSpan {
                                 id: NodeId::default(),
                                 span: 0..0,
                                 value: AstType::Number
-                            }),
-                        }
+                            },
+                        }))
                     },
                     link_name: LinkName::None,
                     arguments: vec![WithSpan {

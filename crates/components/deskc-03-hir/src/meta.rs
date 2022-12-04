@@ -1,13 +1,12 @@
 use std::ops::Range;
 
+use dson::Dson;
 use ids::NodeId;
 use uuid::Uuid;
 
-use crate::expr::Expr;
-
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Meta {
-    pub attrs: Vec<Expr>,
+    pub attrs: Vec<Dson>,
     pub span: Option<Range<usize>>,
 }
 

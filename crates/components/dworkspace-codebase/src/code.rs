@@ -17,7 +17,7 @@ pub enum Code {
 // Some syntax are not supported yet.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SyntaxKind {
-    Hacker,
+    Minimalist,
     TypeScriptLike,
     OCamlLike,
     RustLike,

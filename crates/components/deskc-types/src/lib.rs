@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use dson::Dson;
 use ids::NodeId;
 use serde::{Deserialize, Serialize};
 
@@ -18,14 +19,18 @@ pub enum Type {
     Product(Vec<Self>),
     Sum(Vec<Self>),
     Function {
-        parameters: Vec<Self>,
+        parameter: Box<Self>,
         body: Box<Self>,
     },
     Vector(Box<Self>),
-    Set(Box<Self>),
+    Map {
+        key: Box<Self>,
+        value: Box<Self>,
+    },
     Variable(String),
     ForAll {
         variable: String,
+        bound: Option<Box<Self>>,
         body: Box<Self>,
     },
     Effectful {
@@ -33,11 +38,11 @@ pub enum Type {
         effects: EffectExpr,
     },
     Brand {
-        brand: String,
+        brand: Dson,
         item: Box<Self>,
     },
     Label {
-        label: String,
+        label: Dson,
         item: Box<Self>,
     },
 }
@@ -60,9 +65,9 @@ impl Type {
     pub fn unit() -> Self {
         Type::Product(vec![])
     }
-    pub fn label(label: impl Into<String>, item: Self) -> Self {
+    pub fn label(label: Dson, item: Self) -> Self {
         Type::Label {
-            label: label.into(),
+            label: label,
             item: Box::new(item),
         }
     }
@@ -80,10 +85,9 @@ impl Type {
             Type::Sum(types)
         }
     }
-    pub fn function(mut parameters: Vec<Self>, body: Self) -> Self {
-        parameters.sort();
+    pub fn function(parameter: Self, body: Self) -> Self {
         Type::Function {
-            parameters,
+            parameter: Box::new(parameter),
             body: Box::new(body),
         }
     }

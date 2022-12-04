@@ -86,7 +86,11 @@ impl TypeVisitorMut for EffectExprSimplifier {
             return;
         }
         match function {
-            Type::ForAll { variable: _, body } => {
+            Type::ForAll {
+                variable: _,
+                bound: _,
+                body,
+            } => {
                 *function = *body.clone();
                 self.visit_effect_expr_apply(function, arguments)
             }
@@ -228,6 +232,7 @@ mod tests {
         let mut effects = EffectExpr::Apply {
             function: Box::new(Type::ForAll {
                 variable: 1,
+                bound: None,
                 body: Box::new(Type::Function {
                     parameter: Box::new(Type::String),
                     body: Box::new(Type::Function {

@@ -2,6 +2,7 @@ pub mod effect_expr;
 
 use std::collections::HashMap;
 
+use dson::Dson;
 use ids::NodeId;
 
 use self::effect_expr::EffectExpr;
@@ -31,10 +32,14 @@ pub enum Type {
         body: Box<Self>,
     },
     Vector(Box<Self>),
-    Set(Box<Self>),
+    Map {
+        key: Box<Self>,
+        value: Box<Self>,
+    },
     Variable(Id),
     ForAll {
         variable: Id,
+        bound: Option<Box<Self>>,
         body: Box<Self>,
     },
     Existential(Id),
@@ -44,11 +49,11 @@ pub enum Type {
         effects: EffectExpr,
     },
     Brand {
-        brand: String,
+        brand: Dson,
         item: Box<Self>,
     },
     Label {
-        label: String,
+        label: Dson,
         item: Box<Self>,
     },
 }
@@ -69,11 +74,15 @@ pub(crate) trait TypeVisitorMut {
     fn visit_array(&mut self, ty: &mut Type) {
         self.visit(ty);
     }
-    fn visit_set(&mut self, ty: &mut Type) {
-        self.visit(ty);
+    fn visit_map(&mut self, key: &mut Type, value: &mut Type) {
+        self.visit(key);
+        self.visit(value);
     }
     fn visit_variable(&mut self, _id: &mut Id) {}
-    fn visit_forall(&mut self, _variable: &mut Id, body: &mut Type) {
+    fn visit_forall(&mut self, _variable: &mut Id, bound: &mut Option<Box<Type>>, body: &mut Type) {
+        if let Some(bound) = bound {
+            self.visit(bound);
+        }
         self.visit(body);
     }
     fn visit_existential(&mut self, _id: &mut Id) {}
@@ -126,10 +135,10 @@ pub(crate) trait TypeVisitorMut {
         self.visit(&mut effect.input);
         self.visit(&mut effect.output);
     }
-    fn visit_brand(&mut self, _brand: &mut String, item: &mut Type) {
+    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut Type) {
         self.visit(item);
     }
-    fn visit_label(&mut self, _label: &mut String, item: &mut Type) {
+    fn visit_label(&mut self, _label: &mut Dson, item: &mut Type) {
         self.visit(item);
     }
     fn visit(&mut self, ty: &mut Type) {
@@ -143,9 +152,13 @@ pub(crate) trait TypeVisitorMut {
             Type::Sum(types) => self.visit_sum(types),
             Type::Function { parameter, body } => self.visit_function(parameter, body),
             Type::Vector(ty) => self.visit_array(ty),
-            Type::Set(ty) => self.visit_set(ty),
+            Type::Map { key, value } => self.visit_map(key, value),
             Type::Variable(id) => self.visit_variable(id),
-            Type::ForAll { variable, body } => self.visit_forall(variable, body),
+            Type::ForAll {
+                variable,
+                bound,
+                body,
+            } => self.visit_forall(variable, bound, body),
             Type::Existential(id) => self.visit_existential(id),
             Type::Infer(id) => self.visit_infer(id),
             Type::Effectful { ty, effects } => self.visit_effectful(ty, effects),
@@ -171,11 +184,15 @@ pub(crate) trait TypeVisitor {
     fn visit_array(&mut self, ty: &Type) {
         self.visit(ty);
     }
-    fn visit_set(&mut self, ty: &Type) {
-        self.visit(ty);
+    fn visit_map(&mut self, key: &Type, value: &Type) {
+        self.visit(key);
+        self.visit(value);
     }
     fn visit_variable(&mut self, _id: &Id) {}
-    fn visit_forall(&mut self, _variable: &Id, body: &Type) {
+    fn visit_forall(&mut self, _variable: &Id, bound: &Option<Box<Type>>, body: &Type) {
+        if let Some(bound) = bound {
+            self.visit(bound);
+        }
         self.visit(body);
     }
     fn visit_existential(&mut self, _id: &Id) {}
@@ -224,10 +241,10 @@ pub(crate) trait TypeVisitor {
         self.visit(&effect.input);
         self.visit(&effect.output);
     }
-    fn visit_brand(&mut self, _brand: &str, item: &Type) {
+    fn visit_brand(&mut self, _brand: &Dson, item: &Type) {
         self.visit(item);
     }
-    fn visit_label(&mut self, _label: &str, item: &Type) {
+    fn visit_label(&mut self, _label: &Dson, item: &Type) {
         self.visit(item);
     }
     fn visit(&mut self, ty: &Type) {
@@ -241,9 +258,13 @@ pub(crate) trait TypeVisitor {
             Type::Sum(types) => self.visit_sum(types),
             Type::Function { parameter, body } => self.visit_function(parameter, body),
             Type::Vector(ty) => self.visit_array(ty),
-            Type::Set(ty) => self.visit_set(ty),
+            Type::Map { key, value } => self.visit_map(key, value),
             Type::Variable(id) => self.visit_variable(id),
-            Type::ForAll { variable, body } => self.visit_forall(variable, body),
+            Type::ForAll {
+                variable,
+                bound,
+                body,
+            } => self.visit_forall(variable, bound, body),
             Type::Existential(id) => self.visit_existential(id),
             Type::Infer(id) => self.visit_infer(id),
             Type::Effectful { ty, effects } => self.visit_effectful(ty, effects),
