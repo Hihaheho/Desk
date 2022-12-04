@@ -81,10 +81,10 @@ Desk compiler is an incremental compiler for Desk-lang.
 **Crates**
 
 - [deskc](/crates/systems/deskc/src): the incremental compiler
-- [deskc-lexer](/crates/systems/deskc-01-lexer/src) scans Desk-lang source code and generates tokens
-- [deskc-parser](/crates/systems/deskc-02-parser/src) parses tokens and generates an AST
-- [deskc-typeinfer](/crates/systems/deskc-04-typeinfer/src) infers types of expressions.
-- [deskc-mirgen](/crates/systems/deskc-06-mirgen/src) generates [MIR](/crates/components/deskc-05-mir/src)
+- [deskc-lexer](/crates/systems/deskc-lexer/src) scans Desk-lang source code and generates tokens
+- [deskc-parser](/crates/systems/deskc-parser/src) parses tokens and generates an AST
+- [deskc-typeinfer](/crates/systems/deskc-typeinfer/src) infers types of expressions.
+- [deskc-mirgen](/crates/systems/deskc-mirgen/src) generates [MIR](/crates/components/deskc-mir/src)
 
 ## Desk-workspace (dworkspace)
 

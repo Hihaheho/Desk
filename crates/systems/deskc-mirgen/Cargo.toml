@@ -1,5 +1,5 @@
 [package]
-name = "deskvm"
+name = "deskc-mirgen"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -11,13 +11,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
-
-anyhow = "1.0.66"
-parking_lot = "0.12.1"
-
-[dev-dependencies]
-uuid = { version = "1.2.1", features = ["v4"] }
+ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 mir = { path = "../../components/deskc-mir", version = "0.0.0", package = "deskc-mir" }
-miri = { path = "../deskvm-miri", version = "0.0.0", package = "deskvm-miri" }
+thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
+thiserror = "1.0.37"
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }

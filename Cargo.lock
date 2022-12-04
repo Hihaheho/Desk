@@ -1700,7 +1700,6 @@ dependencies = [
  "deskc-syntax-minimalist",
  "deskc-thir",
  "deskc-thirgen",
- "deskc-tokens",
  "deskc-typeinfer",
  "deskc-types",
  "dworkspace-codebase",
@@ -1862,13 +1861,6 @@ dependencies = [
  "dson",
  "pretty_assertions",
  "thiserror",
-]
-
-[[package]]
-name = "deskc-tokens"
-version = "0.0.0"
-dependencies = [
- "uuid",
 ]
 
 [[package]]

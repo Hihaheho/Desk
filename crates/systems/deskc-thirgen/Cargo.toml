@@ -12,14 +12,14 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
-thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
+hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
+thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
 thiserror = "1.0.37"
 
 [dev-dependencies]
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
-typeinfer = { path = "../../systems/deskc-04-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
+typeinfer = { path = "../../systems/deskc-typeinfer", version = "0.0.0", package = "deskc-typeinfer" }
 chumsky = "0.8.0"
 pretty_assertions = "1.3.0"

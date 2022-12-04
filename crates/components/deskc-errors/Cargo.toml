@@ -12,6 +12,6 @@ edition = "2021"
 
 [dependencies]
 types = { path = "../deskc-types", version = "0.0.0", package = "deskc-types" }
-hir = { path = "../../components/deskc-03-hir", version = "0.0.0", package = "deskc-hir" }
+hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 
 thiserror = "1.0.37"

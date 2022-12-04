@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-ast = { path = "../../components/deskc-02-ast", version = "0.0.0", package = "deskc-ast" }
+ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc-ast" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 

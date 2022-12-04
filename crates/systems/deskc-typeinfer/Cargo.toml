@@ -1,5 +1,5 @@
 [package]
-name = "deskc-mirgen"
+name = "deskc-typeinfer"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"
@@ -12,7 +12,15 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-mir = { path = "../../components/deskc-05-mir", version = "0.0.0", package = "deskc-mir" }
-thir = { path = "../../components/deskc-04-thir", version = "0.0.0", package = "deskc-thir" }
-thiserror = "1.0.37"
+hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
+errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
+
+thiserror = "1.0.37"
+
+[dev-dependencies]
+deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
+chumsky = "0.8.0"
+ariadne = "0.1"
+pretty_assertions = "1.3.0"
