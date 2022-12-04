@@ -14,7 +14,7 @@ types = { path = "../../components/deskc-types", version = "0.0.0", package = "d
 dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
 
 serde = { version = "1.0", features = ["derive"] }
-anyhow = "1.0.66"
+anyhow = "1.0"
 
 [dev-dependencies]
 hirgen = { path = "../../systems/deskc-hirgen", version = "0.0.0", package = "deskc-hirgen" }

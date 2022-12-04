@@ -26,4 +26,4 @@ mirgen = { path = "../../systems/deskc-mirgen", version = "0.0.0", package = "de
 
 salsa = "0.16"
 uuid = "1.2"
-anyhow = "1.0.66"
+anyhow = "1.0"

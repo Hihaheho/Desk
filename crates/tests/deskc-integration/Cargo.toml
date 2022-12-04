@@ -27,4 +27,4 @@ chumsky = "0.8.0"
 pretty_assertions = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
 ariadne = "0.1.5"
-anyhow = "1.0.66"
+anyhow = "1.0"
