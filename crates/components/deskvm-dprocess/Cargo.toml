@@ -17,4 +17,4 @@ anyhow = "1.0.66"
 uuid = { version = "1.2.2", features = ["v4"] }
 parking_lot = "0.12.1"
 mry = "0.2.6"
-serde = { version = "1.0.147", features = ["derive"] }
+serde = { version = "1.0.148", features = ["derive"] }
