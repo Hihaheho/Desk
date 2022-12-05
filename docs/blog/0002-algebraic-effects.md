@@ -62,7 +62,7 @@ Causing an effect is called `perform`. As shown below, `! expr ~> type` is a `pe
 ! 1 ~> 'string
 ```
 This expression performs an effect with ``1`` as the input and waits for the output of `'string` type.
-By the way, this effect is $\texttt{'integer} \ \leadsto \ \texttt{'string}$, the expression is typed as `'string`.
+By the way, this effect is $\texttt{'integer} \ \leadsto \ \texttt{'string}$, the expression is typed as `'string` (but with effects).
 
 ## Examples of effects
 
