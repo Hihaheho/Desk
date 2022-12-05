@@ -275,10 +275,10 @@ In fact, we can pass output multiple times like:
 
 ```desk
 'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer
-'handle 'begin
+'handle (
   $ ! "a" ~> 'integer;
   :'integer ^add(&'integer, &'integer)
-'end {
+) {
   'string ~> 'integer =>
     ^add(<~! 1 ~> 'integer, <~! 2 ~> 'integer)
 }
