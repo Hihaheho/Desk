@@ -20,7 +20,7 @@ In general:
 
 In Desk-lang:
 
-- It's a true pure functional language because every side effect is always tracked by the type system.
+- It's something like a true pure functional language because every side effect is always tracked by the type system.
 - Its strong type-inference system covers effects.
 - Effects are distinguished by input/output type.
 - `perform` and `continue` are symmetric ("resuming a continuation" is also "performing an effect").
@@ -38,7 +38,7 @@ With just a single, simple language feature called `effect`, you can express thi
 
 There is another simple explanatory article[^overreacted], but our post is more aimed at a simple tutorial with **real codes** and technical details.
 
-A language can be a true functional language like Desk-lang by implementing the following features:
+A language can be a purely functional language like Desk-lang by implementing the following features:
 - Every side effect is treated as an `effect`.
 - Every `effect` is tracked by the type system. 
 
