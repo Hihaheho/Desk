@@ -62,7 +62,7 @@ Causing an effect is called `perform`. As shown below, `! expr ~> type` is a `pe
 ! 1 ~> 'string
 ```
 This expression performs an effect with ``1`` as the input and waits for the output of `'string` type.
-By the way, this effect is $\texttt{'integer} \ \leadsto \ \texttt{'string}$, the expression is typed as `'string` (but with effects).
+By the way, this effect is; $$\texttt{'integer} \ \leadsto \ \texttt{'string}$$ and the expression is typed as `'string` (but with effects).
 
 ## Examples of effects
 
@@ -87,20 +87,20 @@ It takes a string and returns `()`, so it's similar to `println!`. It actually b
 **Note**
 > `print` effect can be used to print **anywhere**.
 > This is because you can specify handlers such as `print-to-stdout handler` and `print-to-screen handler` (`handler` is described later).
-> On the other hand, if you want to distinguish storage in the code, just rewrite `@"printed"` to `@"printed to stdout"` or `@"printed to screen"`.
+> On the other hand, if you want to distinguish the destination in the code, just rewrite `@"printed"` to `@"printed to stdout"` or `@"printed to screen"`.
 
 ### get/set (to get/set a state)
 
 `get` effect is as follows:
 
 $$
-\texttt{*<>} \ \leadsto \ \texttt{+<} \ \texttt{@"state"} \ \tau \ , \texttt{@"none"} \ \texttt{*<>} \texttt{>}
+\texttt{\*<>} \ \leadsto \ \texttt{+<} \ \texttt{@"state"} \ \tau \ , \texttt{@"none"} \ \texttt{\*<>} \texttt{>}
 $$
 
 `set` effect is as follows:
 
 $$
-\texttt{@"state"} \ \tau \ \leadsto \ \texttt{*<>}
+\texttt{@"state"} \ \tau \ \leadsto \ \texttt{\*<>}
 $$
 
 Rust-like rewrites of each are as follows:
@@ -127,7 +127,7 @@ I think that both `get` and `set` are intuitive in terms of input and output. If
 Here is `throw` effect:
 
 $$
-\texttt{@"exception"} \ \tau \ \leadsto \ \texttt{*<>}
+\texttt{@"exception"} \ \tau \ \leadsto \ \texttt{\*<>}
 $$
 
 I guess you can read this without further explanation.
@@ -182,16 +182,16 @@ That's the end of the syntax explanation. Let's think about how this program act
 First, the function called by the `handle` expression seems to have two side effects. Probably the type of the function is as follows.
 
 $$
-\backslash \ \texttt{*<>} \ \rightarrow \ \texttt{!} \ \\{
-\ \texttt{'string} \ \leadsto \ \texttt{@"printed"} \ \texttt{*<>},
+\backslash \ \texttt{\*<>} \ \rightarrow \ \texttt{!} \ \\{
+\ \texttt{'string} \ \leadsto \ \texttt{@"printed"} \ \texttt{\*<>},
 \texttt{@"division by zero"} \ \texttt{'integer} \ \leadsto \ \texttt{'integer}
-\ \\} \ \texttt{*<>}
+\ \\} \ \texttt{\*<>}
 $$
 
 Oops, I surprised you. First, let's look at the type ignoring the effect.
 
 $$
-\backslash \ \texttt{*<>} \ \rightarrow \ \texttt{*<>}
+\backslash \ \texttt{\*<>} \ \rightarrow \ \texttt{\*<>}
 $$
 
 It's very easy to understand. In Rust, it's like this:
@@ -235,7 +235,7 @@ In other words, exceptions also have a continuation like this:
 }
 ```
 
-If you do this, even if division by zero occurs, the expression will not fail and be halted, and the result of the calculation such as `3 / 0` will be `0`, the output passed by the handler.
+If you run this, even if division by zero occurs, the expression will not fail and be halted, and the result of the calculation such as `3 / 0` will be `0`, the output passed by the handler.
 
 ## Symmetric perform and continue
 
@@ -255,7 +255,7 @@ In other words, "continue the processing by passing an output value" equals "per
 
 Since we only changed `<~!` to `!`, the number of keystrokes has decreased.
 However, in general, use `<~!`.
-Not only `continue` operator can make it clear to the reader that you are continuing,
+Not only `<~!` operator can make it clear to the reader that you are continuing,
 but also the compiler checks that you are correctly continuing the effect.
 
 On the other hand, when do you have to use `!` to continue? In fact, `<~!` can only be used in the `handle` expression.
@@ -274,10 +274,10 @@ As I explained earlier, we can pass output to effect and continue the processing
 In fact, we can pass output multiple times like:
 
 ```desk
-'type add \ *<@1 'integer, @2 'integer> -> @sum 'integer
+'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer
 'handle 'begin
   $ ! "a" ~> 'integer;
-  ^add(&'integer, &'integer)
+  :'integer ^add(&'integer, &'integer)
 'end {
   'string ~> 'integer =>
     ^add(<~! 1 ~> 'integer, <~! 2 ~> 'integer)
@@ -318,6 +318,12 @@ We can transform it to:
 
 So, the result of the expression is `6`.
 
+**Note**
+> `:type expr`, which the example uses, is a type annotation syntax and like `(type) expr` in C.
+> The code makes `@"sum" 'number` to `'number`.
+> 
+> Of course, the compiler denies invalid type annotations like `:'number "a"`.
+
 ## Effect as a system call
 
 In fact, you cannot write a program with real side effects in Desk-lang alone.
@@ -328,7 +334,7 @@ That is to treat effects as an interface to the outside world and perform effect
 In other words, if you can resolve the effect in the language, use the "handler in the language", and if you want to cause real side effects, use the "handler outside the language".
 
 **Note**
-> By the way, the type system can enumerate all system calls statically, which is not a good idea from a security perspective.
+> By the way, the type system can enumerate all system calls statically. Isn't it a good idea for security?
 
 ## Appendix 1. Higher-order functions and effects
 
