@@ -10,17 +10,23 @@ The title's "on Desk" means both:
 
 ## TL;DR
 
+In general:
+
 - Effects can represent exceptions, monads, async/await, coroutines.
-- Desk-lang is a true pure functional language because every side effect is always tracked by the type system.
 - An effect has an input and an output.
-- Desk-lang distinguishes effects by input/output type.
 - A handler handles an effect.
 - An effect is like an interface, so it's handler-agnostic.
 - An effect has a continuation, so a handler can resume it.
-- In Desk-lang, `perform` and `continue` are symmetric ("resuming a continuation" is also "performing an effect").
-- In Desk-lang, a continuation is so-called multi-shot continuation (useful for non-deterministic computations, etc.).
-- In Desk-lang, effects can be treated like a system call and used to communicate with external resources.
-- In Desk-lang, higher-order functions can be typed with effects.
+
+In Desk-lang:
+
+- It's a true pure functional language because every side effect is always tracked by the type system.
+- Its strong type-inference system covers effects.
+- Effects are distinguished by input/output type.
+- `perform` and `continue` are symmetric ("resuming a continuation" is also "performing an effect").
+- A continuation is so-called multi-shot continuation (useful for non-deterministic computations, etc.).
+- Effects can be treated like a system call and used to communicate with external world.
+- Higher-order functions can be typed with care for effects.
 
 ## What are algebraic effects and handlers?
 
@@ -32,10 +38,12 @@ With just a single, simple language feature called `effect`, you can express thi
 
 There is another simple explanatory article[^overreacted], but our post is more aimed at a simple tutorial with **real codes** and technical details.
 
-Desk-lang is a static and pure
-- The Desk-lang uses an `effect` to represent any side effect. Without `effect`, no side effects can be expressed.
+A language can be a true functional language like Desk-lang by implementing the following features:
+- Every side effect is treated as an `effect`.
+- Every `effect` is tracked by the type system. 
 
-The `effect` is inferred by the type system, and you can tell what side effects an expression has just by looking at its type.
+Also, Desk-lang's type system has a strong inference system that covers effects.
+This allows us to know what effect will occur just by looking at the inferred type.
 
 ## Effect
 
