@@ -55,7 +55,7 @@ The left side of the arrow ( $\tau_1$ above) is called the "input" of the effect
 
 In other words, in Desk-lang, every side effect has an input and an output.
 
-Also, the distinction between side effects is made by the type of input and output.
+Also, in Desk-lang, the distinction between side effects is made by the type of input and output.
 
 Causing an effect is called `perform`. As shown below, `! expr ~> type` is a `perform` syntax.
 ```desk
