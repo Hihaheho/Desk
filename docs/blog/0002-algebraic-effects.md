@@ -277,7 +277,7 @@ In fact, we can pass output multiple times like:
 'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer
 'handle (
   $ ! "a" ~> 'integer;
-  :'integer ^add(&'integer, &'integer)
+  <'integer> ^add(&'integer, &'integer)
 ) {
   'string ~> 'integer =>
     ^add(<~! 1 ~> 'integer, <~! 2 ~> 'integer)
@@ -319,10 +319,10 @@ We can transform it to:
 So, the result of the expression is `6`.
 
 **Note**
-> `:type expr`, which the example uses, is a type annotation syntax and like `(type) expr` in C.
+> `<type> expr`, which the example uses, is a type annotation syntax and like `(type) expr` in C.
 > The code makes `@"sum" 'number` to `'number`.
 > 
-> Of course, the compiler denies invalid type annotations like `:'number "a"`.
+> Of course, the compiler denies invalid type annotations like `<'number> "a"`.
 
 ## Effect as a system call
 
