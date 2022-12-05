@@ -8,11 +8,19 @@ The title's "on Desk" means both:
 - "in Desk-lang"
 - "on your desk" (easy tutorial)
 
-The Desk-lang uses an `effect` to represent side effects. Without `effect`, no side effects can be expressed.
+## TL;DR
 
-Also, since the Desk-lang alone cannot express side effects, the `effect` is treated like a system call and used to communicate with external resources.
-
-The `effect` is inferred by the type system, and you can tell what side effects an expression has just by looking at its type.
+- Effects can represent exceptions, monads, async/await, coroutines.
+- Desk-lang is a true pure functional language because every side effect is always tracked by the type system.
+- An effect has an input and an output.
+- Desk-lang distinguishes effects by input/output type.
+- A handler handles an effect.
+- An effect is like an interface, so it's handler-agnostic.
+- An effect has a continuation, so a handler can resume it.
+- In Desk-lang, `perform` and `continue` are symmetric ("resuming a continuation" is also "performing an effect").
+- In Desk-lang, a continuation is so-called multi-shot continuation (useful for non-deterministic computations, etc.).
+- In Desk-lang, effects can be treated like a system call and used to communicate with external resources.
+- In Desk-lang, higher-order functions can be typed with effects.
 
 ## What are algebraic effects and handlers?
 
@@ -23,6 +31,11 @@ To put it bluntly, effects are like, you know, React Hooks![^criticized]
 With just a single, simple language feature called `effect`, you can express things like exceptions, monads, async/await, coroutines, non-deterministic calculations, and many other things. So the language will be simple.
 
 There is another simple explanatory article[^overreacted], but our post is more aimed at a simple tutorial with **real codes** and technical details.
+
+Desk-lang is a static and pure
+- The Desk-lang uses an `effect` to represent any side effect. Without `effect`, no side effects can be expressed.
+
+The `effect` is inferred by the type system, and you can tell what side effects an expression has just by looking at its type.
 
 ## Effect
 
@@ -67,7 +80,6 @@ It takes a string and returns `()`, so it's similar to `println!`. It actually b
 > `print` effect can be used to print **anywhere**.
 > This is because you can specify handlers such as `print-to-stdout handler` and `print-to-screen handler` (`handler` is described later).
 > On the other hand, if you want to distinguish storage in the code, just rewrite `@"printed"` to `@"printed to stdout"` or `@"printed to screen"`.
-
 
 ### get/set (to get/set a state)
 
