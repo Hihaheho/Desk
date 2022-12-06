@@ -58,6 +58,7 @@ mod tests {
         }
     }
 
+    #[allow(unused)]
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
@@ -79,7 +80,6 @@ mod tests {
     #[test]
     #[ignore = "parol #42"]
     fn ident_utf8() {
-        init();
         assert_eq!(
             parse("& `あ-　a 0  `").value,
             r(Type::Variable("あ- a 0".into()))
@@ -137,6 +137,14 @@ mod tests {
     }
 
     #[test]
+    fn parse_literal_string_with_newline() {
+        assert_eq!(
+            parse("\"\nabc\ndef\n\"").value,
+            Expr::Literal(Literal::String("\nabc\ndef\n".into()))
+        );
+    }
+
+    #[test]
     fn parse_let() {
         assert_eq!(
             parse("$ 3; ?").value,
@@ -175,7 +183,6 @@ mod tests {
 
     #[test]
     fn parse_call() {
-        init();
         assert_eq!(
             parse("^add(1 2)").value,
             Expr::Apply {
@@ -256,7 +263,7 @@ mod tests {
     #[test]
     fn parse_type_annotation() {
         assert_eq!(
-            parse(": 'number ?").value,
+            parse("<'number> ?").value,
             Expr::Typed {
                 item: bw(Expr::Hole),
                 ty: w(Type::Number),

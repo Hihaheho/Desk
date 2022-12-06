@@ -1,14 +1,21 @@
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::grammar_trait::{
-    Comment, EffectExpr0, EffectExpr1, EffectExpr2, EffectExpr3, Expr0, Expr1, Expr10, Expr11,
-    Expr12, Expr13, Expr14, Expr15, Expr16, Expr17, Expr18, Expr19, Expr2, Expr20, Expr3, Expr4,
-    Expr5, Expr6, Expr7, Expr8, Expr9, Integer, LinkName0, LinkName1, Literal0, Literal1, Literal2,
-    Literal3, Ty0, Ty1, Ty10, Ty11, Ty12, Ty13, Ty14, Ty15, Ty16, Ty17, Ty2, Ty3, Ty4, Ty5, Ty6,
-    Ty7, Ty8, Ty9,
+use crate::{
+    grammar_trait::{
+        self, ApplyGroup, ApplyGroupParam, ApplyGroupParams, CommentBlockComment,
+        CommentInlineComment, EffectExprAddEffects, EffectExprApplyEffects, EffectExprEffects,
+        EffectExprSubEffects, ExprApply, ExprAttributed, ExprBeginKeyExprEndKey, ExprBrand,
+        ExprCard, ExprCast, ExprCommentExpr, ExprContinue, ExprDo, ExprExists, ExprForall,
+        ExprFunction, ExprHandle, ExprHole, ExprLabeled, ExprLet, ExprLiteral, ExprMap, ExprMatch,
+        ExprNewType, ExprPerform, ExprProduct, ExprReference, ExprVector, IdentIdentWrapped,
+        Integer, LinkNameCardKeyUuid, LinkNameVersionKeyUuid, LiteralFloat, LiteralInteger,
+        LiteralRational, LiteralString, TyAttributedTy, TyBeginKeyTyEndKey, TyCommentTy,
+        TyEffectful, TyExistsTy, TyForallTy, TyFunctionTy, TyInfer, TyLabeledTy, TyLetTy, TyMapTy,
+        TyNumberKey, TyProductTy, TyStringKey, TySum, TyThis, TyTrait, TyVariable, TyVecTy,
+    },
+    MinimalistSyntaxError,
 };
-use crate::{grammar_trait, MinimalistSyntaxError};
 use ast::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     span::WithSpan,
@@ -21,7 +28,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
     type Error = MinimalistSyntaxError;
     fn try_from(expr: grammar_trait::Expr) -> Result<Self, Self::Error> {
         let expr = match expr {
-            grammar_trait::Expr::Expr0(Expr0 { comment, expr }) => WithSpan {
+            grammar_trait::Expr::CommentExpr(ExprCommentExpr { comment, expr }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Comment {
@@ -29,12 +36,15 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     item: Box::new((*expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr1(Expr1 { hole: _ }) => WithSpan {
+            grammar_trait::Expr::BeginKeyExprEndKey(ExprBeginKeyExprEndKey { expr }) => {
+                (*expr).try_into()?
+            }
+            grammar_trait::Expr::Hole(ExprHole { hole: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Hole,
             },
-            grammar_trait::Expr::Expr2(Expr2 { r#do }) => WithSpan {
+            grammar_trait::Expr::Do(ExprDo { r#do }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Do {
@@ -42,7 +52,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     expr: Box::new((*r#do.expr0).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr3(Expr3 { cast }) => WithSpan {
+            grammar_trait::Expr::Cast(ExprCast { cast }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Typed {
@@ -50,11 +60,11 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     item: Box::new((*cast.expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr4(Expr4 { literal }) => WithSpan {
+            grammar_trait::Expr::Literal(ExprLiteral { literal }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Literal(match *literal {
-                    grammar_trait::Literal::Literal0(Literal0 { rational }) => {
+                    grammar_trait::Literal::Rational(LiteralRational { rational }) => {
                         let text = rational.rational.text().to_string();
                         let splitted: Vec<_> = text.split("/").collect();
                         let a = splitted[0].trim_end().parse().map_err(|_| {
@@ -71,28 +81,28 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         })?;
                         Literal::Rational(a, b)
                     }
-                    grammar_trait::Literal::Literal1(Literal1 { integer }) => {
+                    grammar_trait::Literal::Integer(LiteralInteger { integer }) => {
                         let integer = match *integer {
-                            Integer::Integer0(integer) => i64::from_str_radix(
+                            Integer::Hex(integer) => i64::from_str_radix(
                                 integer.hex.hex.text().to_string().get(2..).unwrap(),
                                 16,
                             ),
-                            Integer::Integer1(integer) => i64::from_str_radix(
+                            Integer::Oct(integer) => i64::from_str_radix(
                                 integer.oct.oct.text().to_string().get(2..).unwrap(),
                                 8,
                             ),
-                            Integer::Integer2(integer) => i64::from_str_radix(
+                            Integer::Bin(integer) => i64::from_str_radix(
                                 integer.bin.bin.text().to_string().get(2..).unwrap(),
                                 2,
                             ),
-                            Integer::Integer3(integer) => integer.dec.dec.text().parse::<i64>(),
+                            Integer::Dec(integer) => integer.dec.dec.text().parse::<i64>(),
                         }
                         .map_err(|_| {
                             MinimalistSyntaxError::ParseError(format!("Could not parse integer",))
                         })?;
                         Literal::Integer(integer)
                     }
-                    grammar_trait::Literal::Literal2(Literal2 { float }) => {
+                    grammar_trait::Literal::Float(LiteralFloat { float }) => {
                         Literal::Float(float.float.to_string().parse().map_err(|_| {
                             MinimalistSyntaxError::ParseError(format!(
                                 "Could not parse float: {}",
@@ -100,12 +110,12 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                             ))
                         })?)
                     }
-                    grammar_trait::Literal::Literal3(Literal3 { string }) => {
+                    grammar_trait::Literal::String(LiteralString { string }) => {
                         let string = string
                             .string_list
                             .into_iter()
                             .map(|s| match *s.string_list_group {
-                                grammar_trait::StringListGroup::StringListGroup0(escaped) => {
+                                grammar_trait::StringListGroup::Escaped(escaped) => {
                                     match escaped.escaped.escaped.text().to_string().pop().unwrap()
                                     {
                                         't' => "\t",
@@ -116,10 +126,10 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                                     }
                                     .into()
                                 }
-                                grammar_trait::StringListGroup::StringListGroup1(other) => {
+                                grammar_trait::StringListGroup::Characters(other) => {
                                     other.characters.characters.text().to_string()
                                 }
-                                grammar_trait::StringListGroup::StringListGroup2(newline) => {
+                                grammar_trait::StringListGroup::Newlines(newline) => {
                                     newline.newlines.newlines.text().to_string()
                                 }
                             })
@@ -128,7 +138,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     }
                 }),
             },
-            grammar_trait::Expr::Expr5(Expr5 { r#let }) => WithSpan {
+            grammar_trait::Expr::Let(ExprLet { r#let }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Let {
@@ -136,7 +146,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     body: Box::new((*r#let.expr0).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr6(Expr6 { perform }) => WithSpan {
+            grammar_trait::Expr::Perform(ExprPerform { perform }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Perform {
@@ -144,7 +154,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     output: (*perform.ty).try_into()?,
                 },
             },
-            grammar_trait::Expr::Expr7(Expr7 { r#continue }) => WithSpan {
+            grammar_trait::Expr::Continue(ExprContinue { r#continue }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Continue {
@@ -152,7 +162,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     output: (*r#continue.ty).try_into()?,
                 },
             },
-            grammar_trait::Expr::Expr8(Expr8 { handle }) => WithSpan {
+            grammar_trait::Expr::Handle(ExprHandle { handle }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Handle {
@@ -170,7 +180,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 },
             },
-            grammar_trait::Expr::Expr9(Expr9 { product }) => WithSpan {
+            grammar_trait::Expr::Product(ExprProduct { product }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Product(
@@ -181,7 +191,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .collect::<Result<_, _>>()?,
                 ),
             },
-            grammar_trait::Expr::Expr10(Expr10 { vector }) => WithSpan {
+            grammar_trait::Expr::Vector(ExprVector { vector }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Vector(
@@ -192,7 +202,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .collect::<Result<_, _>>()?,
                 ),
             },
-            grammar_trait::Expr::Expr11(Expr11 { map }) => WithSpan {
+            grammar_trait::Expr::Map(ExprMap { map }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Map(
@@ -207,7 +217,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 ),
             },
-            grammar_trait::Expr::Expr12(Expr12 { attributed }) => WithSpan {
+            grammar_trait::Expr::Attributed(ExprAttributed { attributed }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Attributed {
@@ -215,7 +225,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     item: Box::new((*attributed.expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr13(Expr13 { r#match }) => WithSpan {
+            grammar_trait::Expr::Match(ExprMatch { r#match }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Match {
@@ -232,7 +242,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 },
             },
-            grammar_trait::Expr::Expr14(Expr14 { function }) => WithSpan {
+            grammar_trait::Expr::Function(ExprFunction { function }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Function {
@@ -240,20 +250,25 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     body: Box::new((*function.expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr15(Expr15 { apply }) => WithSpan {
+            grammar_trait::Expr::Apply(ExprApply { apply }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Apply {
                     function: (*apply.ty).try_into()?,
                     link_name: try_into_link_name(apply.apply_opt.map(|opt| *opt.link_name))?,
-                    arguments: apply
-                        .apply_list
-                        .into_iter()
-                        .map(|arg| (*arg.expr).try_into())
-                        .collect::<Result<_, _>>()?,
+                    arguments: match *apply.apply_group {
+                        ApplyGroup::Param(ApplyGroupParam { param }) => {
+                            vec![(*param.expr).try_into()?]
+                        }
+                        ApplyGroup::Params(ApplyGroupParams { params }) => params
+                            .params_list
+                            .into_iter()
+                            .map(|param| (*param.expr).try_into())
+                            .collect::<Result<_, _>>()?,
+                    },
                 },
             },
-            grammar_trait::Expr::Expr16(Expr16 { reference }) => WithSpan {
+            grammar_trait::Expr::Reference(ExprReference { reference }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Apply {
@@ -264,7 +279,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     arguments: vec![],
                 },
             },
-            grammar_trait::Expr::Expr17(Expr17 { labeled }) => WithSpan {
+            grammar_trait::Expr::Labeled(ExprLabeled { labeled }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Label {
@@ -272,7 +287,9 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     item: Box::new((*labeled.expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr18(Expr18 { new_type }) => WithSpan {
+            grammar_trait::Expr::Forall(ExprForall { .. }) => todo!(),
+            grammar_trait::Expr::Exists(ExprExists { .. }) => todo!(),
+            grammar_trait::Expr::NewType(ExprNewType { new_type }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::NewType {
@@ -281,7 +298,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     expr: Box::new((*new_type.expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::Expr19(Expr19 { card }) => WithSpan {
+            grammar_trait::Expr::Card(ExprCard { card }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Card {
@@ -290,7 +307,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     next: Some(Box::new((*card.expr0).try_into()?)),
                 },
             },
-            grammar_trait::Expr::Expr20(Expr20 { brand }) => WithSpan {
+            grammar_trait::Expr::Brand(ExprBrand { brand }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Brand {
@@ -307,27 +324,28 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
     type Error = MinimalistSyntaxError;
     fn try_from(ty: grammar_trait::Ty) -> Result<Self, Self::Error> {
         let ty = match ty {
-            grammar_trait::Ty::Ty0(Ty0 { infer: _ }) => WithSpan {
+            grammar_trait::Ty::BeginKeyTyEndKey(TyBeginKeyTyEndKey { ty }) => (*ty).try_into()?,
+            grammar_trait::Ty::Infer(TyInfer { infer: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Infer,
             },
-            grammar_trait::Ty::Ty1(Ty1 { this: _ }) => WithSpan {
+            grammar_trait::Ty::This(TyThis { this: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::This,
             },
-            grammar_trait::Ty::Ty2(Ty2 { number_key: _ }) => WithSpan {
+            grammar_trait::Ty::NumberKey(TyNumberKey { number_key: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Number,
             },
-            grammar_trait::Ty::Ty3(Ty3 { string_key: _ }) => WithSpan {
+            grammar_trait::Ty::StringKey(TyStringKey { string_key: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::String,
             },
-            grammar_trait::Ty::Ty4(Ty4 { effectful }) => WithSpan {
+            grammar_trait::Ty::Effectful(TyEffectful { effectful }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Effectful {
@@ -335,7 +353,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     effects: (*effectful.effect_expr).try_into()?,
                 },
             },
-            grammar_trait::Ty::Ty5(Ty5 { comment, ty }) => WithSpan {
+            grammar_trait::Ty::CommentTy(TyCommentTy { comment, ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Comment {
@@ -343,7 +361,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     item: Box::new((*ty).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty6(Ty6 { r#trait }) => WithSpan {
+            grammar_trait::Ty::Trait(TyTrait { r#trait }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Trait(
@@ -363,7 +381,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 ),
             },
-            grammar_trait::Ty::Ty7(Ty7 { product_ty }) => WithSpan {
+            grammar_trait::Ty::ProductTy(TyProductTy { product_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Product(
@@ -374,7 +392,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 ),
             },
-            grammar_trait::Ty::Ty8(Ty8 { sum }) => WithSpan {
+            grammar_trait::Ty::Sum(TySum { sum }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Sum(
@@ -384,12 +402,12 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
                 ),
             },
-            grammar_trait::Ty::Ty9(Ty9 { vec_ty }) => WithSpan {
+            grammar_trait::Ty::VecTy(TyVecTy { vec_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Vector(Box::new((*vec_ty.ty).try_into()?)),
             },
-            grammar_trait::Ty::Ty10(Ty10 { map_ty }) => WithSpan {
+            grammar_trait::Ty::MapTy(TyMapTy { map_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Map {
@@ -397,7 +415,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     value: Box::new((*map_ty.ty0).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty11(Ty11 { function_ty }) => WithSpan {
+            grammar_trait::Ty::FunctionTy(TyFunctionTy { function_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Function(Box::new(Function {
@@ -405,7 +423,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     body: (*function_ty.ty0).try_into()?,
                 })),
             },
-            grammar_trait::Ty::Ty12(Ty12 { labeled_ty }) => WithSpan {
+            grammar_trait::Ty::LabeledTy(TyLabeledTy { labeled_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Brand {
@@ -413,7 +431,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     item: Box::new((*labeled_ty.ty).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty13(Ty13 { attributed_ty }) => WithSpan {
+            grammar_trait::Ty::AttributedTy(TyAttributedTy { attributed_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Attributed {
@@ -421,12 +439,12 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     ty: Box::new((*attributed_ty.ty).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty14(Ty14 { variable }) => WithSpan {
+            grammar_trait::Ty::Variable(TyVariable { variable }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Variable((*variable.ident).into()),
             },
-            grammar_trait::Ty::Ty15(Ty15 { let_ty }) => WithSpan {
+            grammar_trait::Ty::LetTy(TyLetTy { let_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Let {
@@ -435,32 +453,34 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                     body: Box::new((*let_ty.ty0).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty16(Ty16 { all }) => WithSpan {
+            grammar_trait::Ty::ForallTy(TyForallTy { forall_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Forall {
-                    variable: (*all.ident).into(),
-                    bound: all
-                        .all_opt
+                    variable: (*forall_ty.bounded_variable.ident).into(),
+                    bound: forall_ty
+                        .bounded_variable
+                        .bounded_variable_opt
                         .map::<Result<_, MinimalistSyntaxError>, _>(|trait_| {
                             Ok(Box::new((*trait_.ty).try_into()?))
                         })
                         .transpose()?,
-                    body: Box::new((*all.ty).try_into()?),
+                    body: Box::new((*forall_ty.ty).try_into()?),
                 },
             },
-            grammar_trait::Ty::Ty17(Ty17 { exist }) => WithSpan {
+            grammar_trait::Ty::ExistsTy(TyExistsTy { exists_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::Type::Exists {
-                    variable: (*exist.ident).into(),
-                    bound: exist
-                        .exist_opt
+                    variable: (*exists_ty.bounded_variable.ident).into(),
+                    bound: exists_ty
+                        .bounded_variable
+                        .bounded_variable_opt
                         .map::<Result<_, MinimalistSyntaxError>, _>(|trait_| {
                             Ok(Box::new((*trait_.ty).try_into()?))
                         })
                         .transpose()?,
-                    body: Box::new((*exist.ty).try_into()?),
+                    body: Box::new((*exists_ty.ty).try_into()?),
                 },
             },
         };
@@ -472,7 +492,7 @@ impl TryFrom<grammar_trait::EffectExpr<'_>> for WithSpan<ast::ty::EffectExpr> {
     type Error = MinimalistSyntaxError;
     fn try_from(effect_expr: grammar_trait::EffectExpr) -> Result<Self, Self::Error> {
         let effect_expr = match effect_expr {
-            grammar_trait::EffectExpr::EffectExpr0(EffectExpr0 { effects }) => WithSpan {
+            grammar_trait::EffectExpr::Effects(EffectExprEffects { effects }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
                 value: ast::ty::EffectExpr::Effects(
@@ -483,37 +503,43 @@ impl TryFrom<grammar_trait::EffectExpr<'_>> for WithSpan<ast::ty::EffectExpr> {
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             },
-            grammar_trait::EffectExpr::EffectExpr1(EffectExpr1 { add_effects }) => WithSpan {
-                id: NodeId::new(),
-                span: 0..0,
-                value: ast::ty::EffectExpr::Add(
-                    add_effects
-                        .add_effects_list
-                        .into_iter()
-                        .map(|add_effect| (*add_effect.effect_expr).try_into())
-                        .collect::<Result<Vec<_>, _>>()?,
-                ),
-            },
-            grammar_trait::EffectExpr::EffectExpr2(EffectExpr2 { sub_effects }) => WithSpan {
-                id: NodeId::new(),
-                span: 0..0,
-                value: ast::ty::EffectExpr::Sub {
-                    minuend: Box::new((*sub_effects.effect_expr).try_into()?),
-                    subtrahend: Box::new((*sub_effects.effect_expr0).try_into()?),
-                },
-            },
-            grammar_trait::EffectExpr::EffectExpr3(EffectExpr3 { apply_effects }) => WithSpan {
-                id: NodeId::new(),
-                span: 0..0,
-                value: ast::ty::EffectExpr::Apply {
-                    function: Box::new((*apply_effects.ty).try_into()?),
-                    arguments: apply_effects
-                        .apply_effects_list
-                        .into_iter()
-                        .map(|apply_effect| (*apply_effect.ty).try_into())
-                        .collect::<Result<Vec<_>, _>>()?,
-                },
-            },
+            grammar_trait::EffectExpr::AddEffects(EffectExprAddEffects { add_effects }) => {
+                WithSpan {
+                    id: NodeId::new(),
+                    span: 0..0,
+                    value: ast::ty::EffectExpr::Add(
+                        add_effects
+                            .add_effects_list
+                            .into_iter()
+                            .map(|add_effect| (*add_effect.effect_expr).try_into())
+                            .collect::<Result<Vec<_>, _>>()?,
+                    ),
+                }
+            }
+            grammar_trait::EffectExpr::SubEffects(EffectExprSubEffects { sub_effects }) => {
+                WithSpan {
+                    id: NodeId::new(),
+                    span: 0..0,
+                    value: ast::ty::EffectExpr::Sub {
+                        minuend: Box::new((*sub_effects.effect_expr).try_into()?),
+                        subtrahend: Box::new((*sub_effects.effect_expr0).try_into()?),
+                    },
+                }
+            }
+            grammar_trait::EffectExpr::ApplyEffects(EffectExprApplyEffects { apply_effects }) => {
+                WithSpan {
+                    id: NodeId::new(),
+                    span: 0..0,
+                    value: ast::ty::EffectExpr::Apply {
+                        function: Box::new((*apply_effects.ty).try_into()?),
+                        arguments: apply_effects
+                            .apply_effects_list
+                            .into_iter()
+                            .map(|apply_effect| (*apply_effect.ty).try_into())
+                            .collect::<Result<Vec<_>, _>>()?,
+                    },
+                }
+            }
         };
         Ok(effect_expr)
     }
@@ -555,13 +581,20 @@ impl TryFrom<grammar_trait::Uuid<'_>> for Uuid {
 impl From<grammar_trait::Ident<'_>> for String {
     fn from(ident: grammar_trait::Ident<'_>) -> Self {
         match ident {
-            grammar_trait::Ident::Ident0(raw) => raw.ident_raw.ident_raw.text().to_string(),
-            grammar_trait::Ident::Ident1(parts) => [*parts.ident_part]
-                .into_iter()
-                .chain(parts.ident_list.into_iter().map(|list| *list.ident_part))
-                .map(|part| part.ident_part.text().to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
+            grammar_trait::Ident::IdentRaw(raw) => raw.ident_raw.ident_raw.text().to_string(),
+            grammar_trait::Ident::IdentWrapped(IdentIdentWrapped { ident_wrapped }) => {
+                [*ident_wrapped.ident_part]
+                    .into_iter()
+                    .chain(
+                        ident_wrapped
+                            .ident_wrapped_list
+                            .into_iter()
+                            .map(|list| *list.ident_part),
+                    )
+                    .map(|part| part.ident_part.text().to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            }
         }
     }
 }
@@ -587,12 +620,12 @@ impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithSpan<Function>> {
     }
 }
 
-impl From<Comment<'_>> for String {
-    fn from(comment: Comment) -> Self {
+impl From<grammar_trait::Comment<'_>> for String {
+    fn from(comment: grammar_trait::Comment) -> Self {
         match comment {
-            grammar_trait::Comment::Comment0(comment) => {
-                comment
-                    .comment_list
+            grammar_trait::Comment::BlockComment(CommentBlockComment { block_comment }) => {
+                block_comment
+                    .block_comment_list
                     .into_iter()
                     .map(|content| {
                         content
@@ -602,14 +635,17 @@ impl From<Comment<'_>> for String {
                             .to_string()
                     })
                     .collect::<String>()
-                    + &comment
-                        .comment_list0
+                    + &block_comment
+                        .block_comment_list0
                         .into_iter()
                         .map(|_| ")")
                         .collect::<String>()
             }
-            grammar_trait::Comment::Comment1(comment) => {
-                comment.comment_characters.comment_characters.to_string()
+            grammar_trait::Comment::InlineComment(CommentInlineComment { inline_comment }) => {
+                inline_comment
+                    .comment_characters
+                    .comment_characters
+                    .to_string()
             }
         }
     }
@@ -619,10 +655,10 @@ fn try_into_link_name(
     value: Option<grammar_trait::LinkName<'_>>,
 ) -> Result<LinkName, MinimalistSyntaxError> {
     match value {
-        Some(grammar_trait::LinkName::LinkName0(LinkName0 { card_key: _, uuid })) => {
+        Some(grammar_trait::LinkName::CardKeyUuid(LinkNameCardKeyUuid { uuid })) => {
             Ok(LinkName::Card((*uuid).try_into()?))
         }
-        Some(grammar_trait::LinkName::LinkName1(LinkName1 { uuid })) => {
+        Some(grammar_trait::LinkName::VersionKeyUuid(LinkNameVersionKeyUuid { uuid })) => {
             Ok(LinkName::Version((*uuid).try_into()?))
         }
         None => Ok(LinkName::None),

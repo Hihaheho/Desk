@@ -1,16 +1,16 @@
-{
-  @files [
-    {
-      @name "main.ds",
-      @content "
+*<
+  @"files" [
+    *<
+      @"name" "main.ds",
+      @"content" "
         1
       "
-    }
+    >
   ],
-  @entrypoint "main.ds",
-  @assertions [
-    @RunSuccess {
-      @result @Number @Integer 1
-    }
+  @"entrypoint" "main.ds",
+  @"assertions" [
+    @"RunSuccess" *<
+      @"result" @"Number" @"Integer" 1
+    >
   ]
-}
+>

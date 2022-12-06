@@ -280,8 +280,7 @@ dependencies = [
 [[package]]
 name = "bart"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0f9d52a5c46e2abe28ae1c2ecdaa320c01e424c29a56acb7a6222141c78bae7"
+source = "git+https://github.com/ryo33/bart?rev=5a6046b386aced0bdf0a5d7a23ea96accefade09#5a6046b386aced0bdf0a5d7a23ea96accefade09"
 dependencies = [
  "nom 2.2.1",
 ]
@@ -289,8 +288,7 @@ dependencies = [
 [[package]]
 name = "bart_derive"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39fdc9035ac29aeb14993e2cdae217de7ccc9f9960eae0c5a12d541ca11c6af1"
+source = "git+https://github.com/ryo33/bart?rev=5a6046b386aced0bdf0a5d7a23ea96accefade09#5a6046b386aced0bdf0a5d7a23ea96accefade09"
 dependencies = [
  "itertools",
  "num",
@@ -1532,18 +1530,18 @@ dependencies = [
 
 [[package]]
 name = "derive_builder"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07adf7be193b71cc36b193d0f5fe60b918a3a9db4dad0449f57bcfd519704a3"
+checksum = "8d67778784b508018359cbc8696edb3db78160bab2c2a28ba7f56ef6932997f8"
 dependencies = [
  "derive_builder_macro",
 ]
 
 [[package]]
 name = "derive_builder_core"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f91d4cfa921f1c05904dc3c57b4a32c38aed3340cce209f3a6fd1478babafc4"
+checksum = "c11bdc11a0c47bc7d37d582b5285da6849c96681023680b906673c5707af7b0f"
 dependencies = [
  "darling 0.14.2",
  "proc-macro2",
@@ -1553,9 +1551,9 @@ dependencies = [
 
 [[package]]
 name = "derive_builder_macro"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f0314b72bed045f3a68671b3c86328386762c93f82d98c65c3cb5e5f573dd68"
+checksum = "ebcda35c7a396850a55ffeac740804b40ffec779b98fffbb1738f4033f0ee79e"
 dependencies = [
  "derive_builder_core",
  "syn 1.0.103",
@@ -1801,7 +1799,7 @@ dependencies = [
  "dson",
  "env_logger 0.10.0",
  "parol",
- "parol_runtime 0.9.0 (git+https://github.com/jsinger67/parol_runtime?rev=b3377abf1582411664e2e4d290bd946e62075c8b)",
+ "parol_runtime",
  "thiserror",
  "uuid",
 ]
@@ -1824,6 +1822,7 @@ dependencies = [
  "deskvm-dprocess",
  "deskvm-miri",
  "dson",
+ "env_logger 0.10.0",
  "pretty_assertions",
  "serde",
  "serde-dson",
@@ -2096,11 +2095,8 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
- "atty",
- "humantime",
  "log",
  "regex",
- "termcolor",
 ]
 
 [[package]]
@@ -3587,24 +3583,24 @@ dependencies = [
 
 [[package]]
 name = "parol"
-version = "0.14.0-alpah.2"
-source = "git+https://github.com/jsinger67/parol?rev=8e176890d244834cde63cbbcbabf888dd203daf8#8e176890d244834cde63cbbcbabf888dd203daf8"
+version = "0.15.0-alpha.1"
+source = "git+https://github.com/jsinger67/parol?rev=f0be5be6e37b9141eefe064055928bcef63318a5#f0be5be6e37b9141eefe064055928bcef63318a5"
 dependencies = [
  "bart",
  "bart_derive",
  "cfg-if",
  "clap",
  "derive_builder",
- "env_logger 0.9.3",
+ "env_logger 0.10.0",
  "function_name",
  "id_tree",
  "id_tree_layout",
- "lazy_static",
  "log",
  "miette",
+ "once_cell",
  "owo-colors",
  "parol-macros",
- "parol_runtime 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parol_runtime",
  "rand",
  "rand_regex",
  "regex",
@@ -3616,39 +3612,20 @@ dependencies = [
 [[package]]
 name = "parol-macros"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e050a66a0efd1a8a62f51ec99383cbabf00f7c557747591383c5f02c16cdce5b"
+source = "git+https://github.com/jsinger67/parol?rev=f0be5be6e37b9141eefe064055928bcef63318a5#f0be5be6e37b9141eefe064055928bcef63318a5"
 
 [[package]]
 name = "parol_runtime"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c36eea394b079a78580d35fb3cfbf226a4c46ac26ff6f0d81a3abb29d41690b"
+version = "0.11.0"
+source = "git+https://github.com/jsinger67/parol?rev=f0be5be6e37b9141eefe064055928bcef63318a5#f0be5be6e37b9141eefe064055928bcef63318a5"
 dependencies = [
  "derive_builder",
  "function_name",
  "id_tree",
  "id_tree_layout",
- "lazy_static",
  "log",
  "miette",
- "parol-macros",
- "regex",
- "thiserror",
-]
-
-[[package]]
-name = "parol_runtime"
-version = "0.9.0"
-source = "git+https://github.com/jsinger67/parol_runtime?rev=b3377abf1582411664e2e4d290bd946e62075c8b#b3377abf1582411664e2e4d290bd946e62075c8b"
-dependencies = [
- "derive_builder",
- "function_name",
- "id_tree",
- "id_tree_layout",
- "lazy_static",
- "log",
- "miette",
+ "once_cell",
  "parol-macros",
  "regex",
  "thiserror",

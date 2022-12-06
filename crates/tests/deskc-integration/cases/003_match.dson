@@ -1,27 +1,28 @@
-{
-  @files [
-    {
-      @name "main.ds",
-      @content "
-        $ #1 @false *: x ~
+*<
+  @"files" [
+    *<
+      @"name" "main.ds",
+      @"content" "
+        $ #1 @\"false\" *<>;
         #2
-        + &x ~
-          @true * -> 1,
-          @false * -> 2.
+        'match & @\"false\" *<> {
+          @\"true\" *<> => 1,
+          @\"false\" *<> => 2
+        }
       "
-    }
+    >
   ],
-  @entrypoint "main.ds",
-  @assertions [
-    @Typed [
-      * 1, @Label {
-        @label "false",
-        @item @Product []
-      },
-      * 2, @Number *
+  @"entrypoint" "main.ds",
+  @"assertions" [
+    @"Typed" [
+      *<1, @"Label" *<
+        @"label" @"Literal" @"String" "false",
+        @"item" @"Product" []
+      >>,
+      *<2, @"Number" *<>>
     ],
-    @RunSuccess {
-      @result @Number @Integer 2
-    }
+    @"RunSuccess" *<
+      @"result" @"Number" @"Integer" 2
+    >
   ]
-}
+>

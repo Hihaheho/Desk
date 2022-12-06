@@ -2,18 +2,20 @@ mod assertion;
 mod test_case;
 
 macro_rules! test {
-    ($case:ident, $file_name:expr) => {
+    ($case:ident) => {
         #[test]
         fn $case() {
-            fn print_errors<T>(
-                input: &str,
-                error: deskc::query_result::QueryError,
-            ) -> T {
+            let _ = env_logger::builder().is_test(true).try_init();
+            fn print_errors<T>(input: &str, error: deskc::query_result::QueryError) -> T {
                 use ariadne::{Label, Report, ReportKind, Source};
                 use errors::textual_diagnostics::{Report as TDReport, TextualDiagnostics};
-                let diagnostics: TextualDiagnostics = if let Some(syntax_error) = error.downcast_ref::<errors::syntax::SyntaxError>() {
+                let diagnostics: TextualDiagnostics = if let Some(syntax_error) =
+                    error.downcast_ref::<errors::syntax::SyntaxError>()
+                {
                     syntax_error.into()
-                } else if let Some(typeinfer_error) = error.downcast_ref::<errors::typeinfer::ExprTypeError>() {
+                } else if let Some(typeinfer_error) =
+                    error.downcast_ref::<errors::typeinfer::ExprTypeError>()
+                {
                     typeinfer_error.into()
                 } else {
                     panic!("unexpected error: {:?}", error);
@@ -23,12 +25,9 @@ macro_rules! test {
                 diagnostics
                     .reports
                     .into_iter()
-                    .fold(
-                        report,
-                        |report, TDReport { span, text }| {
-                            report.with_label(Label::new(span).with_message(text))
-                        },
-                    )
+                    .fold(report, |report, TDReport { span, text }| {
+                        report.with_label(Label::new(span).with_message(text))
+                    })
                     .finish()
                     .print(Source::from(input))
                     .unwrap();
@@ -36,12 +35,18 @@ macro_rules! test {
             }
             let passes =
                 |case: &str| println!("\n================ {} passes ================\n", case);
-            use ids::{CardId, NodeId};
-            use std::sync::Arc;
             use crate::test_case::TestCase;
             use assertion::Assertion;
+            use ids::{CardId, NodeId};
             use serde_dson::from_dson;
-            let input = include_str!($file_name);
+            use std::sync::Arc;
+            let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+            let input = std::fs::read_to_string(format!(
+                "{}/cases/{}.dson",
+                manifest_dir,
+                stringify!($case).get(4..).unwrap()
+            ))
+            .unwrap();
             use deskc::card::CardQueries;
             use deskc::{Code, SyntaxKind};
             let mut compiler = deskc::card::CardsCompiler::default();
@@ -50,10 +55,12 @@ macro_rules! test {
                 card_id.clone(),
                 Code::SourceCode {
                     syntax: SyntaxKind::Minimalist,
-                    source: Arc::new(input.to_string()),
+                    source: Arc::new(input.clone()),
                 },
             );
-            let thir = compiler.thir(card_id).unwrap_or_else(|err| print_errors(input, err));
+            let thir = compiler
+                .thir(card_id)
+                .unwrap_or_else(|err| print_errors(&input, err));
             let dson = thir2dson::thir_to_dson(&thir).unwrap();
             let test_case: TestCase = from_dson(dson).unwrap();
             // compile sources
@@ -71,36 +78,40 @@ macro_rules! test {
             for assertion in test_case.assertions.iter() {
                 match assertion {
                     Assertion::Typed(typings) => {
-                        use std::collections::HashMap;
-                        use hir::meta::WithMeta;
+                        use dson::Dson;
                         use hir::expr::Expr;
                         use hir::helper::HirVisitor;
-                        use dson::Dson;
+                        use hir::meta::WithMeta;
+                        use std::collections::HashMap;
                         #[derive(Default)]
                         struct HirIds {
                             ids: Vec<(usize, NodeId)>,
                         }
                         impl HirVisitor for HirIds {
                             fn visit_expr(&mut self, expr: &WithMeta<Expr>) {
-                                if let Some(Dson::Literal(dson::Literal::Integer(int))) = expr.meta.attrs.first() {
+                                if let Some(Dson::Literal(dson::Literal::Integer(int))) =
+                                    expr.meta.attrs.first()
+                                {
                                     self.ids.push((*int as usize, expr.id.clone()));
                                 }
                                 self.super_visit_expr(expr);
                             }
                         }
                         let mut hir_ids = HirIds::default();
-                        let hir_result = compiler.hir(card_id.clone()).unwrap_or_else(|err| print_errors(input, err));
+                        let hir_result = compiler
+                            .hir(card_id.clone())
+                            .unwrap_or_else(|err| print_errors(input, err));
                         hir_ids.visit_expr(&hir_result.hir);
                         let attrs = hir_ids.ids.into_iter().collect::<HashMap<_, _>>();
 
-                        let ctx = compiler.typeinfer(card_id.clone()).unwrap_or_else(|err| print_errors(input, err));
+                        let ctx = compiler
+                            .typeinfer(card_id.clone())
+                            .unwrap_or_else(|err| print_errors(input, err));
                         let types = ctx.get_types();
 
                         for (id, ty) in typings {
-                            let actual = attrs
-                                .get(id)
-                                .and_then(|id| types.get(id).cloned())
-                                .unwrap();
+                            let actual =
+                                attrs.get(id).and_then(|id| types.get(id).cloned()).unwrap();
                             assert_eq!(actual, *ty);
                         }
                         passes("Typed");
@@ -109,7 +120,9 @@ macro_rules! test {
                 }
             }
 
-            let mir = compiler.mir(card_id).unwrap_or_else(|err| print_errors(input, err));
+            let mir = compiler
+                .mir(card_id)
+                .unwrap_or_else(|err| print_errors(input, err));
             let mut miri = miri::eval_mir((*mir).clone());
             use dprocess::interpreter::Interpreter;
             let start = std::time::Instant::now();
@@ -140,11 +153,11 @@ macro_rules! test {
     };
 }
 
-test!(case001, "../cases/001_literal.dson");
-test!(case002, "../cases/002_addition.dson");
-test!(case003, "../cases/003_match.dson");
-test!(case004, "../cases/004_let_function.dson");
-// test!(case005, "../cases/005_division_by_zero.dson");
-test!(case006, "../cases/006_continuation.dson");
-test!(case007, "../cases/007_fibonacci.dson");
-// test!(case008, "../cases/008_cards.dson");
+test!(case001_literal);
+test!(case002_addition);
+test!(case003_match);
+test!(case004_let_function);
+// test!(case005);
+test!(case006_continuation);
+test!(case007_fibonacci);
+// test!(case008);

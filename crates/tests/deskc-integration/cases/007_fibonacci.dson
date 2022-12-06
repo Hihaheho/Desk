@@ -1,43 +1,39 @@
-{
-  @files [
-    {
-      @name "main.ds",
-      @content "
-      (defines aliases of types)
-      'type add \\ 'number, 'number -> @sum 'number ~
-      'type sub \\ @minuend 'number, @subtrahend 'number -> 'number ~
-      'type eq \\ 'number, 'number -> + @equal *, @unequal * ~
-      (let fib (\\'number -> 'number) in)
+*<
+  @"files" [
+    *<
+      @"name" "main.ds",
+      @"content" "
+      ~(defines aliases of types)~
+      'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
+      'type sub \\ *<@\"minuend\" 'number, @\"subtrahend\" 'number> -> 'number;
+      'type eq \\ *<@\"l\" 'number, @\"r\" 'number> -> +<@\"equal\" *<>, @\"unequal\" *<>>;
+      'type fib \\ 'number -> 'number;
+      ~(let fib)~
       $ \\ 'number ->
-        (+ is like Rust's `match` or C's `switch`)
-        + >eq &'number, 0 ~
-          (if the number == 0)
-          @equal * ->
-            0,
-          (if the number != 0)
-          @unequal * ->
-            + >eq &'number, 1 ~
-              @equal * ->
-                1,
-              @unequal * ->
-                (adds fib(number - 1) and fib(number - 2))
-                ^>add
-                  > \\'number -> 'number
-                    >sub @minuend &'number, 1. ;
-                  > \\'number -> 'number
-                    >sub @minuend &'number, 2
-                (`^expr: type` is a type annotation)
-                : 'number
-      ~
-      (calls `fib(7)`)
-      > \\'number -> 'number ~ 7
+        ~(+ is like Rust's `match` or C's `switch`)~
+        'match ^eq *<@\"l\" &'number, @\"r\" 0> {
+          ~(if the number == 0)~
+          @\"equal\" *<> => 0
+          ~(if the number != 0)~
+          @\"unequal\" *<> => 'match ^eq *<@\"l\" &'number, @\"r\" 1> {
+            @\"equal\" *<> => 1
+            @\"unequal\" *<> =>
+              ~(adds fib(number - 1) and fib(number - 2))~
+              <'number> ^add *<
+                ^fib ^sub *<@\"minuend\" &'number, 1>
+                ^fib ^sub *<@\"minuend\" &'number, 2>
+              >
+          }
+        }
+      ;
+      ^fib(7)
       "
-    }
+    >
   ],
-  @entrypoint "main.ds",
-  @assertions [
-    @RunSuccess {
-      @result @Number @Integer 13
-    }
+  @"entrypoint" "main.ds",
+  @"assertions" [
+    @"RunSuccess" *<
+      @"result" @"Number" @"Integer" 13
+    >
   ]
-}
+>

@@ -19,6 +19,7 @@
 %%
 
 Expr: Comment Expr
+    | BeginKey^ Expr EndKey^
     | Hole
     | Do
     | Cast
@@ -35,13 +36,15 @@ Expr: Comment Expr
     | Function
     | Apply
     | Reference
+    | Forall
+    | Exists
     | Labeled
     | NewType
     | Card
     | Brand
     ;
     Do: DoKey^ Expr StmtEnd^ Expr;
-    Cast: TyAnno^ Ty Expr;
+    Cast: TypeBegin^ Ty TypeEnd^ Expr;
     Literal: Rational | Integer | Float | String;
         // Rational must be before Integer for higher priority.
         Rational: "\-?\p{Nd}+\s*/\s*\p{Nd}+";
@@ -68,32 +71,38 @@ Expr: Comment Expr
     Match: MatchKey^ Expr MapBegin^ { Case [ Comma^ ] } MapEnd^;
         Case: Ty Arrow^ Expr;
     Function: FunctionSym^ Ty FArrow^ Expr;
-    Apply: ApplySym^ [ LinkName ] Ty ParamsBegin^ { Expr [ Comma^ ] } ParamsEnd^;
+    // We need `ApplySym` to make it deterministic on such a token: `*`.
+    Apply: ApplySym^ [ LinkName ] Ty ( Param | Params );
+        Param: Expr;
+        Params: ParamsBegin^ { Expr [ Comma^ ] } ParamsEnd^;
     Reference: ReferenceSym^ [ LinkName ] Ty;
     Labeled: Label Expr;
+    Forall: ForallKey^ BoundedVariable Expr;
+    Exists: ExistsKey^ BoundedVariable Expr;
     NewType: TyKey^ Ident Ty StmtEnd^ Expr;
     Card: CardKey^ Uuid Expr StmtEnd^ Expr;
     Brand: BrandKey^ Expr StmtEnd^ Expr;
 
-Ty: Infer
-    | This
-    | NumberKey
-    | StringKey
-    | Effectful
-    | Comment Ty
-    | Trait
-    | ProductTy
-    | Sum
-    | VecTy
-    | MapTy
-    | FunctionTy
-    | LabeledTy
-    | AttributedTy
-    | Variable
-    | LetTy
-    | All
-    | Exist
-    ;
+Ty: BeginKey^ Ty EndKey^
+  | Infer
+  | This
+  | NumberKey
+  | StringKey
+  | Effectful
+  | Comment Ty
+  | Trait
+  | ProductTy
+  | Sum
+  | VecTy
+  | MapTy
+  | FunctionTy
+  | LabeledTy
+  | AttributedTy
+  | Variable
+  | LetTy
+  | ForallTy
+  | ExistsTy
+  ;
     Effectful: PerformSym^ EffectExpr Ty;
         EffectExpr: Effects | AddEffects | SubEffects| ApplyEffects;
         Effects: MapBegin^ { Effect [ Comma^ ] } MapEnd^;
@@ -110,28 +119,31 @@ Ty: Infer
     AttributedTy: Attribute Ty;
     Variable: Ident;
     LetTy: LetSym^ Ident Ty StmtEnd^ Ty;
-    All: AllKey^ Ident [ TyAnno^ Ty ] Ty;
-    Exist: ExistKey^ Ident [ TyAnno^ Ty ] Ty;
+    ForallTy: ForallKey^ BoundedVariable Ty;
+    ExistsTy: ExistsKey^ BoundedVariable Ty;
 
 // Utilities
-Comment: CommentBegin^ %push(BlockComment) { BlockCommentContent } { ParenEnd } CommentEnd ^ %pop()
-       | CommentPrefix^ %push(InlineComment) CommentCharacters %pop();
-    // This must come before ParenEnd for higher priority.
+Comment: BlockComment
+       | InlineComment;
+    // This must come before ParamsEnd for higher priority.
+    BlockComment: CommentBegin^ %push(BlockComment) { BlockCommentContent } { ParamsEnd } CommentEnd ^ %pop();
+    InlineComment: CommentPrefix^ %push(InlineComment) CommentCharacters %pop();
     CommentEnd: <BlockComment> ')~';
     BlockCommentContent: <BlockComment> /[^\)]+(\)[^~\)])?/;
-    ParenEnd: <BlockComment> ')';
     CommentCharacters: <InlineComment> /.*/;
 Attribute: AttributeSym^ Expr;
 Label: LabelSym^ Expr;
 Ident: IdentRaw
-     | IdentDelimiter^ %push(Ident) IdentPart { IdentPart } IdentDelimiter^ %pop();
+     | IdentWrapped;
+    IdentWrapped: IdentDelimiter^ %push(Ident) IdentPart { IdentPart } IdentDelimiter^ %pop();
     IdentRaw: /[^!-@\[-`\{-~\s]+/;
     IdentPart: <Ident> /([^`\s]|\\`)+/;
     IdentDelimiter: <INITIAL, Ident> '`';
-Uuid: UuidKey^ %push(Uuid) UuidText %pop();
-    UuidText: <Uuid> /[\p{Nd}a-fA-F]{8}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{4}-?[\p{Nd}a-fA-F]{12}/;
+Uuid: %push(Uuid) UuidText %pop();
+    UuidText: <Uuid> /[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
-LinkName: CardKey Uuid | Uuid;
+LinkName: CardKey^ Uuid | VersionKey^ Uuid;
+BoundedVariable: Ident [ TyAnno^ Ty ];
 
 // Composite tokens
 // These must be listed first for higher priority.
@@ -155,7 +167,7 @@ VecEnd: ']';
 TypeBegin: '<';
 TypeEnd: '>';
 ParamsBegin: '(';
-ParamsEnd: ')';
+ParamsEnd: <INITIAL, BlockComment>')';
 LabelSym: '@';
 Infer: '_';
 PerformSym: '!';
@@ -175,12 +187,14 @@ StringDelimiter: <INITIAL, String>'"';
 This: "'this";
 DoKey: "'do";
 TyKey: "'type";
-UuidKey: "'uuid";
-AllKey: "'forall";
-ExistKey: "'exists";
+ForallKey: "'forall";
+ExistsKey: "'exists";
 CardKey: "'card";
 BrandKey: "'brand";
 StringKey: "'string";
 NumberKey: "'number";
 HandleKey: "'handle";
 MatchKey: "'match";
+VersionKey: "'version";
+BeginKey: "'begin";
+EndKey: "'end";

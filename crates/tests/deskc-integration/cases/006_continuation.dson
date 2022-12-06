@@ -1,22 +1,26 @@
-{
-  @files [
-    {
-      @name "main.ds",
-      @content "
-        'type add \\'number, 'number -> @sum 'number
-        'handle $ ! \"a\" => 'number: x ~
-          >add &x, &x ~
-        'string => 'number ->
-          >add
-            ! 1 => @sum 'number,
-            ! 2 => @sum 'number
+*<
+  @"files" [
+    *<
+      @"name" "main.ds",
+      @"content" "
+        'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
+        'handle 'begin
+          $ ! \"a\" ~> 'number;
+          <'number> ^add *<@\"l\" &'number, @\"r\" &'number>
+        'end {
+          'string ~> 'number =>
+            ^add *<
+              @\"l\" ! 1 ~> 'number,
+              @\"r\" ! 2 ~> 'number,
+            >
+        }
       "
-    }
+    >
   ],
-  @entrypoint "main.ds",
-  @assertions [
-    @RunSuccess {
-      @result @Number @Integer 6
-    }
+  @"entrypoint" "main.ds",
+  @"assertions" [
+    @"RunSuccess" *<
+      @"result" @"Number" @"Integer" 6
+    >
   ]
-}
+>
