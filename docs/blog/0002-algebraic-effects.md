@@ -274,7 +274,7 @@ As I explained earlier, we can pass output to effect and continue the processing
 In fact, we can pass output multiple times like:
 
 ```desk
-'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer
+'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer;
 'handle (
   $ ! "a" ~> 'integer;
   <'integer> ^add(&'integer, &'integer)
