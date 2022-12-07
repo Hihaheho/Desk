@@ -92,7 +92,7 @@ mod tests {
         impl HirVisitor for HirIds {
             fn visit_expr(&mut self, expr: &WithMeta<Expr>) {
                 if let Some(Dson::Literal(dson::Literal::Integer(int))) = expr.meta.attrs.first() {
-                    self.ids.push((*int as usize, expr.id.clone()));
+                    self.ids.push((*int as usize, expr.meta.id.clone()));
                 }
                 self.super_visit_expr(expr);
             }
@@ -132,7 +132,7 @@ mod tests {
     fn number() {
         assert_eq!(
             synth(dummy_meta(Expr::Literal(Literal::Integer(1)))),
-            Ok(Type::Number)
+            Ok(Type::Integer)
         );
     }
 
@@ -141,7 +141,7 @@ mod tests {
         assert_eq!(
             synth(dummy_meta(Expr::Apply {
                 function: dummy_meta(hir::ty::Type::Function(Box::new(Function {
-                    parameter: dummy_meta(hir::ty::Type::Number),
+                    parameter: dummy_meta(hir::ty::Type::Integer),
                     body: dummy_meta(hir::ty::Type::String),
                 }))),
                 link_name: Default::default(),
@@ -156,10 +156,10 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ 1; &'number
+                    $ 1; &'integer
             "#
             )),
-            Ok(Type::Number)
+            Ok(Type::Integer)
         );
     }
 
@@ -188,7 +188,7 @@ mod tests {
                     ^'forall a \ a -> a (1)
             "#
             )),
-            Ok(Type::Number)
+            Ok(Type::Integer)
         );
     }
 
@@ -218,8 +218,8 @@ mod tests {
                     },
                 ),
                 (3, Type::Existential(103)),
-                (4, Type::Number),
-                (5, Type::Number),
+                (4, Type::Integer),
+                (5, Type::Integer),
                 (6, Type::String),
                 (7, Type::String),
             ],
@@ -230,8 +230,8 @@ mod tests {
     fn subtyping_sum_in_product() {
         let expr = parse(
             r#"
-            $ #1 \ +<'number, *<>> -> 1;
-            #3 ^\ +<'number, *<>> -> 'number (#2 *<1, "a">)
+            $ #1 \ +<'integer, *<>> -> 1;
+            #3 ^\ +<'integer, *<>> -> 'integer (#2 *<1, "a">)
         "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -242,12 +242,12 @@ mod tests {
                 (
                     1,
                     Type::Function {
-                        parameter: Box::new(Type::Sum(vec![Type::Number, Type::Product(vec![])])),
-                        body: Box::new(Type::Number),
+                        parameter: Box::new(Type::Sum(vec![Type::Integer, Type::Product(vec![])])),
+                        body: Box::new(Type::Integer),
                     },
                 ),
-                (2, Type::Product(vec![Type::Number, Type::String])),
-                (3, Type::Number),
+                (2, Type::Product(vec![Type::Integer, Type::String])),
+                (3, Type::Integer),
             ],
         );
     }
@@ -256,8 +256,8 @@ mod tests {
     fn perform() {
         let expr = parse(
             r#"
-            $ #3 \ x -> #2 ^ \ 'number -> 'string (#1 ! &x ~> 'number);
-            #4 ^'forall a \ a -> ! { a ~> 'number } 'string ("a")
+            $ #3 \ x -> #2 ^ \ 'integer -> 'string (#1 ! &x ~> 'integer);
+            #4 ^'forall a \ a -> ! { a ~> 'integer } 'string ("a")
         "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -269,10 +269,10 @@ mod tests {
                 (
                     1,
                     Type::Effectful {
-                        ty: Box::new(Type::Number),
+                        ty: Box::new(Type::Integer),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Existential(x),
-                            output: Type::Number,
+                            output: Type::Integer,
                         }]),
                     },
                 ),
@@ -282,7 +282,7 @@ mod tests {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Existential(x),
-                            output: Type::Number,
+                            output: Type::Integer,
                         }]),
                     },
                 ),
@@ -297,7 +297,7 @@ mod tests {
                                 ty: Box::new(Type::String),
                                 effects: EffectExpr::Effects(vec![Effect {
                                     input: Type::Existential(112),
-                                    output: Type::Number,
+                                    output: Type::Integer,
                                 }]),
                             }),
                         }),
@@ -309,7 +309,7 @@ mod tests {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::String,
-                            output: Type::Number,
+                            output: Type::Integer,
                         }]),
                     }
                 ),
@@ -362,7 +362,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::Existential(z)),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Number,
+                            input: Type::Integer,
                             output: Type::String,
                         }]),
                     },
@@ -375,8 +375,8 @@ mod tests {
     fn test_continue() {
         let expr = parse(
             r#"
-            \ x -> \ y -> #3 'handle #2 ^ \'number -> y (! &x ~> 'number) '{
-              x ~> 'number => #1 !<~ 1 ~> 'string
+            \ x -> \ y -> #3 'handle #2 ^ \'integer -> y (! &x ~> 'integer) '{
+              x ~> 'integer => #1 !<~ 1 ~> 'string
             '}
             "#,
         );
@@ -390,7 +390,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Number,
+                            input: Type::Integer,
                             output: Type::String,
                         }]),
                     },
@@ -401,7 +401,7 @@ mod tests {
                         ty: Box::new(Type::Existential(107)),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Existential(102),
-                            output: Type::Number,
+                            output: Type::Integer,
                         }]),
                     },
                 ),
@@ -415,16 +415,16 @@ mod tests {
     fn test_polymorphic_effectful() {
         let input = r#"
             $ #1 \ x -> \ y -> ^#2 'handle ^ x 1 '{
-              'number ~> 'string -> ^ y 2
+              'integer ~> 'string -> ^ y 2
             '};
             #3 ^fun(
-              \ @"x" 'number -> '{
+              \ @"x" 'integer -> '{
                 'do ! 1 ~> 'string;
-                ! @"a" *<> ~> 'number,
+                ! @"a" *<> ~> 'integer,
               '}
-              \ @"y" 'number -> '{
-                'do ! "a" ~> 'number;
-                ! @"b" *<> ~> 'number
+              \ @"y" 'integer -> '{
+                'do ! "a" ~> 'integer;
+                ! @"b" *<> ~> 'integer
               '}
             )
             "#;
@@ -441,10 +441,10 @@ mod tests {
                         body: Box::new(Type::Function {
                             parameter: Box::new(Type::Function {
                                 parameter: Box::new(Type::Existential(23)),
-                                body: Box::new(Type::Number)
+                                body: Box::new(Type::Integer)
                             }),
                             body: Box::new(Type::Effectful {
-                                ty: Box::new(Type::Number),
+                                ty: Box::new(Type::Integer),
                                 effects: EffectExpr::Add(vec![])
                             })
                         })
@@ -453,21 +453,21 @@ mod tests {
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Number),
+                        ty: Box::new(Type::Integer),
                         effects: EffectExpr::Effects(vec![
                             Effect {
                                 input: Type::Label {
                                     label: Dson::Literal(dson::Literal::String("a".into())),
                                     item: Box::new(Type::Product(vec![]))
                                 },
-                                output: Type::Number,
+                                output: Type::Integer,
                             },
                             Effect {
                                 input: Type::Label {
                                     label: Dson::Literal(dson::Literal::String("b".into())),
                                     item: Box::new(Type::Product(vec![]))
                                 },
-                                output: Type::Number,
+                                output: Type::Integer,
                             }
                         ]),
                     },
@@ -480,14 +480,14 @@ mod tests {
     fn label() {
         let expr = parse(
             r#"
-            <@"labeled" 'number> <'number> <@"labeled" 'number> 1
+            <@"labeled" 'integer> <'integer> <@"labeled" 'integer> 1
         "#,
         );
         assert_eq!(
             synth(expr),
             Ok(Type::Label {
                 label: "labeled".into(),
-                item: Box::new(Type::Number),
+                item: Box::new(Type::Integer),
             })
         );
     }
@@ -496,7 +496,7 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            \ x -> <@"labeled" 'number> &x
+            \ x -> <@"labeled" 'integer> &x
         "#,
         );
         assert_eq!(
@@ -504,11 +504,11 @@ mod tests {
             Ok(Type::Function {
                 parameter: Box::new(Type::Label {
                     label: Dson::Literal(dson::Literal::String("labeled".into())),
-                    item: Box::new(Type::Number),
+                    item: Box::new(Type::Integer),
                 }),
                 body: Box::new(Type::Label {
                     label: Dson::Literal(dson::Literal::String("labeled".into())),
-                    item: Box::new(Type::Number),
+                    item: Box::new(Type::Integer),
                 })
             })
         );
@@ -519,16 +519,16 @@ mod tests {
         let expr = parse(
             r#"
             'brand "brand";
-            <@"brand" 'number> 1
+            <@"brand" 'integer> 1
         "#,
         );
         assert_eq!(
             synth(expr).map_err(|e| e.error),
             Err(TypeError::NotSubtype {
-                sub: types::Type::Number,
+                sub: types::Type::Integer,
                 ty: types::Type::Brand {
                     brand: Dson::Literal(dson::Literal::String("brand".into())),
-                    item: Box::new(types::Type::Number),
+                    item: Box::new(types::Type::Integer),
                 },
             })
         );
@@ -539,22 +539,22 @@ mod tests {
         let expr = parse(
             r#"
             'brand "brand";
-            <'number> &@"brand" 'number
+            <'integer> &@"brand" 'integer
         "#,
         );
-        assert_eq!(synth(expr), Ok(Type::Number));
+        assert_eq!(synth(expr), Ok(Type::Integer));
     }
 
     #[test]
     fn infer() {
         let expr = parse(
             r#"
-            <_> ^ \ _ -> 'number ("a")
+            <_> ^ \ _ -> 'integer ("a")
             "#,
         );
         let (_ctx, ty) = crate::synth(100, &expr).unwrap();
 
-        assert_eq!(ty, Type::Number);
+        assert_eq!(ty, Type::Integer);
     }
 
     #[test]
@@ -563,8 +563,8 @@ mod tests {
             r#"
             \ x ->
               #2 'match #1 &x '{
-                'number => <@"a" 'number> 1,
-                'string => <@"b" 'number> 2,
+                'integer => <@"a" 'integer> 1,
+                'string => <@"b" 'integer> 2,
               '}
             "#,
         );
@@ -573,22 +573,131 @@ mod tests {
         assert_eq!(
             get_types(&expr, &ctx),
             vec![
-                (1, Type::Sum(vec![Type::Number, Type::String])),
+                (1, Type::Sum(vec![Type::Integer, Type::String])),
                 (
                     2,
                     Type::Sum(vec![
                         Type::Label {
                             label: "a".into(),
-                            item: Box::new(Type::Number)
+                            item: Box::new(Type::Integer)
                         },
                         Type::Label {
                             label: "b".into(),
-                            item: Box::new(Type::Number)
+                            item: Box::new(Type::Integer)
                         }
                     ])
                 )
             ]
         );
+    }
+
+    #[test]
+    fn test_numbers() {
+        init();
+        let expr = parse("*<1, 2.0, 3 / 4>");
+        let (_ctx, ty) = crate::synth(100, &expr).unwrap();
+
+        assert_eq!(
+            ty,
+            Type::Product(vec![Type::Integer, Type::Real, Type::Rational])
+        );
+    }
+
+    #[test]
+    fn test_integer_to_rational() {
+        let expr = parse(
+            r#"
+            <'rational> 1
+            "#,
+        );
+        assert_eq!(
+            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            Ok(Type::Rational)
+        );
+    }
+
+    #[test]
+    fn test_rational_to_integer() {
+        let expr = dbg!(parse(
+            r#"
+                    <'integer> 1 / 2
+                    "#,
+        ));
+
+        assert!(matches!(
+            crate::synth(100, &expr),
+            Err(ExprTypeError {
+                meta: _,
+                error: TypeError::NotSubtype {
+                    sub: types::Type::Rational,
+                    ty: types::Type::Integer,
+                },
+            })
+        ));
+    }
+
+    #[test]
+    fn test_rational_to_real() {
+        let expr = parse(
+            r#"
+                    <'real> 1 / 2
+                    "#,
+        );
+        assert_eq!(
+            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            Ok(Type::Real)
+        );
+    }
+
+    #[test]
+    fn test_real_to_rational() {
+        let expr = parse(
+            r#"
+                    <'rational> 1.0
+                    "#,
+        );
+        assert!(matches!(
+            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            Err(ExprTypeError {
+                meta: _,
+                error: TypeError::NotSubtype {
+                    sub: types::Type::Real,
+                    ty: types::Type::Rational,
+                },
+            })
+        ));
+    }
+
+    #[test]
+    fn test_integer_to_real() {
+        let expr = parse(
+            r#"
+                    <'real> 1
+                    "#,
+        );
+        assert_eq!(
+            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            Ok(Type::Real)
+        );
+    }
+
+    #[test]
+    fn test_real_to_integer() {
+        let expr = parse(
+            r#"
+                    <'integer> 1.0
+                    "#,
+        );
+        assert!(matches!(
+            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            Err(ExprTypeError {
+                meta: _,
+                error: TypeError::NotSubtype {
+                    sub: types::Type::Real,
+                    ty: types::Type::Integer,
+                },
+            })
+        ));
     }
 
     // TODO:

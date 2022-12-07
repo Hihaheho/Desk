@@ -122,7 +122,9 @@ pub trait HirVisitor {
 
 fn remove_meta_ty(ty: WithMeta<Type>) -> WithMeta<Type> {
     let value = match ty.value {
-        Type::Number => ty.value,
+        Type::Real => ty.value,
+        Type::Rational => ty.value,
+        Type::Integer => ty.value,
         Type::String => ty.value,
         Type::Trait(_) => todo!(),
         Type::Effectful { ty, effects } => Type::Effectful {

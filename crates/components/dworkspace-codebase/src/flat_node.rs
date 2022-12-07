@@ -98,11 +98,11 @@ mod tests {
     fn update() {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         flat_node.patch_attribute(&AttributePatch::Update {
-            key: Type::Number,
+            key: Type::Real,
             value: Box::new(Expr::Literal(Literal::Integer(1))),
         });
         assert_eq!(
-            flat_node.attributes.get(&Type::Number),
+            flat_node.attributes.get(&Type::Real),
             Some(&Expr::Literal(Literal::Integer(1)))
         );
     }
@@ -111,12 +111,12 @@ mod tests {
     fn remove() {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         flat_node.patch_attribute(&AttributePatch::Update {
-            key: Type::Number,
+            key: Type::Real,
             value: Box::new(Expr::Literal(Literal::Integer(1))),
         });
-        flat_node.patch_attribute(&AttributePatch::Remove { key: Type::Number });
+        flat_node.patch_attribute(&AttributePatch::Remove { key: Type::Real });
 
-        assert_eq!(flat_node.attributes.get(&Type::Number), None,);
+        assert_eq!(flat_node.attributes.get(&Type::Real), None,);
     }
 
     #[test]

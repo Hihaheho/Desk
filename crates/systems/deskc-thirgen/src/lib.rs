@@ -23,16 +23,14 @@ pub struct TypedHirGen {
 
 impl TypedHirGen {
     pub fn gen(&self, expr: &WithMeta<Expr>) -> TypedHir {
-        let expr_id = &expr.id;
+        let expr_id = &expr.meta.id;
         let ty = self.types.get(expr_id).expect("must have type").clone();
         let expr = match &expr.value {
             Expr::Literal(Literal::Hole) => todo!(),
             Expr::Literal(Literal::Integer(value)) => {
                 thir::Expr::Literal(thir::Literal::Int(*value))
             }
-            Expr::Literal(Literal::Float(value)) => {
-                thir::Expr::Literal(thir::Literal::Float(*value))
-            }
+            Expr::Literal(Literal::Real(value)) => thir::Expr::Literal(thir::Literal::Real(*value)),
             Expr::Literal(Literal::Rational(a, b)) => {
                 thir::Expr::Literal(thir::Literal::Rational(*a, *b))
             }
@@ -143,7 +141,10 @@ impl TypedHirGen {
     }
 
     fn get_type<T>(&self, expr: &WithMeta<T>) -> Type {
-        self.types.get(&expr.id).expect("must have type").clone()
+        self.types
+            .get(&expr.meta.id)
+            .expect("must have type")
+            .clone()
     }
 
     pub fn next_id(&self) -> usize {
@@ -209,7 +210,7 @@ mod tests {
             remove_id(gen.gen(&expr)),
             TypedHir {
                 id: NodeId::default(),
-                ty: Type::Number,
+                ty: Type::Real,
                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
             }
         );
@@ -217,7 +218,7 @@ mod tests {
 
     #[test]
     fn function_and_reference() {
-        let expr = parse(r#"\ 'number -> \ 'string -> &'number"#);
+        let expr = parse(r#"\ 'integer -> \ 'string -> &'integer"#);
         let gen = TypedHirGen {
             types: infer(&expr),
             ..Default::default()
@@ -227,19 +228,19 @@ mod tests {
             TypedHir {
                 id: NodeId::default(),
                 ty: Type::Function {
-                    parameter: Box::new(Type::Number),
+                    parameter: Box::new(Type::Real),
                     body: Box::new(Type::Function {
                         parameter: Box::new(Type::String),
-                        body: Box::new(Type::Number)
+                        body: Box::new(Type::Real)
                     }),
                 },
                 expr: thir::Expr::Function {
-                    parameter: Type::Number,
+                    parameter: Type::Real,
                     body: Box::new(TypedHir {
                         id: NodeId::default(),
-                        ty: Type::Number,
+                        ty: Type::Real,
                         expr: thir::Expr::Apply {
-                            function: Type::Number,
+                            function: Type::Real,
                             link_name: Default::default(),
                             arguments: vec![]
                         },
@@ -254,7 +255,7 @@ mod tests {
         let expr = parse(
             r#"
         + 3 ~
-          'number -> 1,
+          'integer -> 1,
           'string -> "2".
         "#,
         );
@@ -266,19 +267,19 @@ mod tests {
             remove_id(gen.gen(&expr)),
             TypedHir {
                 id: NodeId::default(),
-                ty: Type::Sum(vec![Type::Number, Type::String]),
+                ty: Type::Sum(vec![Type::Real, Type::String]),
                 expr: thir::Expr::Match {
                     input: Box::new(TypedHir {
                         id: NodeId::default(),
-                        ty: Type::Number,
+                        ty: Type::Real,
                         expr: thir::Expr::Literal(thir::Literal::Int(3)),
                     }),
                     cases: vec![
                         thir::MatchCase {
-                            ty: Type::Number,
+                            ty: Type::Real,
                             expr: TypedHir {
                                 id: NodeId::default(),
-                                ty: Type::Number,
+                                ty: Type::Real,
                                 expr: thir::Expr::Literal(thir::Literal::Int(1)),
                             }
                         },

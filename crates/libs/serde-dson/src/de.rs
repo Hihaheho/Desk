@@ -41,7 +41,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         unwrap(&mut self.0);
         match &self.0 {
             Dson::Literal(Literal::Integer(int)) => visitor.visit_i64(*int),
-            Dson::Literal(Literal::Float(float)) => visitor.visit_f64(float.0),
+            Dson::Literal(Literal::Real(float)) => visitor.visit_f64(float.0),
             Dson::Literal(Literal::Rational(a, b)) => visitor.visit_f64(*a as f64 / *b as f64),
             Dson::Literal(Literal::String(string)) => visitor.visit_string(string.clone()),
             Dson::Product(values) => {

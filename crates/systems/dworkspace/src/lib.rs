@@ -164,7 +164,7 @@ mod tests {
                     content: Content::Apply {
                         ty: Type::Function {
                             parameter: Box::new(Type::String),
-                            body: Box::new(Type::Number),
+                            body: Box::new(Type::Real),
                         },
                         link_name: Default::default(),
                     },
@@ -234,7 +234,7 @@ mod tests {
                             body: WithSpan {
                                 id: NodeId::default(),
                                 span: 0..0,
-                                value: AstType::Number
+                                value: AstType::Real
                             },
                         }))
                     },

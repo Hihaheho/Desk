@@ -74,7 +74,7 @@ impl MirGen {
                 let const_value = match literal {
                     thir::Literal::Int(int) => Stmt::Const(Const::Int(*int)),
                     thir::Literal::String(string) => Stmt::Const(Const::String(string.clone())),
-                    thir::Literal::Float(a) => Stmt::Const(Const::Float(*a)),
+                    thir::Literal::Real(a) => Stmt::Const(Const::Real(*a)),
                     thir::Literal::Rational(a, b) => Stmt::Const(Const::Rational(*a, *b)),
                 };
                 self.mir_proto().bind_stmt(stmt_ty.clone(), const_value)
@@ -336,7 +336,7 @@ mod tests {
     fn simple() {
         let thir = TypedHir {
             id: NodeId::default(),
-            ty: Type::Number,
+            ty: Type::Real,
             expr: thir::Expr::Literal(thir::Literal::Int(1)),
         };
         let mut gen = MirGen::default();
@@ -348,7 +348,7 @@ mod tests {
         assert_eq!(
             gen.mirs[0].vars,
             Vars(vec![Var {
-                ty: Type::Number,
+                ty: Type::Real,
                 scope: ScopeId(0)
             }])
         );

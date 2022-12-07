@@ -14,7 +14,7 @@ pub enum ContentPatch {
     PatchSourceCode(StringPatch),
     PatchString(StringPatch),
     UpdateInteger(u64),
-    UpdateFloat(f64),
+    UpdateReal(f64),
     UpdateRational(u64, u64),
     UpdateApply { ty: Type, link_name: LinkName },
 }
@@ -25,7 +25,7 @@ pub enum StringPatch {
     DiffMatchPatch(Vec<Patch>),
 }
 
-// ContentPatch::AddFloat should not be NaN
+// ContentPatch::AddReal should not be NaN
 impl Eq for ContentPatch {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]

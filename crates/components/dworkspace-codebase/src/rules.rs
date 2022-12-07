@@ -65,7 +65,7 @@ pub enum NodeOperation {
     ChangeSourceCodeSyntax,
     PatchString,
     UpdateInteger,
-    UpdateFloat,
+    UpdateReal,
     UpdateRational,
     UpdateApply,
     UpdateApplyLinkName,
@@ -111,11 +111,11 @@ mod tests {
     fn returns_intersection() {
         use NodeOperation::*;
         let a = Rules {
-            default: [UpdateInteger, UpdateFloat].into_iter().collect(),
+            default: [UpdateInteger, UpdateReal].into_iter().collect(),
             users: [
                 (
                     UserId("a".into()),
-                    [UpdateInteger, UpdateFloat].into_iter().collect(),
+                    [UpdateInteger, UpdateReal].into_iter().collect(),
                 ),
                 (
                     UserId("b".into()),
@@ -131,11 +131,11 @@ mod tests {
             users: [
                 (
                     UserId("a".into()),
-                    [UpdateFloat, ReplaceContent].into_iter().collect(),
+                    [UpdateReal, ReplaceContent].into_iter().collect(),
                 ),
                 (
                     UserId("b".into()),
-                    [UpdateFloat, ReplaceContent].into_iter().collect(),
+                    [UpdateReal, ReplaceContent].into_iter().collect(),
                 ),
                 (UserId("d".into()), [UpdateInteger].into_iter().collect()),
             ]
@@ -147,7 +147,7 @@ mod tests {
             Rules {
                 default: [UpdateInteger].into_iter().collect(),
                 users: [
-                    (UserId("a".into()), [UpdateFloat].into_iter().collect(),),
+                    (UserId("a".into()), [UpdateReal].into_iter().collect(),),
                     (UserId("b".into()), [ReplaceContent].into_iter().collect(),),
                 ]
                 .into_iter()

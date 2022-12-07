@@ -185,7 +185,7 @@ fn to_sendable(value: crate::value::Value) -> dprocess::value::Value {
         value::Value::Unit => dprocess::value::Value::Unit,
         value::Value::String(string) => dprocess::value::Value::String(string),
         value::Value::Int(int) => dprocess::value::Value::Number(Number::Integer(int)),
-        value::Value::Float(float) => dprocess::value::Value::Number(Number::Float(float)),
+        value::Value::Real(float) => dprocess::value::Value::Number(Number::Real(float)),
         value::Value::Rational(a, b) => dprocess::value::Value::Number(Number::Rational(a, b)),
         value::Value::Product(values) => dprocess::value::Value::Product(
             values
@@ -213,7 +213,7 @@ fn from_sendable(value: Value) -> value::Value {
         Value::Unit => value::Value::Unit,
         Value::Number(number) => match number {
             Number::Integer(int) => value::Value::Int(int),
-            Number::Float(float) => value::Value::Float(float),
+            Number::Real(float) => value::Value::Real(float),
             Number::Rational(a, b) => value::Value::Rational(a, b),
         },
         Value::String(string) => value::Value::String(string),

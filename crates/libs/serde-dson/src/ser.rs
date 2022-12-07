@@ -1,5 +1,5 @@
 use crate::{Error, Result};
-use dson::{Dson, Float, Literal, MapElem};
+use dson::{Dson, Literal, MapElem, Real};
 use serde::{
     ser::{
         self, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant, SerializeTuple,
@@ -76,7 +76,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     }
 
     fn serialize_f64(self, v: f64) -> Result<Self::Ok> {
-        Ok(Dson::Literal(Literal::Float(Float(v))))
+        Ok(Dson::Literal(Literal::Real(Real(v))))
     }
 
     fn serialize_char(self, v: char) -> Result<Self::Ok> {

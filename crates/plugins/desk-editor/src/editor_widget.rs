@@ -54,7 +54,7 @@ impl Widget<egui::Context> for EditorWidget {
                         }
                     }
                     dworkspace_codebase::content::Content::Rational(_a, _b) => todo!(),
-                    dworkspace_codebase::content::Content::Float(_float) => todo!(),
+                    dworkspace_codebase::content::Content::Real(_float) => todo!(),
                     dworkspace_codebase::content::Content::Apply { ty, .. } => {
                         let mut clicked = None;
                         ui.label(format!("{:?}", ty));

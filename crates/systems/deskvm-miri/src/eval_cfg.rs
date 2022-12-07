@@ -244,9 +244,9 @@ mod tests {
     fn literal() {
         let mir = ControlFlowGraph {
             parameters: vec![],
-            output: Type::Number,
+            output: Type::Real,
             vars: Vars(vec![Var {
-                ty: Type::Number,
+                ty: Type::Real,
                 scope: ScopeId(0),
             }]),
             scopes: vec![Scope { super_scope: None }],

@@ -3,12 +3,12 @@
     *<
       @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
       @"content" "
-        'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
-        'type div \\ *<@\"dividend\" 'number, @\"divisor\" 'number> ->
-          ! { @\"division by zero\" 'number ~> 'number } @\"quotient\" 'number;
-        #1 'handle #2 <'number> ^ div *<@\"dividend\" 3, @\"divisor\" 0> '{
-          @\"division by zero\" 'number ~> 'number =>
-            <'number> ^add *<@\"l\" & @\"division by zero\" 'number, 1>
+        'type add \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer;
+        'type div \\ *<@\"dividend\" 'integer, @\"divisor\" 'integer> ->
+          ! { @\"division by zero\" 'integer ~> 'integer } @\"quotient\" 'integer;
+        #1 'handle #2 <'integer> ^ div *<@\"dividend\" 3, @\"divisor\" 0> '{
+          @\"division by zero\" 'integer ~> 'integer =>
+            <'integer> ^add *<@\"l\" & @\"division by zero\" 'integer, 1>
         '}
       "
     >
@@ -17,16 +17,16 @@
     @"typed" [*<
       @"entrypoint" @"File" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca"
       @"typings" {
-        1 => @"Number" *<>,
+        1 => @"Integer" *<>,
         2 => @"Effectful" *<
-          @"ty" @"Number" *<>,
+          @"ty" @"Integer" *<>,
           @"effects" @"Effects" [
             *<
               @"input" @"Label" *<
                 @"label" @"Literal" @"String" "division by zero",
-                @"item" @"Number" *<>
+                @"item" @"Integer" *<>
               >,
-              @"output" @"Number" *<>
+              @"output" @"Integer" *<>
             >
           ]
         >

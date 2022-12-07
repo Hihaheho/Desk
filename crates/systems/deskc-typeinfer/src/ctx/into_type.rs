@@ -8,7 +8,9 @@ use super::Id;
 impl Ctx {
     pub(crate) fn gen_type(&self, ty: &Type) -> types::Type {
         match ty {
-            Type::Number => types::Type::Number,
+            Type::Real => types::Type::Real,
+            Type::Rational => types::Type::Rational,
+            Type::Integer => types::Type::Integer,
             Type::String => types::Type::String,
             Type::Product(types) => {
                 types::Type::product(types.iter().map(|t| self.gen_type(t)).collect())

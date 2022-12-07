@@ -21,9 +21,9 @@ impl Ctx {
     ) -> Result<WithEffects<WithType<Ctx>>, ExprTypeError> {
         let scope = self.begin_scope();
         let WithType(ctx, ty) = match &expr.value {
-            Expr::Literal(Literal::Integer(_)) => self.clone().with_type(Type::Number),
-            Expr::Literal(Literal::Float(_)) => self.clone().with_type(Type::Number),
-            Expr::Literal(Literal::Rational(_, _)) => self.clone().with_type(Type::Number),
+            Expr::Literal(Literal::Integer(_)) => self.clone().with_type(Type::Integer),
+            Expr::Literal(Literal::Rational(_, _)) => self.clone().with_type(Type::Rational),
+            Expr::Literal(Literal::Real(_)) => self.clone().with_type(Type::Real),
             Expr::Literal(Literal::String(_)) => self.clone().with_type(Type::String),
             Expr::Literal(Literal::Hole) => todo!(),
             Expr::Do { stmt, expr } => {
@@ -185,7 +185,10 @@ impl Ctx {
 
                     ctx.add_effects(&EffectExpr::Apply {
                         function: Box::new(fun),
-                        arguments: arguments.iter().map(|arg| self.get_type(&arg.id)).collect(),
+                        arguments: arguments
+                            .iter()
+                            .map(|arg| self.get_type(&arg.meta.id))
+                            .collect(),
                     })
                     .with_type(ty)
                 }
@@ -289,7 +292,7 @@ impl Ctx {
         };
         let effects = ctx.end_scope(scope);
         let ty = ctx.substitute_from_ctx(&ty);
-        ctx.store_type_and_effects(expr.id.clone(), ty.clone(), effects.clone());
+        ctx.store_type_and_effects(expr.meta.id.clone(), ty.clone(), effects.clone());
         Ok(WithEffects(WithType(ctx, ty), effects))
     }
 }

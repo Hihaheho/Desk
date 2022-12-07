@@ -9,11 +9,11 @@ pub enum Literal {
     Integer(i64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
-    Float(f64),
+    Real(f64),
     Hole,
 }
 
-// Literal::Float should not be NaN
+// Literal::Real should not be NaN
 impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]

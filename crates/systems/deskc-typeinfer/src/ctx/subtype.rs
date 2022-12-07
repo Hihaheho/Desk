@@ -22,8 +22,13 @@ impl Ctx {
         };
         let ctx = match (sub, ty) {
             (Type::Variable(id), Type::Variable(id2)) if id == id2 => self.clone(),
-            (Type::Number, Type::Number) => self.clone(),
             (Type::String, Type::String) => self.clone(),
+            (Type::Real, Type::Real) => self.clone(),
+            (Type::Rational, Type::Rational) => self.clone(),
+            (Type::Integer, Type::Integer) => self.clone(),
+            (Type::Integer, Type::Rational) => self.clone(),
+            (Type::Integer, Type::Real) => self.clone(),
+            (Type::Rational, Type::Real) => self.clone(),
             (Type::Existential(id), Type::Existential(id2)) if id == id2 => self.clone(),
             (Type::Existential(id), ty) => {
                 if occurs_in(id, ty) {
@@ -68,8 +73,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                        sub: self.gen_type(sub),
-                        ty: self.gen_type(ty),
+                    sub: self.gen_type(sub),
+                    ty: self.gen_type(ty),
                 })?,
             (Type::Sum(sub_types), Type::Sum(types)) => {
                 if types.iter().all(|ty| {
@@ -93,8 +98,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                        sub: self.gen_type(sub),
-                        ty: self.gen_type(ty),
+                    sub: self.gen_type(sub),
+                    ty: self.gen_type(ty),
                 })?,
             (
                 Type::Function {
@@ -186,8 +191,8 @@ impl Ctx {
             (sub, Type::Effectful { ty, effects: _ }) => self.subtype(sub, ty)?,
             (_, _) => {
                 return Err(TypeError::NotSubtype {
-                        sub: self.gen_type(sub),
-                        ty: self.gen_type(ty),
+                    sub: self.gen_type(sub),
+                    ty: self.gen_type(ty),
                 })
             }
         };

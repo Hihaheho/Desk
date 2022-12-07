@@ -1,8 +1,8 @@
 pub mod card;
+pub mod error;
 pub mod hir_result;
 pub mod parse_source_code;
 pub mod query_result;
-pub mod error;
 
 pub use parse_source_code::*;
 
@@ -47,9 +47,9 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: Type::Number,
+                    output: Type::Real,
                     vars: Vars(vec![Var {
-                        ty: Type::Number,
+                        ty: Type::Real,
                         scope: ScopeId(0)
                     },]),
                     scopes: vec![Scope { super_scope: None }],
@@ -85,9 +85,9 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: Type::Number,
+                    output: Type::Real,
                     vars: Vars(vec![Var {
-                        ty: Type::Number,
+                        ty: Type::Real,
                         scope: ScopeId(0)
                     },]),
                     scopes: vec![Scope { super_scope: None }],

@@ -1,4 +1,4 @@
-use dson::{Dson, Float, MapElem};
+use dson::{Dson, MapElem, Real};
 use thir::{Expr, Literal, TypedHir};
 use thiserror::Error;
 
@@ -12,7 +12,7 @@ pub fn thir_to_dson(thir: &TypedHir) -> Result<Dson, HirToJsonError> {
     let dson = match &thir.expr {
         Expr::Literal(Literal::Int(value)) => Dson::Literal(dson::Literal::Integer(*value)),
         Expr::Literal(Literal::Rational(a, b)) => Dson::Literal(dson::Literal::Rational(*a, *b)),
-        Expr::Literal(Literal::Float(value)) => Dson::Literal(dson::Literal::Float(Float(*value))),
+        Expr::Literal(Literal::Real(value)) => Dson::Literal(dson::Literal::Real(Real(*value))),
         Expr::Literal(Literal::String(value)) => {
             Dson::Literal(dson::Literal::String(value.clone()))
         }

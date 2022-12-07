@@ -14,7 +14,9 @@ pub struct Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Type {
-    Number,
+    Real,
+    Rational,
+    Integer,
     String,
     Product(Vec<Self>),
     Sum(Vec<Self>),

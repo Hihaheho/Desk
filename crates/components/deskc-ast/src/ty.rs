@@ -14,7 +14,9 @@ pub enum Type {
         brand: Dson,
         item: Box<WithSpan<Type>>,
     },
-    Number,
+    Real,
+    Rational,
+    Integer,
     String,
     Trait(Vec<WithSpan<Function>>),
     Effectful {

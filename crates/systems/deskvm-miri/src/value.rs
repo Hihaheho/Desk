@@ -11,7 +11,7 @@ pub enum Value {
     Unit,
     String(String),
     Int(i64),
-    Float(f64),
+    Real(f64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
     Product(HashMap<Type, Value>),

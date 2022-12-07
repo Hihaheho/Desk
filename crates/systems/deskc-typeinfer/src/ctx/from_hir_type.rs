@@ -9,14 +9,16 @@ impl Ctx {
     pub(crate) fn gen_from_hir_type(&self, ty: &WithMeta<hir::ty::Type>) -> Type {
         use hir::ty::Type::*;
         match &ty.value {
-            Number => Type::Number,
+            Real => Type::Real,
+            Rational => Type::Rational,
+            Integer => Type::Integer,
             String => Type::String,
             Trait(_types) => todo!(),
             Effectful { ty, effects } => self.with_effects(
                 self.gen_from_hir_type(ty),
                 self.gen_from_hir_effect_expr(effects),
             ),
-            Infer => Type::Infer(ty.id.clone()),
+            Infer => Type::Infer(ty.meta.id.clone()),
             This => todo!(),
             Product(types) => {
                 Type::Product(types.iter().map(|t| self.gen_from_hir_type(t)).collect())

@@ -16,7 +16,9 @@ pub struct Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
-    Number,
+    Real,
+    Rational,
+    Integer,
     String,
     Trait(Vec<WithMeta<Function>>),
     Effectful {

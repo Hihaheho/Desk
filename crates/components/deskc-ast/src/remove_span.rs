@@ -103,7 +103,9 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
         Type::Brand { brand: _, item } => {
             remove_span_ty(item);
         }
-        Type::Number => {}
+        Type::Real => {}
+        Type::Rational => {}
+        Type::Integer => {}
         Type::String => {}
         Type::Trait(trait_) => {
             for ty in trait_ {

@@ -53,7 +53,9 @@ impl HirGen {
         self.push_span(id.clone(), span.clone());
 
         let with_meta = match ty {
-            ast::ty::Type::Number => self.with_meta(Type::Number),
+            ast::ty::Type::Real => self.with_meta(Type::Real),
+            ast::ty::Type::Rational => self.with_meta(Type::Rational),
+            ast::ty::Type::Integer => self.with_meta(Type::Integer),
             ast::ty::Type::String => self.with_meta(Type::String),
             ast::ty::Type::Trait(trait_) => self.with_meta(Type::Trait(
                 trait_
@@ -137,7 +139,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr.clone());
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.id.clone(), ret.meta.attrs.clone());
+                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
@@ -204,7 +206,7 @@ impl HirGen {
                 ast::expr::Literal::String(value) => Literal::String(value.clone()),
                 ast::expr::Literal::Integer(value) => Literal::Integer(*value),
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(*a, *b),
-                ast::expr::Literal::Float(value) => Literal::Float(*value),
+                ast::expr::Literal::Real(value) => Literal::Real(*value),
             })),
             ast::expr::Expr::Hole => self.with_meta(Expr::Literal(Literal::Hole)),
             ast::expr::Expr::Do { stmt, expr } => self.with_meta(Expr::Do {
@@ -294,7 +296,7 @@ impl HirGen {
                 ret.meta.attrs.push(attr.clone());
                 self.attrs
                     .borrow_mut()
-                    .insert(ret.id.clone(), ret.meta.attrs.clone());
+                    .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
             ast::expr::Expr::Brand { brand, item: expr } => {
@@ -368,8 +370,8 @@ impl HirGen {
     fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
         let span = self.pop_span().unwrap();
         WithMeta {
-            id: span.0,
             meta: Meta {
+                id: span.0,
                 attrs: vec![],
                 // no span is a bug of hirgen, so unwrap is safe
                 span: Some(span.1),
@@ -415,7 +417,7 @@ mod tests {
         assert_eq!(
             remove_meta(
                 gen.gen_card(&dummy_span(ast::expr::Expr::Apply {
-                    function: dummy_span(ast::ty::Type::Number),
+                    function: dummy_span(ast::ty::Type::Real),
                     link_name: Default::default(),
                     arguments: vec![dummy_span(ast::expr::Expr::Attributed {
                         attr: Dson::Literal(dson::Literal::Integer(1)),
@@ -428,18 +430,16 @@ mod tests {
                     .unwrap()
             ),
             WithMeta {
-                id: Default::default(),
                 meta: Meta::default(),
                 value: Expr::Apply {
                     function: WithMeta {
-                        id: Default::default(),
                         meta: Meta::default(),
-                        value: Type::Number
+                        value: Type::Real
                     },
                     link_name: Default::default(),
                     arguments: vec![WithMeta {
-                        id: Default::default(),
                         meta: Meta {
+                            id: Default::default(),
                             attrs: vec![
                                 Dson::Literal(dson::Literal::Integer(2)),
                                 Dson::Literal(dson::Literal::Integer(1)),
@@ -466,10 +466,10 @@ mod tests {
     fn label_and_brand() {
         let expr = parse(
             r#"
-        $ & @"brand" 'number;
+        $ & @"brand" 'integer;
         'brand "brand";
-        $ & @"brand" 'number;
-        & @"label" 'number
+        $ & @"brand" 'integer;
+        & @"label" 'integer
         "#,
         );
 
@@ -480,7 +480,7 @@ mod tests {
                 definition: Box::new(dummy_meta(Expr::Apply {
                     function: dummy_meta(Type::Label {
                         label: Dson::Literal(dson::Literal::String("brand".into())),
-                        item: Box::new(dummy_meta(Type::Number)),
+                        item: Box::new(dummy_meta(Type::Real)),
                     }),
                     link_name: Default::default(),
                     arguments: vec![],
@@ -489,7 +489,7 @@ mod tests {
                     definition: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Brand {
                             brand: Dson::Literal(dson::Literal::String("brand".into())),
-                            item: Box::new(dummy_meta(Type::Number)),
+                            item: Box::new(dummy_meta(Type::Real)),
                         }),
                         link_name: Default::default(),
                         arguments: vec![],
@@ -497,7 +497,7 @@ mod tests {
                     expression: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Label {
                             label: Dson::Literal(dson::Literal::String("label".into())),
-                            item: Box::new(dummy_meta(Type::Number)),
+                            item: Box::new(dummy_meta(Type::Real)),
                         }),
                         link_name: Default::default(),
                         arguments: vec![],

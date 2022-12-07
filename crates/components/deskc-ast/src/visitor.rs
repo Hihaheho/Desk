@@ -153,7 +153,9 @@ pub trait TypeVisitorMut {
     fn super_visit_type(&mut self, ty: &mut WithSpan<Type>) {
         match &mut ty.value {
             Type::Brand { brand, item } => self.visit_brand(brand, item),
-            Type::Number => self.visit_number(),
+            Type::Real => self.visit_real(),
+            Type::Rational => self.visit_rational(),
+            Type::Integer => self.visit_integer(),
             Type::String => self.visit_string(),
             Type::Trait(types) => self.visit_trait(types),
             Type::Effectful { ty, effects } => self.visit_effectful(ty, effects),
@@ -192,7 +194,9 @@ pub trait TypeVisitorMut {
     fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithSpan<Type>) {
         self.visit_type(item);
     }
-    fn visit_number(&mut self) {}
+    fn visit_real(&mut self) {}
+    fn visit_integer(&mut self) {}
+    fn visit_rational(&mut self) {}
     fn visit_string(&mut self) {}
     fn visit_trait(&mut self, types: &mut [WithSpan<Function>]) {
         for ty in types {

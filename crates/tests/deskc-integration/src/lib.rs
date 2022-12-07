@@ -97,7 +97,7 @@ macro_rules! test {
                         if let Some(Dson::Literal(dson::Literal::Integer(int))) =
                             expr.meta.attrs.first()
                         {
-                            self.ids.push((*int as usize, expr.id.clone()));
+                            self.ids.push((*int as usize, expr.meta.id.clone()));
                         }
                         self.super_visit_expr(expr);
                     }

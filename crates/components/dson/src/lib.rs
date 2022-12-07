@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Float(pub f64);
+pub struct Real(pub f64);
 
-// Float must not be NaN or infinity.
-impl Eq for Float {}
+// Real must not be NaN or infinity.
+impl Eq for Real {}
 
-impl std::hash::Hash for Float {
+impl std::hash::Hash for Real {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.to_be_bytes().hash(state);
     }
 }
 
-impl Ord for Float {
+impl Ord for Real {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.partial_cmp(&other.0).unwrap()
     }
@@ -24,7 +24,7 @@ pub enum Literal {
     Integer(i64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
-    Float(Float),
+    Real(Real),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -51,7 +51,9 @@ pub enum Type {
         brand: Box<Dson>,
         item: Box<Self>,
     },
-    Number,
+    Real,
+    Rational,
+    Integer,
     String,
     Product(Vec<Self>),
     Sum(Vec<Self>),

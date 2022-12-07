@@ -20,7 +20,7 @@
           @"label" @"Literal" @"String" "false",
           @"item" @"Product" []
         >,
-        2 => @"Number" *<>
+        2 => @"Integer" *<>
       }
     >]
     @"runs" [

@@ -45,16 +45,17 @@ Expr: Comment Expr
     ;
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: TypeBegin^ Ty TypeEnd^ Expr;
-    Literal: Rational | Integer | Float | String;
+    Literal: Rational | Integer | Real | String;
         // Rational must be before Integer for higher priority.
         Rational: "\-?\p{Nd}+\s*/\s*\p{Nd}+";
+        // Real must be before Integer for higher priority.
+        Real: /\-?\p{Nd}+\.\p{Nd}+/;
         Integer: Hex | Oct | Bin | Dec;
             // Dec must be the last for lower priority.
             Hex: /0x[0-9a-fA-F]+/;
             Oct: /0o[0-7]+/;
             Bin: /0b[01]+/;
             Dec: /\-?\p{Nd}+/;
-        Float: /\-?\p{Nd}+\.\p{Nd}+/;
         String: StringDelimiter^ %push(String) { Escaped | Characters | Newlines } StringDelimiter^ %pop();
             Escaped: <String> /\\[nt"\\]/;
             Characters: <String> /[^\\"]+/;
@@ -86,7 +87,9 @@ Expr: Comment Expr
 Ty: ExprBegin^ Ty ExprEnd^
   | Infer
   | This
-  | NumberKey
+  | RealKey
+  | RationalKey
+  | IntegerKey
   | StringKey
   | Effectful
   | Comment Ty
@@ -197,7 +200,9 @@ ExistsKey: "'exists";
 CardKey: "'card";
 BrandKey: "'brand";
 StringKey: "'string";
-NumberKey: "'number";
+RealKey: "'real";
+RationalKey: "'rational";
+IntegerKey: "'integer";
 HandleKey: "'handle";
 MatchKey: "'match";
 VersionKey: "'version";

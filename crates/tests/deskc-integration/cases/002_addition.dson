@@ -3,7 +3,7 @@
     *<
       @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
       @"content" "
-        ^ \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number (*<@\"l\" 1, @\"r\" 2>)
+        ^ \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer (*<@\"l\" 1, @\"r\" 2>)
       "
     >
   ],

@@ -48,11 +48,11 @@ mod tests {
         assert_eq!(ExitStatus::Returned, ExitStatus::Returned);
         assert_eq!(
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             },
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             },
         );
@@ -67,7 +67,7 @@ mod tests {
         assert_ne!(
             ExitStatus::Returned,
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             }
         );
@@ -77,7 +77,7 @@ mod tests {
         );
         assert_ne!(
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             },
             ExitStatus::Crashed(anyhow::anyhow!(""))
@@ -88,7 +88,7 @@ mod tests {
     fn halted_not_equals() {
         assert_ne!(
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             },
             ExitStatus::Halted {
@@ -98,11 +98,11 @@ mod tests {
         );
         assert_ne!(
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("a".into())
             },
             ExitStatus::Halted {
-                ty: Type::Number,
+                ty: Type::Real,
                 reason: Value::String("b".into())
             }
         );

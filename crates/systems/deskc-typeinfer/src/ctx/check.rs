@@ -17,9 +17,9 @@ impl Ctx {
         let scope = self.begin_scope();
         let mut synthed_ty = None;
         let ctx = match (&expr.value, ty) {
-            (Expr::Literal(Literal::Integer(_)), Type::Number) => self.clone(),
-            (Expr::Literal(Literal::Float(_)), Type::Number) => self.clone(),
-            (Expr::Literal(Literal::Rational(_, _)), Type::Number) => self.clone(),
+            (Expr::Literal(Literal::Integer(_)), Type::Real) => self.clone(),
+            (Expr::Literal(Literal::Real(_)), Type::Real) => self.clone(),
+            (Expr::Literal(Literal::Rational(_, _)), Type::Real) => self.clone(),
             (Expr::Literal(Literal::String(_)), Type::String) => self.clone(),
             (
                 Expr::Function {
@@ -61,7 +61,7 @@ impl Ctx {
         let effects = ctx.end_scope(scope);
         let ty = synthed_ty.as_ref().unwrap_or(ty);
         ctx.store_type_and_effects(
-            expr.id.clone(),
+            expr.meta.id.clone(),
             ctx.substitute_from_ctx(ty),
             effects.clone(),
         );

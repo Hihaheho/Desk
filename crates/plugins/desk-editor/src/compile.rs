@@ -10,7 +10,7 @@ pub struct Cards {
 fn card_id_type() -> Type {
     Type::Label {
         label: "desk-editor card-id".into(),
-        item: Box::new(Type::Vector(Box::new(Type::Number))),
+        item: Box::new(Type::Vector(Box::new(Type::Real))),
     }
 }
 

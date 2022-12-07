@@ -51,7 +51,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 ContentPatch::PatchSourceCode(_) => (SourceCode, PatchSourceCode),
                 ContentPatch::PatchString(_) => (String, PatchString),
                 ContentPatch::UpdateInteger(_) => (Integer, UpdateInteger),
-                ContentPatch::UpdateFloat(_) => (Float, UpdateFloat),
+                ContentPatch::UpdateReal(_) => (Real, UpdateReal),
                 ContentPatch::UpdateRational(_, _) => (Rational, UpdateRational),
                 ContentPatch::UpdateApply { .. } => (Apply, UpdateApply),
             };
@@ -371,7 +371,7 @@ mod tests {
         let node_id = NodeId::new();
         let event = Event::PatchContent {
             node_id: node_id.clone(),
-            patch: ContentPatch::UpdateFloat(1.0),
+            patch: ContentPatch::UpdateReal(1.0),
         };
         assert_eq!(
             extract_assertion(&event),
@@ -379,13 +379,13 @@ mod tests {
                 Assertion::NodeExists(&node_id),
                 Assertion::ContentKind {
                     node_id: &node_id,
-                    kind: ContentKind::Float,
+                    kind: ContentKind::Real,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
                         node_id: &node_id,
-                        operation: NodeOperation::UpdateFloat,
+                        operation: NodeOperation::UpdateReal,
                     },
                 ]),
             ])
@@ -424,7 +424,7 @@ mod tests {
         let event = Event::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::UpdateApply {
-                ty: Type::Number,
+                ty: Type::Real,
                 link_name: LinkName::None,
             },
         };
@@ -566,7 +566,7 @@ mod tests {
         let event = Event::PatchAttribute {
             node_id: node_id.clone(),
             patch: AttributePatch::Update {
-                key: Type::Number,
+                key: Type::Real,
                 value: Box::new(Expr::Literal(Literal::Integer(0))),
             },
         };
@@ -578,7 +578,7 @@ mod tests {
                     Assertion::Owner,
                     Assertion::NodeAllows {
                         node_id: &node_id,
-                        operation: NodeOperation::UpdateAttribute(Type::Number),
+                        operation: NodeOperation::UpdateAttribute(Type::Real),
                     },
                 ]),
             ])
@@ -590,7 +590,7 @@ mod tests {
         let node_id = NodeId::new();
         let event = Event::PatchAttribute {
             node_id: node_id.clone(),
-            patch: AttributePatch::Remove { key: Type::Number },
+            patch: AttributePatch::Remove { key: Type::Real },
         };
         assert_eq!(
             extract_assertion(&event),
@@ -600,7 +600,7 @@ mod tests {
                     Assertion::Owner,
                     Assertion::NodeAllows {
                         node_id: &node_id,
-                        operation: NodeOperation::RemoveAttribute(Type::Number),
+                        operation: NodeOperation::RemoveAttribute(Type::Real),
                     },
                 ]),
             ])

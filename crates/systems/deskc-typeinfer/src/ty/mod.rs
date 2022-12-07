@@ -23,7 +23,9 @@ pub struct Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Type {
-    Number,
+    Real,
+    Rational,
+    Integer,
     String,
     Product(Vec<Self>),
     Sum(Vec<Self>),
@@ -59,7 +61,9 @@ pub enum Type {
 }
 
 pub(crate) trait TypeVisitorMut {
-    fn visit_number(&mut self) {}
+    fn visit_real(&mut self) {}
+    fn visit_rational(&mut self) {}
+    fn visit_integer(&mut self) {}
     fn visit_string(&mut self) {}
     fn visit_product(&mut self, types: &mut Vec<Type>) {
         types.iter_mut().for_each(|ty| self.visit(ty))
@@ -146,7 +150,9 @@ pub(crate) trait TypeVisitorMut {
     }
     fn visit_inner(&mut self, ty: &mut Type) {
         match ty {
-            Type::Number => self.visit_number(),
+            Type::Real => self.visit_real(),
+            Type::Rational => self.visit_rational(),
+            Type::Integer => self.visit_integer(),
             Type::String => self.visit_string(),
             Type::Product(types) => self.visit_product(types),
             Type::Sum(types) => self.visit_sum(types),
@@ -169,7 +175,9 @@ pub(crate) trait TypeVisitorMut {
 }
 
 pub(crate) trait TypeVisitor {
-    fn visit_number(&mut self) {}
+    fn visit_real(&mut self) {}
+    fn visit_rational(&mut self) {}
+    fn visit_integer(&mut self) {}
     fn visit_string(&mut self) {}
     fn visit_product(&mut self, types: &[Type]) {
         types.iter().for_each(|ty| self.visit(ty))
@@ -252,7 +260,9 @@ pub(crate) trait TypeVisitor {
     }
     fn visit_inner(&mut self, ty: &Type) {
         match ty {
-            Type::Number => self.visit_number(),
+            Type::Real => self.visit_real(),
+            Type::Rational => self.visit_rational(),
+            Type::Integer => self.visit_integer(),
             Type::String => self.visit_string(),
             Type::Product(types) => self.visit_product(types),
             Type::Sum(types) => self.visit_sum(types),

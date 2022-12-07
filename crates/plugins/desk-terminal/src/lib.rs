@@ -41,10 +41,10 @@ impl Widget<egui::Context> for TerminalWidget {
                     node_id: NodeId::new(),
                     content: Content::Apply {
                         ty: Type::Function {
-                            parameter: Box::new(Type::Number),
+                            parameter: Box::new(Type::Real),
                             body: Box::new(Type::Label {
                                 label: "sum".into(),
-                                item: Box::new(Type::Number),
+                                item: Box::new(Type::Real),
                             }),
                         },
                         link_name: LinkName::None,

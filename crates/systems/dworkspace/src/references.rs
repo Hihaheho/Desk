@@ -163,7 +163,7 @@ mod tests {
         db.set_operand_rules(
             node_c,
             Arc::new(Rules {
-                default: [UpdateInteger, UpdateFloat].into_iter().collect(),
+                default: [UpdateInteger, UpdateReal].into_iter().collect(),
                 ..Default::default()
             }),
         );
@@ -177,7 +177,7 @@ mod tests {
         db.set_operand_rules(
             node_e,
             Arc::new(Rules {
-                default: [UpdateInteger, UpdateFloat].into_iter().collect(),
+                default: [UpdateInteger, UpdateReal].into_iter().collect(),
                 ..Default::default()
             }),
         );

@@ -9,10 +9,11 @@ use crate::{
         ExprCommentExpr, ExprContinue, ExprDo, ExprExists, ExprExprBeginExprExprEnd, ExprForall,
         ExprFunction, ExprHandle, ExprHole, ExprLabeled, ExprLet, ExprLiteral, ExprMap, ExprMatch,
         ExprNewType, ExprPerform, ExprProduct, ExprReference, ExprVector, IdentIdentWrapped,
-        Integer, LinkNameCardKeyUuid, LinkNameVersionKeyUuid, LiteralFloat, LiteralInteger,
-        LiteralRational, LiteralString, TyAttributedTy, TyCommentTy, TyEffectful, TyExistsTy,
-        TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyLabeledTy, TyLetTy, TyMapTy,
-        TyNumberKey, TyProductTy, TyStringKey, TySum, TyThis, TyTrait, TyVariable, TyVecTy,
+        Integer, LinkNameCardKeyUuid, LinkNameVersionKeyUuid, LiteralInteger, LiteralRational,
+        LiteralReal, LiteralString, TyAttributedTy, TyCommentTy, TyEffectful, TyExistsTy,
+        TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyIntegerKey, TyLabeledTy,
+        TyLetTy, TyMapTy, TyProductTy, TyRationalKey, TyRealKey, TyStringKey, TySum, TyThis,
+        TyTrait, TyVariable, TyVecTy,
     },
     MinimalistSyntaxError,
 };
@@ -102,13 +103,15 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         })?;
                         Literal::Integer(integer)
                     }
-                    grammar_trait::Literal::Float(LiteralFloat { float }) => {
-                        Literal::Float(float.float.to_string().parse().map_err(|_| {
-                            MinimalistSyntaxError::ParseError(format!(
-                                "Could not parse float: {}",
-                                float.float.text().to_string()
-                            ))
-                        })?)
+                    grammar_trait::Literal::Real(LiteralReal { real }) => {
+                        Literal::Real(real.real.text().to_string().parse::<f64>().map_err(
+                            |_| {
+                                MinimalistSyntaxError::ParseError(format!(
+                                    "Could not parse real: {}",
+                                    real.real.text().to_string()
+                                ))
+                            },
+                        )?)
                     }
                     grammar_trait::Literal::String(LiteralString { string }) => {
                         let string = string
@@ -337,10 +340,20 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
                 span: 0..0,
                 value: ast::ty::Type::This,
             },
-            grammar_trait::Ty::NumberKey(TyNumberKey { number_key: _ }) => WithSpan {
+            grammar_trait::Ty::RealKey(TyRealKey { .. }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
-                value: ast::ty::Type::Number,
+                value: ast::ty::Type::Real,
+            },
+            grammar_trait::Ty::RationalKey(TyRationalKey { .. }) => WithSpan {
+                id: NodeId::new(),
+                span: 0..0,
+                value: ast::ty::Type::Rational,
+            },
+            grammar_trait::Ty::IntegerKey(TyIntegerKey { .. }) => WithSpan {
+                id: NodeId::new(),
+                span: 0..0,
+                value: ast::ty::Type::Integer,
             },
             grammar_trait::Ty::StringKey(TyStringKey { string_key: _ }) => WithSpan {
                 id: NodeId::new(),

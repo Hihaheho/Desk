@@ -30,7 +30,7 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
         Content::String(string) => Expr::Literal(Literal::String(string.clone())),
         Content::Integer(integer) => Expr::Literal(Literal::Integer(*integer)),
         Content::Rational(a, b) => Expr::Literal(Literal::Rational(*a, *b)),
-        Content::Float(float) => Expr::Literal(Literal::Float(*float)),
+        Content::Real(float) => Expr::Literal(Literal::Real(*float)),
         Content::Apply { ty, link_name } => Expr::Apply {
             function: from_types(ty),
             link_name: link_name.clone(),
@@ -54,7 +54,9 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
 fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
     use deskc_types::Type as DeskcType;
     let value = match ty {
-        DeskcType::Number => Type::Number,
+        DeskcType::Real => Type::Real,
+        DeskcType::Rational => Type::Rational,
+        DeskcType::Integer => Type::Integer,
         DeskcType::String => Type::String,
         DeskcType::Product(types) => Type::Product(types.iter().map(from_types).collect()),
         DeskcType::Sum(types) => Type::Sum(types.iter().map(from_types).collect()),

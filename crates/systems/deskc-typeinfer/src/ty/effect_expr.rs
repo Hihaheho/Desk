@@ -180,11 +180,11 @@ mod tests {
     fn simplify_effects() {
         let mut effects = EffectExpr::Effects(vec![
             Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             },
             Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             },
         ]);
@@ -192,7 +192,7 @@ mod tests {
         assert_eq!(
             effects,
             EffectExpr::Effects(vec![Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             }])
         );
@@ -202,7 +202,7 @@ mod tests {
     fn simplify_add() {
         let mut effects = EffectExpr::Add(vec![
             EffectExpr::Effects(vec![Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             }]),
             Default::default(),
@@ -211,7 +211,7 @@ mod tests {
         assert_eq!(
             effects,
             EffectExpr::Effects(vec![Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             }])
         );
@@ -221,11 +221,11 @@ mod tests {
     fn simplify_sub() {
         let mut effects = EffectExpr::Sub {
             minuend: Box::new(EffectExpr::Effects(vec![Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             }])),
             subtrahend: Box::new(EffectExpr::Effects(vec![Effect {
-                input: Type::Number,
+                input: Type::Real,
                 output: Type::String,
             }])),
         };
@@ -244,15 +244,15 @@ mod tests {
                     body: Box::new(Type::Function {
                         parameter: Box::new(Type::Variable(1)),
                         body: Box::new(Type::Effectful {
-                            ty: Box::new(Type::Number),
+                            ty: Box::new(Type::Real),
                             effects: EffectExpr::Add(vec![
                                 EffectExpr::Effects(vec![Effect {
-                                    input: Type::Number,
+                                    input: Type::Real,
                                     output: Type::String,
                                 }]),
                                 EffectExpr::Apply {
                                     function: Box::new(Type::Variable(1)),
-                                    arguments: vec![Type::Number],
+                                    arguments: vec![Type::Real],
                                 },
                             ]),
                         }),
@@ -262,12 +262,12 @@ mod tests {
             arguments: vec![
                 Type::String,
                 Type::Function {
-                    parameter: Box::new(Type::Number),
+                    parameter: Box::new(Type::Real),
                     body: Box::new(Type::Effectful {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::String,
-                            output: Type::Number,
+                            output: Type::Real,
                         }]),
                     }),
                 },
@@ -278,12 +278,12 @@ mod tests {
             effects,
             EffectExpr::Effects(vec![
                 Effect {
-                    input: Type::Number,
+                    input: Type::Real,
                     output: Type::String,
                 },
                 Effect {
                     input: Type::String,
-                    output: Type::Number,
+                    output: Type::Real,
                 }
             ])
         );

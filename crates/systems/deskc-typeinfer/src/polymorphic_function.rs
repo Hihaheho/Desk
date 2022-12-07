@@ -18,7 +18,7 @@ impl Ctx {
     }
 
     fn replace_type(self, expr: &WithMeta<Expr>, ty: Type) -> Self {
-        *self.ir_types.borrow_mut().get_mut(&expr.id).unwrap() = ty;
+        *self.ir_types.borrow_mut().get_mut(&expr.meta.id).unwrap() = ty;
         self
     }
 
@@ -70,12 +70,12 @@ mod tests {
     fn function() {
         assert_eq!(
             Ctx::default().to_polymorphic_function(Type::Function {
-                parameter: Box::new(Type::Number),
-                body: Box::new(Type::Number)
+                parameter: Box::new(Type::Real),
+                body: Box::new(Type::Real)
             }),
             Type::Function {
-                parameter: Box::new(Type::Number),
-                body: Box::new(Type::Number)
+                parameter: Box::new(Type::Real),
+                body: Box::new(Type::Real)
             }
         );
     }
@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn function_existential_solved() {
         let ctx = Ctx::default();
-        ctx.store_solved_type_and_effects(1, Type::Number, Default::default());
+        ctx.store_solved_type_and_effects(1, Type::Real, Default::default());
         ctx.store_solved_type_and_effects(2, Type::String, Default::default());
         assert_eq!(
             ctx.to_polymorphic_function(Type::Function {
@@ -113,7 +113,7 @@ mod tests {
                 body: Box::new(Type::Existential(2))
             }),
             Type::Function {
-                parameter: Box::new(Type::Number),
+                parameter: Box::new(Type::Real),
                 body: Box::new(Type::String)
             }
         );

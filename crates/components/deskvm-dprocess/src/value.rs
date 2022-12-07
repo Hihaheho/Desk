@@ -29,7 +29,7 @@ pub enum Value {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Number {
     Integer(i64),
-    Float(f64),
+    Real(f64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
 }

@@ -116,6 +116,11 @@ mod tests {
     }
 
     #[test]
+    fn parse_literal_real() {
+        assert_eq!(parse("12.23").value, Expr::Literal(Literal::Real(12.23)));
+    }
+
+    #[test]
     fn parse_literal_rational() {
         assert_eq!(
             parse("12 / 23").value,
@@ -166,14 +171,14 @@ mod tests {
         assert_eq!(
             parse(
                 r#"'handle ? '{
-              'number ~> 'string => 3
+              'integer ~> 'string => 3
             '}"#
             )
             .value,
             Expr::Handle {
                 expr: bw(Expr::Hole),
                 handlers: vec![Handler {
-                    input: w(Type::Number),
+                    input: w(Type::Integer),
                     output: w(Type::String),
                     handler: w(Expr::Literal(Literal::Integer(3))),
                 }],
@@ -219,9 +224,9 @@ mod tests {
     #[test]
     fn parse_function() {
         assert_eq!(
-            parse(r#"\ 'number -> ?"#).value,
+            parse(r#"\ 'integer -> ?"#).value,
             Expr::Function {
-                parameter: w(Type::Number),
+                parameter: w(Type::Integer),
                 body: bw(Expr::Hole),
             },
         );
@@ -263,10 +268,10 @@ mod tests {
     #[test]
     fn parse_type_annotation() {
         assert_eq!(
-            parse("<'number> ?").value,
+            parse("<'integer> ?").value,
             Expr::Typed {
                 item: bw(Expr::Hole),
-                ty: w(Type::Number),
+                ty: w(Type::Integer),
             }
         );
     }
@@ -299,7 +304,7 @@ mod tests {
             parse(
                 r#"
             'match ? '{
-              'number => "number",
+              'integer => "number",
               'string => "string",
             '}
             "#
@@ -309,7 +314,7 @@ mod tests {
                 of: bw(Expr::Hole),
                 cases: vec![
                     MatchCase {
-                        ty: w(Type::Number),
+                        ty: w(Type::Integer),
                         expr: w(Expr::Literal(Literal::String("number".into()))),
                     },
                     MatchCase {
@@ -380,17 +385,19 @@ mod tests {
     }
 
     #[test]
-    fn test_type() {
-        assert_eq!(parse("& 'number").value, r(Type::Number));
+    fn test_number_types() {
+        assert_eq!(parse("& 'integer").value, r(Type::Integer));
+        assert_eq!(parse("& 'rational").value, r(Type::Rational));
+        assert_eq!(parse("& 'real").value, r(Type::Real));
     }
 
     #[test]
     fn parse_trait() {
         assert_eq!(
-            parse(r#"& %<\'number -> 'number>"#).value,
+            parse(r#"& %<\'integer -> 'integer>"#).value,
             r(Type::Trait(vec![w(Function {
-                parameter: w(Type::Number),
-                body: w(Type::Number),
+                parameter: w(Type::Integer),
+                body: w(Type::Integer),
             })]))
         );
     }
@@ -412,9 +419,9 @@ mod tests {
     #[test]
     fn parse_product_and_sum() {
         assert_eq!(
-            parse("& *< +<'number, _> *<> >").value,
+            parse("& *< +<'integer, _> *<> >").value,
             r(Type::Product(vec![
-                w(Type::Sum(vec![w(Type::Number), w(Type::Infer)])),
+                w(Type::Sum(vec![w(Type::Integer), w(Type::Infer)])),
                 w(Type::Product(vec![]))
             ]))
         );
@@ -423,9 +430,9 @@ mod tests {
     #[test]
     fn parse_function_ty() {
         assert_eq!(
-            parse(r#"& \ 'number -> _"#).value,
+            parse(r#"& \ 'integer -> _"#).value,
             r(Type::Function(Box::new(Function {
-                parameter: w(Type::Number),
+                parameter: w(Type::Integer),
                 body: w(Type::Infer),
             })))
         );
@@ -434,17 +441,17 @@ mod tests {
     #[test]
     fn parse_vec_ty() {
         assert_eq!(
-            parse("& ['number]").value,
-            r(Type::Vector(bw(Type::Number)))
+            parse("& ['integer]").value,
+            r(Type::Vector(bw(Type::Integer)))
         );
     }
 
     #[test]
     fn parse_map_ty() {
         assert_eq!(
-            parse("& {'number => 'string}").value,
+            parse("& {'integer => 'string}").value,
             r(Type::Map {
-                key: bw(Type::Number),
+                key: bw(Type::Integer),
                 value: bw(Type::String),
             })
         );
@@ -465,12 +472,12 @@ mod tests {
     #[test]
     fn parse_effectful() {
         assert_eq!(
-            parse("& ! +< {'number ~> 'string}, - < ^a(_), {'string ~> 'number} >> result").value,
+            parse("& ! +< {'integer ~> 'string}, - < ^a(_), {'string ~> 'integer} >> result").value,
             r(Type::Effectful {
                 ty: bw(Type::Variable("result".into())),
                 effects: w(EffectExpr::Add(vec![
                     w(EffectExpr::Effects(vec![w(Effect {
-                        input: w(Type::Number),
+                        input: w(Type::Integer),
                         output: w(Type::String),
                     },)]),),
                     w(EffectExpr::Sub {
@@ -480,7 +487,7 @@ mod tests {
                         },),
                         subtrahend: bw(EffectExpr::Effects(vec![w(Effect {
                             input: w(Type::String),
-                            output: w(Type::Number),
+                            output: w(Type::Integer),
                         },)]))
                     })
                 ]))
@@ -491,10 +498,10 @@ mod tests {
     #[test]
     fn parse_brand_ty() {
         assert_eq!(
-            parse(r#"& @"added" 'number"#).value,
+            parse(r#"& @"added" 'integer"#).value,
             r(Type::Brand {
                 brand: Dson::Literal(dson::Literal::String("added".into())),
-                item: bw(Type::Number),
+                item: bw(Type::Integer),
             })
         );
     }
@@ -502,10 +509,10 @@ mod tests {
     #[test]
     fn parse_attribute_ty() {
         assert_eq!(
-            parse("& #1 'number").value,
+            parse("& #1 'integer").value,
             r(Type::Attributed {
                 attr: Dson::Literal(dson::Literal::Integer(1)),
-                ty: bw(Type::Number),
+                ty: bw(Type::Integer),
             })
         );
     }

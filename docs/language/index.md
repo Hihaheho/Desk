@@ -33,7 +33,7 @@ a type annotated expression:
 
 ## Basic types
 
-`'number`
+`'integer`
 ```desk
 42
 ```
@@ -43,22 +43,22 @@ a type annotated expression:
 "hello world"
 ```
 
-`['number']` an array of numbers
+`['integer']` an array of numbers
 ```desk
 [1, 2, 2]
 ```
 
-`{'number}` a set of numbers
+`{'integer}` a set of numbers
 ```desk
 {1, 2}
 ```
 
-`* 'string, 'number` a product type
+`* 'string, 'integer` a product type
 ```desk
 * "Ryo", 24
 ```
 
-`[+ 'number, 'string]` a sum type
+`[+ 'integer, 'string]` a sum type
 ```desk
 [1, "a"]
 ```
@@ -91,7 +91,7 @@ $ \ x -> x: id ~
 let syntax:
 ```desk
 $ 42 ~ (let 42 in)
-& 'number (this is 42)
+& 'integer (this is 42)
 ```
 
 let with a type variable:
@@ -104,7 +104,7 @@ $ "Ryo": a name of me ~
 
 ```desk
 + &x
-'number ->
+'integer ->
   "this is number"
 'string ->
   "this is string"

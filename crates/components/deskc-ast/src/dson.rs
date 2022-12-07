@@ -1,4 +1,4 @@
-use dson::{Dson, Float};
+use dson::{Dson, Real};
 use thiserror::Error;
 
 use crate::{
@@ -60,7 +60,7 @@ impl TryFrom<WithSpan<Expr>> for Dson {
                 crate::expr::Literal::String(string) => dson::Literal::String(string),
                 crate::expr::Literal::Integer(integer) => dson::Literal::Integer(integer),
                 crate::expr::Literal::Rational(a, b) => dson::Literal::Rational(a, b),
-                crate::expr::Literal::Float(float) => dson::Literal::Float(Float(float)),
+                crate::expr::Literal::Real(float) => dson::Literal::Real(Real(float)),
             })),
             Expr::Product(exprs) => Ok(Dson::Product(
                 exprs
@@ -126,7 +126,9 @@ impl TryFrom<WithSpan<Type>> for dson::Type {
                 brand: Box::new(brand),
                 item: Box::new(dson::Type::try_from(*item)?),
             }),
-            Type::Number => Ok(dson::Type::Number),
+            Type::Real => Ok(dson::Type::Real),
+            Type::Rational => Ok(dson::Type::Rational),
+            Type::Integer => Ok(dson::Type::Integer),
             Type::String => Ok(dson::Type::String),
             Type::Product(types) => Ok(dson::Type::Product(
                 types

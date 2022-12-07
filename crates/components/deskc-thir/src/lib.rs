@@ -11,12 +11,12 @@ pub type Id = usize;
 pub enum Literal {
     String(String),
     Int(i64),
-    Float(f64),
+    Real(f64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
 }
 
-// Literal::Float should not be NaN
+// Literal::Real should not be NaN
 impl Eq for Literal {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]

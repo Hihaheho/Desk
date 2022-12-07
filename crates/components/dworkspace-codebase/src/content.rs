@@ -10,11 +10,11 @@ pub enum Content {
     Integer(i64),
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
-    Float(f64),
+    Real(f64),
     Apply { ty: Type, link_name: LinkName },
 }
 
-// Content::Float should not be NaN
+// Content::Real should not be NaN
 impl Eq for Content {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -23,7 +23,7 @@ pub enum ContentKind {
     String,
     Integer,
     Rational,
-    Float,
+    Real,
     Apply,
 }
 
@@ -34,7 +34,7 @@ impl Content {
             Content::String(_) => ContentKind::String,
             Content::Integer(_) => ContentKind::Integer,
             Content::Rational(_, _) => ContentKind::Rational,
-            Content::Float(_) => ContentKind::Float,
+            Content::Real(_) => ContentKind::Real,
             Content::Apply { .. } => ContentKind::Apply,
         }
     }
@@ -57,10 +57,10 @@ mod tests {
         assert_eq!(Content::String(String::new()).kind(), ContentKind::String);
         assert_eq!(Content::Integer(0).kind(), ContentKind::Integer);
         assert_eq!(Content::Rational(0, 1).kind(), ContentKind::Rational);
-        assert_eq!(Content::Float(0.0).kind(), ContentKind::Float);
+        assert_eq!(Content::Real(0.0).kind(), ContentKind::Real);
         assert_eq!(
             Content::Apply {
-                ty: Type::Number,
+                ty: Type::Real,
                 link_name: LinkName::None
             }
             .kind(),
