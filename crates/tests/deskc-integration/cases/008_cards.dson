@@ -3,41 +3,42 @@
     *<
       @"name" "main.ds",
       @"content" "
-        'type add \\ 'number, 'number -> @"sum" 'number ~
-        'type sub \\ @"minuend" 'number, @"subtrahend" 'number -> 'number ~
-        'type cmp \\ @"self" 'number, @"other" 'number -> + @"greader" *, @"less" *, @"equal" * ~
+        'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
+        'type sub \\ *<@\"minuend\" 'number, @\"subtrahend\" 'number> -> 'number;
+        'type cmp \\ *<@\"self\" 'number, @\"other\" 'number> -> +<@\"greader\" *<>, @\"less\" *<>, @\"equal\" *<>>;
 
-        'card 'uuid 9883b420-f7be-468d-95f6-000000000000
-        > \\'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa ~ 10
-        ~
-        'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa
-        \\ 'number ->
-          ^> add
-            &'number,
-            + >cmp &'number, 3 ~
-              + @"greater" *, @"equal" * ->
-                > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-bbbbbbbbbbbb ~ &'number;
-              @"less" * ->
+        'card 9883b420-f7be-468d-95f6-000000000000
+          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \\'number -> 'number (10);
+        'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa
+        \\ 'number -> <'number> ^add *<
+            @\"l\" &'number,
+            'match ^cmp *<@\"self\" &'number, 3> '{
+              +< @\"greater\" *<>, @\"equal\" *<>> =>
+                ^ 'card 9883b420-f7be-468d-95f6-bbbbbbbbbbbb \\ 'number -> 'number (&'number)
+              @\"less\" *<> =>
                 0
-          : 'number
-        ~
-        'card 'uuid 9883b420-f7be-468d-95f6-bbbbbbbbbbbb
+            '}
+        >;
+        'card 9883b420-f7be-468d-95f6-bbbbbbbbbbbb
         \\ 'number ->
-          > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-cccccccccccc ~
-            >sub @"minuend" &'number, 1
-        ~
-        'card 'uuid 9883b420-f7be-468d-95f6-cccccccccccc
+          ^ 'card 9883b420-f7be-468d-95f6-cccccccccccc \\ 'number -> 'number (
+            ^sub *<@\"minuend\" &'number, 1>
+          );
+        'card 9883b420-f7be-468d-95f6-cccccccccccc
         \\ 'number ->
-          > \\ 'number -> 'number 'card 'uuid 9883b420-f7be-468d-95f6-aaaaaaaaaaaa ~
-            >sub @"minuend" &'number, 2
+          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \\ 'number -> 'number (
+            ^sub *<@\"minuend\" &'number, 2>
+          );
+        ?
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"entrypoint_card" "9883b420-f7be-468d-95f6-000000000000",
-  @"assertions" [
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 22
-    >
-  ]
+  @"assertions" *<
+    @"runs" [
+      *<
+        @"entrypoint" @"Card" "9883b420-f7be-468d-95f6-000000000000",
+        @"result" @"Success" @"Number" @"Integer" 22
+      >
+    ]
+  >
 >

@@ -5,24 +5,29 @@
       @"content" "
         $ #1 @\"false\" *<>;
         #2
-        'match & @\"false\" *<> {
+        'match & @\"false\" *<> '{
           @\"true\" *<> => 1,
           @\"false\" *<> => 2
-        }
+        '}
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"Typed" [
-      *<1, @"Label" *<
-        @"label" @"Literal" @"String" "false",
-        @"item" @"Product" []
-      >>,
-      *<2, @"Number" *<>>
-    ],
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 2
-    >
-  ]
+  @"assertions" *<
+    @"typed" [*<
+      @"file" "main.ds"
+      @"typings" {
+        1 => @"Label" *<
+          @"label" @"Literal" @"String" "false",
+          @"item" @"Product" []
+        >,
+        2 => @"Number" *<>
+      }
+    >]
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 2
+      >
+    ]
+  >
 >

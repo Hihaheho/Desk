@@ -33,21 +33,21 @@ pub struct DProcess {
     interpreter: RwLock<Box<dyn Interpreter>>,
     /// Metadatas mainly used by the scheduler.
     metas: RwLock<Metas>,
-    /// Effect handlers for this process.
+    /// Effect handlers for this d-process.
     effect_handlers: RwLock<EffectHandlers>,
-    /// The status of the process.
+    /// The status of this d-process.
     status: RwLock<DProcessStatus>,
     /// Received messages.
     mailbox: RwLock<HashMap<Type, VecDeque<Value>>>,
-    /// Which processor is this process attached to.
+    /// Which processor is this d-process attached to.
     processor_attachment: RwLock<ProcessorAttachment>,
-    /// A key-value store for this process.
+    /// A key-value store for this d-process.
     kv: RwLock<HashMap<Type, Value>>,
-    /// This process's flags.
+    /// This d-process's flags.
     flags: RwLock<DProcessFlags>,
     /// Attached timers with the name of the counter used for the label of the event.
     timers: RwLock<HashMap<String, Timer>>,
-    /// A set of d-process ids that are monitoring this process.
+    /// A set of d-process ids that are monitoring this d-process.
     monitors: RwLock<HashSet<DProcessId>>,
     links: RwLock<HashSet<DProcessId>>,
 }

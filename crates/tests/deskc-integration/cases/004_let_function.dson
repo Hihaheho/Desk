@@ -3,27 +3,31 @@
     *<
       @"name" "main.ds",
       @"content" "
-        $ #1 \\ #2 x ->
-          ^\\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number (*<@\"l\" 1, @\"r\" #3 &x>);
+        $ #1 \\ x ->
+          ^\\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number (*<@\"l\" 1, @\"r\" #2 &x>);
         ^ \\ 'number -> @\"sum\" 'number (2)
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"Typed" [
-      *<1, @"Function" *<
-        @"parameter" @"Number" *<>,
-        @"body" @"Label" *<
-          @"label" @"Literal" @"String" "sum",
-          @"item" @"Number" *<>
-        >
-      >>,
-      *<2, @"Number" *<>>,
-      *<3, @"Number" *<>>
-    ],
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 3
-    >
-  ]
+  @"assertions" *<
+    @"typed" [*<
+      @"file" "main.ds"
+      @"typings" {
+        1 => @"Function" *<
+          @"parameter" @"Number" *<>,
+          @"body" @"Label" *<
+            @"label" @"Literal" @"String" "sum",
+            @"item" @"Number" *<>
+          >
+        >,
+        2 => @"Number" *<>,
+      }
+    >]
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 3
+      >
+    ]
+  >
 >

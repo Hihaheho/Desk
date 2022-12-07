@@ -5,13 +5,13 @@ use crate::{
     grammar_trait::{
         self, ApplyGroup, ApplyGroupParam, ApplyGroupParams, CommentBlockComment,
         CommentInlineComment, EffectExprAddEffects, EffectExprApplyEffects, EffectExprEffects,
-        EffectExprSubEffects, ExprApply, ExprAttributed, ExprBeginKeyExprEndKey, ExprBrand,
-        ExprCard, ExprCast, ExprCommentExpr, ExprContinue, ExprDo, ExprExists, ExprForall,
+        EffectExprSubEffects, ExprApply, ExprAttributed, ExprBrand, ExprCard, ExprCast,
+        ExprCommentExpr, ExprContinue, ExprDo, ExprExists, ExprExprBeginExprExprEnd, ExprForall,
         ExprFunction, ExprHandle, ExprHole, ExprLabeled, ExprLet, ExprLiteral, ExprMap, ExprMatch,
         ExprNewType, ExprPerform, ExprProduct, ExprReference, ExprVector, IdentIdentWrapped,
         Integer, LinkNameCardKeyUuid, LinkNameVersionKeyUuid, LiteralFloat, LiteralInteger,
-        LiteralRational, LiteralString, TyAttributedTy, TyBeginKeyTyEndKey, TyCommentTy,
-        TyEffectful, TyExistsTy, TyForallTy, TyFunctionTy, TyInfer, TyLabeledTy, TyLetTy, TyMapTy,
+        LiteralRational, LiteralString, TyAttributedTy, TyCommentTy, TyEffectful, TyExistsTy,
+        TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyLabeledTy, TyLetTy, TyMapTy,
         TyNumberKey, TyProductTy, TyStringKey, TySum, TyThis, TyTrait, TyVariable, TyVecTy,
     },
     MinimalistSyntaxError,
@@ -36,7 +36,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     item: Box::new((*expr).try_into()?),
                 },
             },
-            grammar_trait::Expr::BeginKeyExprEndKey(ExprBeginKeyExprEndKey { expr }) => {
+            grammar_trait::Expr::ExprBeginExprExprEnd(ExprExprBeginExprExprEnd { expr }) => {
                 (*expr).try_into()?
             }
             grammar_trait::Expr::Hole(ExprHole { hole: _ }) => WithSpan {
@@ -324,7 +324,9 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
     type Error = MinimalistSyntaxError;
     fn try_from(ty: grammar_trait::Ty) -> Result<Self, Self::Error> {
         let ty = match ty {
-            grammar_trait::Ty::BeginKeyTyEndKey(TyBeginKeyTyEndKey { ty }) => (*ty).try_into()?,
+            grammar_trait::Ty::ExprBeginTyExprEnd(TyExprBeginTyExprEnd { ty }) => {
+                (*ty).try_into()?
+            }
             grammar_trait::Ty::Infer(TyInfer { infer: _ }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,

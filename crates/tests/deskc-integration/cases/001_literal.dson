@@ -7,10 +7,12 @@
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 1
-    >
-  ]
+  @"assertions" *<
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 1
+      >
+    ]
+  >
 >

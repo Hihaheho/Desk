@@ -4,23 +4,25 @@
       @"name" "main.ds",
       @"content" "
         'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
-        'handle 'begin
+        'handle '(
           $ ! \"a\" ~> 'number;
           <'number> ^add *<@\"l\" &'number, @\"r\" &'number>
-        'end {
+        ') '{
           'string ~> 'number =>
             ^add *<
               @\"l\" ! 1 ~> 'number,
               @\"r\" ! 2 ~> 'number,
             >
-        }
+        '}
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 6
-    >
-  ]
+  @"assertions" *<
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 6
+      >
+    ]
+  >
 >

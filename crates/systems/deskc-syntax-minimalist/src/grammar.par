@@ -19,7 +19,7 @@
 %%
 
 Expr: Comment Expr
-    | BeginKey^ Expr EndKey^
+    | ExprBegin^ Expr ExprEnd^
     | Hole
     | Do
     | Cast
@@ -62,13 +62,13 @@ Expr: Comment Expr
     Let: LetSym^ Expr StmtEnd^ Expr;
     Perform: PerformSym^ Expr EArrow^ Ty;
     Continue: ContinueSym^ Expr EArrow^ Ty;
-    Handle: HandleKey^ Expr BeginKey^ { Handler [ Comma^ ] } EndKey^;
+    Handle: HandleKey^ Expr Begin^ { Handler [ Comma^ ] } End^;
         Handler: Ty EArrow^ Ty Arrow^ Expr;
     Product: ProductSym^ TypeBegin^ { Expr [ Comma^ ] } TypeEnd^;
     Vector: VecBegin^ { Expr [ Comma^ ] } VecEnd^;
     Map: MapBegin^ { Expr Arrow^ Expr [ Comma^ ] } MapEnd^;
     Attributed: Attribute Expr;
-    Match: MatchKey^ Expr BeginKey^ { Case [ Comma^ ] } EndKey^;
+    Match: MatchKey^ Expr Begin^ { Case [ Comma^ ] } End^;
         Case: Ty Arrow^ Expr;
     Function: FunctionSym^ Ty FArrow^ Expr;
     // We need `ApplySym` to make it deterministic on such a token: `*`.
@@ -83,7 +83,7 @@ Expr: Comment Expr
     Card: CardKey^ Uuid Expr StmtEnd^ Expr;
     Brand: BrandKey^ Expr StmtEnd^ Expr;
 
-Ty: BeginKey^ Ty EndKey^
+Ty: ExprBegin^ Ty ExprEnd^
   | Infer
   | This
   | NumberKey
@@ -140,7 +140,7 @@ Ident: IdentRaw
     IdentPart: <Ident> /([^`\s]|\\`)+/;
     IdentDelimiter: <INITIAL, Ident> '`';
 Uuid: %push(Uuid) UuidText %pop();
-    UuidText: <Uuid> /[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}/;
+    UuidText: <Uuid> /[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}/;
 Effect: Ty EArrow^ Ty;
 LinkName: CardKey^ Uuid | VersionKey^ Uuid;
 // Tail comma is allowed, and this is important for writing readable code.
@@ -153,6 +153,10 @@ FArrow: '->';
 EArrow: '~>';
 ContinueSym: '!<~';
 CommentBegin: '~(';
+Begin: "'\{";
+End: "'\}";
+ExprBegin: "'\(";
+ExprEnd: "'\)";
 
 // Tokens
 // ".", "=" is not used.
@@ -197,5 +201,3 @@ NumberKey: "'number";
 HandleKey: "'handle";
 MatchKey: "'match";
 VersionKey: "'version";
-BeginKey: "'begin";
-EndKey: "'end";

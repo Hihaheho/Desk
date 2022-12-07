@@ -25,7 +25,6 @@ pub enum Literal {
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
     Float(Float),
-    Hole,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -77,8 +76,14 @@ pub enum Type {
     Variable(String),
 }
 
-impl<T: ToString> From<T> for Dson {
-    fn from(s: T) -> Self {
+impl From<&str> for Dson {
+    fn from(s: &str) -> Self {
         Dson::Literal(Literal::String(s.to_string()))
+    }
+}
+
+impl From<i64> for Dson {
+    fn from(i: i64) -> Self {
+        Dson::Literal(Literal::Integer(i))
     }
 }

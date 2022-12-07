@@ -21,7 +21,7 @@ pub fn gen_cards(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGe
     let mut hirgen = HirGen::default();
     hirgen.gen_hir(src)?;
     let hir = Hir {
-        entrypoint: hirgen.entrypoint.take(),
+        expr: hirgen.entrypoint.take(),
         cards: hirgen.cards.drain(..).collect(),
     };
     Ok((hirgen, hir))
@@ -486,7 +486,7 @@ mod tests {
         let (_, hir) = gen_cards(&expr).unwrap();
         assert!(hir.cards.is_empty());
         assert_eq!(
-            remove_meta(hir.entrypoint.unwrap()),
+            remove_meta(hir.expr.unwrap()),
             dummy_meta(Expr::Literal(Literal::Integer(1)))
         );
     }

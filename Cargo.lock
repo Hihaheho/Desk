@@ -1826,6 +1826,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde-dson",
+ "uuid",
 ]
 
 [[package]]

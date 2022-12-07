@@ -317,12 +317,12 @@ mod tests {
     fn handle() {
         let expr = parse(
             r#"
-                \ x -> \ y -> \ z -> #3 'handle #2 ^ \ y -> z (! &x ~> y) 'begin
-                  x ~> y => 'begin
+                \ x -> \ y -> \ z -> #3 'handle #2 ^ \ y -> z (! &x ~> y) '{
+                  x ~> y => '(
                     'do ! 1 ~> 'string;
                     #1 ! &y ~> z
-                  'end
-                'end
+                  ')
+                '}
                 "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -371,9 +371,9 @@ mod tests {
     fn test_continue() {
         let expr = parse(
             r#"
-            \ x -> \ y -> #3 'handle #2 ^ \'number -> y (! &x ~> 'number) 'begin
+            \ x -> \ y -> #3 'handle #2 ^ \'number -> y (! &x ~> 'number) '{
               x ~> 'number => #1 !<~ 1 ~> 'string
-            'end
+            '}
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -410,18 +410,18 @@ mod tests {
     #[ignore = "not yet implemented"]
     fn test_polymorphic_effectful() {
         let input = r#"
-            $ #1 \ x -> \ y -> ^#2 'handle ^ x 1 'begin
+            $ #1 \ x -> \ y -> ^#2 'handle ^ x 1 '{
               'number ~> 'string -> ^ y 2
-            'end;
+            '};
             #3 ^fun(
-              \ @"x" 'number -> 'begin
+              \ @"x" 'number -> '{
                 'do ! 1 ~> 'string;
                 ! @"a" *<> ~> 'number,
-              'end
-              \ @"y" 'number -> 'begin
+              '}
+              \ @"y" 'number -> '{
                 'do ! "a" ~> 'number;
                 ! @"b" *<> ~> 'number
-              'end
+              '}
             )
             "#;
         let expr = parse(input);
@@ -558,10 +558,10 @@ mod tests {
         let expr = parse(
             r#"
             \ x ->
-              #2 'match #1 &x 'begin
+              #2 'match #1 &x '{
                 'number => <@"a" 'number> 1,
                 'string => <@"b" 'number> 2,
-              'end
+              '}
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();

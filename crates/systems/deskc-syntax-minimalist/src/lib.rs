@@ -164,9 +164,12 @@ mod tests {
     #[test]
     fn parse_handle() {
         assert_eq!(
-            parse(r#"'handle ? 'begin
+            parse(
+                r#"'handle ? '{
               'number ~> 'string => 3
-            'end"#).value,
+            '}"#
+            )
+            .value,
             Expr::Handle {
                 expr: bw(Expr::Hole),
                 handlers: vec![Handler {
@@ -295,10 +298,10 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            'match ? 'begin
+            'match ? '{
               'number => "number",
               'string => "string",
-            'end
+            '}
             "#
             )
             .value,
@@ -336,6 +339,42 @@ mod tests {
             Expr::Comment {
                 text: "a)".into(),
                 item: bw(Expr::Product(vec![])),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_begin_end() {
+        assert_eq!(
+            parse(r#"'( 1 ')"#).value,
+            Expr::Literal(Literal::Integer(1)),
+        );
+    }
+
+    #[test]
+    fn parse_uuid() {
+        assert_eq!(
+            parse("& 'card 7d71ec53-14b8-48b7-aae6-2a3dbe220fc9 x").value,
+            Expr::Apply {
+                link_name: LinkName::Card(
+                    "7d71ec53-14b8-48b7-aae6-2a3dbe220fc9".try_into().unwrap()
+                ),
+                function: w(Type::Variable("x".into())),
+                arguments: vec![],
+            }
+        );
+    }
+
+    #[test]
+    fn parse_uuid_without_hyphen() {
+        assert_eq!(
+            parse("& 'card 7d71ec5314b848b7aae62a3dbe220fc9 x").value,
+            Expr::Apply {
+                link_name: LinkName::Card(
+                    "7d71ec53-14b8-48b7-aae6-2a3dbe220fc9".try_into().unwrap()
+                ),
+                function: w(Type::Variable("x".into())),
+                arguments: vec![],
             }
         );
     }
@@ -492,5 +531,10 @@ mod tests {
                 item: bw(Type::Product(vec![])),
             })
         );
+    }
+
+    #[test]
+    fn parse_begin_end_ty() {
+        assert_eq!(parse("& '( a ')").value, r(Type::Variable("a".into())),);
     }
 }

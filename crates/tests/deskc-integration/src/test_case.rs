@@ -1,17 +1,47 @@
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use crate::assertion::Assertion;
+use dprocess::value::Value;
+use serde::{Deserialize, Serialize};
+use types::Type;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TestCase {
     pub files: Vec<File>,
-    // file name
-    pub entrypoint: String,
-    pub assertions: Vec<Assertion>,
+    pub assertions: Assertions,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct File {
     pub name: String,
     pub content: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Assertions {
+    pub runs: Option<Vec<Run>>,
+    pub typed: Option<Vec<Typed>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Run {
+    pub entrypoint: Entrypoint,
+    pub result: RunResult,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum Entrypoint {
+    File(String),
+    Card(Uuid),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum RunResult {
+    Success(Value),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Typed {
+    pub file: String,
+    pub typings: HashMap<usize, Type>,
 }

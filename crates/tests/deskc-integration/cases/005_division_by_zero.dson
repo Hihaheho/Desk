@@ -4,40 +4,39 @@
       @"name" "main.ds",
       @"content" "
         'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
-        'type div \\ *<@"dividend" 'number, @"divisor" 'number> ->
+        'type div \\ *<@\"dividend\" 'number, @\"divisor\" 'number> ->
           ! { @\"division by zero\" 'number ~> 'number } @\"quotient\" 'number;
-        #1 'handle #2 > div @\"dividend\" 3, @\"divisor\" 0 {
+        #1 'handle #2 <'number> ^ div *<@\"dividend\" 3, @\"divisor\" 0> '{
           @\"division by zero\" 'number ~> 'number =>
-            >add(& @\"division by zero\" 'number, 1)
-        }
+            <'number> ^add *<@\"l\" & @\"division by zero\" 'number, 1>
+        '}
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"Typed" [
-      *<1, @"Label" *<
-        @"label" @Literal @String "quotient",
-        @"item" @"Number" *<>
-      >>,
-      *<2, @"Effectful" *<
-        @"ty" @"Label" *<
-          @"label" @Literal @String "quotient",
-          @"item" @"Number" *<>
-        >,
-        @"effects" [
-          *<
-            @"input" @"Label" *<
-              @"label" @Literal @String "division by zero",
-              @"item" @"Number" *<>
-            >,
-            @"output" @"Number" *<>
-          >
-        ]
-      >>
-    ],
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 4
-    >
-  ]
+  @"assertions" *<
+    @"typed" [*<
+      @"file" "main.ds"
+      @"typings" {
+        1 => @"Number" *<>,
+        2 => @"Effectful" *<
+          @"ty" @"Number" *<>,
+          @"effects" @"Effects" [
+            *<
+              @"input" @"Label" *<
+                @"label" @"Literal" @"String" "division by zero",
+                @"item" @"Number" *<>
+              >,
+              @"output" @"Number" *<>
+            >
+          ]
+        >
+      }
+    >]
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 4
+      >
+    ]
+  >
 >

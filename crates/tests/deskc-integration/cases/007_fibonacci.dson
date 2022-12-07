@@ -10,11 +10,11 @@
         'type fib \\ 'number -> 'number;
 
         ~~ let fib
-        $ \\ 'number -> 'match ^eq *<@\"l\" &'number, @\"r\" 0> {
+        $ \\ 'number -> 'match ^eq *<@\"l\" &'number, @\"r\" 0> '{
           ~~ if number == 0)
           @\"equal\" *<> => 0
           ~~ if number != 0
-          @\"unequal\" *<> => 'match ^eq *<@\"l\" &'number, @\"r\" 1> {
+          @\"unequal\" *<> => 'match ^eq *<@\"l\" &'number, @\"r\" 1> '{
             @\"equal\" *<> => 1
             @\"unequal\" *<> =>
               ~~ adds fib(number - 1) and fib(number - 2)
@@ -22,16 +22,18 @@
                 ^fib ^sub *<@\"minuend\" &'number, 1>
                 ^fib ^sub *<@\"minuend\" &'number, 2>
               >
-          }
-        };
+          '}
+        '};
         ^fib(7)
       "
     >
   ],
-  @"entrypoint" "main.ds",
-  @"assertions" [
-    @"RunSuccess" *<
-      @"result" @"Number" @"Integer" 13
-    >
-  ]
+  @"assertions" *<
+    @"runs" [
+      *<
+        @"entrypoint" @"File" "main.ds",
+        @"result" @"Success" @"Number" @"Integer" 13
+      >
+    ]
+  >
 >

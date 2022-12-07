@@ -8,6 +8,6 @@ pub mod meta;
 pub mod ty;
 
 pub struct Hir {
-    pub entrypoint: Option<WithMeta<Expr>>,
+    pub expr: Option<WithMeta<Expr>>,
     pub cards: Vec<(CardId, WithMeta<Expr>)>,
 }
