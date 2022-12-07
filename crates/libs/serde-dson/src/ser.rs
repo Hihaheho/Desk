@@ -1,5 +1,5 @@
 use crate::{Error, Result};
-use dson::{Dson, Float, Literal};
+use dson::{Dson, Float, Literal, MapElem};
 use serde::{
     ser::{
         self, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant, SerializeTuple,
@@ -67,8 +67,8 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         self.serialize_i64(v as i64)
     }
 
-    fn serialize_u64(self, _v: u64) -> Result<Self::Ok> {
-        Err(Error::Message("u64 is not supported".into()))
+    fn serialize_u64(self, v: u64) -> Result<Self::Ok> {
+        self.serialize_i64(v as i64)
     }
 
     fn serialize_f32(self, v: f32) -> Result<Self::Ok> {
@@ -301,21 +301,14 @@ impl SerializeMap for MapSerializer {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let entries = self
+        let mut entries: Vec<_> = self
             .0
             .into_iter()
             .zip(self.1.into_iter())
-            .map(|(key, value)| {
-                Dson::Product(vec![
-                    Dson::Labeled {
-                        label: Box::new(Dson::Literal(Literal::String("key".into()))),
-                        expr: Box::new(key),
-                    },
-                    value,
-                ])
-            })
+            .map(|(key, value)| MapElem { key, value })
             .collect();
-        Ok(Dson::Product(entries))
+        entries.sort_by_key(|e| e.key.clone());
+        Ok(Dson::Map(entries))
     }
 }
 impl SerializeStruct for SeqSerializer {
@@ -368,9 +361,7 @@ impl SerializeStructVariant for VariantSerializer {
 
 #[cfg(test)]
 mod tests {
-    use super::to_dson;
-    use dson::{Dson, Literal};
-    use serde::Serialize;
+    use super::*;
 
     #[test]
     fn test_struct() {
@@ -449,6 +440,58 @@ mod tests {
                     expr: Box::new(Dson::Literal(Literal::Integer(1)))
                 }]))
             }
+        );
+    }
+
+    #[test]
+    fn test_map() {
+        use std::collections::HashMap;
+
+        let map = [("a", 1), ("b", 2)].into_iter().collect::<HashMap<_, _>>();
+
+        assert_eq!(
+            to_dson(&map).unwrap(),
+            Dson::Map(vec![
+                MapElem {
+                    key: "a".into(),
+                    value: 1.into(),
+                },
+                MapElem {
+                    key: "b".into(),
+                    value: 2.into(),
+                }
+            ])
+        );
+    }
+
+    #[test]
+    fn test_vec() {
+        let vec = vec![1, 2, 3];
+
+        assert_eq!(
+            to_dson(&vec).unwrap(),
+            Dson::Vector(vec![1.into(), 2.into(), 3.into()])
+        );
+    }
+
+    #[test]
+    fn test_map_key_number() {
+        use std::collections::HashMap;
+
+        let map = [(1, 1), (2, 2)].into_iter().collect::<HashMap<_, _>>();
+
+        assert_eq!(
+            to_dson(&map).unwrap(),
+            Dson::Map(vec![
+                MapElem {
+                    key: 1.into(),
+                    value: 1.into(),
+                },
+                MapElem {
+                    key: 2.into(),
+                    value: 2.into(),
+                }
+            ])
         );
     }
 }

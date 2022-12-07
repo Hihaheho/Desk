@@ -44,12 +44,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             Dson::Literal(Literal::Float(float)) => visitor.visit_f64(float.0),
             Dson::Literal(Literal::Rational(a, b)) => visitor.visit_f64(*a as f64 / *b as f64),
             Dson::Literal(Literal::String(string)) => visitor.visit_string(string.clone()),
-            Dson::Literal(Literal::Hole) => Err(Error::Message("Hole is not allowed".into())),
             Dson::Product(values) => {
                 if values.is_empty() {
                     visitor.visit_unit()
                 } else {
-                    Err(Error::Message("Unexpected product".into()))
+                    visitor.visit_seq(ValuesDeserializer::new(values.clone()))
                 }
             }
             Dson::Vector(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
@@ -82,7 +81,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             {
                 visitor.visit_bool(false)
             }
-            _ => Err(Error::Message("Expected bool".into())),
+            _ => Err(Error::ExpectedBool {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -102,7 +103,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         match &self.0 {
             Dson::Product(values) if values.is_empty() => visitor.visit_unit(),
-            _ => Err(Error::Message("Expected unit".into())),
+            _ => Err(Error::ExpectedProduct {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -111,26 +114,21 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         match &self.0 {
-            Dson::Product(values) => {
-                let values = values
+            Dson::Map(elems) => {
+                let values = elems
                     .iter()
-                    .map(|dson| match dson {
-                        Dson::Labeled { label, expr } => {
-                            if let Dson::Literal(Literal::String(key)) = label.as_ref() {
-                                Ok(MapElem {
-                                    key: Dson::Literal(Literal::String(key.clone())),
-                                    value: *expr.clone(),
-                                })
-                            } else {
-                                Err(Error::Message("Expected string".into()))
-                            }
-                        }
-                        _ => Err(Error::Message("Expected labeled".into())),
+                    .map(|MapElem { key, value }| {
+                        Ok(MapElem {
+                            key: key.clone(),
+                            value: value.clone(),
+                        })
                     })
                     .collect::<Result<Vec<_>>>()?;
                 visitor.visit_map(MapDeserializer::new(values))
             }
-            _ => Err(Error::Message("Expected product".into())),
+            _ => Err(Error::ExpectedMap {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -148,10 +146,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                 if let Dson::Literal(Literal::String(variant)) = label.as_ref() {
                     visitor.visit_enum(EnumDeserializer(variant.clone(), *expr.clone()))
                 } else {
-                    Err(Error::Message("Expected string".into()))
+                    Err(Error::ExpectedString {
+                        got: (**label).clone(),
+                    })
                 }
             }
-            _ => Err(Error::Message("Expected label".into())),
+            _ => Err(Error::ExpectedLabel {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -169,7 +171,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         match &self.0 {
             Dson::Product(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
-            _ => Err(Error::Message("Expected product".into())),
+            _ => Err(Error::ExpectedProduct {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -185,7 +189,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         unwrap(&mut self.0);
         match &self.0 {
             Dson::Product(values) => visitor.visit_seq(ValuesDeserializer::new(values.clone())),
-            _ => Err(Error::Message("Expected set".into())),
+            _ => Err(Error::ExpectedProduct {
+                got: self.0.clone(),
+            }),
         }
     }
 
@@ -211,15 +217,21 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                                     value: *expr.clone(),
                                 })
                             } else {
-                                Err(Error::Message("Expected string".into()))
+                                Err(Error::ExpectedString {
+                                    got: (**label).clone(),
+                                })
                             }
                         }
-                        _ => Err(Error::Message("Expected labeled".into())),
+                        _ => Err(Error::ExpectedLabel {
+                            got: (*dson).clone(),
+                        }),
                     })
                     .collect::<Result<Vec<_>>>()?;
                 visitor.visit_map(MapDeserializer::new(values))
             }
-            _ => Err(Error::Message("Expected set".into())),
+            _ => Err(Error::ExpectedProduct {
+                got: self.0.clone(),
+            }),
         }
     }
 }
@@ -399,6 +411,45 @@ mod tests {
             }])),
         };
         let expected = E::Struct { a: 1 };
+        assert_eq!(expected, from_dson(dson).unwrap());
+    }
+
+    #[test]
+    fn test_map() {
+        use std::collections::HashMap;
+
+        let dson = Dson::Map(vec![
+            MapElem {
+                key: "a".into(),
+                value: 1.into(),
+            },
+            MapElem {
+                key: "b".into(),
+                value: 2.into(),
+            },
+        ]);
+        let expected = [("a".to_string(), 1), ("b".to_string(), 2)]
+            .into_iter()
+            .collect::<HashMap<_, i64>>();
+        assert_eq!(expected, from_dson(dson).unwrap());
+    }
+
+    #[test]
+    fn test_vec() {
+        let dson = Dson::Vector(vec![1.into(), 2.into()]);
+        let expected = vec![1_i32, 2_i32];
+        assert_eq!(expected, from_dson::<'_, Vec<i32>>(dson).unwrap());
+    }
+
+    #[test]
+    fn test_map_key_number() {
+        use std::collections::HashMap;
+
+        let dson = Dson::Map(vec![MapElem {
+            key: 1.into(),
+            value: 2.into(),
+        }]);
+        let expected = [(1, 2)].into_iter().collect::<HashMap<_, i64>>();
         assert_eq!(expected, from_dson(dson).unwrap());
     }
 }
