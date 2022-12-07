@@ -16,11 +16,10 @@ Pre-release includes:
 - [x] incremental Desk-lang compiler
 - [x] DeskVM with an official scheduler
 - [x] a file system for Desk-lang
-- [ ] an alternative syntax for Desk-lang like Rust
 - [ ] Desk-lang visual editor
 - [ ] A web demo like Rust Playground for Desk-lang
 
-### The first release (planned for this year)
+### The first release (planned for earlier 2023)
 
 The first release includes:
 
