@@ -58,11 +58,6 @@ mod tests {
         }
     }
 
-    #[allow(unused)]
-    fn init() {
-        let _ = env_logger::builder().is_test(true).try_init();
-    }
-
     fn parse(input: &str) -> WithSpan<Expr> {
         let mut expr = super::parse(input).unwrap();
         remove_span(&mut expr);
@@ -169,7 +164,9 @@ mod tests {
     #[test]
     fn parse_handle() {
         assert_eq!(
-            parse(r#"'handle ? { 'number ~> 'string => 3 }"#).value,
+            parse(r#"'handle ? 'begin
+              'number ~> 'string => 3
+            'end"#).value,
             Expr::Handle {
                 expr: bw(Expr::Hole),
                 handlers: vec![Handler {
@@ -298,10 +295,10 @@ mod tests {
         assert_eq!(
             parse(
                 r#"
-            'match ? {
+            'match ? 'begin
               'number => "number",
               'string => "string",
-            }
+            'end
             "#
             )
             .value,

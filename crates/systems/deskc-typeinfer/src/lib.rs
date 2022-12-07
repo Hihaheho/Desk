@@ -56,6 +56,11 @@ mod tests {
 
     use super::*;
 
+    #[allow(unused)]
+    fn init() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    }
+
     fn synth(expr: WithMeta<Expr>) -> Result<Type, ExprTypeError> {
         crate::synth(100, &expr).map(|(_, ty)| ty)
     }
@@ -147,19 +152,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ 1 ~ &'number
-            "#
-            )),
-            Ok(Type::Number)
-        );
-    }
-
-    #[test]
-    fn let_with_type() {
-        assert_eq!(
-            synth(parse(
-                r#"
-                    $ 1: 'a x ~ &'a x
+                    $ 1; &'number
             "#
             )),
             Ok(Type::Number)
@@ -172,7 +165,7 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    \ 'a x -> &'a x
+                \ x -> &x
             "#
             )),
             Ok(Type::Function {
@@ -187,8 +180,8 @@ mod tests {
         assert_eq!(
             synth(parse(
                 r#"
-                    $ \ 'a x -> &'a x: 'a id ~
-                    >'a id 1
+                    $ \ x -> &x;
+                    ^'forall a \ a -> a (1)
             "#
             )),
             Ok(Type::Number)
@@ -198,9 +191,9 @@ mod tests {
     #[test]
     fn typing_expressions() {
         let input = &r#"
-            #1 $ #2 \ 'a x -> #3 &'a x: 'a id ~
-            $ #4 >'a id #5 1 ~
-            #6 >'a id #7 "a"
+            #1 $ #2 \ x -> #3 &x;
+            'do #4 ^'forall a \ a -> a (#5 1);
+            #6 ^'forall a \ a -> a (#7 "a")
         "#;
         let expr = &parse(input);
         let (ctx, _ty) = crate::synth(100, expr).unwrap_or_else(|error| print_error(input, error));
@@ -211,9 +204,13 @@ mod tests {
                 (1, Type::String),
                 (
                     2,
-                    Type::Function {
-                        parameter: Box::new(Type::Existential(103)),
-                        body: Box::new(Type::Existential(103)),
+                    Type::ForAll {
+                        variable: 107,
+                        bound: None,
+                        body: Box::new(Type::Function {
+                            parameter: Box::new(Type::Existential(107)),
+                            body: Box::new(Type::Existential(107)),
+                        })
                     },
                 ),
                 (3, Type::Existential(103)),
@@ -229,8 +226,8 @@ mod tests {
     fn subtyping_sum_in_product() {
         let expr = parse(
             r#"
-            $ #1 \ + 'number, * -> 1: 'a fun ~
-            #3 >'a fun #2 * 1, "a"
+            $ #1 \ +<'number, *<>> -> 1;
+            #3 ^\ +<'number, *<>> -> 'number (#2 *<1, "a">)
         "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -255,13 +252,13 @@ mod tests {
     fn perform() {
         let expr = parse(
             r#"
-            $ #3 \ x -> #2 > \ 'number -> 'string ~ #1 ! &x => 'number: fun ~
-            #4 >fun "a"
+            $ #3 \ x -> #2 ^ \ 'number -> 'string (#1 ! &x ~> 'number);
+            #4 ^'forall a \ a -> ! { a ~> 'number } 'string ("a")
         "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
 
-        let x = 103;
+        let x = ctx.get_id_of("x".into()) + 1;
         assert_eq!(
             get_types(&expr, &ctx),
             vec![
@@ -287,14 +284,18 @@ mod tests {
                 ),
                 (
                     3,
-                    Type::Function {
-                        parameter: Box::new(Type::Existential(x)),
-                        body: Box::new(Type::Effectful {
-                            ty: Box::new(Type::String),
-                            effects: EffectExpr::Effects(vec![Effect {
-                                input: Type::Existential(x),
-                                output: Type::Number,
-                            }]),
+                    Type::ForAll {
+                        variable: 112,
+                        bound: None,
+                        body: Box::new(Type::Function {
+                            parameter: Box::new(Type::Existential(112)),
+                            body: Box::new(Type::Effectful {
+                                ty: Box::new(Type::String),
+                                effects: EffectExpr::Effects(vec![Effect {
+                                    input: Type::Existential(112),
+                                    output: Type::Number,
+                                }]),
+                            }),
                         }),
                     },
                 ),
@@ -316,11 +317,12 @@ mod tests {
     fn handle() {
         let expr = parse(
             r#"
-                    \ x, y, z ->
-                      #3 'handle #2 > \y -> z ! &x => y ~
-                      x => y ->
-                        $ ! 1 => 'string ~
-                        #1 ! &y => z
+                \ x -> \ y -> \ z -> #3 'handle #2 ^ \ y -> z (! &x ~> y) 'begin
+                  x ~> y => 'begin
+                    'do ! 1 ~> 'string;
+                    #1 ! &y ~> z
+                  'end
+                'end
                 "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -369,51 +371,9 @@ mod tests {
     fn test_continue() {
         let expr = parse(
             r#"
-            \x, y ->
-              #3 'handle #2 > \'number -> 'string ! &x => 'number ~
-              x => 'number ->
-                #1 <! &y
-            "#,
-        );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
-
-        let x = 102;
-        assert_eq!(
-            get_types(&expr, &ctx),
-            vec![
-                (
-                    1,
-                    Type::Effectful {
-                        ty: Box::new(Type::String),
-                        effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Number,
-                            output: Type::String,
-                        }]),
-                    },
-                ),
-                (
-                    2,
-                    Type::Effectful {
-                        ty: Box::new(Type::String),
-                        effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(x),
-                            output: Type::Number,
-                        }]),
-                    },
-                ),
-                (3, Type::String),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_continue_with_output() {
-        let expr = parse(
-            r#"
-            \x, y ->
-              #3 'handle #2 > \'number -> y ! &x => 'number ~
-              x => 'number ->
-                #1 <! 1 => 'string
+            \ x -> \ y -> #3 'handle #2 ^ \'number -> y (! &x ~> 'number) 'begin
+              x ~> 'number => #1 !<~ 1 ~> 'string
+            'end
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -450,19 +410,19 @@ mod tests {
     #[ignore = "not yet implemented"]
     fn test_polymorphic_effectful() {
         let input = r#"
-            $ #1 \x, y ->
-              ^#2 'handle > x 1 ~
-              'number => 'string ->
-                > y 2
-              : 'number
-            : fun ~
-            #3 >fun
-              \ @x 'number ->
-                $ ! 1 => 'string ~
-                ! @a * => 'number,
-              \ @y 'number ->
-                $ ! "a" => 'number ~
-                ! @b * => 'number
+            $ #1 \ x -> \ y -> ^#2 'handle ^ x 1 'begin
+              'number ~> 'string -> ^ y 2
+            'end;
+            #3 ^fun(
+              \ @"x" 'number -> 'begin
+                'do ! 1 ~> 'string;
+                ! @"a" *<> ~> 'number,
+              'end
+              \ @"y" 'number -> 'begin
+                'do ! "a" ~> 'number;
+                ! @"b" *<> ~> 'number
+              'end
+            )
             "#;
         let expr = parse(input);
         let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
@@ -516,13 +476,13 @@ mod tests {
     fn label() {
         let expr = parse(
             r#"
-            ^^^1: @labeled 'number: 'number: @labeled 'number
+            <@"labeled" 'number> <'number> <@"labeled" 'number> 1
         "#,
         );
         assert_eq!(
             synth(expr),
             Ok(Type::Label {
-                label: Dson::Literal(dson::Literal::String("labeled".into())),
+                label: "labeled".into(),
                 item: Box::new(Type::Number),
             })
         );
@@ -532,7 +492,7 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            \ 'a x -> ^&'a x: @labeled 'number
+            \ x -> <@"labeled" 'number> &x
         "#,
         );
         assert_eq!(
@@ -554,8 +514,8 @@ mod tests {
     fn brand_supertype() {
         let expr = parse(
             r#"
-            'brand brand
-            ^1: @brand 'number
+            'brand "brand";
+            <@"brand" 'number> 1
         "#,
         );
         assert_eq!(
@@ -574,8 +534,8 @@ mod tests {
     fn brand_subtype() {
         let expr = parse(
             r#"
-            'brand brand
-            ^&@brand 'number: 'number
+            'brand "brand";
+            <'number> &@"brand" 'number
         "#,
         );
         assert_eq!(synth(expr), Ok(Type::Number));
@@ -585,7 +545,7 @@ mod tests {
     fn infer() {
         let expr = parse(
             r#"
-            ^> \ _ -> 'number "a": _
+            <_> ^ \ _ -> 'number ("a")
             "#,
         );
         let (_ctx, ty) = crate::synth(100, &expr).unwrap();
@@ -597,10 +557,11 @@ mod tests {
     fn test_match() {
         let expr = parse(
             r#"
-            \ 'a x ->
-              #2 + #1 &'a x ~
-               'number -> ^1: @a 'number,
-               'string -> ^2: @b 'number.
+            \ x ->
+              #2 'match #1 &x 'begin
+                'number => <@"a" 'number> 1,
+                'string => <@"b" 'number> 2,
+              'end
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -613,11 +574,11 @@ mod tests {
                     2,
                     Type::Sum(vec![
                         Type::Label {
-                            label: Dson::Literal(dson::Literal::String("a".into())),
+                            label: "a".into(),
                             item: Box::new(Type::Number)
                         },
                         Type::Label {
-                            label: Dson::Literal(dson::Literal::String("b".into())),
+                            label: "b".into(),
                             item: Box::new(Type::Number)
                         }
                     ])

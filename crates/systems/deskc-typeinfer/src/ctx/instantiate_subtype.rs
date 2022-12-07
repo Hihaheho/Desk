@@ -3,7 +3,7 @@ use errors::typeinfer::TypeError;
 use crate::{
     ctx::{Ctx, Id, Log},
     mono_type::is_monotype,
-    ty::{effect_expr::EffectExpr, Type},
+    ty::Type,
 };
 
 impl Ctx {
@@ -138,10 +138,14 @@ impl Ctx {
                         vec![Log::Solved(*id, sup.clone())],
                     )
                 }
-                ty => return Err(TypeError::NotInstantiableSubtype { ty: self.gen_type(ty) }),
+                ty => {
+                    return Err(TypeError::NotInstantiableSubtype {
+                        ty: self.gen_type(ty),
+                    })
+                }
             }
         };
-        self.store_solved_type_and_effects(*id, sup.clone(), EffectExpr::Effects(vec![]));
+        self.store_solved_type_and_effects(*id, sup.clone(), Default::default());
         Ok(ctx)
     }
 }

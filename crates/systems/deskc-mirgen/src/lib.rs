@@ -143,7 +143,7 @@ impl MirGen {
                         self.begin_mir();
                         let handler_end = self.gen_stmt(handler)?;
                         let handler_mir = self.end_mir(handler_end, stmt_ty.clone());
-                        let handler_type = self.get_mir(&handler_mir).get_type();
+                        let handler_type = self.get_mir(&handler_mir).get_type().clone();
                         // call effectful mir
                         let handler_var = self.mir_proto().bind_stmt(
                             handler_type,
@@ -162,7 +162,7 @@ impl MirGen {
                 self.begin_mir();
                 let effectful_end = self.gen_stmt(expr)?;
                 let effectful_mir = self.end_mir(effectful_end, stmt_ty.clone());
-                let effectful_type = self.get_mir(&effectful_mir).get_type();
+                let effectful_type = self.get_mir(&effectful_mir).get_type().clone();
 
                 let effectful_fun = self.mir_proto().bind_stmt(
                     effectful_type,

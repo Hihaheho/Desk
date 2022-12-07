@@ -4,7 +4,7 @@ use crate::{
     ctx::{Ctx, Id, Log},
     mono_type::is_monotype,
     substitute::substitute,
-    ty::{effect_expr::EffectExpr, Type},
+    ty::Type,
 };
 
 impl Ctx {
@@ -145,10 +145,14 @@ impl Ctx {
                         vec![Log::Solved(*id, sub.clone())],
                     )
                 }
-                ty => return Err(TypeError::NotInstantiableSupertype { ty: self.gen_type(ty) }),
+                ty => {
+                    return Err(TypeError::NotInstantiableSupertype {
+                        ty: self.gen_type(ty),
+                    })
+                }
             }
         };
-        self.store_solved_type_and_effects(*id, sub.clone(), EffectExpr::Effects(vec![]));
+        self.store_solved_type_and_effects(*id, sub.clone(), Default::default());
         Ok(ctx)
     }
 }

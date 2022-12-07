@@ -28,7 +28,7 @@ pub struct Mir {
 }
 
 impl ControlFlowGraph {
-    pub fn get_type(&self) -> Type {
-        todo!()
+    pub fn get_type(&self) -> &Type {
+        &self.output
     }
 }

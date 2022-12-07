@@ -81,13 +81,13 @@ impl Ctx {
             .insert(id, self.with_effects(ty, effects));
     }
 
-    fn store_solved_type_and_effects(&self, id: Id, ty: Type, effects: EffectExpr) {
+    pub(crate) fn store_solved_type_and_effects(&self, id: Id, ty: Type, effects: EffectExpr) {
         self.types
             .borrow_mut()
             .insert(id, self.with_effects(ty, effects));
     }
 
-    fn store_inferred_type(&self, infer: NodeId, ty: Type) {
+    pub(crate) fn store_inferred_type(&self, infer: NodeId, ty: Type) {
         self.inferred_types.borrow_mut().insert(infer, ty);
     }
 
@@ -111,7 +111,7 @@ impl Ctx {
     fn save_from_hir_type(&self, hir_ty: &WithMeta<hir::ty::Type>) -> Type {
         let ty = self.gen_from_hir_type(hir_ty);
         let ty = self.substitute_from_ctx(&ty);
-        self.store_type_and_effects(hir_ty.id.clone(), ty.clone(), EffectExpr::Effects(vec![]));
+        self.store_type_and_effects(hir_ty.id.clone(), ty.clone(), Default::default());
         ty
     }
 

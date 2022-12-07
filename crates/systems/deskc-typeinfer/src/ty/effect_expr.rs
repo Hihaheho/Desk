@@ -16,6 +16,12 @@ pub enum EffectExpr {
     },
 }
 
+impl Default for EffectExpr {
+    fn default() -> Self {
+        Self::Effects(vec![])
+    }
+}
+
 pub fn simplify(ty: &mut Type) {
     EffectExprSimplifier.visit(ty);
 }
@@ -145,7 +151,7 @@ impl TypeVisitorMut for EffectExprSimplifier {
                         } => {
                             *effects = expr.clone();
                         }
-                        _ => *effects = EffectExpr::Effects(vec![]),
+                        _ => *effects = Default::default(),
                     }
                 }
             }
@@ -199,7 +205,7 @@ mod tests {
                 input: Type::Number,
                 output: Type::String,
             }]),
-            EffectExpr::Effects(vec![]),
+            Default::default(),
         ]);
         EffectExprSimplifier.visit_effect_expr(&mut effects);
         assert_eq!(
@@ -224,7 +230,7 @@ mod tests {
             }])),
         };
         EffectExprSimplifier.visit_effect_expr(&mut effects);
-        assert_eq!(effects, EffectExpr::Effects(vec![]));
+        assert_eq!(effects, Default::default());
     }
 
     #[test]

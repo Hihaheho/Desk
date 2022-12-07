@@ -3,30 +3,28 @@
     *<
       @"name" "main.ds",
       @"content" "
-      ~(defines aliases of types)~
-      'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
-      'type sub \\ *<@\"minuend\" 'number, @\"subtrahend\" 'number> -> 'number;
-      'type eq \\ *<@\"l\" 'number, @\"r\" 'number> -> +<@\"equal\" *<>, @\"unequal\" *<>>;
-      'type fib \\ 'number -> 'number;
-      ~(let fib)~
-      $ \\ 'number ->
-        ~(+ is like Rust's `match` or C's `switch`)~
-        'match ^eq *<@\"l\" &'number, @\"r\" 0> {
-          ~(if the number == 0)~
+        ~~ type aliases
+        'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
+        'type sub \\ *<@\"minuend\" 'number, @\"subtrahend\" 'number> -> 'number;
+        'type eq \\ *<@\"l\" 'number, @\"r\" 'number> -> +<@\"equal\" *<>, @\"unequal\" *<>>;
+        'type fib \\ 'number -> 'number;
+
+        ~~ let fib
+        $ \\ 'number -> 'match ^eq *<@\"l\" &'number, @\"r\" 0> {
+          ~~ if number == 0)
           @\"equal\" *<> => 0
-          ~(if the number != 0)~
+          ~~ if number != 0
           @\"unequal\" *<> => 'match ^eq *<@\"l\" &'number, @\"r\" 1> {
             @\"equal\" *<> => 1
             @\"unequal\" *<> =>
-              ~(adds fib(number - 1) and fib(number - 2))~
+              ~~ adds fib(number - 1) and fib(number - 2)
               <'number> ^add *<
                 ^fib ^sub *<@\"minuend\" &'number, 1>
                 ^fib ^sub *<@\"minuend\" &'number, 2>
               >
           }
-        }
-      ;
-      ^fib(7)
+        };
+        ^fib(7)
       "
     >
   ],

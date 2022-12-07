@@ -35,7 +35,7 @@ impl Ctx {
                 expression,
             } => {
                 let WithType(ctx, def_ty) = self.synth(definition)?.recover_effects();
-                let ctx = ctx.make_polymorphic(expr, def_ty);
+                let ctx = ctx.make_polymorphic(definition, def_ty);
                 let WithType(ctx, ty) = ctx.synth(expression)?.recover_effects();
                 ctx.with_type(ty)
             }

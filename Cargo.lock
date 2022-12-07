@@ -1875,6 +1875,7 @@ dependencies = [
  "deskc-ids",
  "deskc-types",
  "dson",
+ "env_logger 0.10.0",
  "pretty_assertions",
  "thiserror",
 ]

@@ -44,11 +44,21 @@ struct Visitor<'a> {
 }
 
 impl<'a> TypeVisitorMut for Visitor<'a> {
-    fn visit_existential(&mut self, id: &mut Id) {
-        *id = *self
-            .ids
-            .entry(*id)
-            .or_insert_with(|| self.ctx.fresh_existential());
+    fn visit(&mut self, ty: &mut Type) {
+        match ty {
+            Type::Existential(id) => {
+                if let Some(solved) = self.ctx.types.borrow().get(id) {
+                    *ty = solved.clone();
+                }
+                if let Type::Existential(id) = ty {
+                    *id = *self
+                        .ids
+                        .entry(*id)
+                        .or_insert_with(|| self.ctx.fresh_existential());
+                }
+            }
+            ty => self.visit_inner(ty),
+        }
     }
 }
 
@@ -74,6 +84,48 @@ mod tests {
     fn function_existential() {
         assert_eq!(
             Ctx::default().to_polymorphic_function(Type::Function {
+                parameter: Box::new(Type::Existential(1)),
+                body: Box::new(Type::Existential(2))
+            }),
+            Type::ForAll {
+                variable: 0,
+                bound: None,
+                body: Box::new(Type::ForAll {
+                    variable: 1,
+                    bound: None,
+                    body: Box::new(Type::Function {
+                        parameter: Box::new(Type::Existential(0)),
+                        body: Box::new(Type::Existential(1))
+                    })
+                })
+            }
+        );
+    }
+
+    #[test]
+    fn function_existential_solved() {
+        let ctx = Ctx::default();
+        ctx.store_solved_type_and_effects(1, Type::Number, Default::default());
+        ctx.store_solved_type_and_effects(2, Type::String, Default::default());
+        assert_eq!(
+            ctx.to_polymorphic_function(Type::Function {
+                parameter: Box::new(Type::Existential(1)),
+                body: Box::new(Type::Existential(2))
+            }),
+            Type::Function {
+                parameter: Box::new(Type::Number),
+                body: Box::new(Type::String)
+            }
+        );
+    }
+
+    #[test]
+    fn function_existential_solved_but_existential() {
+        let ctx = Ctx::default();
+        ctx.store_solved_type_and_effects(1, Type::Existential(3), Default::default());
+        ctx.store_solved_type_and_effects(2, Type::Existential(4), Default::default());
+        assert_eq!(
+            ctx.to_polymorphic_function(Type::Function {
                 parameter: Box::new(Type::Existential(1)),
                 body: Box::new(Type::Existential(2))
             }),
