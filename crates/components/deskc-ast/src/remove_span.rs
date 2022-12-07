@@ -73,12 +73,6 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
                 remove_span(&mut elem.value);
             }
         }
-        Expr::Import { ty, .. } => {
-            remove_span_ty(ty);
-        }
-        Expr::Export { ty } => {
-            remove_span_ty(ty);
-        }
         Expr::Attributed { attr: _, item } => {
             remove_span(item);
         }
@@ -95,15 +89,9 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
         Expr::Comment { text: _, item } => {
             remove_span(item);
         }
-        Expr::Card {
-            uuid: _,
-            item,
-            next,
-        } => {
+        Expr::Card { id: _, item, next } => {
             remove_span(item);
-            if let Some(next) = next {
-                remove_span(next);
-            }
+            remove_span(next);
         }
     }
     *id = Default::default();

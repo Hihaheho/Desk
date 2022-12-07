@@ -1,6 +1,5 @@
-use ids::NodeId;
+use ids::{CardId, NodeId};
 use thiserror::Error;
-use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum HirGenError {
@@ -10,6 +9,6 @@ pub enum HirGenError {
     UnexpectedClass { span: NodeId },
     #[error("unknown type alias {alias} {span:?}")]
     UnknownTypeAlias { alias: String, span: NodeId },
-    #[error("unexpected card {ident}")]
-    UnexpectedCard { ident: Uuid },
+    #[error("unexpected card {card_id:?}")]
+    UnexpectedCard { card_id: CardId },
 }

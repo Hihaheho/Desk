@@ -23,7 +23,7 @@ use ast::{
 };
 use dson::Dson;
 
-use ids::{LinkName, NodeId};
+use ids::{CardId, LinkName, NodeId};
 impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
     type Error = MinimalistSyntaxError;
     fn try_from(expr: grammar_trait::Expr) -> Result<Self, Self::Error> {
@@ -302,9 +302,9 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                 id: NodeId::new(),
                 span: 0..0,
                 value: Expr::Card {
-                    uuid: (*card.uuid).try_into()?,
+                    id: CardId((*card.uuid).try_into()?),
                     item: Box::new((*card.expr).try_into()?),
-                    next: Some(Box::new((*card.expr0).try_into()?)),
+                    next: Box::new((*card.expr0).try_into()?),
                 },
             },
             grammar_trait::Expr::Brand(ExprBrand { brand }) => WithSpan {

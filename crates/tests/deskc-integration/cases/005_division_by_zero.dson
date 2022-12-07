@@ -1,7 +1,7 @@
 *<
   @"files" [
     *<
-      @"name" "main.ds",
+      @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
       @"content" "
         'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
         'type div \\ *<@\"dividend\" 'number, @\"divisor\" 'number> ->
@@ -15,7 +15,7 @@
   ],
   @"assertions" *<
     @"typed" [*<
-      @"file" "main.ds"
+      @"entrypoint" @"File" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca"
       @"typings" {
         1 => @"Number" *<>,
         2 => @"Effectful" *<
@@ -34,7 +34,7 @@
     >]
     @"runs" [
       *<
-        @"entrypoint" @"File" "main.ds",
+        @"entrypoint" @"File" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
         @"result" @"Success" @"Number" @"Integer" 4
       >
     ]

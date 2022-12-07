@@ -1,6 +1,7 @@
 pub mod const_stmt;
 pub mod eval_cfg;
 pub mod interpreter_builder;
+pub mod operators;
 pub mod value;
 
 use anyhow::Result;
@@ -163,6 +164,9 @@ impl Interpreter for EvalMir {
                     };
                     self.stack.push(eval_mir);
                     InterpreterOutput::Running
+                }
+                value::FnRef::Operator(op) => {
+                    todo!()
                 }
             },
             InnerOutput::Running => InterpreterOutput::Running,

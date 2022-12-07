@@ -46,7 +46,7 @@ mod tests {
     use dson::Dson;
     use errors::textual_diagnostics::TextualDiagnostics;
     use hir::{expr::Literal, helper::HirVisitor, meta::dummy_meta, ty::Function};
-    use ids::{CardId, NodeId};
+    use ids::{Entrypoint, FileId, NodeId};
     use pretty_assertions::assert_eq;
 
     use crate::{
@@ -66,18 +66,22 @@ mod tests {
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        use deskc::card::CardQueries;
+        use deskc::card::DeskcQueries;
         use deskc::{Code, SyntaxKind};
-        let card_id = CardId::new();
-        let mut compiler = deskc::card::CardsCompiler::default();
+        let file_id = FileId::new();
+        let mut compiler = deskc::card::DeskCompiler::default();
         compiler.set_code(
-            card_id.clone(),
+            file_id.clone(),
             Code::SourceCode {
                 syntax: SyntaxKind::Minimalist,
                 source: Arc::new(input.to_string()),
             },
         );
-        compiler.hir(card_id).unwrap().hir.clone()
+        compiler
+            .hir(Entrypoint::File(file_id))
+            .unwrap()
+            .as_ref()
+            .clone()
     }
 
     fn get_types(hir: &WithMeta<Expr>, ctx: &Ctx) -> Vec<(usize, Type)> {

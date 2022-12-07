@@ -1702,6 +1702,7 @@ dependencies = [
  "deskc-types",
  "dworkspace-codebase",
  "salsa",
+ "thiserror",
  "uuid",
 ]
 
@@ -1712,7 +1713,6 @@ dependencies = [
  "deskc-ids",
  "dson",
  "thiserror",
- "uuid",
 ]
 
 [[package]]
@@ -1753,7 +1753,6 @@ dependencies = [
  "dson",
  "pretty_assertions",
  "thiserror",
- "uuid",
 ]
 
 [[package]]
@@ -1826,7 +1825,6 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde-dson",
- "uuid",
 ]
 
 [[package]]

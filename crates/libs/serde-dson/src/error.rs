@@ -22,6 +22,8 @@ pub enum Error {
     ExpectedLabel { got: Dson },
     #[error("expected a string literal but got {got:?}")]
     ExpectedString { got: Dson },
+    #[error("label mismatch: expected {expected:?} but got {got:?}")]
+    LabelMismatch { expected: String, got: String },
 }
 
 impl ser::Error for Error {

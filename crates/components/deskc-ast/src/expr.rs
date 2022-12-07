@@ -1,6 +1,6 @@
 use dson::Dson;
+use ids::CardId;
 pub use ids::LinkName;
-use uuid::Uuid;
 
 use crate::{span::WithSpan, ty::Type};
 
@@ -67,13 +67,6 @@ pub enum Expr {
     },
     Vector(Vec<WithSpan<Self>>),
     Map(Vec<MapElem>),
-    Import {
-        ty: WithSpan<Type>,
-        uuid: Option<Uuid>,
-    },
-    Export {
-        ty: WithSpan<Type>,
-    },
     Attributed {
         attr: Dson,
         item: Box<WithSpan<Self>>,
@@ -96,9 +89,9 @@ pub enum Expr {
         item: Box<WithSpan<Self>>,
     },
     Card {
-        uuid: Uuid,
+        id: CardId,
         item: Box<WithSpan<Self>>,
-        next: Option<Box<WithSpan<Self>>>,
+        next: Box<WithSpan<Self>>,
     },
 }
 

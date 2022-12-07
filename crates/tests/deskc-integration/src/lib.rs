@@ -34,8 +34,8 @@ macro_rules! test {
             }
             let passes =
                 |case: &str| println!("\n================ {} passes ================\n", case);
-            use crate::test_case::{Entrypoint, RunResult, TestCase};
-            use ids::{CardId, NodeId};
+            use crate::test_case::{RunResult, TestCase};
+            use ids::{Entrypoint, FileId, NodeId};
             use serde_dson::from_dson;
             use std::sync::Arc;
 
@@ -48,48 +48,38 @@ macro_rules! test {
             );
             let input = std::fs::read_to_string(&case_file)
                 .expect(&format!("case file not found {}", case_file));
-            use deskc::card::CardQueries;
+            use deskc::card::{DeskCompiler, DeskcQueries};
             use deskc::{Code, SyntaxKind};
-            let mut compiler = deskc::card::CardsCompiler::default();
-            let case_card_id = CardId::new();
+            let mut compiler = DeskCompiler::default();
+            let case_file_id = FileId::new();
             compiler.set_code(
-                case_card_id.clone(),
+                case_file_id.clone(),
                 Code::SourceCode {
                     syntax: SyntaxKind::Minimalist,
                     source: Arc::new(input.clone()),
                 },
             );
             let thir = compiler
-                .thir(case_card_id)
+                .thir(Entrypoint::File(case_file_id))
                 .unwrap_or_else(|err| print_errors(&input, err));
             let dson = thir2dson::thir_to_dson(&thir).unwrap();
             let test_case: TestCase = from_dson(dson).unwrap();
 
             // assertions
-            let mut file_to_card = std::collections::HashMap::new();
-            let mut file_contents = std::collections::HashMap::new();
             for file in test_case.files {
-                let card_id = CardId::new();
-                file_to_card.insert(file.name.clone(), card_id.clone());
-                file_contents.insert(file.name.clone(), file.content.clone());
                 compiler.set_code(
-                    card_id.clone(),
+                    file.id,
                     Code::SourceCode {
                         syntax: SyntaxKind::Minimalist,
                         source: Arc::new(file.content),
                     },
                 );
             }
-            let card_id = |file_name: &String| {
-                file_to_card
-                    .get(file_name)
-                    .expect(&format!("file not found: {}", file_name))
-                    .clone()
-            };
-            let input = |file_name: &String| {
-                file_contents
-                    .get(file_name)
-                    .expect(&format!("file not found: {}", file_name))
+            let input = |compiler: &DeskCompiler, entrypoint: &Entrypoint| match compiler
+                .code(entrypoint.file_id().clone())
+            {
+                Code::SourceCode { source, .. } => source,
+                _ => panic!("cannot get source code"),
             };
 
             if let Some(typed_vec) = test_case.assertions.typed {
@@ -115,15 +105,19 @@ macro_rules! test {
 
                 for typed in typed_vec {
                     let mut hir_ids = HirIds::default();
-                    let hir_result = compiler
-                        .hir(card_id(&typed.file))
-                        .unwrap_or_else(|err| print_errors(input(&typed.file), err));
-                    hir_ids.visit_expr(&hir_result.hir);
+                    let hir = compiler
+                        .hir(typed.entrypoint.clone())
+                        .unwrap_or_else(|err| {
+                            print_errors(&input(&compiler, &typed.entrypoint), err)
+                        });
+                    hir_ids.visit_expr(&hir);
                     let attrs = hir_ids.ids.into_iter().collect::<HashMap<_, _>>();
 
                     let ctx = compiler
-                        .typeinfer(card_id(&typed.file))
-                        .unwrap_or_else(|err| print_errors(input(&typed.file), err));
+                        .typeinfer(typed.entrypoint.clone())
+                        .unwrap_or_else(|err| {
+                            print_errors(&input(&compiler, &typed.entrypoint), err)
+                        });
                     let types = ctx.get_types();
 
                     for (id, ty) in typed.typings {
@@ -139,14 +133,9 @@ macro_rules! test {
 
             if let Some(runs) = test_case.assertions.runs {
                 for run in runs {
-                    let mir = match run.entrypoint {
-                        Entrypoint::File(file_name) => compiler
-                            .mir(card_id(&file_name))
-                            .unwrap_or_else(|err| print_errors(input(&file_name), err)),
-                        Entrypoint::Card(uuid) => {
-                            todo!()
-                        }
-                    };
+                    let mir = compiler.mir(run.entrypoint.clone()).unwrap_or_else(|err| {
+                        print_errors(&input(&compiler, &run.entrypoint), err)
+                    });
                     let mut miri = miri::eval_mir((*mir).clone());
                     use dprocess::interpreter::Interpreter;
                     let start = std::time::Instant::now();

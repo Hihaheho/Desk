@@ -1,6 +1,5 @@
 use dson::Dson;
-use ids::LinkName;
-use uuid::Uuid;
+use ids::{CardId, LinkName};
 
 use crate::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
@@ -32,14 +31,12 @@ pub trait ExprVisitorMut {
             Expr::Function { parameter, body } => self.visit_function(parameter, body),
             Expr::Vector(exprs) => self.visit_vector(exprs),
             Expr::Map(exprs) => self.visit_map(exprs),
-            Expr::Import { ty, uuid } => self.visit_import(ty, uuid),
-            Expr::Export { ty } => self.visit_export(ty),
             Expr::Attributed { attr, item } => self.visit_attribute(attr, item),
             Expr::Brand { brand, item } => self.visit_brand(brand, item),
             Expr::Label { label, item } => self.visit_label(label, item),
             Expr::NewType { ident, ty, expr } => self.visit_new_type(ident, ty, expr),
             Expr::Comment { text, item } => self.visit_comment(text, item),
-            Expr::Card { uuid, item, next } => self.visit_card(uuid, item, next),
+            Expr::Card { id, item, next } => self.visit_card(id, item, next),
         }
     }
     fn visit_literal(&mut self, _literal: &mut Literal) {}
@@ -116,12 +113,6 @@ pub trait ExprVisitorMut {
             self.visit_expr(&mut elem.value);
         }
     }
-    fn visit_import(&mut self, ty: &mut WithSpan<Type>, _uuid: &mut Option<Uuid>) {
-        self.visit_type(ty);
-    }
-    fn visit_export(&mut self, ty: &mut WithSpan<Type>) {
-        self.visit_type(ty);
-    }
     fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
     }
@@ -145,14 +136,12 @@ pub trait ExprVisitorMut {
     }
     fn visit_card(
         &mut self,
-        _uuid: &mut Uuid,
+        _id: &mut CardId,
         item: &mut WithSpan<Expr>,
-        next: &mut Option<Box<WithSpan<Expr>>>,
+        next: &mut WithSpan<Expr>,
     ) {
         self.visit_expr(item);
-        if let Some(next) = next {
-            self.visit_expr(next);
-        }
+        self.visit_expr(next);
     }
     fn visit_type(&mut self, _ty: &mut WithSpan<Type>) {}
 }
@@ -237,12 +226,6 @@ pub trait TypeVisitorMut {
     fn visit_map(&mut self, key: &mut WithSpan<Type>, value: &mut WithSpan<Type>) {
         self.visit_type(key);
         self.visit_type(value);
-    }
-    fn visit_import(&mut self, ty: &mut WithSpan<Type>, _uuid: &mut Option<Uuid>) {
-        self.visit_type(ty);
-    }
-    fn visit_export(&mut self, ty: &mut WithSpan<Type>) {
-        self.visit_type(ty);
     }
     fn visit_let(
         &mut self,

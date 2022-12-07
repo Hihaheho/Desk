@@ -1,7 +1,7 @@
 *<
   @"files" [
     *<
-      @"name" "main.ds",
+      @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-000000000000",
       @"content" "
         1
       "
@@ -10,7 +10,7 @@
   @"assertions" *<
     @"runs" [
       *<
-        @"entrypoint" @"File" "main.ds",
+        @"entrypoint" @"File" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-000000000000",
         @"result" @"Success" @"Number" @"Integer" 1
       >
     ]

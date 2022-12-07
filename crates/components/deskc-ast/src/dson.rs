@@ -27,10 +27,6 @@ pub enum ExprToDsonError {
     UnexpectedHole,
     #[error("unexpected function")]
     UnexpectedFunction,
-    #[error("unexpected import")]
-    UnexpectedImport,
-    #[error("unexpected export")]
-    UnexpectedExport,
     #[error("unexpected brand")]
     UnexpectedBrand,
     #[error("unexpected new type")]
@@ -114,8 +110,6 @@ impl TryFrom<WithSpan<Expr>> for Dson {
             Expr::Match { .. } => Err(ExprToDsonError::UnexpectedMatch),
             Expr::Hole => Err(ExprToDsonError::UnexpectedHole),
             Expr::Function { .. } => Err(ExprToDsonError::UnexpectedFunction),
-            Expr::Import { .. } => Err(ExprToDsonError::UnexpectedImport),
-            Expr::Export { .. } => Err(ExprToDsonError::UnexpectedExport),
             Expr::Brand { .. } => Err(ExprToDsonError::UnexpectedBrand),
             Expr::NewType { .. } => Err(ExprToDsonError::UnexpectedNewType),
             Expr::Card { .. } => Err(ExprToDsonError::UnexpectedCard),

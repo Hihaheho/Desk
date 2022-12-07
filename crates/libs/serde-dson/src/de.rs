@@ -157,12 +157,33 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         }
     }
 
-    fn deserialize_newtype_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
+    fn deserialize_newtype_struct<V>(self, name: &'static str, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
-        unwrap(&mut self.0);
-        self.deserialize_any(visitor)
+        match &self.0 {
+            Dson::Labeled { label, expr } => {
+                if let Dson::Literal(Literal::String(label)) = label.as_ref() {
+                    if name == label {
+                        visitor.visit_newtype_struct(&mut Deserializer::from_dson(
+                            expr.as_ref().clone(),
+                        ))
+                    } else {
+                        Err(Error::LabelMismatch {
+                            expected: name.into(),
+                            got: label.clone(),
+                        })
+                    }
+                } else {
+                    Err(Error::ExpectedString {
+                        got: (**label).clone(),
+                    })
+                }
+            }
+            _ => Err(Error::ExpectedLabel {
+                got: self.0.clone(),
+            }),
+        }
     }
 
     fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value>
@@ -450,6 +471,25 @@ mod tests {
             value: 2.into(),
         }]);
         let expected = [(1, 2)].into_iter().collect::<HashMap<_, i64>>();
+        assert_eq!(expected, from_dson(dson).unwrap());
+    }
+
+    #[test]
+    fn test_struct_in_struct() {
+        #[derive(Deserialize, PartialEq, Debug)]
+        pub struct Wrapper {
+            pub inner: Inner,
+        }
+        #[derive(Deserialize, PartialEq, Debug)]
+        pub struct Inner(pub u32);
+        let expected = Wrapper { inner: Inner(1) };
+        let dson = Dson::Product(vec![Dson::Labeled {
+            label: Box::new("inner".into()),
+            expr: Box::new(Dson::Labeled {
+                label: Box::new("Inner".into()),
+                expr: Box::new(1.into()),
+            }),
+        }]);
         assert_eq!(expected, from_dson(dson).unwrap());
     }
 }

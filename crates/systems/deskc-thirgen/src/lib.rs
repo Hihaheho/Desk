@@ -155,25 +155,29 @@ impl TypedHirGen {
 mod tests {
     use std::sync::Arc;
 
-    use ids::{CardId, NodeId};
+    use ids::{Entrypoint, FileId, NodeId};
     use thir::visitor::TypedHirVisitorMut;
 
     use super::*;
     use pretty_assertions::assert_eq;
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        use deskc::card::CardQueries;
+        use deskc::card::DeskcQueries;
         use deskc::{Code, SyntaxKind};
-        let card_id = CardId::new();
-        let mut compiler = deskc::card::CardsCompiler::default();
+        let file_id = FileId::new();
+        let mut compiler = deskc::card::DeskCompiler::default();
         compiler.set_code(
-            card_id.clone(),
+            file_id.clone(),
             Code::SourceCode {
                 syntax: SyntaxKind::Minimalist,
                 source: Arc::new(input.to_string()),
             },
         );
-        compiler.hir(card_id).unwrap().hir.clone()
+        compiler
+            .hir(Entrypoint::File(file_id))
+            .unwrap()
+            .as_ref()
+            .clone()
     }
 
     fn infer(expr: &WithMeta<Expr>) -> Types {

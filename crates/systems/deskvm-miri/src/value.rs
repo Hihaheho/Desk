@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
 use mir::mir::ControlFlowGraphId;
-use serde::{Deserialize, Serialize};
 use types::{Effect, Type};
 
-use crate::eval_cfg::Handler;
+use crate::eval_cfg::{EvalCfg, Handler};
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) enum Value {
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
     // empty product
     Unit,
     String(String),
@@ -22,16 +21,23 @@ pub(crate) enum Value {
     TraitObject { ty: Type, value: Box<Value> },
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) enum FnRef {
+#[derive(Debug, Clone, PartialEq)]
+pub enum FnRef {
     Link(Type),
     Closure(Closure),
     Recursion,
+    Operator(fn(EvalCfg) -> OperatorOutput),
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Closure {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Closure {
     pub mir: ControlFlowGraphId,
     pub captured: HashMap<Type, Value>,
     pub handlers: HashMap<Effect, Handler>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum OperatorOutput {
+    Return(Value),
+    Perform { effect: Effect, input: Value },
 }

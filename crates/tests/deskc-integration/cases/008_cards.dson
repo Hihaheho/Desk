@@ -1,13 +1,13 @@
 *<
   @"files" [
     *<
-      @"name" "main.ds",
+      @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
       @"content" "
         'type add \\ *<@\"l\" 'number, @\"r\" 'number> -> @\"sum\" 'number;
         'type sub \\ *<@\"minuend\" 'number, @\"subtrahend\" 'number> -> 'number;
         'type cmp \\ *<@\"self\" 'number, @\"other\" 'number> -> +<@\"greader\" *<>, @\"less\" *<>, @\"equal\" *<>>;
 
-        'card 9883b420-f7be-468d-95f6-000000000000
+        'card 9883b420-f7be-468d-95f6-43884d885a33
           ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \\'number -> 'number (10);
         'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa
         \\ 'number -> <'number> ^add *<
@@ -36,7 +36,10 @@
   @"assertions" *<
     @"runs" [
       *<
-        @"entrypoint" @"Card" "9883b420-f7be-468d-95f6-000000000000",
+        @"entrypoint" @"Card" *<
+          @"file_id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
+          @"card_id" @"CardId" "9883b420-f7be-468d-95f6-43884d885a33"
+        >
         @"result" @"Success" @"Number" @"Integer" 22
       >
     ]

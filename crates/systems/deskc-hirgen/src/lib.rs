@@ -1,7 +1,7 @@
 mod error;
 mod gen_effect_expr;
 use dson::Dson;
-use ids::{CardId, NodeId};
+use ids::NodeId;
 
 use std::{
     cell::RefCell,
@@ -14,15 +14,15 @@ use hir::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     meta::{Meta, WithMeta},
     ty::{Function, Type},
-    Hir,
+    Card, Cards,
 };
 
-pub fn gen_cards(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Hir), HirGenError> {
-    let mut hirgen = HirGen::default();
-    hirgen.gen_hir(src)?;
-    let hir = Hir {
-        expr: hirgen.entrypoint.take(),
-        cards: hirgen.cards.drain(..).collect(),
+pub fn gen_cards(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Cards), HirGenError> {
+    let hirgen = HirGen::default();
+    let file = hirgen.gen_cards(src)?;
+    let hir = Cards {
+        cards: hirgen.cards.borrow_mut().drain(..).collect(),
+        file,
     };
     Ok((hirgen, hir))
 }
@@ -40,8 +40,7 @@ pub struct HirGen {
     pub attrs: RefCell<HashMap<NodeId, Vec<Dson>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<Dson>>,
-    cards: Vec<(CardId, WithMeta<Expr>)>,
-    entrypoint: Option<WithMeta<Expr>>,
+    cards: RefCell<Vec<Card>>,
 }
 
 impl HirGen {
@@ -170,6 +169,28 @@ impl HirGen {
         Ok(with_meta)
     }
 
+    pub fn gen_cards(
+        &self,
+        ast: &WithSpan<ast::expr::Expr>,
+    ) -> Result<WithMeta<Expr>, HirGenError> {
+        match &ast.value {
+            ast::expr::Expr::Card { id, item, next } => {
+                self.cards.borrow_mut().push(Card {
+                    id: id.clone(),
+                    hir: self.gen_card(item)?,
+                });
+                let next = self.gen_cards(next)?;
+                Ok(next)
+            }
+            ast::expr::Expr::Comment { item, .. } => self.gen_cards(&item),
+            ast::expr::Expr::NewType { ident, ty, expr } => {
+                self.add_new_type(ty, ident)?;
+                self.gen_cards(expr)
+            }
+            _ => self.gen_card(ast),
+        }
+    }
+
     pub fn gen_card(&self, ast: &WithSpan<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
         let WithSpan {
             value: expr,
@@ -267,8 +288,6 @@ impl HirGen {
                     })
                     .collect::<Result<_, _>>()?,
             )),
-            ast::expr::Expr::Import { ty: _, uuid: _ } => todo!(),
-            ast::expr::Expr::Export { ty: _ } => todo!(),
             ast::expr::Expr::Attributed { attr, item: expr } => {
                 self.pop_span();
                 let mut ret = self.gen_card(expr)?;
@@ -308,20 +327,27 @@ impl HirGen {
                 }
             }
             ast::expr::Expr::NewType { ident, ty, expr } => {
-                let ty = self.gen_type(ty)?.value;
-                self.type_aliases.borrow_mut().insert(ident.clone(), ty);
+                self.add_new_type(ty, ident)?;
                 self.gen_card(expr)?
             }
             ast::expr::Expr::Comment { item, .. } => self.gen_card(item)?,
-            ast::expr::Expr::Card { uuid, .. } => {
-                return Err(HirGenError::UnexpectedCard { ident: *uuid });
+            ast::expr::Expr::Card { id, .. } => {
+                return Err(HirGenError::UnexpectedCard {
+                    card_id: id.clone(),
+                });
             }
         };
         Ok(with_meta)
     }
 
-    pub fn gen_hir(&mut self, ast: &WithSpan<ast::expr::Expr>) -> Result<(), HirGenError> {
-        self.entrypoint = Some(self.gen_card(ast)?);
+    #[must_use]
+    pub(crate) fn add_new_type(
+        &self,
+        ty: &WithSpan<ast::ty::Type>,
+        ident: &String,
+    ) -> Result<(), HirGenError> {
+        let ty = self.gen_type(ty)?.value;
+        self.type_aliases.borrow_mut().insert(ident.clone(), ty);
         Ok(())
     }
 
@@ -358,28 +384,29 @@ mod tests {
     use std::sync::Arc;
 
     use ast::span::dummy_span;
-    use deskc::card::CardQueries;
+    use deskc::card::DeskcQueries;
     use deskc::{Code, SyntaxKind};
     use hir::{
         helper::remove_meta,
         meta::{dummy_meta, Meta},
         ty::Type,
     };
+    use ids::FileId;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
     fn parse(input: &str) -> Arc<WithSpan<ast::expr::Expr>> {
-        let card_id = CardId::new();
-        let mut compiler = deskc::card::CardsCompiler::default();
+        let file_id = FileId::new();
+        let mut compiler = deskc::card::DeskCompiler::default();
         compiler.set_code(
-            card_id.clone(),
+            file_id.clone(),
             Code::SourceCode {
                 syntax: SyntaxKind::Minimalist,
                 source: Arc::new(input.to_string()),
             },
         );
-        compiler.ast(card_id).unwrap()
+        compiler.ast(file_id).unwrap()
     }
 
     #[test]
@@ -481,12 +508,12 @@ mod tests {
     }
 
     #[test]
-    fn gen_entrypoint() {
+    fn gen_rest() {
         let expr = parse("1");
         let (_, hir) = gen_cards(&expr).unwrap();
         assert!(hir.cards.is_empty());
         assert_eq!(
-            remove_meta(hir.expr.unwrap()),
+            remove_meta(hir.file),
             dummy_meta(Expr::Literal(Literal::Integer(1)))
         );
     }

@@ -29,4 +29,3 @@ serde = { version = "1.0", features = ["derive"] }
 ariadne = "0.1.5"
 anyhow = "1.0"
 env_logger = "0.10.0"
-uuid = "1.2"

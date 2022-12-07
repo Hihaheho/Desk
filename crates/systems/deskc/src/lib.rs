@@ -1,6 +1,8 @@
 pub mod card;
+pub mod hir_result;
 pub mod parse_source_code;
 pub mod query_result;
+pub mod error;
 
 pub use parse_source_code::*;
 
@@ -15,7 +17,7 @@ mod tests {
         span::WithSpan,
     };
     use codebase::code::{Code, SyntaxKind};
-    use ids::{CardId, NodeId};
+    use ids::{Entrypoint, FileId, NodeId};
     use mir::{
         block::BasicBlock,
         mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
@@ -25,21 +27,21 @@ mod tests {
     };
     use types::Type;
 
-    use crate::card::{CardQueries, CardsCompiler};
+    use crate::card::{DeskCompiler, DeskcQueries};
 
     #[test]
     fn compiles_source_code() {
-        let mut cards = CardsCompiler::default();
-        let card_id = CardId::new();
+        let mut cards = DeskCompiler::default();
+        let file_id = FileId::new();
         cards.set_code(
-            card_id.clone(),
+            file_id.clone(),
             Code::SourceCode {
                 syntax: SyntaxKind::Minimalist,
                 source: Arc::new("1".into()),
             },
         );
         assert_eq!(
-            cards.mir(card_id).unwrap(),
+            cards.mir(Entrypoint::File(file_id)).unwrap(),
             Arc::new(Mir {
                 entrypoint: ControlFlowGraphId(0),
                 cfgs: vec![ControlFlowGraph {
@@ -66,10 +68,10 @@ mod tests {
 
     #[test]
     fn compiles_ast() {
-        let mut cards = CardsCompiler::default();
-        let card_id = CardId::new();
+        let mut cards = DeskCompiler::default();
+        let file_id = FileId::new();
         cards.set_code(
-            card_id.clone(),
+            file_id.clone(),
             Code::Ast(Arc::new(WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
@@ -77,7 +79,7 @@ mod tests {
             })),
         );
         assert_eq!(
-            cards.mir(card_id).unwrap(),
+            cards.mir(Entrypoint::File(file_id)).unwrap(),
             Arc::new(Mir {
                 entrypoint: ControlFlowGraphId(0),
                 cfgs: vec![ControlFlowGraph {

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use dprocess::value::Value;
+use ids::{Entrypoint, FileId};
 use serde::{Deserialize, Serialize};
 use types::Type;
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TestCase {
@@ -13,7 +13,7 @@ pub struct TestCase {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct File {
-    pub name: String,
+    pub id: FileId,
     pub content: String,
 }
 
@@ -30,18 +30,12 @@ pub struct Run {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub enum Entrypoint {
-    File(String),
-    Card(Uuid),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum RunResult {
     Success(Value),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Typed {
-    pub file: String,
+    pub entrypoint: Entrypoint,
     pub typings: HashMap<usize, Type>,
 }

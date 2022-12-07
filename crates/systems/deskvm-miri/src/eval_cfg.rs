@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use mir::block::BlockId;
 use mir::mir::ControlFlowGraph;
 use mir::stmt::{Stmt, Terminator};
-use serde::{Deserialize, Serialize};
 use types::{Effect, Type};
 
 use crate::const_stmt;
@@ -12,21 +11,21 @@ use crate::value::{Closure, FnRef, Value};
 use mir::stmt::StmtBind;
 use mir::var::VarId;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct EvalCfg {
-    pub cfg: ControlFlowGraph,
-    pub registers: HashMap<VarId, Value>,
-    pub parameters: HashMap<Type, Value>,
-    pub captured: HashMap<Type, Value>,
-    pub pc_block: BlockId,
-    pub pc_stmt_idx: usize,
+#[derive(Debug, Clone, PartialEq)]
+pub struct EvalCfg {
+    pub(crate) cfg: ControlFlowGraph,
+    pub(crate) registers: HashMap<VarId, Value>,
+    pub(crate) parameters: HashMap<Type, Value>,
+    pub(crate) captured: HashMap<Type, Value>,
+    pub(crate) pc_block: BlockId,
+    pub(crate) pc_stmt_idx: usize,
     // Before handling apply stmt, save the var to here, and used when returned.
-    pub return_register: Option<VarId>,
-    pub handlers: HashMap<Effect, Handler>,
+    pub(crate) return_register: Option<VarId>,
+    pub(crate) handlers: HashMap<Effect, Handler>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) enum Handler {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Handler {
     Handler(Closure),
     Continuation(Vec<EvalCfg>),
 }
@@ -46,7 +45,7 @@ pub(crate) enum InnerOutput {
 }
 
 impl EvalCfg {
-    pub fn eval_next(&mut self) -> InnerOutput {
+    pub(crate) fn eval_next(&mut self) -> InnerOutput {
         let block = &self.cfg.blocks[self.pc_block.0];
         // if reach to terminator
         if block.stmts.len() == self.pc_stmt_idx {

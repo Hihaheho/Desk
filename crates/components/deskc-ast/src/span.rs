@@ -1,5 +1,4 @@
 use ids::NodeId;
-use uuid::Uuid;
 
 pub type Span = std::ops::Range<usize>;
 
@@ -12,7 +11,7 @@ pub struct WithSpan<T> {
 
 pub fn dummy_span<T>(value: T) -> WithSpan<T> {
     WithSpan {
-        id: NodeId(Uuid::default()),
+        id: NodeId::default(),
         span: 0..0,
         value,
     }
