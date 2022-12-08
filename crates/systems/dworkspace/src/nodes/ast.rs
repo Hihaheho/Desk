@@ -58,11 +58,24 @@ fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
         DeskcType::Rational => Type::Rational,
         DeskcType::Integer => Type::Integer,
         DeskcType::String => Type::String,
+        DeskcType::Trait(trait_) => Type::Trait(
+            trait_
+                .iter()
+                .map(|function| WithSpan {
+                    id: NodeId::new(),
+                    span: 0..0,
+                    value: Function {
+                        parameter: from_types(&function.parameter),
+                        body: from_types(&function.body),
+                    },
+                })
+                .collect(),
+        ),
         DeskcType::Product(types) => Type::Product(types.iter().map(from_types).collect()),
         DeskcType::Sum(types) => Type::Sum(types.iter().map(from_types).collect()),
-        DeskcType::Function { parameter, body } => Type::Function(Box::new(Function {
-            parameter: from_types(parameter),
-            body: from_types(body),
+        DeskcType::Function(function) => Type::Function(Box::new(Function {
+            parameter: from_types(&function.parameter),
+            body: from_types(&function.body),
         })),
         DeskcType::Vector(ty) => Type::Vector(Box::new(from_types(ty))),
         DeskcType::Map { key, value } => Type::Map {
@@ -75,11 +88,11 @@ fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
             ty: Box::new(from_types(ty)),
             effects: from_types_effects(effects),
         },
-        DeskcType::Brand { brand, item } => Type::Brand {
+        DeskcType::Brand { brand, item } => Type::Labeled {
             brand: brand.clone(),
             item: Box::new(from_types(item)),
         },
-        DeskcType::Label { label, item } => Type::Brand {
+        DeskcType::Label { label, item } => Type::Labeled {
             brand: label.clone(),
             item: Box::new(from_types(item)),
         },

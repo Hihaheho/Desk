@@ -18,7 +18,7 @@ pub enum Stmt {
     Product(Vec<VarId>),
     Vector(Vec<VarId>),
     Map(Vec<MapElem>),
-    Fn(FnRef),
+    Fn(Closure),
     Perform(VarId),
     MatchResult(VarId),
     Apply {
@@ -40,15 +40,12 @@ pub struct MapElem {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FnRef {
-    Link(Type),
-    Closure {
-        mir: ControlFlowGraphId,
-        /// Caputerd variables
-        captured: Vec<VarId>,
-        /// Used to create an effectful expression
-        handlers: HashMap<Effect, VarId>,
-    },
+pub struct Closure {
+    pub mir: ControlFlowGraphId,
+    /// Caputerd variables
+    pub captured: Vec<VarId>,
+    /// Used to create an effectful expression
+    pub handlers: HashMap<Effect, VarId>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

@@ -162,10 +162,10 @@ mod tests {
                 event: Event::CreateNode {
                     node_id: node_a.clone(),
                     content: Content::Apply {
-                        ty: Type::Function {
-                            parameter: Box::new(Type::String),
-                            body: Box::new(Type::Real),
-                        },
+                        ty: Type::Function(Box::new(deskc_types::Function {
+                            parameter: Type::String,
+                            body: Type::Real,
+                        })),
                         link_name: Default::default(),
                     },
                 },

@@ -2,9 +2,9 @@ use std::fmt::{Display, Formatter};
 
 use hir::{expr::Expr, meta::Meta};
 use thiserror::Error;
-use types::{Type, Effect};
+use types::{Effect, Type};
 
-use crate::textual_diagnostics::{TextualDiagnostics, Report};
+use crate::textual_diagnostics::{Report, TextualDiagnostics};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ExprTypeError {

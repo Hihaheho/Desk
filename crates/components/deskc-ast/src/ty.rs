@@ -10,7 +10,7 @@ pub struct Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
-    Brand {
+    Labeled {
         brand: Dson,
         item: Box<WithSpan<Type>>,
     },
@@ -39,10 +39,6 @@ pub enum Type {
         body: Box<WithSpan<Self>>,
     },
     Variable(String),
-    BoundedVariable {
-        bound: Box<WithSpan<Self>>,
-        identifier: String,
-    },
     Attributed {
         attr: Dson,
         ty: Box<WithSpan<Self>>,

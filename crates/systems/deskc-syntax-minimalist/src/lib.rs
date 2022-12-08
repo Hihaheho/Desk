@@ -172,7 +172,7 @@ mod tests {
             parse(
                 r#"'handle ? '{
               'integer ~> 'string => 3
-            '}"#
+            }'"#
             )
             .value,
             Expr::Handle {
@@ -306,7 +306,7 @@ mod tests {
             'match ? '{
               'integer => "number",
               'string => "string",
-            '}
+            }'
             "#
             )
             .value,
@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn parse_begin_end() {
         assert_eq!(
-            parse(r#"'( 1 ')"#).value,
+            parse(r#"'( 1 )'"#).value,
             Expr::Literal(Literal::Integer(1)),
         );
     }
@@ -499,7 +499,7 @@ mod tests {
     fn parse_brand_ty() {
         assert_eq!(
             parse(r#"& @"added" 'integer"#).value,
-            r(Type::Brand {
+            r(Type::Labeled {
                 brand: Dson::Literal(dson::Literal::String("added".into())),
                 item: bw(Type::Integer),
             })
@@ -542,6 +542,6 @@ mod tests {
 
     #[test]
     fn parse_begin_end_ty() {
-        assert_eq!(parse("& '( a ')").value, r(Type::Variable("a".into())),);
+        assert_eq!(parse("& '( a )'").value, r(Type::Variable("a".into())),);
     }
 }

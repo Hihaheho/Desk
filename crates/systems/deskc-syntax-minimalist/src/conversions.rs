@@ -103,16 +103,14 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         })?;
                         Literal::Integer(integer)
                     }
-                    grammar_trait::Literal::Real(LiteralReal { real }) => {
-                        Literal::Real(real.real.text().to_string().parse::<f64>().map_err(
-                            |_| {
-                                MinimalistSyntaxError::ParseError(format!(
-                                    "Could not parse real: {}",
-                                    real.real.text().to_string()
-                                ))
-                            },
-                        )?)
-                    }
+                    grammar_trait::Literal::Real(LiteralReal { real }) => Literal::Real(
+                        real.real.text().to_string().parse::<f64>().map_err(|_| {
+                            MinimalistSyntaxError::ParseError(format!(
+                                "Could not parse real: {}",
+                                real.real.text().to_string()
+                            ))
+                        })?,
+                    ),
                     grammar_trait::Literal::String(LiteralString { string }) => {
                         let string = string
                             .string_list
@@ -441,7 +439,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithSpan<ast::ty::Type> {
             grammar_trait::Ty::LabeledTy(TyLabeledTy { labeled_ty }) => WithSpan {
                 id: NodeId::new(),
                 span: 0..0,
-                value: ast::ty::Type::Brand {
+                value: ast::ty::Type::Labeled {
                     brand: (*labeled_ty.label.expr).try_into()?,
                     item: Box::new((*labeled_ty.ty).try_into()?),
                 },

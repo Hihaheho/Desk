@@ -4,12 +4,12 @@
       @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
       @"content" "
         'type add \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer;
-        'type div \\ *<@\"dividend\" 'integer, @\"divisor\" 'integer> ->
-          ! { @\"division by zero\" 'integer ~> 'integer } @\"quotient\" 'integer;
+        'type div \\ *<@\"l\" 'integer, @\"r\" 'integer> ->
+          ! { @\"division by zero\" 'integer ~> @\"quot\" 'integer } @\"quot\" 'integer;
         #1 'handle #2 <'integer> ^ div *<@\"dividend\" 3, @\"divisor\" 0> '{
           @\"division by zero\" 'integer ~> 'integer =>
             <'integer> ^add *<@\"l\" & @\"division by zero\" 'integer, 1>
-        '}
+        }'
       "
     >
   ],

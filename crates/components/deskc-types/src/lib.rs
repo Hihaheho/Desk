@@ -20,10 +20,8 @@ pub enum Type {
     String,
     Product(Vec<Self>),
     Sum(Vec<Self>),
-    Function {
-        parameter: Box<Self>,
-        body: Box<Self>,
-    },
+    Function(Box<Function>),
+    Trait(Vec<Function>),
     Vector(Box<Self>),
     Map {
         key: Box<Self>,
@@ -63,16 +61,13 @@ pub enum EffectExpr {
     },
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct Function {
+    pub parameter: Type,
+    pub body: Type,
+}
+
 impl Type {
-    pub fn unit() -> Self {
-        Type::Product(vec![])
-    }
-    pub fn label(label: Dson, item: Self) -> Self {
-        Type::Label {
-            label: label,
-            item: Box::new(item),
-        }
-    }
     pub fn product(mut types: Vec<Self>) -> Self {
         // Sort is required to make the type comparable.
         types.sort();
@@ -88,10 +83,14 @@ impl Type {
         }
     }
     pub fn function(parameter: Self, body: Self) -> Self {
-        Type::Function {
-            parameter: Box::new(parameter),
-            body: Box::new(body),
-        }
+        Type::Function(Box::new(Function {
+            parameter: parameter,
+            body: body,
+        }))
+    }
+
+    pub fn parameters<'a>(&'a self) -> ParametersIter<'a> {
+        ParametersIter(self)
     }
 }
 
@@ -116,5 +115,24 @@ impl IdGen {
         let id = self.next_id;
         self.next_id += 1;
         id
+    }
+}
+
+pub struct ParametersIter<'a>(&'a Type);
+
+impl<'a> Iterator for ParametersIter<'a> {
+    type Item = &'a Type;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0 {
+            Type::Function(f) => {
+                self.0 = &f.body;
+                Some(&f.parameter)
+            }
+            Type::ForAll { body, .. } => {
+                self.0 = body;
+                self.next()
+            }
+            _ => None,
+        }
     }
 }

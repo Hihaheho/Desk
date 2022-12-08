@@ -34,10 +34,6 @@ impl Ctx {
                 value: Box::new(self.gen_from_hir_type(value)),
             },
             Variable(id) => Type::Variable(self.get_id_of(id.clone())),
-            BoundedVariable {
-                bound: _,
-                identifier: _,
-            } => todo!(),
             Brand { brand, item } => Type::Brand {
                 brand: brand.clone(),
                 item: Box::new(self.gen_from_hir_type(item)),

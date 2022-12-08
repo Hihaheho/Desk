@@ -32,3 +32,9 @@ impl ControlFlowGraph {
         &self.output
     }
 }
+
+impl Mir {
+    pub fn captured(&self) -> &[Type] {
+        &self.cfgs[self.entrypoint.0].captured
+    }
+}

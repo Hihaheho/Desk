@@ -164,6 +164,11 @@ impl MirProto {
     }
 
     pub fn bind_stmt(&mut self, ty: Type, stmt: Stmt) -> VarId {
+        // unwrap effectful
+        let ty = match ty {
+            Type::Effectful { ty, effects: _ } => *ty,
+            ty => ty,
+        };
         let var = self.create_var(ty);
         self.bind_to(var, stmt)
     }

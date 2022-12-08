@@ -154,10 +154,6 @@ fn remove_meta_ty(ty: WithMeta<Type>) -> WithMeta<Type> {
             body: Box::new(remove_meta_ty(*body)),
         },
         Type::Variable(_) => ty.value,
-        Type::BoundedVariable { bound, identifier } => Type::BoundedVariable {
-            bound: Box::new(remove_meta_ty(*bound)),
-            identifier,
-        },
         Type::Brand { brand, item } => Type::Brand {
             brand,
             item: Box::new(remove_meta_ty(*item)),

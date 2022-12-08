@@ -6,13 +6,13 @@ use std::collections::HashMap;
 
 use mir::{
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
-    stmt::{Const, FnRef, MapElem, MatchCase, Stmt, Terminator},
+    stmt::{Closure, Const, MapElem, MatchCase, Stmt, Terminator},
     var::VarId,
 };
 use mir_proto::MirProto;
 use thir::{Handler, LinkName, TypedHir};
 use thiserror::Error;
-use types::Type;
+use types::{Effect, Type};
 
 pub fn gen_mir(thir: &TypedHir) -> Result<Mir, GenMirError> {
     let mut gen = MirGen::default();
@@ -38,8 +38,11 @@ impl Default for MirGen {
 
 #[derive(Debug, Clone, Error)]
 pub enum GenMirError {
-    #[error("reference unknown var {0:?}")]
-    ReferencesUnknownVar(Type),
+    #[error("invalid function call {function:?} with {arguments:?}")]
+    InvalidFunctionCall {
+        function: Type,
+        arguments: Vec<TypedHir>,
+    },
 }
 
 macro_rules! mir_proto {
@@ -115,7 +118,8 @@ impl MirGen {
                         .bind_stmt(definition.ty.clone(), Stmt::Recursion);
                     self.mir_proto().create_named_var(recursion_var);
                     // gen definition
-                    let fn_ref = self.gen_closure(parameter, body)?;
+                    let function = self.gen_function(parameter, body)?;
+                    let fn_ref = self.to_closure(function, Default::default());
                     // finish recursion
                     self.mir_proto()
                         .bind_stmt(definition.ty.clone(), Stmt::Fn(fn_ref))
@@ -131,10 +135,13 @@ impl MirGen {
 
                 self.mir_proto().end_scope_then_return(var)
             }
-            thir::Expr::Perform(input) => {
+            thir::Expr::Perform { input, output } => {
                 let var = self.gen_stmt(input)?;
+                let output_var = self
+                    .mir_proto()
+                    .bind_stmt(output.clone(), Stmt::Perform(var));
                 self.mir_proto()
-                    .bind_stmt(stmt_ty.clone(), Stmt::Perform(var))
+                    .bind_stmt(stmt_ty.clone(), Stmt::Cast(output_var))
             }
             thir::Expr::Handle { handlers, expr } => {
                 let handlers = handlers
@@ -142,17 +149,12 @@ impl MirGen {
                     .map(|Handler { effect, handler }| {
                         self.begin_mir();
                         let handler_end = self.gen_stmt(handler)?;
-                        let handler_mir = self.end_mir(handler_end, stmt_ty.clone());
-                        let handler_type = self.get_mir(&handler_mir).get_type().clone();
+                        let handler_cfg_id = self.end_mir(handler_end, stmt_ty.clone());
+                        let handler_type = self.get_mir(&handler_cfg_id).get_type().clone();
                         // call effectful mir
-                        let handler_var = self.mir_proto().bind_stmt(
-                            handler_type,
-                            Stmt::Fn(FnRef::Closure {
-                                mir: handler_mir,
-                                captured: vec![], // TODO
-                                handlers: HashMap::new(),
-                            }),
-                        );
+                        let fn_ref = self.to_closure(handler_cfg_id, Default::default());
+                        let handler_var =
+                            self.mir_proto().bind_stmt(handler_type, Stmt::Fn(fn_ref));
                         Ok((effect.clone(), handler_var))
                     })
                     .collect::<Result<HashMap<_, _>, _>>()?;
@@ -161,17 +163,11 @@ impl MirGen {
                 // effectful mir
                 self.begin_mir();
                 let effectful_end = self.gen_stmt(expr)?;
-                let effectful_mir = self.end_mir(effectful_end, stmt_ty.clone());
-                let effectful_type = self.get_mir(&effectful_mir).get_type().clone();
+                let effectful_cfg_id = self.end_mir(effectful_end, stmt_ty.clone());
+                let effectful_type = self.get_mir(&effectful_cfg_id).get_type().clone();
 
-                let effectful_fun = self.mir_proto().bind_stmt(
-                    effectful_type,
-                    Stmt::Fn(FnRef::Closure {
-                        mir: effectful_mir,
-                        captured: vec![], // TODO
-                        handlers,
-                    }),
-                );
+                let fn_ref = self.to_closure(effectful_cfg_id, handlers);
+                let effectful_fun = self.mir_proto().bind_stmt(effectful_type, Stmt::Fn(fn_ref));
                 self.mir_proto().bind_stmt(
                     stmt_ty.clone(),
                     Stmt::Apply {
@@ -181,22 +177,29 @@ impl MirGen {
                 )
             }
             thir::Expr::Apply {
-                function,
+                function: function_ty,
                 link_name,
                 arguments,
             } => {
                 let function = if link_name != &LinkName::None {
                     self.mir_proto()
-                        .bind_link(function.clone(), link_name.clone())
+                        .bind_link(function_ty.clone(), link_name.clone())
                 } else {
-                    self.mir_proto().find_var(function)
+                    self.mir_proto().find_var(function_ty)
                 };
                 if arguments.is_empty() {
                     function
                 } else {
+                    let mut parameters = function_ty.parameters();
                     let arguments = arguments
                         .iter()
-                        .map(|arg| self.gen_stmt(arg))
+                        .map(|arg| {
+                            let Some(parameter) = parameters.next() else {
+                                return Err(GenMirError::InvalidFunctionCall { function: function_ty.clone(), arguments: arguments.clone() });
+                            };
+                            let var = self.gen_stmt(arg)?;
+                            Ok(self.mir_proto().bind_stmt(parameter.clone(), Stmt::Cast(var)))
+                        })
                         .collect::<Result<Vec<_>, _>>()?;
                     self.mir_proto().bind_stmt(
                         stmt_ty.clone(),
@@ -216,7 +219,8 @@ impl MirGen {
                     .bind_stmt(stmt_ty.clone(), Stmt::Product(values))
             }
             thir::Expr::Function { parameter, body } => {
-                let fn_ref = self.gen_closure(parameter, body)?;
+                let function = self.gen_function(parameter, body)?;
+                let fn_ref = self.to_closure(function, Default::default());
                 self.mir_proto()
                     .bind_stmt(stmt_ty.clone(), Stmt::Fn(fn_ref))
             }
@@ -260,11 +264,12 @@ impl MirGen {
                 // TODO: simplify this.
                 if let thir::Expr::Apply { .. } = expr.expr {
                     // Reference needs a correct type.
-                    self.gen_stmt(&TypedHir {
+                    let var = self.gen_stmt(&TypedHir {
                         id: expr.id.clone(),
                         ty: expr.ty.clone(),
                         expr: expr.expr.clone(),
-                    })?
+                    })?;
+                    self.mir_proto().bind_stmt(stmt_ty.clone(), Stmt::Cast(var))
                 } else {
                     self.gen_stmt(&TypedHir {
                         id: expr.id.clone(),
@@ -277,7 +282,11 @@ impl MirGen {
         Ok(var_id)
     }
 
-    fn gen_closure(&mut self, parameter: &Type, body: &TypedHir) -> Result<FnRef, GenMirError> {
+    fn gen_function(
+        &mut self,
+        parameter: &Type,
+        body: &TypedHir,
+    ) -> Result<ControlFlowGraphId, GenMirError> {
         // Begin new mir
         self.begin_mir();
 
@@ -289,20 +298,26 @@ impl MirGen {
         let var = self.gen_stmt(body)?;
 
         // Out of function
-        let mir_id = self.end_mir(var, body.ty.clone());
+        Ok(self.end_mir(var, body.ty.clone()))
+    }
 
-        let mir = get_mir!(self, mir_id);
+    fn to_closure(
+        &mut self,
+        cfg_id: ControlFlowGraphId,
+        handlers: HashMap<Effect, VarId>,
+    ) -> Closure {
+        let mir = get_mir!(self, cfg_id);
         let captured = mir
             .captured
             .iter()
             .map(|ty| mir_proto!(self).find_var(ty))
             .collect();
 
-        Ok(FnRef::Closure {
-            mir: mir_id,
+        Closure {
+            mir: cfg_id,
             captured,
-            handlers: Default::default(),
-        })
+            handlers,
+        }
     }
 
     fn begin_mir(&mut self) {
@@ -336,7 +351,7 @@ mod tests {
     fn simple() {
         let thir = TypedHir {
             id: NodeId::default(),
-            ty: Type::Real,
+            ty: Type::Integer,
             expr: thir::Expr::Literal(thir::Literal::Int(1)),
         };
         let mut gen = MirGen::default();
@@ -348,7 +363,7 @@ mod tests {
         assert_eq!(
             gen.mirs[0].vars,
             Vars(vec![Var {
-                ty: Type::Real,
+                ty: Type::Integer,
                 scope: ScopeId(0)
             }])
         );

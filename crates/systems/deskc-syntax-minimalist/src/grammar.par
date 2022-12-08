@@ -157,9 +157,9 @@ EArrow: '~>';
 ContinueSym: '!<~';
 CommentBegin: '~(';
 Begin: "'\{";
-End: "'\}";
+End: "\}'";
 ExprBegin: "'\(";
-ExprEnd: "'\)";
+ExprEnd: "\)'";
 
 // Tokens
 // ".", "=" is not used.

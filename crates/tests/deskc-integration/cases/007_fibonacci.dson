@@ -5,8 +5,8 @@
       @"content" "
         ~~ type aliases
         'type add \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer;
-        'type sub \\ *<@\"minuend\" 'integer, @\"subtrahend\" 'integer> -> 'integer;
-        'type eq \\ *<@\"l\" 'integer, @\"r\" 'integer> -> +<@\"equal\" *<>, @\"unequal\" *<>>;
+        'type sub \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"diff\" 'integer;
+        'type eq \\ *<@\"l\" 'real, @\"r\" 'real> -> +<@\"equal\" *<>, @\"unequal\" *<>>;
         'type fib \\ 'integer -> 'integer;
 
         ~~ let fib
@@ -19,11 +19,11 @@
             @\"unequal\" *<> =>
               ~~ adds fib(number - 1) and fib(number - 2)
               <'integer> ^add *<
-                ^fib ^sub *<@\"minuend\" &'integer, 1>
-                ^fib ^sub *<@\"minuend\" &'integer, 2>
+                @\"l\" ^fib ^sub *<@\"l\" &'integer, @\"r\" 1>
+                @\"r\" ^fib ^sub *<@\"l\" &'integer, @\"r\" 2>
               >
-          '}
-        '};
+          }'
+        }';
         ^fib(7)
       "
     >

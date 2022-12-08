@@ -1,0 +1,21 @@
+[package]
+name = "deskc-macros"
+version = "0.0.0"
+license = "MIT OR Apache-2.0"
+description = "The application platform for your cyberpunk desk"
+homepage = "https://github.com/Hihaheho/Desk"
+repository = "https://github.com/Hihaheho/Desk"
+readme = "../../../README.md"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc-ast" }
+parser = { path = "../../systems/deskc-syntax-minimalist", version = "0.0.0", package = "deskc-syntax-minimalist" }
+dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
+
+quote = "1.0"
+proc-macro2 = "1.0"

@@ -23,8 +23,9 @@ impl<T: Into<anyhow::Error>> From<T> for QueryError {
 }
 
 impl QueryError {
-    pub fn downcast_ref<T: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static>(&self) -> Option<&T>
-    {
+    pub fn downcast_ref<T: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static>(
+        &self,
+    ) -> Option<&T> {
         self.0.downcast_ref()
     }
 }

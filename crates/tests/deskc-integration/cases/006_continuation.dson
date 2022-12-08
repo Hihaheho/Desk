@@ -7,13 +7,13 @@
         'handle '(
           $ ! \"a\" ~> 'integer;
           <'integer> ^add *<@\"l\" &'integer, @\"r\" &'integer>
-        ') '{
+        )' '{
           'string ~> 'integer =>
-            ^add *<
+            <'integer> ^add *<
               @\"l\" ! 1 ~> 'integer,
               @\"r\" ! 2 ~> 'integer,
             >
-        '}
+        }'
       "
     >
   ],

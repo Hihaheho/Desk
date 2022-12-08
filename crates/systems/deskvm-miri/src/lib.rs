@@ -5,36 +5,55 @@ pub mod operators;
 pub mod value;
 
 use anyhow::Result;
+use interpreter_builder::{MiriBuilder, MiriBuilderCreationError};
+use operators::OPERATORS;
+use value::{FnRef, Value};
 
 use std::{
     collections::{HashMap, VecDeque},
     time::Duration,
 };
 
-use dprocess::{
-    interpreter::Interpreter,
-    interpreter_output::InterpreterOutput,
-    value::{Number, Value},
-};
+use dprocess::{interpreter::Interpreter, interpreter_output::InterpreterOutput};
 use mir::{
     block::BlockId,
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
 };
-use types::Effect;
+use types::{Effect, Type};
 
 use crate::{
     eval_cfg::{EvalCfg, Handler, InnerOutput},
     value::Closure,
 };
 
-pub fn eval_mir(mirs: Mir) -> EvalMir {
+pub fn try_create_miri_builder(
+    mir: Mir,
+    parameters: &HashMap<Type, dprocess::value::Value>,
+) -> Result<MiriBuilder, MiriBuilderCreationError> {
+    let parameters = mir
+        .captured()
+        .into_iter()
+        .map(|ty| {
+            let parameter = parameters
+                .get(ty)
+                .cloned()
+                .map(Into::into)
+                .or_else(|| Some(Value::FnRef(FnRef::Operator(*OPERATORS.get(ty)?))))
+                .ok_or_else(|| MiriBuilderCreationError::ParameterNotFound(ty.clone()))?;
+            Ok((ty.clone(), parameter))
+        })
+        .collect::<Result<_, _>>()?;
+    Ok(MiriBuilder { mir, parameters })
+}
+
+fn eval_mir(mirs: Mir, parameters: HashMap<Type, Value>) -> EvalMir {
     let cfg = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMir {
         cfgs: mirs.cfgs,
         stack: vec![EvalCfg {
             cfg,
             registers: HashMap::new(),
-            parameters: HashMap::new(),
+            parameters,
             captured: HashMap::new(),
             pc_block: BlockId(0),
             pc_stmt_idx: 0,
@@ -58,6 +77,70 @@ impl EvalMir {
     pub fn get_mir(&self, cfg_id: &ControlFlowGraphId) -> &ControlFlowGraph {
         &self.cfgs[cfg_id.0]
     }
+
+    fn handle_perform(
+        &mut self,
+        effect: Effect,
+        input: Value,
+    ) -> anyhow::Result<InterpreterOutput> {
+        let mut continuation_from_handler = VecDeque::new();
+        let handler = loop {
+            if let Some(eval_mir) = self.stack.pop() {
+                // find handler
+                let handler = eval_mir.handlers.get(&effect).cloned();
+                // push eval_mir to continuation
+                continuation_from_handler.push_front(eval_mir);
+                if let Some(handler) = handler {
+                    break handler;
+                }
+            } else {
+                // When handler are not found, push back to continuation stack and perform
+                self.stack.extend(continuation_from_handler);
+                return Ok(InterpreterOutput::Performed {
+                    input: input.into(),
+                    effect,
+                });
+            }
+        };
+        let output = match handler {
+            eval_cfg::Handler::Handler(Closure {
+                mir,
+                mut captured,
+                // Really ignorable??
+                handlers: _,
+            }) => {
+                captured.insert(effect.input.clone(), input);
+                let eval_mir = EvalCfg {
+                    cfg: self.get_mir(&mir).clone(),
+                    registers: Default::default(),
+                    parameters: Default::default(),
+                    captured,
+                    pc_block: BlockId(0),
+                    pc_stmt_idx: 0,
+                    return_register: None,
+                    handlers: [(
+                        Effect {
+                            input: effect.output,
+                            output: continuation_from_handler[0].cfg.output.clone(),
+                        },
+                        Handler::Continuation(continuation_from_handler.into()),
+                    )]
+                    .into_iter()
+                    .collect(),
+                };
+                self.stack.push(eval_mir);
+                InterpreterOutput::Running
+            }
+            eval_cfg::Handler::Continuation(continuation) => {
+                self.stack.extend(continuation_from_handler);
+                self.stack.extend(continuation);
+                // path input to continuation
+                self.stack().return_or_continue_with_value(input);
+                InterpreterOutput::Running
+            }
+        };
+        Ok(output)
+    }
 }
 
 impl Interpreter for EvalMir {
@@ -66,71 +149,14 @@ impl Interpreter for EvalMir {
             InnerOutput::Return(value) => {
                 // When top level
                 if self.stack.len() == 1 {
-                    InterpreterOutput::Returned(to_sendable(value))
+                    InterpreterOutput::Returned(value.into())
                 } else {
                     self.stack.pop().unwrap();
                     self.stack().return_or_continue_with_value(value);
                     InterpreterOutput::Running
                 }
             }
-            InnerOutput::Perform { input, effect } => {
-                let mut continuation_from_handler = VecDeque::new();
-                let handler = loop {
-                    if let Some(eval_mir) = self.stack.pop() {
-                        // find handler
-                        let handler = eval_mir.handlers.get(&effect).cloned();
-                        // push eval_mir to continuation
-                        continuation_from_handler.push_front(eval_mir);
-                        if let Some(handler) = handler {
-                            break handler;
-                        }
-                    } else {
-                        // When handler are not found, push back to continuation stack and perform
-                        self.stack.extend(continuation_from_handler);
-                        return Ok(InterpreterOutput::Performed {
-                            input: to_sendable(input),
-                            effect,
-                        });
-                    }
-                };
-                match handler {
-                    eval_cfg::Handler::Handler(Closure {
-                        mir,
-                        mut captured,
-                        // Really ignorable??
-                        handlers: _,
-                    }) => {
-                        captured.insert(effect.input.clone(), input);
-                        let eval_mir = EvalCfg {
-                            cfg: self.get_mir(&mir).clone(),
-                            registers: Default::default(),
-                            parameters: Default::default(),
-                            captured,
-                            pc_block: BlockId(0),
-                            pc_stmt_idx: 0,
-                            return_register: None,
-                            handlers: [(
-                                Effect {
-                                    input: effect.output,
-                                    output: continuation_from_handler[0].cfg.output.clone(),
-                                },
-                                Handler::Continuation(continuation_from_handler.into()),
-                            )]
-                            .into_iter()
-                            .collect(),
-                        };
-                        self.stack.push(eval_mir);
-                        InterpreterOutput::Running
-                    }
-                    eval_cfg::Handler::Continuation(continuation) => {
-                        self.stack.extend(continuation_from_handler);
-                        self.stack.extend(continuation);
-                        // path input to continuation
-                        self.stack().return_or_continue_with_value(input);
-                        InterpreterOutput::Running
-                    }
-                }
-            }
+            InnerOutput::Perform { input, effect } => self.handle_perform(effect, input)?,
             InnerOutput::RunOther { fn_ref, parameters } => match fn_ref {
                 value::FnRef::Link(_) => todo!(),
                 value::FnRef::Closure(Closure {
@@ -165,74 +191,22 @@ impl Interpreter for EvalMir {
                     self.stack.push(eval_mir);
                     InterpreterOutput::Running
                 }
-                value::FnRef::Operator(op) => {
-                    todo!()
-                }
+                value::FnRef::Operator(op) => match op.call(&parameters.iter().next().unwrap().1) {
+                    value::OperatorOutput::Return(value) => {
+                        self.stack().return_or_continue_with_value(value);
+                        InterpreterOutput::Running
+                    }
+                    value::OperatorOutput::Perform { effect, input } => {
+                        self.handle_perform(effect, input)?
+                    }
+                },
             },
             InnerOutput::Running => InterpreterOutput::Running,
         };
         Ok(output)
     }
 
-    fn effect_output(&mut self, value: Value) {
-        self.stack()
-            .return_or_continue_with_value(from_sendable(value));
-    }
-}
-
-fn to_sendable(value: crate::value::Value) -> dprocess::value::Value {
-    match value {
-        value::Value::Unit => dprocess::value::Value::Unit,
-        value::Value::String(string) => dprocess::value::Value::String(string),
-        value::Value::Int(int) => dprocess::value::Value::Number(Number::Integer(int)),
-        value::Value::Real(float) => dprocess::value::Value::Number(Number::Real(float)),
-        value::Value::Rational(a, b) => dprocess::value::Value::Number(Number::Rational(a, b)),
-        value::Value::Product(values) => dprocess::value::Value::Product(
-            values
-                .into_iter()
-                .map(|(ty, value)| (ty, to_sendable(value)))
-                .collect(),
-        ),
-        value::Value::Variant { ty, value } => dprocess::value::Value::Variant {
-            ty,
-            value: Box::new(to_sendable(*value)),
-        },
-        value::Value::Vector(values) => {
-            dprocess::value::Value::Vector(values.into_iter().map(to_sendable).collect())
-        }
-        value::Value::FnRef(_) => panic!(),
-        value::Value::TraitObject { ty, value } => dprocess::value::Value::TraitObject {
-            ty,
-            value: Box::new(to_sendable(*value)),
-        },
-    }
-}
-
-fn from_sendable(value: Value) -> value::Value {
-    match value {
-        Value::Unit => value::Value::Unit,
-        Value::Number(number) => match number {
-            Number::Integer(int) => value::Value::Int(int),
-            Number::Real(float) => value::Value::Real(float),
-            Number::Rational(a, b) => value::Value::Rational(a, b),
-        },
-        Value::String(string) => value::Value::String(string),
-        Value::Product(values) => value::Value::Product(
-            values
-                .into_iter()
-                .map(|(ty, value)| (ty, from_sendable(value)))
-                .collect(),
-        ),
-        Value::Variant { ty, value } => value::Value::Variant {
-            ty,
-            value: Box::new(from_sendable(*value)),
-        },
-        Value::Vector(values) => {
-            value::Value::Vector(values.into_iter().map(from_sendable).collect())
-        }
-        Value::TraitObject { ty, value } => value::Value::TraitObject {
-            ty,
-            value: Box::new(from_sendable(*value)),
-        },
+    fn effect_output(&mut self, value: dprocess::value::Value) {
+        self.stack().return_or_continue_with_value(value.into());
     }
 }

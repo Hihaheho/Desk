@@ -17,7 +17,7 @@ types = { path = "../../components/deskc-types", version = "0.0.0", package = "d
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
-thiserror = "1.0.37"
+thiserror = "1.0"
 
 [dev-dependencies]
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }

@@ -136,8 +136,11 @@ macro_rules! test {
                     let mir = compiler.mir(run.entrypoint.clone()).unwrap_or_else(|err| {
                         print_errors(&input(&compiler, &run.entrypoint), err)
                     });
-                    let mut miri = miri::eval_mir((*mir).clone());
-                    use dprocess::interpreter::Interpreter;
+                    use dprocess::interpreter_builder::InterpreterBuilder;
+                    let mut miri =
+                        miri::try_create_miri_builder((*mir).clone(), &Default::default())
+                            .unwrap()
+                            .build();
                     let start = std::time::Instant::now();
                     let value = loop {
                         match miri.reduce(&std::time::Duration::from_secs(1)).unwrap() {

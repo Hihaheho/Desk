@@ -152,7 +152,7 @@ pub trait TypeVisitorMut {
     }
     fn super_visit_type(&mut self, ty: &mut WithSpan<Type>) {
         match &mut ty.value {
-            Type::Brand { brand, item } => self.visit_brand(brand, item),
+            Type::Labeled { brand, item } => self.visit_brand(brand, item),
             Type::Real => self.visit_real(),
             Type::Rational => self.visit_rational(),
             Type::Integer => self.visit_integer(),
@@ -174,9 +174,6 @@ pub trait TypeVisitorMut {
                 body,
             } => self.visit_let(variable, definition, body),
             Type::Variable(ident) => self.visit_variable(ident),
-            Type::BoundedVariable { bound, identifier } => {
-                self.visit_bounded_variable(bound, identifier)
-            }
             Type::Attributed { attr, ty } => self.visit_attribute(attr, ty),
             Type::Comment { text, item } => self.visit_comment(text, item),
             Type::Forall {
@@ -241,7 +238,6 @@ pub trait TypeVisitorMut {
         self.visit_type(body);
     }
     fn visit_variable(&mut self, _ident: &mut String) {}
-    fn visit_bounded_variable(&mut self, _bound: &mut WithSpan<Type>, _identifier: &mut String) {}
     fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithSpan<Type>) {
         self.visit_type(item);
     }

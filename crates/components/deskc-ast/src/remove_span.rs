@@ -100,7 +100,7 @@ pub fn remove_span(WithSpan { id, span, value }: &mut WithSpan<Expr>) {
 
 pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
     match value {
-        Type::Brand { brand: _, item } => {
+        Type::Labeled { brand: _, item } => {
             remove_span_ty(item);
         }
         Type::Real => {}
@@ -151,12 +151,6 @@ pub fn remove_span_ty(WithSpan { id, span, value }: &mut WithSpan<Type>) {
             remove_span_ty(body);
         }
         Type::Variable(_) => {}
-        Type::BoundedVariable {
-            bound,
-            identifier: _,
-        } => {
-            remove_span_ty(bound);
-        }
         Type::Attributed { attr: _, ty } => {
             remove_span_ty(ty);
         }

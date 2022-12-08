@@ -1,13 +1,7 @@
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
 
-use crate::{
-    ctx::Ctx,
-    ctx::Log,
-    substitute::substitute,
-    to_expr_type_error,
-    ty::Type,
-};
+use crate::{ctx::Ctx, ctx::Log, substitute::substitute, to_expr_type_error, ty::Type};
 
 use super::with_type::WithType;
 

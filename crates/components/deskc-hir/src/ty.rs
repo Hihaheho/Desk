@@ -42,10 +42,6 @@ pub enum Type {
         definition: Box<WithMeta<Type>>,
     },
     Variable(String),
-    BoundedVariable {
-        bound: Box<WithMeta<Self>>,
-        identifier: String,
-    },
     Brand {
         brand: Dson,
         item: Box<WithMeta<Self>>,

@@ -48,8 +48,14 @@ impl TypedHirGen {
                 definition: Box::new(self.gen(definition)),
                 body: Box::new(self.gen(expression)),
             },
-            Expr::Perform { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(input))),
-            Expr::Continue { input, output: _ } => thir::Expr::Perform(Box::new(self.gen(input))),
+            Expr::Perform { input, output } => thir::Expr::Perform {
+                input: Box::new(self.gen(input)),
+                output: self.get_type(output),
+            },
+            Expr::Continue { input, output } => thir::Expr::Perform {
+                input: Box::new(self.gen(input)),
+                output: self.get_type(output),
+            },
             Expr::Handle { handlers, expr } => thir::Expr::Handle {
                 handlers: handlers
                     .iter()
@@ -84,15 +90,14 @@ impl TypedHirGen {
             Expr::Product(values) => {
                 thir::Expr::Product(values.iter().map(|value| self.gen(value)).collect())
             }
-            // one ID disappeared here, but fine
             Expr::Typed { ty: _, item: expr } => self.gen(expr).expr,
             Expr::Function { parameter: _, body } => {
                 // get type from whole function is more accurate than from parameter.
                 let function_ty = self.get_type(expr);
-                if let Type::Function { parameter, body: _ } = function_ty {
+                if let Type::Function(function) = function_ty {
                     // Flatten the function
                     thir::Expr::Function {
-                        parameter: *parameter,
+                        parameter: function.parameter,
                         body: Box::new(self.gen(body)),
                     }
                 } else {
@@ -158,6 +163,7 @@ mod tests {
 
     use ids::{Entrypoint, FileId, NodeId};
     use thir::visitor::TypedHirVisitorMut;
+    use types::Function;
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -227,13 +233,13 @@ mod tests {
             remove_id(gen.gen(&expr)),
             TypedHir {
                 id: NodeId::default(),
-                ty: Type::Function {
-                    parameter: Box::new(Type::Real),
-                    body: Box::new(Type::Function {
-                        parameter: Box::new(Type::String),
-                        body: Box::new(Type::Real)
-                    }),
-                },
+                ty: Type::Function(Box::new(Function {
+                    parameter: Type::Real,
+                    body: Type::Function(Box::new(Function {
+                        parameter: Type::String,
+                        body: Type::Real
+                    })),
+                })),
                 expr: thir::Expr::Function {
                     parameter: Type::Real,
                     body: Box::new(TypedHir {

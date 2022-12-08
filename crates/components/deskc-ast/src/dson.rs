@@ -43,8 +43,6 @@ pub enum ExprToDsonError {
     UnexpectedThis,
     #[error("unexpected function type")]
     UnexpectedFunctionTy,
-    #[error("unexpected bounded variable")]
-    UnexpectedBoundedVariable,
     #[error("unexpected forall")]
     UnexpectedForall,
     #[error("unexpected exists")]
@@ -122,7 +120,7 @@ impl TryFrom<WithSpan<Type>> for dson::Type {
 
     fn try_from(ty: WithSpan<Type>) -> Result<Self, Self::Error> {
         match ty.value {
-            Type::Brand { brand, item } => Ok(dson::Type::Brand {
+            Type::Labeled { brand, item } => Ok(dson::Type::Brand {
                 brand: Box::new(brand),
                 item: Box::new(dson::Type::try_from(*item)?),
             }),
@@ -170,7 +168,6 @@ impl TryFrom<WithSpan<Type>> for dson::Type {
             Type::Infer => Err(ExprToDsonError::UnexpectedInfer),
             Type::This => Err(ExprToDsonError::UnexpectedThis),
             Type::Function(_) => Err(ExprToDsonError::UnexpectedFunctionTy),
-            Type::BoundedVariable { .. } => Err(ExprToDsonError::UnexpectedBoundedVariable),
             Type::Forall { .. } => Err(ExprToDsonError::UnexpectedForall),
             Type::Exists { .. } => Err(ExprToDsonError::UnexpectedExists),
         }

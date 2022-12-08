@@ -53,7 +53,11 @@ pub enum Expr {
         definition: Box<TypedHir>,
         body: Box<TypedHir>,
     },
-    Perform(Box<TypedHir>),
+    Perform {
+        input: Box<TypedHir>,
+        // This is needed because output type may differ from expression type.
+        output: Type,
+    },
     Handle {
         handlers: Vec<Handler>,
         expr: Box<TypedHir>,

@@ -87,61 +87,46 @@ impl EvalCfg {
                 ),
                 Stmt::Vector(_) => todo!(),
                 Stmt::Map(_) => todo!(),
-                Stmt::Fn(fn_ref) => {
-                    let fn_ref = match fn_ref {
-                        mir::stmt::FnRef::Link(_) => todo!(),
-                        mir::stmt::FnRef::Closure {
-                            mir,
-                            captured,
-                            handlers,
-                        } => FnRef::Closure(Closure {
-                            mir: *mir,
-                            captured: captured
-                                .iter()
-                                .map(|var| {
-                                    (self.get_var_ty(var).clone(), self.load_value(var).clone())
-                                })
-                                .collect(),
-                            handlers: handlers
-                                .iter()
-                                .map(|(effect, handler)| {
-                                    (
-                                        effect.clone(),
-                                        if let Value::FnRef(FnRef::Closure(closure)) =
-                                            self.load_value(handler).clone()
-                                        {
-                                            Handler::Handler(closure)
-                                        } else {
-                                            panic!("handler must be FnRef::Closure")
-                                        },
-                                    )
-                                })
-                                .collect(),
-                        }),
-                    };
-                    Value::FnRef(fn_ref)
-                }
+                Stmt::Fn(mir::stmt::Closure {
+                    mir,
+                    captured,
+                    handlers,
+                }) => Value::FnRef(FnRef::Closure(Closure {
+                    mir: *mir,
+                    captured: captured
+                        .iter()
+                        .map(|var| (self.get_var_ty(var).clone(), self.load_value(var).clone()))
+                        .collect(),
+                    handlers: handlers
+                        .iter()
+                        .map(|(effect, handler)| {
+                            (
+                                effect.clone(),
+                                if let Value::FnRef(FnRef::Closure(closure)) =
+                                    self.load_value(handler).clone()
+                                {
+                                    Handler::Handler(closure)
+                                } else {
+                                    panic!("handler must be FnRef::Closure")
+                                },
+                            )
+                        })
+                        .collect(),
+                })),
                 Stmt::Perform(var) => {
                     // Save the return register to get result from continuation.
                     self.return_register = Some(*bind_var);
-                    if let Type::Effectful {
-                        ty: output,
-                        effects: _,
-                    } = self.get_var_ty(bind_var)
-                    {
-                        let effect = Effect {
-                            input: self.get_var_ty(var).clone(),
-                            output: *output.clone(),
-                        };
-                        // Increment pc before perform is important
-                        self.pc_stmt_idx += 1;
-                        return InnerOutput::Perform {
-                            input: self.load_value(var).clone(),
-                            effect,
-                        };
-                    } else {
-                        panic!("type should be effectful")
-                    }
+                    let output = self.get_var_ty(bind_var);
+                    let effect = Effect {
+                        input: self.get_var_ty(var).clone(),
+                        output: output.clone(),
+                    };
+                    // Increment pc before perform is important
+                    self.pc_stmt_idx += 1;
+                    return InnerOutput::Perform {
+                        input: self.load_value(var).clone(),
+                        effect,
+                    };
                 }
                 Stmt::Apply {
                     function,
@@ -164,7 +149,7 @@ impl EvalCfg {
                     }
                 }
                 Stmt::Parameter => {
-                    // unwrap is safe because typeinfer ensures that a parameter must be exist.
+                    // this is safe because typeinfer ensures that a parameter must be exist.
                     let ty = self.get_var_ty(bind_var);
                     self.parameters
                         .get(ty)
@@ -218,7 +203,11 @@ impl EvalCfg {
                     value: Box::new(value.clone()),
                 }
             }
-            (_value, Type::Product(_), Type::Product(_types)) => {
+            (value, ty, Type::Label { label: _, item }) if *ty == **item => value.clone(),
+            (value, Type::Label { label: _, item }, ty) if **item == *ty => value.clone(),
+            (_value, Type::Product(types1), Type::Product(types2)) => {
+                dbg!(types1);
+                dbg!(types2);
                 todo!()
             }
             (_value, Type::Product(_types), _ty) => {

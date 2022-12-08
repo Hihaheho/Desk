@@ -148,7 +148,7 @@ mod tests {
         stmt::{Const, Stmt, StmtBind, Terminator},
         var::{Var, VarId, Vars},
     };
-    use miri::interpreter_builder::MiriBuilder;
+    use miri::{interpreter_builder::MiriBuilder, try_create_miri_builder};
     use types::Type;
 
     use crate::{desk_vm::DeskVm, scheduler::OfficialScheduler};
@@ -325,27 +325,31 @@ mod tests {
 
     fn dprocess_manifest() -> DProcessManifest {
         DProcessManifest::new(
-            MiriBuilder(Mir {
-                entrypoint: ControlFlowGraphId(0),
-                cfgs: vec![ControlFlowGraph {
-                    parameters: vec![],
-                    captured: vec![],
-                    output: Type::Real,
-                    vars: Vars(vec![Var {
-                        ty: Type::Real,
-                        scope: ScopeId(0),
-                    }]),
-                    scopes: vec![Scope { super_scope: None }],
-                    blocks: vec![BasicBlock {
-                        stmts: vec![StmtBind {
-                            var: VarId(0),
-                            stmt: Stmt::Const(Const::Int(1)),
+            try_create_miri_builder(
+                Mir {
+                    entrypoint: ControlFlowGraphId(0),
+                    cfgs: vec![ControlFlowGraph {
+                        parameters: vec![],
+                        captured: vec![],
+                        output: Type::Real,
+                        vars: Vars(vec![Var {
+                            ty: Type::Real,
+                            scope: ScopeId(0),
+                        }]),
+                        scopes: vec![Scope { super_scope: None }],
+                        blocks: vec![BasicBlock {
+                            stmts: vec![StmtBind {
+                                var: VarId(0),
+                                stmt: Stmt::Const(Const::Int(1)),
+                            }],
+                            terminator: Terminator::Return(VarId(0)),
                         }],
-                        terminator: Terminator::Return(VarId(0)),
+                        links: vec![],
                     }],
-                    links: vec![],
-                }],
-            }),
+                },
+                &Default::default(),
+            )
+            .unwrap(),
             Default::default(),
             Default::default(),
         )

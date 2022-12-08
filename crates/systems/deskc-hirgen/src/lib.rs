@@ -114,13 +114,7 @@ impl HirGen {
                 definition: Box::new(self.gen_type(definition)?),
                 body: Box::new(self.gen_type(body)?),
             }),
-            ast::ty::Type::BoundedVariable { bound, identifier } => {
-                self.with_meta(Type::BoundedVariable {
-                    bound: Box::new(self.gen_type(bound)?),
-                    identifier: identifier.clone(),
-                })
-            }
-            ast::ty::Type::Brand { brand, item } => {
+            ast::ty::Type::Labeled { brand, item } => {
                 if self.brands.borrow().contains(brand) {
                     self.with_meta(Type::Brand {
                         brand: brand.clone(),

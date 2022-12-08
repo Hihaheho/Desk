@@ -11,7 +11,7 @@ pub trait TypedHirVisitor {
             }
             crate::Expr::Match { input, cases } => self.visit_match(input, cases),
             crate::Expr::Let { definition, body } => self.visit_let(definition, body),
-            crate::Expr::Perform(perform) => self.visit_perform(perform),
+            crate::Expr::Perform { input, output } => self.visit_perform(input, output),
             crate::Expr::Handle { handlers, expr } => self.visit_handle(handlers, expr),
             crate::Expr::Apply {
                 function,
@@ -41,8 +41,9 @@ pub trait TypedHirVisitor {
         self.visit(definition);
         self.visit(body);
     }
-    fn visit_perform(&mut self, perform: &crate::TypedHir) {
-        self.visit(perform);
+    fn visit_perform(&mut self, input: &crate::TypedHir, output: &crate::Type) {
+        self.visit(input);
+        self.visit_type(output);
     }
     fn visit_handle(&mut self, handlers: &[crate::Handler], expr: &crate::TypedHir) {
         for handler in handlers {
@@ -109,7 +110,7 @@ pub trait TypedHirVisitorMut {
             }
             crate::Expr::Match { input, cases } => self.visit_match(input, cases),
             crate::Expr::Let { definition, body } => self.visit_let(definition, body),
-            crate::Expr::Perform(perform) => self.visit_perform(perform),
+            crate::Expr::Perform { input, output } => self.visit_perform(input, output),
             crate::Expr::Handle { handlers, expr } => self.visit_handle(handlers, expr),
             crate::Expr::Apply {
                 function,
@@ -139,8 +140,9 @@ pub trait TypedHirVisitorMut {
         self.visit(definition);
         self.visit(body);
     }
-    fn visit_perform(&mut self, perform: &mut crate::TypedHir) {
-        self.visit(perform);
+    fn visit_perform(&mut self, input: &mut crate::TypedHir, output: &mut crate::Type) {
+        self.visit(input);
+        self.visit_type(output);
     }
     fn visit_handle(&mut self, handlers: &mut [crate::Handler], expr: &mut crate::TypedHir) {
         for handler in handlers {

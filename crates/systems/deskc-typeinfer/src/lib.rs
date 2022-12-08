@@ -325,8 +325,8 @@ mod tests {
                   x ~> y => '(
                     'do ! 1 ~> 'string;
                     #1 ! &y ~> z
-                  ')
-                '}
+                  )'
+                }'
                 "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -377,7 +377,7 @@ mod tests {
             r#"
             \ x -> \ y -> #3 'handle #2 ^ \'integer -> y (! &x ~> 'integer) '{
               x ~> 'integer => #1 !<~ 1 ~> 'string
-            '}
+            }'
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
@@ -416,16 +416,16 @@ mod tests {
         let input = r#"
             $ #1 \ x -> \ y -> ^#2 'handle ^ x 1 '{
               'integer ~> 'string -> ^ y 2
-            '};
+            }';
             #3 ^fun(
               \ @"x" 'integer -> '{
                 'do ! 1 ~> 'string;
                 ! @"a" *<> ~> 'integer,
-              '}
+              }'
               \ @"y" 'integer -> '{
                 'do ! "a" ~> 'integer;
                 ! @"b" *<> ~> 'integer
-              '}
+              }'
             )
             "#;
         let expr = parse(input);
@@ -565,7 +565,7 @@ mod tests {
               #2 'match #1 &x '{
                 'integer => <@"a" 'integer> 1,
                 'string => <@"b" 'integer> 2,
-              '}
+              }'
             "#,
         );
         let (ctx, _ty) = crate::synth(100, &expr).unwrap();
