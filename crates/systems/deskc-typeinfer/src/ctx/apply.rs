@@ -1,7 +1,7 @@
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
 
-use crate::{ctx::Ctx, ctx::Log, substitute::substitute, to_expr_type_error, internal_type::Type};
+use crate::{ctx::Ctx, ctx::Log, internal_type::Type, substitute::substitute, to_expr_type_error};
 
 use super::with_type::WithType;
 
@@ -56,10 +56,10 @@ impl Ctx {
                 return Err(to_expr_type_error(
                     expr,
                     TypeError::NotApplicable {
-                        ty: self.gen_type(ty),
+                        ty: self.gen_type_or_string(ty),
                         expr: Box::new(expr.value.clone()),
                     },
-                ))
+                ));
             }
         };
         Ok(ret)

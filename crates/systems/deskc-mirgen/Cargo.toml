@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
+hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 mir = { path = "../../components/deskc-mir", version = "0.0.0", package = "deskc-mir" }
-thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
-thiserror = "1.0.37"
 ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
+errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }

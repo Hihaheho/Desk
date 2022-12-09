@@ -7,8 +7,8 @@ use hir::{
 use crate::{
     ctx::Ctx,
     ctx::Log,
-    to_expr_type_error,
     internal_type::{effect_expr::EffectExpr, Effect, Type},
+    to_expr_type_error,
     utils::sum_all,
 };
 
@@ -25,14 +25,13 @@ impl Ctx {
             Expr::Literal(Literal::Rational(_, _)) => self.clone().with_type(Type::Rational),
             Expr::Literal(Literal::Real(_)) => self.clone().with_type(Type::Real),
             Expr::Literal(Literal::String(_)) => self.clone().with_type(Type::String),
-            Expr::Literal(Literal::Hole) => todo!(),
             Expr::Do { stmt, expr } => {
                 let WithType(ctx, _) = self.synth(stmt)?.recover_effects();
                 ctx.synth(expr)?.recover_effects()
             }
             Expr::Let {
                 definition,
-                expression,
+                expr: expression,
             } => {
                 let WithType(ctx, def_ty) = self.synth(definition)?.recover_effects();
                 let ctx = ctx.make_polymorphic(definition, def_ty);
@@ -89,46 +88,38 @@ impl Ctx {
                 // check handler
                 handlers
                     .iter()
-                    .map(
-                        |Handler {
-                             input,
-                             output,
-                             handler,
-                         }| {
-                            let output = self.save_from_hir_type(output);
-                            // push handler input type
-                            ctx.continue_input.borrow_mut().push(output.clone());
+                    .map(|Handler { effect, handler }| {
+                        let output = self.save_from_hir_type(&effect.output);
+                        // push handler input type
+                        ctx.continue_input.borrow_mut().push(output.clone());
 
-                            let WithEffects(WithType(next_ctx, handler_type), effects) =
-                                ctx.synth(handler)?;
-                            ctx = next_ctx;
+                        let WithEffects(WithType(next_ctx, handler_type), effects) =
+                            ctx.synth(handler)?;
+                        ctx = next_ctx;
 
-                            // pop handler input type
-                            ctx.continue_input.borrow_mut().pop();
+                        // pop handler input type
+                        ctx.continue_input.borrow_mut().pop();
 
-                            // handled effect and continue effect
-                            let handled_effect = Effect {
-                                input: ctx.save_from_hir_type(input),
-                                output,
-                            };
-                            let continue_effect = Effect {
-                                input: handled_effect.output.clone(),
-                                output: ctx.substitute_from_ctx(&expr_ty),
-                            };
-                            handler_types.push(handler_type);
-                            handled_effects.push(handled_effect);
-                            handler_effects.push(
-                                // remove continue effect
-                                EffectExpr::Sub {
-                                    minuend: Box::new(effects),
-                                    subtrahend: Box::new(EffectExpr::Effects(vec![
-                                        continue_effect,
-                                    ])),
-                                },
-                            );
-                            Ok(())
-                        },
-                    )
+                        // handled effect and continue effect
+                        let handled_effect = Effect {
+                            input: ctx.save_from_hir_type(&effect.input),
+                            output,
+                        };
+                        let continue_effect = Effect {
+                            input: handled_effect.output.clone(),
+                            output: ctx.substitute_from_ctx(&expr_ty),
+                        };
+                        handler_types.push(handler_type);
+                        handled_effects.push(handled_effect);
+                        handler_effects.push(
+                            // remove continue effect
+                            EffectExpr::Sub {
+                                minuend: Box::new(effects),
+                                subtrahend: Box::new(EffectExpr::Effects(vec![continue_effect])),
+                            },
+                        );
+                        Ok(())
+                    })
                     .collect::<Result<Vec<_>, _>>()?;
 
                 // pop continue output type.
@@ -187,7 +178,10 @@ impl Ctx {
                         function: Box::new(fun),
                         arguments: arguments
                             .iter()
-                            .map(|arg| self.get_type(&arg.meta.id))
+                            .map(|arg| {
+                                self.get_type(&arg.meta.id)
+                                    .expect("arguments should be typeinferred")
+                            })
                             .collect(),
                     })
                     .with_type(ty)

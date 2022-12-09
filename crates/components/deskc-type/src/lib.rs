@@ -1,7 +1,6 @@
-use std::collections::HashMap;
+pub mod conclusion;
 
 use dson::Dson;
-use ids::NodeId;
 use serde::{Deserialize, Serialize};
 
 pub type Id = usize;
@@ -91,30 +90,6 @@ impl Type {
 
     pub fn parameters<'a>(&'a self) -> ParametersIter<'a> {
         ParametersIter(self)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct Types {
-    pub types: HashMap<NodeId, Type>,
-}
-
-impl Types {
-    pub fn get(&self, id: &NodeId) -> Option<&Type> {
-        self.types.get(id)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct IdGen {
-    pub next_id: Id,
-}
-
-impl IdGen {
-    pub fn next_id(&mut self) -> Id {
-        let id = self.next_id;
-        self.next_id += 1;
-        id
     }
 }
 

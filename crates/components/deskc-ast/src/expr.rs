@@ -2,7 +2,10 @@ use dson::Dson;
 use ids::CardId;
 pub use ids::LinkName;
 
-use crate::{span::WithSpan, ty::Type};
+use crate::{
+    span::WithSpan,
+    ty::{Effect, Type},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -18,8 +21,7 @@ impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
-    pub input: WithSpan<Type>,
-    pub output: WithSpan<Type>,
+    pub effect: Effect,
     pub handler: WithSpan<Expr>,
 }
 

@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use ids::LinkName;
 use mir::{
     block::{BasicBlock, BlockId},
     mir::ControlFlowGraph,
@@ -7,7 +8,6 @@ use mir::{
     stmt::{LinkId, Stmt, StmtBind, Terminator},
     var::{Var, VarId, Vars},
 };
-use thir::LinkName;
 use ty::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};

@@ -16,6 +16,10 @@ macro_rules! test {
                     error.downcast_ref::<errors::typeinfer::ExprTypeError>()
                 {
                     typeinfer_error.into()
+                } else if let Some(mirgen_error) =
+                    error.downcast_ref::<errors::mirgen::GenMirError>()
+                {
+                    mirgen_error.into()
                 } else {
                     panic!("unexpected error: {:?}", error);
                 };
@@ -59,10 +63,16 @@ macro_rules! test {
                     source: Arc::new(input.clone()),
                 },
             );
-            let thir = compiler
-                .thir(Entrypoint::File(case_file_id))
+            // Type check of case file
+            let _ = compiler
+                .typeinfer(Entrypoint::File(case_file_id.clone()))
                 .unwrap_or_else(|err| print_errors(&input, err));
-            let dson = thir2dson::thir_to_dson(&thir).unwrap();
+            let ast = compiler
+                .ast(case_file_id)
+                .unwrap_or_else(|err| print_errors(&input, err));
+            let dson = ast.as_ref().clone().try_into().unwrap_or_else(|err| {
+                panic!("failed to convert ast to dson: {:?}", err);
+            });
             let test_case: TestCase = from_dson(dson).unwrap();
 
             // assertions
@@ -85,8 +95,8 @@ macro_rules! test {
             if let Some(typed_vec) = test_case.assertions.typed {
                 use dson::Dson;
                 use hir::expr::Expr;
-                use hir::helper::HirVisitor;
                 use hir::meta::WithMeta;
+                use hir::visitor::HirVisitor;
                 use std::collections::HashMap;
                 #[derive(Default)]
                 struct HirIds {
@@ -113,17 +123,17 @@ macro_rules! test {
                     hir_ids.visit_expr(&hir);
                     let attrs = hir_ids.ids.into_iter().collect::<HashMap<_, _>>();
 
-                    let ctx = compiler
-                        .typeinfer(typed.entrypoint.clone())
-                        .unwrap_or_else(|err| {
-                            print_errors(&input(&compiler, &typed.entrypoint), err)
-                        });
-                    let types = ctx.get_types();
+                    let conclusions =
+                        compiler
+                            .typeinfer(typed.entrypoint.clone())
+                            .unwrap_or_else(|err| {
+                                print_errors(&input(&compiler, &typed.entrypoint), err)
+                            });
 
                     for (id, ty) in typed.typings {
                         let actual = attrs
                             .get(&id)
-                            .and_then(|id| types.get(id).cloned())
+                            .and_then(|id| conclusions.get_type(id).cloned())
                             .expect(&format!("no type for {}", id));
                         assert_eq!(actual, ty, "type mismatch for {}", id);
                     }

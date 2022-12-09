@@ -147,7 +147,7 @@ impl Ctx {
                 }
                 ty => {
                     return Err(TypeError::NotInstantiableSupertype {
-                        ty: self.gen_type(ty),
+                        ty: self.gen_type_or_string(ty),
                     })
                 }
             }

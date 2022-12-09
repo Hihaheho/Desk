@@ -1,5 +1,6 @@
 mod error;
 mod gen_effect_expr;
+
 use dson::Dson;
 use ids::NodeId;
 
@@ -13,7 +14,7 @@ use error::HirGenError;
 use hir::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     meta::{Meta, WithMeta},
-    ty::{Function, Type},
+    ty::{Effect, Function, Type},
     Card, Cards,
 };
 
@@ -202,7 +203,10 @@ impl HirGen {
                 ast::expr::Literal::Rational(a, b) => Literal::Rational(*a, *b),
                 ast::expr::Literal::Real(value) => Literal::Real(*value),
             })),
-            ast::expr::Expr::Hole => self.with_meta(Expr::Literal(Literal::Hole)),
+            ast::expr::Expr::Hole => self.with_meta(Expr::Perform {
+                input: Box::new(self.with_no_span(Expr::Product(vec![]))),
+                output: self.with_no_span(Type::Infer),
+            }),
             ast::expr::Expr::Do { stmt, expr } => self.with_meta(Expr::Do {
                 stmt: Box::new(self.gen_card(stmt)?),
                 expr: Box::new(self.gen_card(expr)?),
@@ -212,7 +216,7 @@ impl HirGen {
                 body: expression,
             } => self.with_meta(Expr::Let {
                 definition: Box::new(self.gen_card(definition)?),
-                expression: Box::new(self.gen_card(expression)?),
+                expr: Box::new(self.gen_card(expression)?),
             }),
             ast::expr::Expr::Perform { input, output } => self.with_meta(Expr::Perform {
                 input: Box::new(self.gen_card(input)?),
@@ -225,19 +229,15 @@ impl HirGen {
             ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
                 handlers: handlers
                     .iter()
-                    .map(
-                        |ast::expr::Handler {
-                             input,
-                             output,
-                             handler,
-                         }| {
-                            Ok(Handler {
-                                input: self.gen_type(input)?,
-                                output: self.gen_type(output)?,
-                                handler: self.gen_card(handler)?,
-                            })
-                        },
-                    )
+                    .map(|ast::expr::Handler { effect, handler }| {
+                        Ok(Handler {
+                            effect: Effect {
+                                input: self.gen_type(&effect.input)?,
+                                output: self.gen_type(&effect.output)?,
+                            },
+                            handler: self.gen_card(handler)?,
+                        })
+                    })
                     .collect::<Result<Vec<_>, _>>()?,
                 expr: Box::new(self.gen_card(expr)?),
             }),
@@ -373,6 +373,17 @@ impl HirGen {
             value,
         }
     }
+
+    fn with_no_span<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
+        WithMeta {
+            meta: Meta {
+                id: NodeId::new(),
+                attrs: vec![],
+                span: None,
+            },
+            value,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -383,9 +394,9 @@ mod tests {
     use deskc::card::DeskcQueries;
     use deskc::{Code, SyntaxKind};
     use hir::{
-        helper::remove_meta,
         meta::{dummy_meta, Meta},
         ty::Type,
+        visitor::remove_meta,
     };
     use ids::FileId;
     use pretty_assertions::assert_eq;
@@ -417,7 +428,9 @@ mod tests {
                         attr: Dson::Literal(dson::Literal::Integer(1)),
                         item: Box::new(dummy_span(ast::expr::Expr::Attributed {
                             attr: Dson::Literal(dson::Literal::Integer(2)),
-                            item: Box::new(dummy_span(ast::expr::Expr::Hole)),
+                            item: Box::new(dummy_span(ast::expr::Expr::Literal(
+                                ast::expr::Literal::Integer(3)
+                            ))),
                         },)),
                     },)],
                 },),)
@@ -440,7 +453,7 @@ mod tests {
                             ],
                             span: Default::default()
                         },
-                        value: Expr::Literal(Literal::Hole)
+                        value: Expr::Literal(Literal::Integer(3))
                     }],
                 },
             }
@@ -479,7 +492,7 @@ mod tests {
                     link_name: Default::default(),
                     arguments: vec![],
                 })),
-                expression: Box::new(dummy_meta(Expr::Let {
+                expr: Box::new(dummy_meta(Expr::Let {
                     definition: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Brand {
                             brand: Dson::Literal(dson::Literal::String("brand".into())),
@@ -488,7 +501,7 @@ mod tests {
                         link_name: Default::default(),
                         arguments: vec![],
                     })),
-                    expression: Box::new(dummy_meta(Expr::Apply {
+                    expr: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Label {
                             label: Dson::Literal(dson::Literal::String("label".into())),
                             item: Box::new(dummy_meta(Type::Integer)),

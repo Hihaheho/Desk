@@ -5,7 +5,7 @@ use codebase::code::Code;
 use hir::meta::WithMeta;
 use ids::{Entrypoint, FileId};
 use mir::mir::Mir;
-use thir::TypedHir;
+use ty::conclusion::TypeConclusions;
 
 use crate::{
     error::DeskcError, hir_result::CardsResult, parse_source_code, query_result::QueryResult,
@@ -18,8 +18,7 @@ pub trait DeskcQueries {
     fn ast(&self, id: FileId) -> QueryResult<WithSpan<ast::expr::Expr>>;
     fn cards(&self, id: FileId) -> QueryResult<CardsResult>;
     fn hir(&self, entrypoint: Entrypoint) -> QueryResult<WithMeta<hir::expr::Expr>>;
-    fn typeinfer(&self, entrypoint: Entrypoint) -> QueryResult<typeinfer::ctx::Ctx>;
-    fn thir(&self, entrypoint: Entrypoint) -> QueryResult<TypedHir>;
+    fn typeinfer(&self, entrypoint: Entrypoint) -> QueryResult<TypeConclusions>;
     fn mir(&self, entrypoint: Entrypoint) -> QueryResult<Mir>;
 }
 
@@ -66,22 +65,16 @@ fn hir(db: &dyn DeskcQueries, entrypoint: Entrypoint) -> QueryResult<WithMeta<hi
     Ok(Arc::new(hir))
 }
 
-fn typeinfer(db: &dyn DeskcQueries, entrypoint: Entrypoint) -> QueryResult<typeinfer::ctx::Ctx> {
+fn typeinfer(db: &dyn DeskcQueries, entrypoint: Entrypoint) -> QueryResult<TypeConclusions> {
     let cards_result = db.cards(entrypoint.file_id().clone())?;
     let hir = db.hir(entrypoint)?;
-    let (ctx, _ty) = typeinfer::synth(cards_result.next_id, &hir)?;
-    Ok(Arc::new(ctx))
-}
-
-fn thir(db: &dyn DeskcQueries, entrypoint: Entrypoint) -> QueryResult<TypedHir> {
-    let hir = db.hir(entrypoint.clone())?;
-    let ctx = db.typeinfer(entrypoint)?;
-    let thir = thirgen::gen_typed_hir(ctx.next_id(), ctx.get_types(), &hir);
-    Ok(Arc::new(thir))
+    let conclusion = typeinfer::synth(cards_result.next_id, &hir)?;
+    Ok(Arc::new(conclusion))
 }
 
 fn mir(db: &dyn DeskcQueries, entrypoint: Entrypoint) -> QueryResult<Mir> {
-    let thir = db.thir(entrypoint)?;
-    let mir = mirgen::gen_mir(&thir)?;
+    let hir = db.hir(entrypoint.clone())?;
+    let conclusion = db.typeinfer(entrypoint)?;
+    let mir = mirgen::gen_mir(&hir, &conclusion)?;
     Ok(Arc::new(mir))
 }

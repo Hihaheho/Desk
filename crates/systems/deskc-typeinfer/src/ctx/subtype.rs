@@ -15,8 +15,8 @@ impl Ctx {
                 Ok(self.clone())
             } else {
                 Err(TypeError::NotSubtype {
-                    sub: self.gen_type(sub),
-                    ty: self.gen_type(ty),
+                    sub: self.gen_type_or_string(sub),
+                    ty: self.gen_type_or_string(ty),
                 })
             }
         };
@@ -34,7 +34,7 @@ impl Ctx {
                 if occurs_in(id, ty) {
                     return Err(TypeError::CircularExistential {
                         id: *id,
-                        ty: self.gen_type(ty),
+                        ty: self.gen_type_or_string(ty),
                     });
                 } else {
                     self.instantiate_subtype(id, ty)?
@@ -44,7 +44,7 @@ impl Ctx {
                 if occurs_in(id, sub) {
                     return Err(TypeError::CircularExistential {
                         id: *id,
-                        ty: self.gen_type(ty),
+                        ty: self.gen_type_or_string(ty),
                     });
                 } else {
                     self.instantiate_supertype(sub, id)?
@@ -60,8 +60,8 @@ impl Ctx {
                     self.clone()
                 } else {
                     return Err(TypeError::NotSubtype {
-                        sub: self.gen_type(sub),
-                        ty: self.gen_type(ty),
+                        sub: self.gen_type_or_string(sub),
+                        ty: self.gen_type_or_string(ty),
                     });
                 }
             }
@@ -73,8 +73,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                    sub: self.gen_type(sub),
-                    ty: self.gen_type(ty),
+                    sub: self.gen_type_or_string(sub),
+                    ty: self.gen_type_or_string(ty),
                 })?,
             (Type::Sum(sub_types), Type::Sum(types)) => {
                 if types.iter().all(|ty| {
@@ -85,8 +85,8 @@ impl Ctx {
                     self.clone()
                 } else {
                     return Err(TypeError::NotSubtype {
-                        sub: self.gen_type(sub),
-                        ty: self.gen_type(ty),
+                        sub: self.gen_type_or_string(sub),
+                        ty: self.gen_type_or_string(ty),
                     });
                 }
             }
@@ -98,8 +98,8 @@ impl Ctx {
                     Err(_) => None,
                 })
                 .ok_or(TypeError::NotSubtype {
-                    sub: self.gen_type(sub),
-                    ty: self.gen_type(ty),
+                    sub: self.gen_type_or_string(sub),
+                    ty: self.gen_type_or_string(ty),
                 })?,
             (
                 Type::Function {
@@ -191,8 +191,8 @@ impl Ctx {
             (sub, Type::Effectful { ty, effects: _ }) => self.subtype(sub, ty)?,
             (_, _) => {
                 return Err(TypeError::NotSubtype {
-                    sub: self.gen_type(sub),
-                    ty: self.gen_type(ty),
+                    sub: self.gen_type_or_string(sub),
+                    ty: self.gen_type_or_string(ty),
                 })
             }
         };

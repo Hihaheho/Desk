@@ -28,6 +28,7 @@ pub enum MinimalistSyntaxError {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use ast::{
         expr::{Handler, Literal, MapElem, MatchCase},
         remove_span::remove_span,
@@ -178,8 +179,10 @@ mod tests {
             Expr::Handle {
                 expr: bw(Expr::Hole),
                 handlers: vec![Handler {
-                    input: w(Type::Integer),
-                    output: w(Type::String),
+                    effect: Effect {
+                        input: w(Type::Integer),
+                        output: w(Type::String),
+                    },
                     handler: w(Expr::Literal(Literal::Integer(3))),
                 }],
             }

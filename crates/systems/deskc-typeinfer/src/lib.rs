@@ -10,24 +10,31 @@ mod well_formed;
 
 use std::{cell::RefCell, rc::Rc};
 
-use ctx::{with_effects::WithEffects, with_type::WithType, Ctx};
+use ctx::Ctx;
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
-use internal_type::Type;
-use ty::IdGen;
+use ty::conclusion::TypeConclusions;
+use utils::IdGen;
 
-pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
-    Ctx {
+pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<TypeConclusions, ExprTypeError> {
+    let ctx = Ctx {
         id_gen: Rc::new(RefCell::new(IdGen { next_id })),
         ..Default::default()
     }
-    .synth(expr)
-    .map(|WithEffects(WithType(ctx, ty), effects)| {
-        assert!(ctx.continue_input.borrow().is_empty());
-        assert!(ctx.continue_output.borrow().is_empty());
-        let ty = ctx.substitute_from_ctx(&ty);
-        let with_effects = ctx.with_effects(ty, effects);
-        (ctx, with_effects)
+    .synth(expr)?
+    .0
+     .0;
+    let types = expr
+        .get_expr_ids()
+        .filter_map(|id| {
+            let ty = ctx.gen_type(&ctx.get_type(&id).ok()?).ok()?;
+            Some((id, ty))
+        })
+        .collect();
+    let cast_strategies = ctx.cast_strategies.borrow().clone();
+    Ok(TypeConclusions {
+        types,
+        cast_strategies,
     })
 }
 
@@ -44,15 +51,11 @@ mod tests {
 
     use ariadne::{Label, Report, ReportKind, Source};
     use dson::Dson;
-    use errors::textual_diagnostics::TextualDiagnostics;
-    use hir::{expr::Literal, helper::HirVisitor, meta::dummy_meta, ty::Function};
+    use errors::{textual_diagnostics::TextualDiagnostics, typeinfer::TypeOrString};
+    use hir::visitor::HirVisitor;
     use ids::{Entrypoint, FileId, NodeId};
     use pretty_assertions::assert_eq;
-
-    use crate::{
-        ctx::Ctx,
-        internal_type::{effect_expr::EffectExpr, Effect},
-    };
+    use ty::{Effect, EffectExpr, Function, Type};
 
     use super::*;
 
@@ -61,8 +64,8 @@ mod tests {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
-    fn synth(expr: WithMeta<Expr>) -> Result<Type, ExprTypeError> {
-        crate::synth(100, &expr).map(|(_, ty)| ty)
+    fn synth(expr: &WithMeta<Expr>) -> Result<TypeConclusions, ExprTypeError> {
+        crate::synth(100, &expr)
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
@@ -84,7 +87,7 @@ mod tests {
             .clone()
     }
 
-    fn get_types(hir: &WithMeta<Expr>, ctx: &Ctx) -> Vec<(usize, Type)> {
+    fn get_types(hir: &WithMeta<Expr>, ctx: &TypeConclusions) -> Vec<(usize, Type)> {
         #[derive(Default)]
         struct HirIds {
             ids: Vec<(usize, NodeId)>,
@@ -103,7 +106,7 @@ mod tests {
         let mut vec: Vec<_> = hir_ids
             .ids
             .into_iter()
-            .map(|(attr, id)| (attr, ctx.get_type(&id)))
+            .map(|(attr, id)| (attr, ctx.get_type(&id).unwrap().clone()))
             .collect();
 
         vec.sort_by_key(|(attr, _)| *attr);
@@ -130,66 +133,67 @@ mod tests {
 
     #[test]
     fn number() {
-        assert_eq!(
-            synth(dummy_meta(Expr::Literal(Literal::Integer(1)))),
-            Ok(Type::Integer)
+        let expr = parse(
+            r#"
+                #1 1
+            "#,
         );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), [(1, Type::Integer)]);
     }
 
     #[test]
     fn function() {
-        assert_eq!(
-            synth(dummy_meta(Expr::Apply {
-                function: dummy_meta(hir::ty::Type::Function(Box::new(Function {
-                    parameter: dummy_meta(hir::ty::Type::Integer),
-                    body: dummy_meta(hir::ty::Type::String),
-                }))),
-                link_name: Default::default(),
-                arguments: vec![dummy_meta(Expr::Literal(Literal::Integer(1))),]
-            })),
-            Ok(Type::String)
+        let expr = parse(
+            r#"
+                #1 ^\ 'integer -> 'string (1)
+            "#,
         );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), [(1, Type::String)]);
     }
 
     #[test]
     fn let_() {
-        assert_eq!(
-            synth(parse(
-                r#"
-                    $ 1; &'integer
-            "#
-            )),
-            Ok(Type::Integer)
+        let expr = parse(
+            r#"
+                  #1  $ 1; &'integer
+            "#,
         );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), [(1, Type::Integer)]);
     }
 
     #[test]
     fn generic_function() {
-        let x = 102;
+        let expr = parse(
+            r#"
+                  #1 \x -> &x
+            "#,
+        );
+        let conclusion = synth(&expr).unwrap();
         assert_eq!(
-            synth(parse(
-                r#"
-                \ x -> &x
-            "#
-            )),
-            Ok(Type::Function {
-                parameter: Box::new(Type::Existential(x)),
-                body: Box::new(Type::Existential(x)),
-            })
+            get_types(&expr, &conclusion),
+            [(
+                1,
+                Type::Function(Box::new(ty::Function {
+                    parameter: Type::Variable("a".into()),
+                    body: Type::Variable("a".into()),
+                })),
+            )]
         );
     }
 
     #[test]
     fn let_function() {
-        assert_eq!(
-            synth(parse(
-                r#"
-                    $ \ x -> &x;
-                    ^'forall a \ a -> a (1)
-            "#
-            )),
-            Ok(Type::Integer)
+        let expr = parse(
+            r#"
+                #1 $ \ x -> &x;
+                ^'forall a \ a -> a (1)
+            "#,
         );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), [(1, Type::Integer)]);
     }
 
     #[test]
@@ -200,24 +204,24 @@ mod tests {
             #6 ^'forall a \ a -> a (#7 "a")
         "#;
         let expr = &parse(input);
-        let (ctx, _ty) = crate::synth(100, expr).unwrap_or_else(|error| print_error(input, error));
+        let conclusion = crate::synth(100, expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (1, Type::String),
                 (
                     2,
                     Type::ForAll {
-                        variable: 107,
+                        variable: "a".into(),
                         bound: None,
-                        body: Box::new(Type::Function {
-                            parameter: Box::new(Type::Existential(107)),
-                            body: Box::new(Type::Existential(107)),
-                        })
+                        body: Box::new(Type::Function(Box::new(Function {
+                            parameter: Type::Variable("a".into()),
+                            body: Type::Variable("a".into()),
+                        })))
                     },
                 ),
-                (3, Type::Existential(103)),
+                (3, Type::Variable("b".into())),
                 (4, Type::Integer),
                 (5, Type::Integer),
                 (6, Type::String),
@@ -234,17 +238,17 @@ mod tests {
             #3 ^\ +<'integer, *<>> -> 'integer (#2 *<1, "a">)
         "#,
         );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = crate::synth(100, &expr).unwrap();
 
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (
                     1,
-                    Type::Function {
-                        parameter: Box::new(Type::Sum(vec![Type::Integer, Type::Product(vec![])])),
-                        body: Box::new(Type::Integer),
-                    },
+                    Type::Function(Box::new(Function {
+                        parameter: Type::Sum(vec![Type::Integer, Type::Product(vec![])]),
+                        body: Type::Integer,
+                    })),
                 ),
                 (2, Type::Product(vec![Type::Integer, Type::String])),
                 (3, Type::Integer),
@@ -260,18 +264,17 @@ mod tests {
             #4 ^'forall a \ a -> ! { a ~> 'integer } 'string ("a")
         "#,
         );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = crate::synth(100, &expr).unwrap();
 
-        let x = ctx.get_id_of("x".into()) + 1;
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (
                     1,
                     Type::Effectful {
                         ty: Box::new(Type::Integer),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(x),
+                            input: Type::Variable("b".into()),
                             output: Type::Integer,
                         }]),
                     },
@@ -281,7 +284,7 @@ mod tests {
                     Type::Effectful {
                         ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(x),
+                            input: Type::Variable("b".into()),
                             output: Type::Integer,
                         }]),
                     },
@@ -289,18 +292,18 @@ mod tests {
                 (
                     3,
                     Type::ForAll {
-                        variable: 112,
+                        variable: "a".into(),
                         bound: None,
-                        body: Box::new(Type::Function {
-                            parameter: Box::new(Type::Existential(112)),
-                            body: Box::new(Type::Effectful {
+                        body: Box::new(Type::Function(Box::new(Function {
+                            parameter: Type::Variable("a".into()),
+                            body: Type::Effectful {
                                 ty: Box::new(Type::String),
                                 effects: EffectExpr::Effects(vec![Effect {
-                                    input: Type::Existential(112),
+                                    input: Type::Variable("a".into()),
                                     output: Type::Integer,
                                 }]),
-                            }),
-                        }),
+                            },
+                        }))),
                     },
                 ),
                 (
@@ -329,38 +332,35 @@ mod tests {
                 }'
                 "#,
         );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = crate::synth(100, &expr).unwrap();
 
-        let x = 102;
-        let y = 107;
-        let z = 112;
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (
                     1,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(z)),
+                        ty: Box::new(Type::Variable("c".into())),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(y),
-                            output: Type::Existential(z),
+                            input: Type::Variable("b".into()),
+                            output: Type::Variable("c".into()),
                         }]),
                     },
                 ),
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(z)),
+                        ty: Box::new(Type::Variable("c".into())),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(x),
-                            output: Type::Existential(y),
+                            input: Type::Variable("a".into()),
+                            output: Type::Variable("b".into()),
                         }]),
                     },
                 ),
                 (
                     3,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(z)),
+                        ty: Box::new(Type::Variable("c".into())),
                         effects: EffectExpr::Effects(vec![Effect {
                             input: Type::Integer,
                             output: Type::String,
@@ -380,10 +380,10 @@ mod tests {
             }'
             "#,
         );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = synth(&expr).unwrap();
 
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (
                     1,
@@ -398,9 +398,9 @@ mod tests {
                 (
                     2,
                     Type::Effectful {
-                        ty: Box::new(Type::Existential(107)),
+                        ty: Box::new(Type::String),
                         effects: EffectExpr::Effects(vec![Effect {
-                            input: Type::Existential(102),
+                            input: Type::Variable("a".into()),
                             output: Type::Integer,
                         }]),
                     },
@@ -429,26 +429,26 @@ mod tests {
             )
             "#;
         let expr = parse(input);
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap_or_else(|error| print_error(input, error));
+        let conclusion = synth(&expr).unwrap();
 
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (
                     1,
-                    Type::Function {
-                        parameter: Box::new(Type::Existential(2)),
-                        body: Box::new(Type::Function {
-                            parameter: Box::new(Type::Function {
-                                parameter: Box::new(Type::Existential(23)),
-                                body: Box::new(Type::Integer)
-                            }),
-                            body: Box::new(Type::Effectful {
+                    Type::Function(Box::new(Function {
+                        parameter: Type::Variable("a".into()),
+                        body: Type::Function(Box::new(Function {
+                            parameter: Type::Function(Box::new(Function {
+                                parameter: Type::Variable("a".into()),
+                                body: Type::Integer
+                            })),
+                            body: Type::Effectful {
                                 ty: Box::new(Type::Integer),
                                 effects: EffectExpr::Add(vec![])
-                            })
-                        })
-                    }
+                            }
+                        }))
+                    }))
                 ),
                 (
                     2,
@@ -480,15 +480,19 @@ mod tests {
     fn label() {
         let expr = parse(
             r#"
-            <@"labeled" 'integer> <'integer> <@"labeled" 'integer> 1
+            #1 <@"labeled" 'integer> <'integer> <@"labeled" 'integer> 1
         "#,
         );
+        let conclusion = synth(&expr).unwrap();
         assert_eq!(
-            synth(expr),
-            Ok(Type::Label {
-                label: "labeled".into(),
-                item: Box::new(Type::Integer),
-            })
+            get_types(&expr, &conclusion),
+            vec![(
+                1,
+                Type::Label {
+                    label: Dson::Literal(dson::Literal::String("labeled".into())),
+                    item: Box::new(Type::Integer),
+                },
+            ),]
         );
     }
 
@@ -496,21 +500,25 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            \ x -> <@"labeled" 'integer> &x
+            #1 \ x -> <@"labeled" 'integer> &x
         "#,
         );
+        let conclusion = synth(&expr).unwrap();
         assert_eq!(
-            synth(expr),
-            Ok(Type::Function {
-                parameter: Box::new(Type::Label {
-                    label: Dson::Literal(dson::Literal::String("labeled".into())),
-                    item: Box::new(Type::Integer),
-                }),
-                body: Box::new(Type::Label {
-                    label: Dson::Literal(dson::Literal::String("labeled".into())),
-                    item: Box::new(Type::Integer),
-                })
-            })
+            get_types(&expr, &conclusion),
+            vec![(
+                1,
+                Type::Function(Box::new(Function {
+                    parameter: Type::Label {
+                        label: Dson::Literal(dson::Literal::String("labeled".into())),
+                        item: Box::new(Type::Integer),
+                    },
+                    body: Type::Label {
+                        label: Dson::Literal(dson::Literal::String("labeled".into())),
+                        item: Box::new(Type::Integer),
+                    },
+                })),
+            ),]
         );
     }
 
@@ -523,13 +531,14 @@ mod tests {
         "#,
         );
         assert_eq!(
-            synth(expr).map_err(|e| e.error),
+            synth(&expr).map_err(|e| e.error),
             Err(TypeError::NotSubtype {
-                sub: ty::Type::Integer,
+                sub: ty::Type::Integer.into(),
                 ty: ty::Type::Brand {
                     brand: Dson::Literal(dson::Literal::String("brand".into())),
                     item: Box::new(ty::Type::Integer),
-                },
+                }
+                .into(),
             })
         );
     }
@@ -539,22 +548,23 @@ mod tests {
         let expr = parse(
             r#"
             'brand "brand";
-            <'integer> &@"brand" 'integer
+            #1 <'integer> &@"brand" 'integer
         "#,
         );
-        assert_eq!(synth(expr), Ok(Type::Integer));
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Integer)]);
     }
 
     #[test]
     fn infer() {
         let expr = parse(
             r#"
-            <_> ^ \ _ -> 'integer ("a")
+            #1 <_> ^ \ _ -> 'integer ("a")
             "#,
         );
-        let (_ctx, ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = synth(&expr).unwrap();
 
-        assert_eq!(ty, Type::Integer);
+        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Integer),]);
     }
 
     #[test]
@@ -568,10 +578,10 @@ mod tests {
               }'
             "#,
         );
-        let (ctx, _ty) = crate::synth(100, &expr).unwrap();
+        let conclusion = synth(&expr).unwrap();
 
         assert_eq!(
-            get_types(&expr, &ctx),
+            get_types(&expr, &conclusion),
             vec![
                 (1, Type::Sum(vec![Type::Integer, Type::String])),
                 (
@@ -594,12 +604,15 @@ mod tests {
     #[test]
     fn test_numbers() {
         init();
-        let expr = parse("*<1, 2.0, 3 / 4>");
-        let (_ctx, ty) = crate::synth(100, &expr).unwrap();
+        let expr = parse("#1 *<1, 2.0, 3 / 4>");
+        let conclusion = synth(&expr).unwrap();
 
         assert_eq!(
-            ty,
-            Type::Product(vec![Type::Integer, Type::Real, Type::Rational])
+            get_types(&expr, &conclusion),
+            vec![(
+                1,
+                Type::Product(vec![Type::Real, Type::Rational, Type::Integer])
+            )]
         );
     }
 
@@ -607,20 +620,18 @@ mod tests {
     fn test_integer_to_rational() {
         let expr = parse(
             r#"
-            <'rational> 1
+            #1 <'rational> 1
             "#,
         );
-        assert_eq!(
-            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
-            Ok(Type::Rational)
-        );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Rational)]);
     }
 
     #[test]
     fn test_rational_to_integer() {
         let expr = dbg!(parse(
             r#"
-                    <'integer> 1 / 2
+                    #1 <'integer> 1 / 2
                     "#,
         ));
 
@@ -629,8 +640,8 @@ mod tests {
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: ty::Type::Rational,
-                    ty: ty::Type::Integer,
+                    sub: TypeOrString::Type(ty::Type::Rational),
+                    ty: TypeOrString::Type(ty::Type::Integer),
                 },
             })
         ));
@@ -640,29 +651,27 @@ mod tests {
     fn test_rational_to_real() {
         let expr = parse(
             r#"
-                    <'real> 1 / 2
+                    #1 <'real> 1 / 2
                     "#,
         );
-        assert_eq!(
-            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
-            Ok(Type::Real)
-        );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Real)]);
     }
 
     #[test]
     fn test_real_to_rational() {
         let expr = parse(
             r#"
-                    <'rational> 1.0
+                    #1 <'rational> 1.0
                     "#,
         );
         assert!(matches!(
-            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            crate::synth(100, &expr),
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: ty::Type::Real,
-                    ty: ty::Type::Rational,
+                    sub: TypeOrString::Type(ty::Type::Real),
+                    ty: TypeOrString::Type(ty::Type::Rational),
                 },
             })
         ));
@@ -672,29 +681,27 @@ mod tests {
     fn test_integer_to_real() {
         let expr = parse(
             r#"
-                    <'real> 1
+                    #1 <'real> 1
                     "#,
         );
-        assert_eq!(
-            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
-            Ok(Type::Real)
-        );
+        let conclusion = synth(&expr).unwrap();
+        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Real)]);
     }
 
     #[test]
     fn test_real_to_integer() {
         let expr = parse(
             r#"
-                    <'integer> 1.0
+                    #1 <'integer> 1.0
                     "#,
         );
         assert!(matches!(
-            crate::synth(100, &expr).map(|(_ctx, ty)| ty),
+            crate::synth(100, &expr),
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: ty::Type::Real,
-                    ty: ty::Type::Integer,
+                    sub: TypeOrString::Type(ty::Type::Real),
+                    ty: TypeOrString::Type(ty::Type::Integer),
                 },
             })
         ));

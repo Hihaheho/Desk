@@ -24,24 +24,34 @@ impl std::error::Error for ExprTypeError {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum TypeOrString {
+    Type(Type),
+    String(String),
+}
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum TypeError {
-    #[error("not applicable")]
-    NotApplicable { expr: Box<Expr>, ty: Type },
-    #[error("not subtype")]
-    NotSubtype { sub: Type, ty: Type },
-    #[error("circular existential")]
-    CircularExistential { id: usize, ty: Type },
-    #[error("not instantiable subtype")]
-    NotInstantiableSubtype { ty: Type },
-    #[error("not instantiable supertype")]
-    NotInstantiableSupertype { ty: Type },
+    #[error("not applicable {expr:?} {ty:?}")]
+    NotApplicable { expr: Box<Expr>, ty: TypeOrString },
+    #[error("not subtype {sub:?} {ty:?}")]
+    NotSubtype { sub: TypeOrString, ty: TypeOrString },
+    #[error("circular existential {id:?} {ty:?}")]
+    CircularExistential { id: usize, ty: TypeOrString },
+    #[error("not instantiable subtype {ty:?}")]
+    NotInstantiableSubtype { ty: TypeOrString },
+    #[error("not instantiable supertype {ty:?}")]
+    NotInstantiableSupertype { ty: TypeOrString },
     #[error("variable not typed {id}")]
     VariableNotTyped { id: usize },
     #[error("unknown effect handled: {effect:?}")]
     UnknownEffectHandled { effect: Effect },
     #[error("continue out of handle")]
     ContinueOutOfHandle,
+    #[error("existential not instansiated {id}")]
+    ExistentialNotInstansiated { id: usize },
+    #[error("not inferred {id:?}")]
+    NotInferred { id: ids::NodeId },
 }
 
 impl From<&ExprTypeError> for TextualDiagnostics {
@@ -53,5 +63,11 @@ impl From<&ExprTypeError> for TextualDiagnostics {
                 text: format!("{:?}", error.error),
             }],
         }
+    }
+}
+
+impl From<Type> for TypeOrString {
+    fn from(ty: Type) -> Self {
+        Self::Type(ty)
     }
 }

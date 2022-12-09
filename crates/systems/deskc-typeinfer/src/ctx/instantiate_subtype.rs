@@ -140,7 +140,7 @@ impl Ctx {
                 }
                 ty => {
                     return Err(TypeError::NotInstantiableSubtype {
-                        ty: self.gen_type(ty),
+                        ty: self.gen_type_or_string(ty),
                     })
                 }
             }

@@ -2,19 +2,19 @@ use dson::Dson;
 
 use crate::meta::WithMeta;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Handler {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Effect {
     pub input: WithMeta<Type>,
     pub output: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Real,
     Rational,
@@ -63,13 +63,13 @@ pub enum Type {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Function {
     pub parameter: WithMeta<Type>,
     pub body: WithMeta<Type>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum EffectExpr {
     Effects(Vec<WithMeta<Effect>>),
     Add(Vec<WithMeta<EffectExpr>>),

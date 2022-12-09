@@ -20,7 +20,7 @@ use crate::{
 use ast::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
     span::WithSpan,
-    ty::Function,
+    ty::{Effect, Function},
 };
 use dson::Dson;
 
@@ -173,8 +173,10 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .into_iter()
                         .map(|handler| {
                             Ok(Handler {
-                                input: (*handler.handler.ty).try_into()?,
-                                output: (*handler.handler.ty0).try_into()?,
+                                effect: Effect {
+                                    input: (*handler.handler.ty).try_into()?,
+                                    output: (*handler.handler.ty0).try_into()?,
+                                },
                                 handler: (*handler.handler.expr).try_into()?,
                             })
                         })

@@ -14,11 +14,9 @@ edition = "2021"
 deskc = { path = "../../systems/deskc", version = "0.0.0", package = "deskc" }
 miri = { path = "../../systems/deskvm-miri", version = "0.0.0", package = "deskvm-miri" }
 dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
-thir2dson = { path = "../../systems/deskc-thir2dson", version = "0.0.0", package = "deskc-thir2dson" }
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
-thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }

@@ -26,3 +26,4 @@ parol = { git = "https://github.com/jsinger67/parol", rev = "f0be5be6e37b9141eef
 
 [dev-dependencies]
 env_logger = "0.10.0"
+pretty_assertions = "1.3.0"

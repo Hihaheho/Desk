@@ -63,9 +63,12 @@ pub trait ExprVisitorMut {
         }
     }
     fn visit_handler(&mut self, handler: &mut Handler) {
-        self.visit_type(&mut handler.input);
-        self.visit_type(&mut handler.output);
+        self.visit_effect(&mut handler.effect);
         self.visit_expr(&mut handler.handler);
+    }
+    fn visit_effect(&mut self, effect: &mut Effect) {
+        self.visit_type(&mut effect.input);
+        self.visit_type(&mut effect.output);
     }
     fn visit_apply(
         &mut self,
@@ -246,6 +249,9 @@ pub trait TypeVisitorMut {
     }
     fn visit_expr(&mut self, _item: &mut WithSpan<Expr>) {}
     fn visit_effect_expr(&mut self, item: &mut WithSpan<EffectExpr>) {
+        self.super_visit_effect_expr(item);
+    }
+    fn super_visit_effect_expr(&mut self, item: &mut WithSpan<EffectExpr>) {
         match &mut item.value {
             EffectExpr::Effects(effects) => {
                 for effect in effects {

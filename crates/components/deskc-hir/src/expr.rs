@@ -1,7 +1,10 @@
 use dson::Dson;
 pub use ids::LinkName;
 
-use crate::{meta::WithMeta, ty::Type};
+use crate::{
+    meta::WithMeta,
+    ty::{Effect, Type},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
@@ -10,7 +13,6 @@ pub enum Literal {
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
     Real(f64),
-    Hole,
 }
 
 // Literal::Real should not be NaN
@@ -18,8 +20,7 @@ impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
-    pub input: WithMeta<Type>,
-    pub output: WithMeta<Type>,
+    pub effect: Effect,
     pub handler: WithMeta<Expr>,
 }
 
@@ -32,7 +33,7 @@ pub enum Expr {
     },
     Let {
         definition: Box<WithMeta<Self>>,
-        expression: Box<WithMeta<Self>>,
+        expr: Box<WithMeta<Self>>,
     },
     Perform {
         input: Box<WithMeta<Self>>,

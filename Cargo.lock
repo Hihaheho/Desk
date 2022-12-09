@@ -1696,8 +1696,6 @@ dependencies = [
  "deskc-mir",
  "deskc-mirgen",
  "deskc-syntax-minimalist",
- "deskc-thir",
- "deskc-thirgen",
  "deskc-type",
  "deskc-typeinfer",
  "dworkspace-codebase",
@@ -1724,6 +1722,7 @@ name = "deskc-errors"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",
+ "deskc-ids",
  "deskc-type",
  "thiserror",
 ]
@@ -1738,6 +1737,7 @@ version = "0.0.0"
 dependencies = [
  "deskc-ids",
  "dson",
+ "thiserror",
 ]
 
 [[package]]
@@ -1791,11 +1791,11 @@ dependencies = [
 name = "deskc-mirgen"
 version = "0.0.0"
 dependencies = [
+ "deskc-errors",
+ "deskc-hir",
  "deskc-ids",
  "deskc-mir",
- "deskc-thir",
  "deskc-type",
- "thiserror",
 ]
 
 [[package]]
@@ -1810,6 +1810,7 @@ dependencies = [
  "env_logger 0.10.0",
  "parol",
  "parol_runtime",
+ "pretty_assertions",
  "thiserror",
  "uuid",
 ]
@@ -1826,8 +1827,6 @@ dependencies = [
  "deskc-errors",
  "deskc-hir",
  "deskc-ids",
- "deskc-thir",
- "deskc-thir2dson",
  "deskc-type",
  "deskvm-dprocess",
  "deskvm-miri",
@@ -1836,41 +1835,6 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "serde-dson",
-]
-
-[[package]]
-name = "deskc-thir"
-version = "0.0.0"
-dependencies = [
- "deskc-ids",
- "deskc-type",
- "dson",
-]
-
-[[package]]
-name = "deskc-thir2dson"
-version = "0.0.0"
-dependencies = [
- "deskc-thir",
- "deskc-type",
- "dson",
- "thiserror",
-]
-
-[[package]]
-name = "deskc-thirgen"
-version = "0.0.0"
-dependencies = [
- "chumsky",
- "deskc",
- "deskc-hir",
- "deskc-ids",
- "deskc-thir",
- "deskc-type",
- "deskc-typeinfer",
- "dson",
- "pretty_assertions",
- "thiserror",
 ]
 
 [[package]]

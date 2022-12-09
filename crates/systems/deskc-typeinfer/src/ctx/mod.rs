@@ -14,14 +14,15 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use errors::typeinfer::TypeError;
 use hir::meta::WithMeta;
 use ids::NodeId;
-use ty::{IdGen, Types};
+use ty::conclusion::{CastStrategy, TypeToType};
 
 use crate::{
-    substitute_from_ctx::SubstituteFromCtx,
     internal_type::{
         effect_expr::{simplify, simplify_effect_expr, EffectExpr},
         Type, TypeVisitor, TypeVisitorMut,
     },
+    substitute_from_ctx::SubstituteFromCtx,
+    utils::{IdGen, IdentGen},
     well_formed::WellFormed,
 };
 
@@ -41,19 +42,21 @@ pub enum Log {
 
 #[must_use]
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Ctx {
-    pub(crate) id_gen: Rc<RefCell<IdGen>>,
-    pub(crate) logs: RefCell<Vec<Log>>,
+pub(crate) struct Ctx {
+    pub id_gen: Rc<RefCell<IdGen>>,
+    pub ident_gen: Rc<RefCell<IdentGen>>,
+    pub logs: RefCell<Vec<Log>>,
     // Result of type inference
-    pub(crate) ir_types: Rc<RefCell<HashMap<NodeId, Type>>>,
-    pub(crate) types: Rc<RefCell<HashMap<Id, Type>>>,
+    pub ir_types: Rc<RefCell<HashMap<NodeId, Type>>>,
+    pub types: Rc<RefCell<HashMap<Id, Type>>>,
+    pub cast_strategies: Rc<RefCell<HashMap<TypeToType, CastStrategy>>>,
     // a stack; continue's input of current context
-    pub(crate) continue_input: RefCell<Vec<Type>>,
+    pub continue_input: RefCell<Vec<Type>>,
     // a stack; continue's output of current context
-    pub(crate) continue_output: RefCell<Vec<Type>>,
-    pub(crate) inferred_types: RefCell<HashMap<NodeId, Type>>,
-    pub(crate) variables_ids: RefCell<HashMap<String, usize>>,
-    pub(crate) variables_idents: RefCell<HashMap<usize, String>>,
+    pub continue_output: RefCell<Vec<Type>>,
+    pub inferred_types: RefCell<HashMap<NodeId, Type>>,
+    pub variables_ids: RefCell<HashMap<String, usize>>,
+    pub variables_idents: RefCell<HashMap<usize, String>>,
 }
 
 impl Ctx {
@@ -63,9 +66,11 @@ impl Ctx {
     fn empty(&self) -> Self {
         Self {
             id_gen: self.id_gen.clone(),
+            ident_gen: self.ident_gen.clone(),
             logs: Default::default(),
             ir_types: self.ir_types.clone(),
             types: self.types.clone(),
+            cast_strategies: Default::default(),
             continue_input: Default::default(),
             continue_output: Default::default(),
             inferred_types: Default::default(),
@@ -91,15 +96,15 @@ impl Ctx {
         self.inferred_types.borrow_mut().insert(infer, ty);
     }
 
-    pub fn get_type(&self, id: &NodeId) -> Type {
-        self.finalize(
+    pub fn get_type(&self, id: &NodeId) -> Result<Type, TypeError> {
+        Ok(self.finalize(
             &self
                 .ir_types
                 .borrow()
                 .get(id)
                 .cloned()
-                .expect("should be stored"),
-        )
+                .ok_or_else(|| TypeError::NotInferred { id: id.clone() })?,
+        ))
     }
 
     pub(crate) fn finalize(&self, ty: &Type) -> Type {
@@ -113,21 +118,6 @@ impl Ctx {
         let ty = self.substitute_from_ctx(&ty);
         self.store_type_and_effects(hir_ty.meta.id.clone(), ty.clone(), Default::default());
         ty
-    }
-
-    pub fn get_id_gen(&self) -> IdGen {
-        self.id_gen.borrow().clone()
-    }
-
-    pub fn get_types(&self) -> Types {
-        Types {
-            types: self
-                .ir_types
-                .borrow()
-                .iter()
-                .map(|(id, ty)| (id.clone(), self.gen_type(ty)))
-                .collect(),
-        }
     }
 
     fn begin_scope(&self) -> Id {
