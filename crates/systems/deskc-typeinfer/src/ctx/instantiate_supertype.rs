@@ -4,7 +4,7 @@ use crate::{
     ctx::{Ctx, Id, Log},
     mono_type::is_monotype,
     substitute::substitute,
-    ty::Type,
+    internal_type::Type,
 };
 
 impl Ctx {

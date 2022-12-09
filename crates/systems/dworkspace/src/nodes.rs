@@ -61,7 +61,7 @@ mod tests {
         patch::{AttributePatch, ContentPatch, OperandPatch},
     };
     use deskc_hir::expr::{Expr, Literal};
-    use deskc_types::Type;
+    use deskc_ty::Type;
 
     use super::*;
 

@@ -13,7 +13,7 @@ edition = "2021"
 [dependencies]
 components = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 deskc-ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc-ast" }
 deskc-hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 deskc-hirgen = { path = "../deskc-hirgen", version = "0.0.0", package = "deskc-hirgen" }
@@ -29,7 +29,7 @@ parking_lot = "0.12.1"
 anyhow = "1.0"
 
 [dev-dependencies]
-deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 
 uuid = { version = "1.2", features = ["v4"] }
 mry = "0.2.6"

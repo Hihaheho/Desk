@@ -1,6 +1,6 @@
 use crate::{
     ctx::Id,
-    ty::{Type, TypeVisitor},
+    internal_type::{Type, TypeVisitor},
 };
 
 // existential type is occurs in the type

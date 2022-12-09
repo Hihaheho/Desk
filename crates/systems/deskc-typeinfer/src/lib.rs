@@ -1,10 +1,10 @@
 pub mod ctx;
+mod internal_type;
 mod mono_type;
 mod occurs_in;
 mod polymorphic_function;
 mod substitute;
 mod substitute_from_ctx;
-mod ty;
 mod utils;
 mod well_formed;
 
@@ -13,8 +13,8 @@ use std::{cell::RefCell, rc::Rc};
 use ctx::{with_effects::WithEffects, with_type::WithType, Ctx};
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
-use ty::Type;
-use types::IdGen;
+use internal_type::Type;
+use ty::IdGen;
 
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<(Ctx, Type), ExprTypeError> {
     Ctx {
@@ -51,7 +51,7 @@ mod tests {
 
     use crate::{
         ctx::Ctx,
-        ty::{effect_expr::EffectExpr, Effect},
+        internal_type::{effect_expr::EffectExpr, Effect},
     };
 
     use super::*;
@@ -525,10 +525,10 @@ mod tests {
         assert_eq!(
             synth(expr).map_err(|e| e.error),
             Err(TypeError::NotSubtype {
-                sub: types::Type::Integer,
-                ty: types::Type::Brand {
+                sub: ty::Type::Integer,
+                ty: ty::Type::Brand {
                     brand: Dson::Literal(dson::Literal::String("brand".into())),
-                    item: Box::new(types::Type::Integer),
+                    item: Box::new(ty::Type::Integer),
                 },
             })
         );
@@ -629,8 +629,8 @@ mod tests {
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: types::Type::Rational,
-                    ty: types::Type::Integer,
+                    sub: ty::Type::Rational,
+                    ty: ty::Type::Integer,
                 },
             })
         ));
@@ -661,8 +661,8 @@ mod tests {
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: types::Type::Real,
-                    ty: types::Type::Rational,
+                    sub: ty::Type::Real,
+                    ty: ty::Type::Rational,
                 },
             })
         ));
@@ -693,8 +693,8 @@ mod tests {
             Err(ExprTypeError {
                 meta: _,
                 error: TypeError::NotSubtype {
-                    sub: types::Type::Real,
-                    ty: types::Type::Integer,
+                    sub: ty::Type::Real,
+                    ty: ty::Type::Integer,
                 },
             })
         ));

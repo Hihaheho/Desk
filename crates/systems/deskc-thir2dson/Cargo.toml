@@ -13,5 +13,5 @@ edition = "2021"
 [dependencies]
 thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 thiserror = "1.0.37"

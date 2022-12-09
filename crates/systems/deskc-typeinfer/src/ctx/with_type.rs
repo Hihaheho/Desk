@@ -1,4 +1,4 @@
-use crate::ty::Type;
+use crate::internal_type::Type;
 
 use super::Ctx;
 

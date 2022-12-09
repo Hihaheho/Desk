@@ -3,7 +3,7 @@ pub mod visitor;
 use dson::Dson;
 pub use ids::LinkName;
 use ids::NodeId;
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 pub type Id = usize;
 

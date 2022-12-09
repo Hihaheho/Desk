@@ -1,6 +1,6 @@
 use crate::{
     ctx::{Ctx, Log},
-    ty::effect_expr::EffectExpr,
+    internal_type::effect_expr::EffectExpr,
 };
 
 use super::with_type::WithType;

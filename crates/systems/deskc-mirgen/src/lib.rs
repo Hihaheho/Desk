@@ -12,7 +12,7 @@ use mir::{
 use mir_proto::MirProto;
 use thir::{Handler, LinkName, TypedHir};
 use thiserror::Error;
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 pub fn gen_mir(thir: &TypedHir) -> Result<Mir, GenMirError> {
     let mut gen = MirGen::default();

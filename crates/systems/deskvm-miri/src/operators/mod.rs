@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 
 use once_cell::sync::Lazy;
-use types::Type;
+use ty::Type;
 
 use crate::value::{OperatorOutput, Value};
 

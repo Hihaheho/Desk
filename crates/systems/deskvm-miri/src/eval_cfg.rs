@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use mir::block::BlockId;
 use mir::mir::ControlFlowGraph;
 use mir::stmt::{Stmt, Terminator};
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::const_stmt;
 

@@ -148,8 +148,8 @@ mod tests {
         stmt::{Const, Stmt, StmtBind, Terminator},
         var::{Var, VarId, Vars},
     };
-    use miri::{interpreter_builder::MiriBuilder, try_create_miri_builder};
-    use types::Type;
+    use miri::try_create_miri_builder;
+    use ty::Type;
 
     use crate::{desk_vm::DeskVm, scheduler::OfficialScheduler};
 

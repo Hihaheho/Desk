@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use dprocess::value::Number;
 use mir::mir::ControlFlowGraphId;
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::{eval_cfg::Handler, operators::Operator};
 

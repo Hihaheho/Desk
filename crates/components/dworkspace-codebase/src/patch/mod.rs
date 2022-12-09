@@ -1,7 +1,7 @@
 mod diff_match_patch;
 use deskc_ids::{LinkName, NodeId};
 use hir::expr::Expr;
-use types::Type;
+use ty::Type;
 
 use crate::{code::SyntaxKind, content::Content};
 

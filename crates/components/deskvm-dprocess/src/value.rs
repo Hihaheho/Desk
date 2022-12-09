@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use types::Type;
+use ty::Type;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Sendable value between processes.

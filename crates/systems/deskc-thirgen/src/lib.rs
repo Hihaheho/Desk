@@ -5,7 +5,7 @@ use hir::{
     meta::WithMeta,
 };
 use thir::{Handler, MapElem, TypedHir};
-use types::{Effect, IdGen, Type, Types};
+use ty::{Effect, IdGen, Type, Types};
 
 pub fn gen_typed_hir(next_id: usize, types: Types, expr: &WithMeta<Expr>) -> TypedHir {
     TypedHirGen {
@@ -163,7 +163,7 @@ mod tests {
 
     use ids::{Entrypoint, FileId, NodeId};
     use thir::visitor::TypedHirVisitorMut;
-    use types::Function;
+    use ty::Function;
 
     use super::*;
     use pretty_assertions::assert_eq;

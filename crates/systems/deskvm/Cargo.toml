@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 
 anyhow = "1.0"
 parking_lot = "0.12.1"

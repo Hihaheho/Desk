@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use dprocess::{interpreter::Interpreter, interpreter_builder::InterpreterBuilder};
 use mir::mir::Mir;
 use thiserror::Error;
-use types::Type;
+use ty::Type;
 
 use crate::{eval_mir, value::Value};
 

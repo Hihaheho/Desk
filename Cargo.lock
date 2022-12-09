@@ -1575,7 +1575,7 @@ dependencies = [
  "desk-system-ordering",
  "desk-window",
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "dworkspace",
  "dworkspace-codebase",
  "egui 0.19.0",
@@ -1628,7 +1628,7 @@ dependencies = [
  "desk-system-ordering",
  "desk-window",
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "dworkspace",
  "dworkspace-codebase",
  "egui 0.19.0",
@@ -1698,8 +1698,8 @@ dependencies = [
  "deskc-syntax-minimalist",
  "deskc-thir",
  "deskc-thirgen",
+ "deskc-type",
  "deskc-typeinfer",
- "deskc-types",
  "dworkspace-codebase",
  "salsa",
  "thiserror",
@@ -1724,7 +1724,7 @@ name = "deskc-errors"
 version = "0.0.0"
 dependencies = [
  "deskc-hir",
- "deskc-types",
+ "deskc-type",
  "thiserror",
 ]
 
@@ -1772,7 +1772,7 @@ version = "0.0.0"
 dependencies = [
  "deskc-ast",
  "deskc-syntax-minimalist",
- "deskc-types",
+ "deskc-type",
  "dson",
  "proc-macro2",
  "quote 1.0.21",
@@ -1783,7 +1783,7 @@ name = "deskc-mir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "serde",
 ]
 
@@ -1794,7 +1794,7 @@ dependencies = [
  "deskc-ids",
  "deskc-mir",
  "deskc-thir",
- "deskc-types",
+ "deskc-type",
  "thiserror",
 ]
 
@@ -1828,7 +1828,7 @@ dependencies = [
  "deskc-ids",
  "deskc-thir",
  "deskc-thir2dson",
- "deskc-types",
+ "deskc-type",
  "deskvm-dprocess",
  "deskvm-miri",
  "dson",
@@ -1843,7 +1843,7 @@ name = "deskc-thir"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "dson",
 ]
 
@@ -1852,7 +1852,7 @@ name = "deskc-thir2dson"
 version = "0.0.0"
 dependencies = [
  "deskc-thir",
- "deskc-types",
+ "deskc-type",
  "dson",
  "thiserror",
 ]
@@ -1866,11 +1866,20 @@ dependencies = [
  "deskc-hir",
  "deskc-ids",
  "deskc-thir",
+ "deskc-type",
  "deskc-typeinfer",
- "deskc-types",
  "dson",
  "pretty_assertions",
  "thiserror",
+]
+
+[[package]]
+name = "deskc-type"
+version = "0.0.0"
+dependencies = [
+ "deskc-ids",
+ "dson",
+ "serde",
 ]
 
 [[package]]
@@ -1883,20 +1892,11 @@ dependencies = [
  "deskc-errors",
  "deskc-hir",
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "dson",
  "env_logger 0.10.0",
  "pretty_assertions",
  "thiserror",
-]
-
-[[package]]
-name = "deskc-types"
-version = "0.0.0"
-dependencies = [
- "deskc-ids",
- "dson",
- "serde",
 ]
 
 [[package]]
@@ -1905,7 +1905,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "deskc-mir",
- "deskc-types",
+ "deskc-type",
  "deskvm-dprocess",
  "deskvm-miri",
  "parking_lot 0.12.1",
@@ -1917,7 +1917,7 @@ name = "deskvm-dprocess"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "deskc-types",
+ "deskc-type",
  "mry",
  "parking_lot 0.12.1",
  "serde",
@@ -1933,8 +1933,8 @@ dependencies = [
  "deskc-hirgen",
  "deskc-macros",
  "deskc-mir",
+ "deskc-type",
  "deskc-typeinfer",
- "deskc-types",
  "deskvm-dprocess",
  "dson",
  "once_cell",
@@ -1985,8 +1985,8 @@ dependencies = [
  "deskc-hir",
  "deskc-hirgen",
  "deskc-ids",
+ "deskc-type",
  "deskc-typeinfer",
- "deskc-types",
  "downcast-rs",
  "dworkspace-codebase",
  "mry",
@@ -2004,7 +2004,7 @@ dependencies = [
  "deskc-ast",
  "deskc-hir",
  "deskc-ids",
- "deskc-types",
+ "deskc-type",
  "uuid",
 ]
 

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::{collections::HashMap, time::Duration};
-use types::Effect;
+use ty::Effect;
 
 use crate::{interpreter_output::InterpreterOutput, processing_kind::ProcessingKind, value::Value};
 

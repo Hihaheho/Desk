@@ -1,4 +1,4 @@
-use crate::{ctx::Ctx, ty::Type};
+use crate::{ctx::Ctx, internal_type::Type};
 
 // TODO: use subtyping before concat or push the type.
 pub(crate) fn sum_all(_ctx: &Ctx, types: Vec<Type>) -> Type {

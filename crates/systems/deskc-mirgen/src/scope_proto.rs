@@ -4,7 +4,7 @@ use mir::{
     scope::{Scope, ScopeId},
     var::VarId,
 };
-use types::Type;
+use ty::Type;
 
 #[derive(Debug, Default)]
 pub struct ScopeProto {

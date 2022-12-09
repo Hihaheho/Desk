@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::Type;
+use ty::Type;
 
 use crate::scope::ScopeId;
 

@@ -1,5 +1,5 @@
 use deskc_ids::LinkName;
-use types::Type;
+use ty::Type;
 
 use crate::code::SyntaxKind;
 

@@ -170,7 +170,7 @@ mod tests {
     };
     use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::{LinkName, NodeId};
-    use deskc_types::Type;
+    use deskc_ty::Type;
 
     use super::*;
 

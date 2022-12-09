@@ -1,6 +1,6 @@
 use std::{ops::DerefMut, sync::Arc, time::Duration};
 
-use types::Effect;
+use ty::Effect;
 
 use crate::{
     dprocess_info::DProcessInfo,

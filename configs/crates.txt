@@ -2,7 +2,7 @@
 
 # deskc components
 deskc-ids
-deskc-types
+deskc-type
 deskc-tokens
 deskc-ast
 deskc-hir

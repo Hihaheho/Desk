@@ -1,8 +1,8 @@
-use types::Id;
+use ty::Id;
 
 use crate::{
     ctx::Ctx,
-    ty::{Type, TypeVisitor},
+    internal_type::{Type, TypeVisitor},
 };
 
 pub(crate) struct WellFormed<'a> {

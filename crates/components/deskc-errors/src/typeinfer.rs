@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use hir::{expr::Expr, meta::Meta};
 use thiserror::Error;
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::textual_diagnostics::{Report, TextualDiagnostics};
 

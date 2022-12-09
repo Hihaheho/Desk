@@ -20,7 +20,7 @@ ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc
 hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 serde-dson = { path = "../../libs/serde-dson", version = "0.0.0" }
 chumsky = "0.8.0"

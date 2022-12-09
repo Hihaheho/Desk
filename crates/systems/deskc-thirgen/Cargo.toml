@@ -14,7 +14,7 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 thiserror = "1.0.37"
 
 [dev-dependencies]

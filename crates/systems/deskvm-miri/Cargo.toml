@@ -10,7 +10,7 @@ edition = "2021"
 
 [dependencies]
 mir = { path = "../../components/deskc-mir", version = "0.0.0", package = "deskc-mir" }
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 macros = { path = "../../libs/deskc-macros", version = "0.0.0", package = "deskc-macros" }
 dprocess = { path = "../../components/deskvm-dprocess", version = "0.0.0", package = "deskvm-dprocess" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }

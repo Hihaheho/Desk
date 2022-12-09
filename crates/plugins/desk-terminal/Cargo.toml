@@ -15,7 +15,7 @@ system-ordering = { package = "desk-system-ordering", path = "../../components/d
 command = { package = "desk-command", path = "../../components/desk-command", version = "0.0.0" }
 dworkspace-codebase = { package = "dworkspace-codebase", path = "../../components/dworkspace-codebase", version = "0.0.0" }
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
-deskc-types = { package = "deskc-types", path = "../../components/deskc-types", version = "0.0.0" }
+deskc-ty = { package = "deskc-type", path = "../../components/deskc-type", version = "0.0.0" }
 
 bevy = "0.9"
 egui = "0.19.0"

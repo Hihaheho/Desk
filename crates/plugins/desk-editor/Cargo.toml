@@ -14,7 +14,7 @@ desk-window = { package = "desk-window", path = "../../components/desk-window", 
 dworkspace = { path = "../../systems/dworkspace", version = "0.0.0", package = "dworkspace" }
 dworkspace-codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-deskc-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 
 bevy = "0.9"
 egui = "0.19.0"

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ids::LinkName;
 use serde::{Deserialize, Serialize};
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::{block::BlockId, mir::ControlFlowGraphId, var::VarId};
 

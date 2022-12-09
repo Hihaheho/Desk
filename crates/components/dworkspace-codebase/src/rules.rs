@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use types::Type;
+use ty::Type;
 
 use crate::user::UserId;
 

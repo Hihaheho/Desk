@@ -1,6 +1,6 @@
 use crate::{
     ctx::Id,
-    ty::{Type, TypeVisitorMut},
+    internal_type::{Type, TypeVisitorMut},
 };
 
 pub fn substitute(to: &Type, id: &Id, by: &Type) -> Type {

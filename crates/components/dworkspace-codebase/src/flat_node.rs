@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use deskc_ids::NodeId;
 use hir::expr::Expr;
-use types::Type;
+use ty::Type;
 
 use crate::{
     content::Content,

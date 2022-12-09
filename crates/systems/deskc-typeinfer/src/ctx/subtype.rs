@@ -5,7 +5,7 @@ use crate::{
     ctx::Log,
     occurs_in::occurs_in,
     substitute::substitute,
-    ty::{effect_expr::EffectExpr, Type},
+    internal_type::{effect_expr::EffectExpr, Type},
 };
 
 impl Ctx {

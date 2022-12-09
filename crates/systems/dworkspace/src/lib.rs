@@ -104,7 +104,7 @@ mod tests {
         ty::Type as AstType,
     };
     use deskc_ids::{LinkName, NodeId};
-    use deskc_types::Type;
+    use deskc_ty::Type;
     use nodes::NodeQueries;
 
     use crate::repository::TestRepository;
@@ -162,7 +162,7 @@ mod tests {
                 event: Event::CreateNode {
                     node_id: node_a.clone(),
                     content: Content::Apply {
-                        ty: Type::Function(Box::new(deskc_types::Function {
+                        ty: Type::Function(Box::new(deskc_ty::Function {
                             parameter: Type::String,
                             body: Type::Real,
                         })),

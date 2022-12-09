@@ -4,7 +4,7 @@ use hir::{
     meta::WithMeta,
 };
 
-use crate::{ctx::Ctx, ctx::Log, to_expr_type_error, ty::Type};
+use crate::{ctx::Ctx, ctx::Log, to_expr_type_error, internal_type::Type};
 
 use super::{with_effects::WithEffects, with_type::WithType};
 

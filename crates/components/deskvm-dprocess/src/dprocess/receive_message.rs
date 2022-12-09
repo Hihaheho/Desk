@@ -1,4 +1,4 @@
-use types::Type;
+use ty::Type;
 
 use crate::{status::DProcessStatus, value::Value, vm_ref::VmRef};
 

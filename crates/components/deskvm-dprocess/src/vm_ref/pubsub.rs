@@ -1,4 +1,4 @@
-use types::Type;
+use ty::Type;
 
 use crate::{dprocess::DProcessId, value::Value};
 

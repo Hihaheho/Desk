@@ -474,7 +474,7 @@ mod tests {
                 definition: Box::new(dummy_meta(Expr::Apply {
                     function: dummy_meta(Type::Label {
                         label: Dson::Literal(dson::Literal::String("brand".into())),
-                        item: Box::new(dummy_meta(Type::Real)),
+                        item: Box::new(dummy_meta(Type::Integer)),
                     }),
                     link_name: Default::default(),
                     arguments: vec![],
@@ -483,7 +483,7 @@ mod tests {
                     definition: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Brand {
                             brand: Dson::Literal(dson::Literal::String("brand".into())),
-                            item: Box::new(dummy_meta(Type::Real)),
+                            item: Box::new(dummy_meta(Type::Integer)),
                         }),
                         link_name: Default::default(),
                         arguments: vec![],
@@ -491,7 +491,7 @@ mod tests {
                     expression: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Label {
                             label: Dson::Literal(dson::Literal::String("label".into())),
-                            item: Box::new(dummy_meta(Type::Real)),
+                            item: Box::new(dummy_meta(Type::Integer)),
                         }),
                         link_name: Default::default(),
                         arguments: vec![],

@@ -172,7 +172,7 @@ impl EffectExpr {
 
 #[cfg(test)]
 mod tests {
-    use crate::ty::{Effect, Type};
+    use crate::internal_type::{Effect, Type};
 
     use super::*;
 

@@ -1,48 +1,48 @@
 use crate::{
-    ty::{effect_expr::EffectExpr, Type},
+    internal_type::{effect_expr::EffectExpr, Type},
     Ctx,
 };
 
 use super::Id;
 
 impl Ctx {
-    pub(crate) fn gen_type(&self, ty: &Type) -> types::Type {
+    pub(crate) fn gen_type(&self, ty: &Type) -> ty::Type {
         match ty {
-            Type::Real => types::Type::Real,
-            Type::Rational => types::Type::Rational,
-            Type::Integer => types::Type::Integer,
-            Type::String => types::Type::String,
+            Type::Real => ty::Type::Real,
+            Type::Rational => ty::Type::Rational,
+            Type::Integer => ty::Type::Integer,
+            Type::String => ty::Type::String,
             Type::Product(types) => {
-                types::Type::product(types.iter().map(|t| self.gen_type(t)).collect())
+                ty::Type::product(types.iter().map(|t| self.gen_type(t)).collect())
             }
-            Type::Sum(types) => types::Type::sum(types.iter().map(|t| self.gen_type(t)).collect()),
+            Type::Sum(types) => ty::Type::sum(types.iter().map(|t| self.gen_type(t)).collect()),
             Type::Function { parameter, body } => {
-                types::Type::function(self.gen_type(parameter), self.gen_type(body))
+                ty::Type::function(self.gen_type(parameter), self.gen_type(body))
             }
-            Type::Vector(ty) => types::Type::Vector(Box::new(self.gen_type(ty))),
-            Type::Map { key, value } => types::Type::Map {
+            Type::Vector(ty) => ty::Type::Vector(Box::new(self.gen_type(ty))),
+            Type::Map { key, value } => ty::Type::Map {
                 key: Box::new(self.gen_type(key)),
                 value: Box::new(self.gen_type(value)),
             },
-            Type::Variable(id) => types::Type::Variable(self.get_ident_of(*id)),
+            Type::Variable(id) => ty::Type::Variable(self.get_ident_of(*id)),
             Type::ForAll {
                 variable,
                 bound,
                 body,
-            } => types::Type::ForAll {
+            } => ty::Type::ForAll {
                 variable: self.get_ident_of(*variable),
                 bound: bound.as_ref().map(|bound| Box::new(self.gen_type(&bound))),
                 body: Box::new(self.gen_type(body)),
             },
-            Type::Effectful { ty, effects } => types::Type::Effectful {
+            Type::Effectful { ty, effects } => ty::Type::Effectful {
                 ty: Box::new(self.gen_type(ty)),
                 effects: self.gen_effect_expr(effects),
             },
-            Type::Brand { brand, item } => types::Type::Brand {
+            Type::Brand { brand, item } => ty::Type::Brand {
                 brand: brand.clone(),
                 item: Box::new(self.gen_type(item)),
             },
-            Type::Label { label, item } => types::Type::Label {
+            Type::Label { label, item } => ty::Type::Label {
                 label: label.clone(),
                 item: Box::new(self.gen_type(item)),
             },
@@ -58,31 +58,31 @@ impl Ctx {
         }
     }
 
-    pub(crate) fn gen_effect_expr(&self, expr: &EffectExpr) -> types::EffectExpr {
+    pub(crate) fn gen_effect_expr(&self, expr: &EffectExpr) -> ty::EffectExpr {
         match expr {
-            EffectExpr::Effects(effects) => types::EffectExpr::Effects(
+            EffectExpr::Effects(effects) => ty::EffectExpr::Effects(
                 effects
                     .iter()
-                    .map(|e| types::Effect {
+                    .map(|e| ty::Effect {
                         input: self.gen_type(&e.input),
                         output: self.gen_type(&e.output),
                     })
                     .collect(),
             ),
             EffectExpr::Add(effects) => {
-                types::EffectExpr::Add(effects.iter().map(|e| self.gen_effect_expr(e)).collect())
+                ty::EffectExpr::Add(effects.iter().map(|e| self.gen_effect_expr(e)).collect())
             }
             EffectExpr::Sub {
                 minuend,
                 subtrahend,
-            } => types::EffectExpr::Sub {
+            } => ty::EffectExpr::Sub {
                 minuend: Box::new(self.gen_effect_expr(minuend)),
                 subtrahend: Box::new(self.gen_effect_expr(subtrahend)),
             },
             EffectExpr::Apply {
                 function,
                 arguments,
-            } => types::EffectExpr::Apply {
+            } => ty::EffectExpr::Apply {
                 function: Box::new(self.gen_type(function)),
                 arguments: arguments.iter().map(|a| self.gen_type(a)).collect(),
             },

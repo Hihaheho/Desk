@@ -51,8 +51,8 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
     })))
 }
 
-fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
-    use deskc_types::Type as DeskcType;
+fn from_types(ty: &deskc_ty::Type) -> WithSpan<Type> {
+    use deskc_ty::Type as DeskcType;
     let value = match ty {
         DeskcType::Real => Type::Real,
         DeskcType::Rational => Type::Rational,
@@ -104,12 +104,12 @@ fn from_types(ty: &deskc_types::Type) -> WithSpan<Type> {
     }
 }
 
-fn from_types_effects(effects: &deskc_types::EffectExpr) -> WithSpan<EffectExpr> {
+fn from_types_effects(effects: &deskc_ty::EffectExpr) -> WithSpan<EffectExpr> {
     let value = match effects {
-        deskc_types::EffectExpr::Effects(effects) => EffectExpr::Effects(
+        deskc_ty::EffectExpr::Effects(effects) => EffectExpr::Effects(
             effects
                 .iter()
-                .map(|deskc_types::Effect { input, output }| WithSpan {
+                .map(|deskc_ty::Effect { input, output }| WithSpan {
                     id: NodeId::new(),
                     span: 0..0,
                     value: Effect {
@@ -119,17 +119,17 @@ fn from_types_effects(effects: &deskc_types::EffectExpr) -> WithSpan<EffectExpr>
                 })
                 .collect(),
         ),
-        deskc_types::EffectExpr::Add(exprs) => {
+        deskc_ty::EffectExpr::Add(exprs) => {
             EffectExpr::Add(exprs.iter().map(from_types_effects).collect())
         }
-        deskc_types::EffectExpr::Sub {
+        deskc_ty::EffectExpr::Sub {
             minuend,
             subtrahend,
         } => EffectExpr::Sub {
             minuend: Box::new(from_types_effects(minuend)),
             subtrahend: Box::new(from_types_effects(subtrahend)),
         },
-        deskc_types::EffectExpr::Apply {
+        deskc_ty::EffectExpr::Apply {
             function,
             arguments,
         } => EffectExpr::Apply {

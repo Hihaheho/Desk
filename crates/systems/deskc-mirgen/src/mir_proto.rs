@@ -8,7 +8,7 @@ use mir::{
     var::{Var, VarId, Vars},
 };
 use thir::LinkName;
-use types::Type;
+use ty::Type;
 
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 

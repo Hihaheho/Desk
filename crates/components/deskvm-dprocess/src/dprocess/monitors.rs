@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use types::Type;
+use ty::Type;
 
 use crate::{
     status::{DProcessStatus, LinkExit},

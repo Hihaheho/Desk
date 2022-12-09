@@ -81,7 +81,7 @@ fn parse(
                 let tokens = map(expr);
                 quote! {
                     {
-                        use types::{Effect, Function, Type, EffectExpr};
+                        use ty::{Effect, Function, Type, EffectExpr};
                         use dson::{Dson, Literal};
                         #tokens
                     }

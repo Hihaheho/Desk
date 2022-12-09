@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use dprocess::value::Value;
 use ids::{Entrypoint, FileId};
 use serde::{Deserialize, Serialize};
-use types::Type;
+use ty::Type;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TestCase {

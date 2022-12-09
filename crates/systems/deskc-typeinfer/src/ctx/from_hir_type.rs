@@ -2,7 +2,7 @@ use hir::meta::WithMeta;
 
 use crate::{
     ctx::Ctx,
-    ty::{effect_expr::EffectExpr, Effect, Type},
+    internal_type::{effect_expr::EffectExpr, Effect, Type},
 };
 
 impl Ctx {

@@ -8,7 +8,7 @@ use crate::{
     ctx::Ctx,
     ctx::Log,
     to_expr_type_error,
-    ty::{effect_expr::EffectExpr, Effect, Type},
+    internal_type::{effect_expr::EffectExpr, Effect, Type},
     utils::sum_all,
 };
 

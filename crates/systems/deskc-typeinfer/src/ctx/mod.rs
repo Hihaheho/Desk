@@ -14,11 +14,11 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use errors::typeinfer::TypeError;
 use hir::meta::WithMeta;
 use ids::NodeId;
-use types::{IdGen, Types};
+use ty::{IdGen, Types};
 
 use crate::{
     substitute_from_ctx::SubstituteFromCtx,
-    ty::{
+    internal_type::{
         effect_expr::{simplify, simplify_effect_expr, EffectExpr},
         Type, TypeVisitor, TypeVisitorMut,
     },

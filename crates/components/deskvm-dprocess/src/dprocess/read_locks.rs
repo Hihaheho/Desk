@@ -3,7 +3,7 @@ use std::{
     ops::Deref,
 };
 
-use types::Type;
+use ty::Type;
 
 use crate::{
     effect_handler::EffectHandlers, flags::DProcessFlags, interpreter::Interpreter, metas::Metas,

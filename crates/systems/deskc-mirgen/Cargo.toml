@@ -15,4 +15,4 @@ ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc
 mir = { path = "../../components/deskc-mir", version = "0.0.0", package = "deskc-mir" }
 thir = { path = "../../components/deskc-thir", version = "0.0.0", package = "deskc-thir" }
 thiserror = "1.0.37"
-types = { path = "../../components/deskc-types", version = "0.0.0", package = "deskc-types" }
+ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }

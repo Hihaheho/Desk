@@ -8,4 +8,4 @@ pub use components::rules::{NodeOperation, SpaceOperation};
 pub use components::snapshot::Snapshot;
 pub use components::user::UserId;
 pub use deskc_ast::expr::Expr;
-pub use deskc_types::Type;
+pub use deskc_ty::Type;

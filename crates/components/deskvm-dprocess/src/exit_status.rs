@@ -1,4 +1,4 @@
-use types::Type;
+use ty::Type;
 
 use crate::{status::LinkExit, value::Value};
 
@@ -39,7 +39,7 @@ impl PartialEq for ExitStatus {
 
 #[cfg(test)]
 mod tests {
-    use types::Type;
+    use ty::Type;
 
     use super::*;
 

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::Type;
+use ty::Type;
 
 use crate::{block::BasicBlock, scope::Scope, stmt::LinkId, var::Vars};
 

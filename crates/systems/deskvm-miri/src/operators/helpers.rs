@@ -5,7 +5,7 @@ pub fn lr(value: &Value) -> (&Value, &Value) {
     let vec: Vec<_> = values
         .iter()
         .map(|(key, value)| match key {
-            types::Type::Label { label, item: _ } => {
+            ty::Type::Label { label, item: _ } => {
                 let left = *label == "l".into();
                 (left, value)
             }

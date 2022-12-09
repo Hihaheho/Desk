@@ -25,7 +25,7 @@ mod tests {
         stmt::{Const, Stmt, StmtBind, Terminator},
         var::{Var, VarId, Vars},
     };
-    use types::Type;
+    use ty::Type;
 
     use crate::card::{DeskCompiler, DeskcQueries};
 
@@ -47,9 +47,9 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: Type::Real,
+                    output: Type::Integer,
                     vars: Vars(vec![Var {
-                        ty: Type::Real,
+                        ty: Type::Integer,
                         scope: ScopeId(0)
                     },]),
                     scopes: vec![Scope { super_scope: None }],
@@ -85,9 +85,9 @@ mod tests {
                 cfgs: vec![ControlFlowGraph {
                     parameters: vec![],
                     captured: vec![],
-                    output: Type::Real,
+                    output: Type::Integer,
                     vars: Vars(vec![Var {
-                        ty: Type::Real,
+                        ty: Type::Integer,
                         scope: ScopeId(0)
                     },]),
                     scopes: vec![Scope { super_scope: None }],

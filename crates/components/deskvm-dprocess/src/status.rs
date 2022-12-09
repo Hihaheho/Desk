@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::{dprocess::DProcessId, value::Value};
 

@@ -4,7 +4,7 @@ use hir::{expr::Expr, meta::WithMeta};
 
 use crate::{
     ctx::{Ctx, Id},
-    ty::{Type, TypeVisitorMut},
+    internal_type::{Type, TypeVisitorMut},
 };
 
 impl Ctx {

@@ -1,5 +1,5 @@
 use crate::{
-    ty::{Type, TypeVisitorMut},
+    internal_type::{Type, TypeVisitorMut},
     Ctx,
 };
 

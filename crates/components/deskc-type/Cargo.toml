@@ -1,5 +1,5 @@
 [package]
-name = "deskc-types"
+name = "deskc-type"
 version = "0.0.0"
 license = "MIT OR Apache-2.0"
 description = "The application platform for your cyberpunk desk"

@@ -19,7 +19,7 @@ use mir::{
     block::BlockId,
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
 };
-use types::{Effect, Type};
+use ty::{Effect, Type};
 
 use crate::{
     eval_cfg::{EvalCfg, Handler, InnerOutput},

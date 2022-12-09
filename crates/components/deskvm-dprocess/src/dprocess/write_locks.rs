@@ -3,7 +3,7 @@ use std::{
     ops::DerefMut,
 };
 
-use types::Type;
+use ty::Type;
 
 use crate::{
     flags::DProcessFlags, interpreter::Interpreter, status::DProcessStatus, timer::Timer,
