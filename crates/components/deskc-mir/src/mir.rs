@@ -5,8 +5,8 @@ use crate::{block::BasicBlock, scope::Scope, stmt::LinkId, var::Vars};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ControlFlowGraph {
-    // function parameters
-    pub parameters: Vec<Type>,
+    // function parameter
+    pub parameter: Option<Type>,
     // implicit parameters that captured from outer scope.
     pub captured: Vec<Type>,
     pub output: Type,

@@ -13,7 +13,7 @@ use ty::Type;
 use crate::{block_proto::BlockProto, scope_proto::ScopeProto};
 
 pub struct MirProto {
-    parameters: Vec<Type>,
+    parameter: Option<Type>,
     scopes: Vec<ScopeProto>,
     blocks_proto: HashMap<BlockId, BlockProto>,
     blocks: HashMap<BlockId, BasicBlock>,
@@ -33,7 +33,7 @@ pub struct MirProto {
 impl Default for MirProto {
     fn default() -> Self {
         Self {
-            parameters: vec![],
+            parameter: None,
             current_scope: vec![ScopeId(0)],
             current_block: vec![BlockId(0)],
             deferred_block: vec![],
@@ -51,7 +51,7 @@ impl MirProto {
     pub fn into_mir(self, var: VarId, output: Type) -> ControlFlowGraph {
         let current_block_id = self.current_block_id();
         let MirProto {
-            parameters,
+            parameter,
             scopes,
             mut blocks,
             mut blocks_proto,
@@ -88,7 +88,7 @@ impl MirProto {
         let links = links.into_iter().collect();
 
         ControlFlowGraph {
-            parameters,
+            parameter,
             captured,
             output,
             vars,
@@ -215,5 +215,9 @@ impl MirProto {
         let stmts = self.blocks_proto.remove(&id).unwrap().stmts;
         self.blocks.insert(id, BasicBlock { stmts, terminator });
         id
+    }
+
+    pub(crate) fn set_parameter(&mut self, parameter: Type) {
+        self.parameter = Some(parameter);
     }
 }

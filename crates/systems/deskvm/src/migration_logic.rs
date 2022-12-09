@@ -329,7 +329,7 @@ mod tests {
                 Mir {
                     entrypoint: ControlFlowGraphId(0),
                     cfgs: vec![ControlFlowGraph {
-                        parameters: vec![],
+                        parameter: Default::default(),
                         captured: vec![],
                         output: Type::Real,
                         vars: Vars(vec![Var {

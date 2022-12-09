@@ -149,6 +149,7 @@ impl MirGen<'_> {
                     .bind_stmt(stmt_ty.clone(), Stmt::Cast(output_var))
             }
             Expr::Handle { handlers, expr } => {
+                // handlers mir
                 let handlers = handlers
                     .iter()
                     .map(|Handler { effect, handler }| {
@@ -157,6 +158,7 @@ impl MirGen<'_> {
                             output: self.get_type(&effect.output)?.clone(),
                         };
                         self.begin_mir();
+                        self.set_parameter(effect.input.clone());
                         let handler_end = self.gen_stmt(handler)?;
                         let handler_cfg_id = self.end_mir(handler_end, stmt_ty.clone());
                         let handler_type = self.get_mir(&handler_cfg_id).get_type().clone();
@@ -167,7 +169,6 @@ impl MirGen<'_> {
                         Ok((effect.clone(), handler_var))
                     })
                     .collect::<Result<HashMap<_, _>, _>>()?;
-                // handler mir
 
                 // effectful mir
                 self.begin_mir();
@@ -301,9 +302,7 @@ impl MirGen<'_> {
         self.begin_mir();
 
         // make the parameter named
-        let param_var = self.mir_proto().create_var(parameter.clone());
-        self.mir_proto().bind_to(param_var, Stmt::Parameter);
-        self.mir_proto().create_named_var(param_var);
+        self.set_parameter(parameter.clone());
 
         let var = self.gen_stmt(body)?;
 
@@ -329,6 +328,13 @@ impl MirGen<'_> {
             captured,
             handlers,
         }
+    }
+
+    fn set_parameter(&mut self, parameter: Type) {
+        let param_var = self.mir_proto().create_var(parameter.clone());
+        self.mir_proto().bind_to(param_var, Stmt::Parameter);
+        self.mir_proto().create_named_var(param_var);
+        self.mir_proto().set_parameter(parameter);
     }
 
     fn begin_mir(&mut self) {
@@ -381,7 +387,7 @@ mod tests {
         gen.gen_mir(&hir).unwrap();
 
         assert_eq!(gen.mirs.len(), 1);
-        assert_eq!(gen.mirs[0].parameters, vec![]);
+        assert_eq!(gen.mirs[0].parameter, None);
         assert_eq!(gen.mirs[0].scopes, vec![Scope { super_scope: None }]);
         assert_eq!(
             gen.mirs[0].vars,

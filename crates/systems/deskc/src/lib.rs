@@ -45,7 +45,7 @@ mod tests {
             Arc::new(Mir {
                 entrypoint: ControlFlowGraphId(0),
                 cfgs: vec![ControlFlowGraph {
-                    parameters: vec![],
+                    parameter: Default::default(),
                     captured: vec![],
                     output: Type::Integer,
                     vars: Vars(vec![Var {
@@ -83,7 +83,7 @@ mod tests {
             Arc::new(Mir {
                 entrypoint: ControlFlowGraphId(0),
                 cfgs: vec![ControlFlowGraph {
-                    parameters: vec![],
+                    parameter: Default::default(),
                     captured: vec![],
                     output: Type::Integer,
                     vars: Vars(vec![Var {

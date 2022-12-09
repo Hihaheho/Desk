@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn literal() {
         let mir = ControlFlowGraph {
-            parameters: vec![],
+            parameter: Default::default(),
             output: Type::Real,
             vars: Vars(vec![Var {
                 ty: Type::Real,

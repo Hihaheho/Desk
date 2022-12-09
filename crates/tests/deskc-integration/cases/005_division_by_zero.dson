@@ -6,8 +6,8 @@
         'type add \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer;
         'type div \\ *<@\"l\" 'integer, @\"r\" 'integer> ->
           ! { @\"division by zero\" 'integer ~> @\"quot\" 'integer } @\"quot\" 'integer;
-        #1 'handle #2 <'integer> ^ div *<@\"dividend\" 3, @\"divisor\" 0> '{
-          @\"division by zero\" 'integer ~> 'integer =>
+        #1 'handle #2 <'integer> ^ div *<@\"l\" 3, @\"r\" 0> '{
+          @\"division by zero\" 'integer ~> @\"quot\" 'integer =>
             <'integer> ^add *<@\"l\" & @\"division by zero\" 'integer, 1>
         }'
       "
@@ -26,7 +26,10 @@
                 @"label" @"Literal" @"String" "division by zero",
                 @"item" @"Integer" *<>
               >,
-              @"output" @"Integer" *<>
+              @"output" @"Label" *<
+                @"label" @"Literal" @"String" "quot",
+                @"item" @"Integer" *<>
+              >
             >
           ]
         >
