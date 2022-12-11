@@ -14,13 +14,13 @@ impl Ctx {
             Type::Rational => ty::Type::Rational,
             Type::Integer => ty::Type::Integer,
             Type::String => ty::Type::String,
-            Type::Product(types) => ty::Type::product(
+            Type::Product(types) => ty::Type::Product(
                 types
                     .iter()
                     .map(|t| self.gen_type(t))
                     .collect::<Result<_, _>>()?,
             ),
-            Type::Sum(types) => ty::Type::sum(
+            Type::Sum(types) => ty::Type::Sum(
                 types
                     .iter()
                     .map(|t| self.gen_type(t))

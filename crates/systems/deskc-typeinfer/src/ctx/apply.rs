@@ -1,7 +1,10 @@
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
 
-use crate::{ctx::Ctx, ctx::Log, internal_type::Type, substitute::substitute, to_expr_type_error};
+use crate::{
+    ctx::Ctx, ctx::Log, internal_type::Type, similarity::WithSimilarities, substitute::substitute,
+    to_expr_type_error,
+};
 
 use super::with_type::WithType;
 
@@ -18,10 +21,12 @@ impl Ctx {
                     .ok()
                     .map(|with| with.recover_effects())
                     .and_then(|WithType(ctx, ty)| {
-                        ctx.subtype(&ty, parameter).ok().map(|ctx| {
-                            let ty = ctx.substitute_from_ctx(body);
-                            ctx.with_type(ty)
-                        })
+                        ctx.subtype(&ty, parameter)
+                            .ok()
+                            .map(|WithSimilarities { ctx, .. }| {
+                                let ty = ctx.substitute_from_ctx(body);
+                                ctx.with_type(ty)
+                            })
                     })
                     .unwrap_or(WithType(delta, *body.clone()))
             }

@@ -357,7 +357,7 @@ impl MirGen<'_> {
             .conclusion
             .get_type(&hir.meta.id)
             .ok_or_else(|| GenMirError::TypeNotFound {
-                for_expr: dbg!(&hir).meta.clone(),
+                for_expr: hir.meta.clone(),
             })?)
     }
 }

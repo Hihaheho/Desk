@@ -17,7 +17,7 @@ pub struct TypeToType {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CastStrategy(HashMap<Type, Type>);
+pub struct CastStrategy(pub HashMap<Type, Type>);
 
 impl TypeConclusions {
     pub fn get_type(&self, id: &NodeId) -> Option<&Type> {

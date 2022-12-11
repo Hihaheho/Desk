@@ -2,8 +2,8 @@ use errors::typeinfer::TypeError;
 
 use crate::{
     ctx::{Ctx, Id, Log},
-    mono_type::is_monotype,
     internal_type::Type,
+    mono_type::is_monotype,
 };
 
 impl Ctx {

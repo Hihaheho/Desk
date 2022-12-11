@@ -14,7 +14,6 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use errors::typeinfer::TypeError;
 use hir::meta::WithMeta;
 use ids::NodeId;
-use ty::conclusion::{CastStrategy, TypeToType};
 
 use crate::{
     internal_type::{
@@ -49,7 +48,7 @@ pub(crate) struct Ctx {
     // Result of type inference
     pub ir_types: Rc<RefCell<HashMap<NodeId, Type>>>,
     pub types: Rc<RefCell<HashMap<Id, Type>>>,
-    pub cast_strategies: Rc<RefCell<HashMap<TypeToType, CastStrategy>>>,
+    pub cast_strategies: Rc<RefCell<HashMap<(Type, Type), Vec<(Type, Type)>>>>,
     // a stack; continue's input of current context
     pub continue_input: RefCell<Vec<Type>>,
     // a stack; continue's output of current context

@@ -59,7 +59,8 @@ impl Ctx {
                             .map_err(|error| to_expr_type_error(expr, error))?,
                         &output,
                     )
-                    .map_err(|error| to_expr_type_error(expr, error))?;
+                    .map_err(|error| to_expr_type_error(expr, error))?
+                    .ctx;
                 let continue_input = ctx.continue_input.borrow();
                 ctx.subtype(
                     &input_ty,
@@ -69,6 +70,7 @@ impl Ctx {
                         .map_err(|error| to_expr_type_error(expr, error))?,
                 )
                 .map_err(|error| to_expr_type_error(expr, error))?
+                .ctx
                 .add(Log::Effect(EffectExpr::Effects(vec![Effect {
                     input: input_ty,
                     output: output.clone(),

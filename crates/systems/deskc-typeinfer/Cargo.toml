@@ -18,6 +18,7 @@ dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
 thiserror = "1.0"
+itertools = "0.10"
 
 [dev-dependencies]
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }

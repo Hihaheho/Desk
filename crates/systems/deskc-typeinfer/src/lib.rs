@@ -1,8 +1,11 @@
 pub mod ctx;
 mod internal_type;
+mod mappings;
 mod mono_type;
 mod occurs_in;
+mod partial_ord_max;
 mod polymorphic_function;
+mod similarity;
 mod substitute;
 mod substitute_from_ctx;
 mod utils;
@@ -13,7 +16,7 @@ use std::{cell::RefCell, rc::Rc};
 use ctx::Ctx;
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
-use ty::conclusion::TypeConclusions;
+use ty::conclusion::{CastStrategy, TypeConclusions, TypeToType};
 use utils::IdGen;
 
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<TypeConclusions, ExprTypeError> {
@@ -31,7 +34,23 @@ pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<TypeConclusions, E
             Some((id, ty))
         })
         .collect();
-    let cast_strategies = ctx.cast_strategies.borrow().clone();
+    let cast_strategies = ctx
+        .cast_strategies
+        .borrow()
+        .iter()
+        .filter_map(|(k, v)| {
+            let k = TypeToType {
+                from: ctx.gen_type(&k.0).ok()?,
+                to: ctx.gen_type(&k.1).ok()?,
+            };
+            let v = v
+                .iter()
+                .map(|(from, to)| Ok((ctx.gen_type(from)?, ctx.gen_type(to)?)))
+                .collect::<Result<_, TypeError>>()
+                .ok()?;
+            Some((k, CastStrategy(v)))
+        })
+        .collect();
     Ok(TypeConclusions {
         types,
         cast_strategies,
@@ -47,7 +66,7 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::{collections::HashMap, sync::Arc};
 
     use ariadne::{Label, Report, ReportKind, Source};
     use dson::Dson;
@@ -55,7 +74,7 @@ mod tests {
     use hir::visitor::HirVisitor;
     use ids::{Entrypoint, FileId, NodeId};
     use pretty_assertions::assert_eq;
-    use ty::{Effect, EffectExpr, Function, Type};
+    use ty::{conclusion::TypeToType, Effect, EffectExpr, Function, Type};
 
     use super::*;
 
@@ -611,7 +630,7 @@ mod tests {
             get_types(&expr, &conclusion),
             vec![(
                 1,
-                Type::Product(vec![Type::Real, Type::Rational, Type::Integer])
+                Type::Product(vec![Type::Integer, Type::Real, Type::Rational])
             )]
         );
     }
@@ -629,11 +648,11 @@ mod tests {
 
     #[test]
     fn test_rational_to_integer() {
-        let expr = dbg!(parse(
+        let expr = parse(
             r#"
                     #1 <'integer> 1 / 2
                     "#,
-        ));
+        );
 
         assert!(matches!(
             crate::synth(100, &expr),
@@ -648,66 +667,46 @@ mod tests {
     }
 
     #[test]
-    fn test_rational_to_real() {
+    fn test_cast_strategy_product_to_type() {
         let expr = parse(
             r#"
-                    #1 <'real> 1 / 2
-                    "#,
+            #1 <@"l" 'real> *<@"l" 1, @"r" 2>
+            "#,
         );
         let conclusion = synth(&expr).unwrap();
-        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Real)]);
-    }
-
-    #[test]
-    fn test_real_to_rational() {
-        let expr = parse(
-            r#"
-                    #1 <'rational> 1.0
-                    "#,
-        );
-        assert!(matches!(
-            crate::synth(100, &expr),
-            Err(ExprTypeError {
-                meta: _,
-                error: TypeError::NotSubtype {
-                    sub: TypeOrString::Type(ty::Type::Real),
-                    ty: TypeOrString::Type(ty::Type::Rational),
+        assert_eq!(
+            conclusion
+                .cast_strategies
+                .get(&TypeToType {
+                    from: Type::Product(vec![
+                        Type::Label {
+                            label: "l".into(),
+                            item: Box::new(Type::Integer)
+                        },
+                        Type::Label {
+                            label: "r".into(),
+                            item: Box::new(Type::Integer)
+                        }
+                    ]),
+                    to: Type::Label {
+                        label: "l".into(),
+                        item: Box::new(Type::Real)
+                    }
+                })
+                .expect("cast strategy not found")
+                .0,
+            [(
+                Type::Label {
+                    label: "l".into(),
+                    item: Box::new(Type::Integer)
                 },
-            })
-        ));
-    }
-
-    #[test]
-    fn test_integer_to_real() {
-        let expr = parse(
-            r#"
-                    #1 <'real> 1
-                    "#,
+                Type::Label {
+                    label: "l".into(),
+                    item: Box::new(Type::Real)
+                }
+            ),]
+            .into_iter()
+            .collect::<HashMap<_, _>>()
         );
-        let conclusion = synth(&expr).unwrap();
-        assert_eq!(get_types(&expr, &conclusion), vec![(1, Type::Real)]);
     }
-
-    #[test]
-    fn test_real_to_integer() {
-        let expr = parse(
-            r#"
-                    #1 <'integer> 1.0
-                    "#,
-        );
-        assert!(matches!(
-            crate::synth(100, &expr),
-            Err(ExprTypeError {
-                meta: _,
-                error: TypeError::NotSubtype {
-                    sub: TypeOrString::Type(ty::Type::Real),
-                    ty: TypeOrString::Type(ty::Type::Integer),
-                },
-            })
-        ));
-    }
-
-    // TODO:
-    // Priority labels in function application
-    // Priority labels in product and sum
 }

@@ -52,6 +52,18 @@ pub enum TypeError {
     ExistentialNotInstansiated { id: usize },
     #[error("not inferred {id:?}")]
     NotInferred { id: ids::NodeId },
+    #[error("ambiguous subtype {sub:?} {ty:?}")]
+    AmbiguousSubtype { sub: TypeOrString, ty: TypeOrString },
+    #[error("sum subtype {sub_ty:?} has unsufficent elements to supertype {super_ty:?}")]
+    SumInsufficentElements {
+        sub_ty: Vec<TypeOrString>,
+        super_ty: Vec<TypeOrString>,
+    },
+    #[error("product supertype {super_ty:?} has unsufficent elements to subtype {sub_ty:?}")]
+    ProductInsufficentElements {
+        sub_ty: Vec<TypeOrString>,
+        super_ty: Vec<TypeOrString>,
+    },
 }
 
 impl From<&ExprTypeError> for TextualDiagnostics {

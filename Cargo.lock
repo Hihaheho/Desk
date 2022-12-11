@@ -290,7 +290,7 @@ name = "bart_derive"
 version = "0.1.4"
 source = "git+https://github.com/ryo33/bart?rev=5a6046b386aced0bdf0a5d7a23ea96accefade09#5a6046b386aced0bdf0a5d7a23ea96accefade09"
 dependencies = [
- "itertools",
+ "itertools 0.6.5",
  "num",
  "quote 0.3.15",
  "syn 0.10.8",
@@ -1859,6 +1859,7 @@ dependencies = [
  "deskc-type",
  "dson",
  "env_logger 0.10.0",
+ "itertools 0.10.5",
  "pretty_assertions",
  "thiserror",
 ]
@@ -2742,6 +2743,15 @@ name = "itertools"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3f2be4da1690a039e9ae5fd575f706a63ad5a2120f161b1d653c9da3930dd21"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
 dependencies = [
  "either",
 ]
