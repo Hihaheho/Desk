@@ -16,4 +16,4 @@ dworkspace = { path = "../../systems/dworkspace", version = "0.0.0", package = "
 
 bevy = "0.9"
 ron = "0.8"
-bevy_egui = "0.17"
+bevy_egui = "0.18"

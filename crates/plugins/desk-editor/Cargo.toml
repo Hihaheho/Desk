@@ -17,6 +17,6 @@ deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = 
 deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 
 bevy = "0.9"
-egui = "0.19.0"
+egui = "0.20.1"
 uuid = "1.2"
 egui_cable = "0.3"

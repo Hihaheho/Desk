@@ -30,4 +30,4 @@ bevy = "0.9"
 bevy-inspector-egui = { version = "0.14.0", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3"
-egui = "0.19.0"
+egui = "0.20.1"
