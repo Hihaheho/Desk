@@ -14,9 +14,9 @@ do
 done
 
 tools/diff-crates.sh
+[[ -z ${NO_CARGO_DENY} ]] && cargo deny check --config configs/deny.toml
 cargo fmt --all -- --check
-cargo check --tests --all-features
 cargo clippy --all-targets --all-features -- -D warnings -W clippy::all -W clippy::dbg_macro
+cargo check --tests --all-features
 cargo test --no-run --locked --all-features
 cargo test --all-features
-[[ -z ${NO_CARGO_DENY} ]] && cargo deny check --config configs/deny.toml
