@@ -1,0 +1,18 @@
+*<
+  @"files" [
+    *<
+      @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
+      @"content" "
+        ^ \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer (*<@\"l\" 1, @\"r\" 2>)
+      "
+    >
+  ],
+  @"assertions" *<
+    @"runs" [
+      *<
+        @"entrypoint" @"File" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
+        @"result" @"Success" @"Number" @"Integer" 3
+      >
+    ]
+  >
+>
