@@ -1,8 +1,12 @@
+mod cast;
+
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use mir::block::BlockId;
 use mir::mir::ControlFlowGraph;
 use mir::stmt::{Stmt, Terminator};
+use ty::conclusion::TypeConclusions;
 use ty::{Effect, Type};
 
 use crate::const_stmt;
@@ -14,6 +18,7 @@ use mir::var::VarId;
 #[derive(Debug, Clone, PartialEq)]
 pub struct EvalCfg {
     pub(crate) cfg: ControlFlowGraph,
+    pub(crate) type_conclusion: Arc<TypeConclusions>,
     pub(crate) registers: HashMap<VarId, Value>,
     pub(crate) parameters: HashMap<Type, Value>,
     pub(crate) captured: HashMap<Type, Value>,
@@ -164,7 +169,12 @@ impl EvalCfg {
                     todo!()
                 }
                 Stmt::MatchResult(_) => todo!(),
-                Stmt::Cast(var) => self.cast(var, self.get_var_ty(bind_var)),
+                Stmt::Cast(var) => {
+                    let value = self.load_value(var);
+                    let ty = self.get_var_ty(var);
+                    let target = self.get_var_ty(bind_var);
+                    EvalCfg::cast(self.type_conclusion.clone(), value, ty, target)
+                }
             };
             let var = *bind_var;
             self.store_value(var, value);
@@ -189,32 +199,6 @@ impl EvalCfg {
 
     pub fn get_var_ty(&self, var: &VarId) -> &Type {
         &self.cfg.vars.get(var).ty
-    }
-
-    // TODO: complete the implementation
-    pub fn cast(&self, var: &VarId, target: &Type) -> Value {
-        let value = self.load_value(var);
-        let ty = self.get_var_ty(var);
-        match (value, ty, target) {
-            (value, a, b) if a == b => value.clone(),
-            (value, ty, Type::Sum(_)) if !matches!(value, Value::Variant { .. }) => {
-                Value::Variant {
-                    ty: ty.clone(),
-                    value: Box::new(value.clone()),
-                }
-            }
-            (value, ty, Type::Label { label: _, item }) if *ty == **item => value.clone(),
-            (value, Type::Label { label: _, item }, ty) if **item == *ty => value.clone(),
-            (_value, Type::Product(types1), Type::Product(types2)) => {
-                dbg!(types1);
-                dbg!(types2);
-                todo!()
-            }
-            (_value, Type::Product(_types), _ty) => {
-                todo!()
-            }
-            (_value, a, b) => panic!("unable to cast {:?} to {:?}", a, b),
-        }
     }
 }
 
@@ -252,6 +236,7 @@ mod tests {
 
         let mut eval = EvalCfg {
             cfg: mir,
+            type_conclusion: Default::default(),
             pc_block: BlockId(0),
             pc_stmt_idx: 0,
             registers: HashMap::new(),
@@ -264,7 +249,4 @@ mod tests {
         assert_eq!(eval.eval_next(), InnerOutput::Running);
         assert_eq!(eval.eval_next(), InnerOutput::Return(Value::Int(1)));
     }
-
-    #[test]
-    fn builtin() {}
 }

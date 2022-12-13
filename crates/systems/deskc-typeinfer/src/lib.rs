@@ -1,3 +1,4 @@
+mod cast_strategies;
 pub mod ctx;
 mod internal_type;
 mod mappings;
@@ -13,10 +14,11 @@ mod well_formed;
 
 use std::{cell::RefCell, rc::Rc};
 
+use cast_strategies::CastStrategy;
 use ctx::Ctx;
 use errors::typeinfer::{ExprTypeError, TypeError};
 use hir::{expr::Expr, meta::WithMeta};
-use ty::conclusion::{CastStrategy, TypeConclusions, TypeToType};
+use ty::conclusion::{TypeConclusions, TypeToType};
 use utils::IdGen;
 
 pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<TypeConclusions, ExprTypeError> {
@@ -38,17 +40,42 @@ pub fn synth(next_id: usize, expr: &WithMeta<Expr>) -> Result<TypeConclusions, E
         .cast_strategies
         .borrow()
         .iter()
-        .filter_map(|(k, v)| {
-            let k = TypeToType {
-                from: ctx.gen_type(&k.0).ok()?,
-                to: ctx.gen_type(&k.1).ok()?,
+        .filter_map(|(type_to_type, strategy)| {
+            let type_to_type = TypeToType {
+                from: ctx.gen_type(&type_to_type.0).ok()?,
+                to: ctx.gen_type(&type_to_type.1).ok()?,
             };
-            let v = v
-                .iter()
-                .map(|(from, to)| Ok((ctx.gen_type(from)?, ctx.gen_type(to)?)))
-                .collect::<Result<_, TypeError>>()
-                .ok()?;
-            Some((k, CastStrategy(v)))
+            let cast_strategy = match strategy {
+                CastStrategy::ProductToProduct(mapping) => {
+                    ty::conclusion::CastStrategy::ProductToProduct(
+                        mapping
+                            .iter()
+                            .filter_map(|(from, to)| {
+                                let from = ctx.gen_type(from).ok()?;
+                                let to = ctx.gen_type(to).ok()?;
+                                Some((from, to))
+                            })
+                            .collect(),
+                    )
+                }
+                CastStrategy::SumToSum(mapping) => ty::conclusion::CastStrategy::SumToSum(
+                    mapping
+                        .iter()
+                        .filter_map(|(from, to)| {
+                            let from = ctx.gen_type(from).ok()?;
+                            let to = ctx.gen_type(to).ok()?;
+                            Some((from, to))
+                        })
+                        .collect(),
+                ),
+                CastStrategy::ProductToInner(ty) => {
+                    ty::conclusion::CastStrategy::ProductToInner(ctx.gen_type(ty).ok()?)
+                }
+                CastStrategy::InnerToSum(ty) => {
+                    ty::conclusion::CastStrategy::InnerToSum(ctx.gen_type(ty).ok()?)
+                }
+            };
+            Some((type_to_type, cast_strategy))
         })
         .collect();
     Ok(TypeConclusions {
@@ -74,7 +101,10 @@ mod tests {
     use hir::visitor::HirVisitor;
     use ids::{Entrypoint, FileId, NodeId};
     use pretty_assertions::assert_eq;
-    use ty::{conclusion::TypeToType, Effect, EffectExpr, Function, Type};
+    use ty::{
+        conclusion::{CastStrategy, TypeToType},
+        Effect, EffectExpr, Function, Type,
+    };
 
     use super::*;
 
@@ -693,20 +723,11 @@ mod tests {
                         item: Box::new(Type::Real)
                     }
                 })
-                .expect("cast strategy not found")
-                .0,
-            [(
-                Type::Label {
-                    label: "l".into(),
-                    item: Box::new(Type::Integer)
-                },
-                Type::Label {
-                    label: "l".into(),
-                    item: Box::new(Type::Real)
-                }
-            ),]
-            .into_iter()
-            .collect::<HashMap<_, _>>()
+                .expect("cast strategy not found"),
+            &CastStrategy::ProductToInner(Type::Label {
+                label: "l".into(),
+                item: Box::new(Type::Integer)
+            })
         );
     }
 }

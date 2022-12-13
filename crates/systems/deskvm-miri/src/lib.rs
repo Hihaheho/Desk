@@ -11,6 +11,7 @@ use value::{FnRef, Value};
 
 use std::{
     collections::{HashMap, VecDeque},
+    sync::Arc,
     time::Duration,
 };
 
@@ -19,7 +20,7 @@ use mir::{
     block::BlockId,
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
 };
-use ty::{Effect, Type};
+use ty::{conclusion::TypeConclusions, Effect, Type};
 
 use crate::{
     eval_cfg::{EvalCfg, Handler, InnerOutput},
@@ -29,6 +30,7 @@ use crate::{
 pub fn try_create_miri_builder(
     mir: Mir,
     parameters: &HashMap<Type, dprocess::value::Value>,
+    type_conclusion: Arc<TypeConclusions>,
 ) -> Result<MiriBuilder, MiriBuilderCreationError> {
     let parameters = mir
         .captured()
@@ -43,15 +45,25 @@ pub fn try_create_miri_builder(
             Ok((ty.clone(), parameter))
         })
         .collect::<Result<_, _>>()?;
-    Ok(MiriBuilder { mir, parameters })
+    Ok(MiriBuilder {
+        mir,
+        parameters,
+        type_conclusion,
+    })
 }
 
-fn eval_mir(mirs: Mir, parameters: HashMap<Type, Value>) -> EvalMir {
+fn eval_mir(
+    mirs: Mir,
+    parameters: HashMap<Type, Value>,
+    type_conclusion: Arc<TypeConclusions>,
+) -> EvalMir {
     let cfg = mirs.cfgs.get(mirs.entrypoint.0).cloned().unwrap();
     EvalMir {
+        type_conclusion: type_conclusion.clone(),
         cfgs: mirs.cfgs,
         stack: vec![EvalCfg {
             cfg,
+            type_conclusion,
             registers: HashMap::new(),
             parameters,
             captured: HashMap::new(),
@@ -65,6 +77,7 @@ fn eval_mir(mirs: Mir, parameters: HashMap<Type, Value>) -> EvalMir {
 
 #[derive(Clone, Debug)]
 pub struct EvalMir {
+    type_conclusion: Arc<TypeConclusions>,
     cfgs: Vec<ControlFlowGraph>,
     stack: Vec<EvalCfg>,
 }
@@ -112,6 +125,7 @@ impl EvalMir {
                 captured.insert(effect.input.clone(), input);
                 let eval_mir = EvalCfg {
                     cfg: self.get_mir(&mir).clone(),
+                    type_conclusion: self.type_conclusion.clone(),
                     registers: Default::default(),
                     parameters: Default::default(),
                     captured,
@@ -166,6 +180,7 @@ impl Interpreter for EvalMir {
                 }) => {
                     let eval_mir = EvalCfg {
                         cfg: self.get_mir(&mir).clone(),
+                        type_conclusion: self.type_conclusion.clone(),
                         registers: Default::default(),
                         parameters,
                         captured,
@@ -180,6 +195,7 @@ impl Interpreter for EvalMir {
                 value::FnRef::Recursion => {
                     let eval_mir = EvalCfg {
                         cfg: self.stack().cfg.clone(),
+                        type_conclusion: self.type_conclusion.clone(),
                         registers: Default::default(),
                         parameters,
                         captured: self.stack().captured.clone(),

@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use dprocess::{interpreter::Interpreter, interpreter_builder::InterpreterBuilder};
 use mir::mir::Mir;
 use thiserror::Error;
-use ty::Type;
+use ty::{conclusion::TypeConclusions, Type};
 
 use crate::{eval_mir, value::Value};
 
@@ -17,10 +17,15 @@ pub enum MiriBuilderCreationError {
 pub struct MiriBuilder {
     pub mir: Mir,
     pub parameters: HashMap<Type, Value>,
+    pub type_conclusion: Arc<TypeConclusions>,
 }
 
 impl InterpreterBuilder for MiriBuilder {
     fn build(&self) -> Box<dyn Interpreter> {
-        Box::new(eval_mir(self.mir.clone(), self.parameters.clone()))
+        Box::new(eval_mir(
+            self.mir.clone(),
+            self.parameters.clone(),
+            self.type_conclusion.clone(),
+        ))
     }
 }

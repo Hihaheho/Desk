@@ -348,6 +348,7 @@ mod tests {
                     }],
                 },
                 &Default::default(),
+                Default::default(),
             )
             .unwrap(),
             Default::default(),

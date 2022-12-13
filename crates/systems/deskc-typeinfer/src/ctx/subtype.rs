@@ -1,6 +1,7 @@
 use errors::typeinfer::TypeError;
 
 use crate::{
+    cast_strategies::CastStrategy,
     ctx::Ctx,
     ctx::Log,
     internal_type::{effect_expr::EffectExpr, Type},
@@ -70,7 +71,7 @@ impl Ctx {
                     let (sub_ty, ctx) = candidates[0].clone();
                     ctx.ctx.cast_strategies.borrow_mut().insert(
                         (sub.clone(), ty.clone()),
-                        vec![(sub_ty.clone(), ty.clone())],
+                        CastStrategy::ProductToInner(sub_ty.clone()),
                     );
                     Ok(ctx.insert_similarity(Similarity::ProductToInner))
                 } else {
@@ -89,10 +90,12 @@ impl Ctx {
                         let (ctx, mapping) = max.ctx;
                         ctx.cast_strategies.borrow_mut().insert(
                             (sub.clone(), ty.clone()),
-                            mapping
-                                .into_iter()
-                                .map(|(l, r)| (l.clone(), r.clone()))
-                                .collect(),
+                            CastStrategy::ProductToProduct(
+                                mapping
+                                    .into_iter()
+                                    .map(|(l, r)| (l.clone(), r.clone()))
+                                    .collect(),
+                            ),
                         );
                         let mut similarities = max.list.max();
                         similarities.insert(Similarity::Product);
@@ -128,7 +131,7 @@ impl Ctx {
                     let (first, ctx) = candidates[0].clone();
                     ctx.ctx.cast_strategies.borrow_mut().insert(
                         (sub.clone(), ty.clone()),
-                        vec![(sub.clone(), first.clone())],
+                        CastStrategy::InnerToSum(first.clone()),
                     );
                     Ok(ctx.insert_similarity(Similarity::InnerToSum))
                 } else {
@@ -147,10 +150,12 @@ impl Ctx {
                         let (ctx, mapping) = max.ctx;
                         ctx.cast_strategies.borrow_mut().insert(
                             (sub.clone(), ty.clone()),
-                            mapping
-                                .into_iter()
-                                .map(|(l, r)| (l.clone(), r.clone()))
-                                .collect(),
+                            CastStrategy::SumToSum(
+                                mapping
+                                    .into_iter()
+                                    .map(|(l, r)| (l.clone(), r.clone()))
+                                    .collect(),
+                            ),
                         );
                         dbg!(&max.list);
                         let mut similarities = max.list.max();
@@ -448,7 +453,7 @@ mod tests {
                     Type::Integer
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Integer, Type::Integer)]
+            &CastStrategy::ProductToInner(Type::Integer)
         );
     }
 
@@ -480,10 +485,7 @@ mod tests {
                     Type::Product(vec![Type::Integer, Type::Rational])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(
-                Type::Product(vec![Type::Integer, Type::Rational]),
-                Type::Product(vec![Type::Integer, Type::Rational])
-            ),]
+            &CastStrategy::ProductToInner(Type::Product(vec![Type::Integer, Type::Rational]))
         );
     }
 
@@ -509,7 +511,7 @@ mod tests {
                     Type::Sum(vec![Type::Integer, Type::Rational])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Rational, Type::Rational)]
+            &CastStrategy::InnerToSum(Type::Rational)
         );
     }
 
@@ -541,10 +543,7 @@ mod tests {
                     ])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(
-                Type::Sum(vec![Type::Integer, Type::Rational]),
-                Type::Sum(vec![Type::Integer, Type::Rational])
-            ),]
+            &CastStrategy::InnerToSum(Type::Sum(vec![Type::Integer, Type::Rational]))
         );
     }
 
@@ -599,7 +598,7 @@ mod tests {
                     Type::Rational
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Rational, Type::Rational)]
+            &CastStrategy::ProductToInner(Type::Rational)
         );
     }
 
@@ -625,7 +624,7 @@ mod tests {
                     Type::Sum(vec![Type::Integer, Type::Rational])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Integer, Type::Integer)]
+            &CastStrategy::InnerToSum(Type::Integer)
         );
     }
 
@@ -691,7 +690,11 @@ mod tests {
                     Type::Product(vec![Type::Integer, Type::Real])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Integer, Type::Integer), (Type::Rational, Type::Real)]
+            &CastStrategy::ProductToProduct(
+                [(Type::Integer, Type::Integer), (Type::Rational, Type::Real)]
+                    .into_iter()
+                    .collect()
+            )
         );
     }
 
@@ -717,7 +720,11 @@ mod tests {
                     Type::Sum(vec![Type::Integer, Type::Real])
                 ))
                 .expect("cast strategy not found"),
-            &vec![(Type::Integer, Type::Integer), (Type::Rational, Type::Real)]
+            &CastStrategy::SumToSum(
+                [(Type::Integer, Type::Integer), (Type::Rational, Type::Real)]
+                    .into_iter()
+                    .collect()
+            )
         );
     }
 
