@@ -12,23 +12,24 @@ pub use parol_runtime::derive_builder;
 pub fn parse(input: &str) -> Result<WithSpan<Expr>, MinimalistSyntaxError> {
     let mut grammar = grammar::Grammar::new();
     parser::parse(input, "dummy", &mut grammar)
-        .map_err(|err| MinimalistSyntaxError::ParseError(err.to_string()))?;
+        .map_err(|err| MinimalistSyntaxError::ParseError(err))?;
     grammar.expr.unwrap().try_into()
 }
 
 #[derive(Error, Debug)]
 pub enum MinimalistSyntaxError {
-    #[error("Parse error: {0}")]
-    ParseError(String),
+    #[error("Parse error: {0:?}")]
+    ParseError(parol_runtime::miette::Error),
     #[error("Uuid error: {0}")]
     UuidError(#[from] uuid::Error),
     #[error("Dson error: {0}")]
     DsonError(#[from] ast::dson::ExprToDsonError),
+    #[error("other error: {0}")]
+    OtherError(String),
 }
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
     use ast::{
         expr::{Handler, Literal, MapElem, MatchCase},
         remove_span::remove_span,
@@ -36,6 +37,7 @@ mod tests {
     };
     use dson::Dson;
     use ids::{LinkName, NodeId};
+    use pretty_assertions::assert_eq;
 
     use super::*;
 

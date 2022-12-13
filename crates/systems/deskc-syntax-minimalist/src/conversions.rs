@@ -69,13 +69,13 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         let text = rational.rational.text().to_string();
                         let splitted: Vec<_> = text.split("/").collect();
                         let a = splitted[0].trim_end().parse().map_err(|_| {
-                            MinimalistSyntaxError::ParseError(format!(
+                            MinimalistSyntaxError::OtherError(format!(
                                 "Could not parse numerator of rational: {}",
                                 rational.rational.text()
                             ))
                         })?;
                         let b = splitted[1].trim_start().parse().map_err(|_| {
-                            MinimalistSyntaxError::ParseError(format!(
+                            MinimalistSyntaxError::OtherError(format!(
                                 "Could not parse denominator of rational: {}",
                                 rational.rational.text()
                             ))
@@ -99,13 +99,13 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                             Integer::Dec(integer) => integer.dec.dec.text().parse::<i64>(),
                         }
                         .map_err(|_| {
-                            MinimalistSyntaxError::ParseError(format!("Could not parse integer",))
+                            MinimalistSyntaxError::OtherError(format!("Could not parse integer",))
                         })?;
                         Literal::Integer(integer)
                     }
                     grammar_trait::Literal::Real(LiteralReal { real }) => Literal::Real(
                         real.real.text().to_string().parse::<f64>().map_err(|_| {
-                            MinimalistSyntaxError::ParseError(format!(
+                            MinimalistSyntaxError::OtherError(format!(
                                 "Could not parse real: {}",
                                 real.real.text().to_string()
                             ))
