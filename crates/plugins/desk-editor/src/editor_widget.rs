@@ -57,10 +57,10 @@ impl Widget<egui::Context> for EditorWidget {
                     dworkspace_codebase::content::Content::Real(_float) => todo!(),
                     dworkspace_codebase::content::Content::Apply { ty, .. } => {
                         let mut clicked = None;
-                        ui.label(format!("{:?}", ty));
+                        ui.label(format!("{ty:?}"));
                         for (index, child) in node.operands.iter().enumerate() {
                             ui.horizontal(|ui| {
-                                ui.label(format!("{:?}", child));
+                                ui.label(format!("{child:?}"));
                                 if ui.button("x").clicked() {
                                     clicked = Some(Event::PatchOperand {
                                         node_id: self.node_id.clone(),

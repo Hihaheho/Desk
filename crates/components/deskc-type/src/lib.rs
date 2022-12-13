@@ -82,13 +82,10 @@ impl Type {
         }
     }
     pub fn function(parameter: Self, body: Self) -> Self {
-        Type::Function(Box::new(Function {
-            parameter: parameter,
-            body: body,
-        }))
+        Type::Function(Box::new(Function { parameter, body }))
     }
 
-    pub fn parameters<'a>(&'a self) -> ParametersIter<'a> {
+    pub fn parameters(&self) -> ParametersIter<'_> {
         ParametersIter(self)
     }
 }

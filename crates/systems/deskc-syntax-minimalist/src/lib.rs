@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 pub mod grammar_trait;
 pub mod parser;
 
@@ -11,8 +12,7 @@ pub use parol_runtime::derive_builder;
 
 pub fn parse(input: &str) -> Result<WithSpan<Expr>, MinimalistSyntaxError> {
     let mut grammar = grammar::Grammar::new();
-    parser::parse(input, "dummy", &mut grammar)
-        .map_err(|err| MinimalistSyntaxError::ParseError(err))?;
+    parser::parse(input, "dummy", &mut grammar).map_err(MinimalistSyntaxError::ParseError)?;
     grammar.expr.unwrap().try_into()
 }
 

@@ -51,7 +51,7 @@ impl Ctx {
                 variable: self.get_id_of(variable.clone()),
                 bound: bound
                     .as_ref()
-                    .map(|bound| Box::new(self.gen_from_hir_type(&bound))),
+                    .map(|bound| Box::new(self.gen_from_hir_type(bound))),
                 body: Box::new(self.gen_from_hir_type(body)),
             },
             Exists { .. } => todo!(),

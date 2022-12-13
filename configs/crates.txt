@@ -3,25 +3,21 @@
 # deskc components
 deskc-ids
 deskc-type
-deskc-tokens
 deskc-ast
 deskc-hir
-deskc-thir
 deskc-mir
-deskc-textual-diagnostics
+deskc-errors
 
 # deskc systems
-deskc-lexer
-deskc-parser
-deskc-syntax-rustlike
 deskc-syntax-minimalist
 deskc-hirgen
 deskc-typeinfer
-deskc-thirgen
 deskc-mirgen
 deskc-fmt
-deskc-thir2dson
 deskc
+
+# deskc libs
+deskc-macros
 
 # deskc apps
 deskc-cli

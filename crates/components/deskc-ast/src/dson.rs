@@ -63,7 +63,7 @@ impl TryFrom<WithSpan<Expr>> for Dson {
             Expr::Product(exprs) => Ok(Dson::Product(
                 exprs
                     .into_iter()
-                    .map(|ty| Dson::try_from(ty))
+                    .map(Dson::try_from)
                     .collect::<Result<Vec<_>, _>>()?,
             )),
             Expr::Typed { ty, item } => Ok(Dson::Typed {
@@ -73,7 +73,7 @@ impl TryFrom<WithSpan<Expr>> for Dson {
             Expr::Vector(exprs) => Ok(Dson::Vector(
                 exprs
                     .into_iter()
-                    .map(|ty| Dson::try_from(ty))
+                    .map(Dson::try_from)
                     .collect::<Result<Vec<_>, _>>()?,
             )),
             Expr::Map(elems) => Ok(Dson::Map(
@@ -131,13 +131,13 @@ impl TryFrom<WithSpan<Type>> for dson::Type {
             Type::Product(types) => Ok(dson::Type::Product(
                 types
                     .into_iter()
-                    .map(|ty| dson::Type::try_from(ty))
+                    .map(dson::Type::try_from)
                     .collect::<Result<Vec<_>, _>>()?,
             )),
             Type::Sum(types) => Ok(dson::Type::Sum(
                 types
                     .into_iter()
-                    .map(|ty| dson::Type::try_from(ty))
+                    .map(dson::Type::try_from)
                     .collect::<Result<Vec<_>, _>>()?,
             )),
             Type::Vector(ty) => Ok(dson::Type::Vector(Box::new(dson::Type::try_from(*ty)?))),

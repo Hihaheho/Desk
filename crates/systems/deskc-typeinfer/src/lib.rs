@@ -114,7 +114,7 @@ mod tests {
     }
 
     fn synth(expr: &WithMeta<Expr>) -> Result<TypeConclusions, ExprTypeError> {
-        crate::synth(100, &expr)
+        crate::synth(100, expr)
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
@@ -256,7 +256,7 @@ mod tests {
         let conclusion = crate::synth(100, expr).unwrap_or_else(|error| print_error(input, error));
 
         assert_eq!(
-            get_types(&expr, &conclusion),
+            get_types(expr, &conclusion),
             vec![
                 (1, Type::String),
                 (

@@ -1,7 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Real(pub f64);
+
+impl PartialEq for Real {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits() == other.0.to_bits()
+    }
+}
 
 // Real must not be NaN or infinity.
 impl Eq for Real {}
@@ -9,6 +15,12 @@ impl Eq for Real {}
 impl std::hash::Hash for Real {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.to_be_bytes().hash(state);
+    }
+}
+
+impl PartialOrd for Real {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.0)
     }
 }
 

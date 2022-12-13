@@ -54,11 +54,11 @@ impl PartialOrd for Similarities {
         // This zip truncates the longer one,
         // and it's safe because terminator is always greater or less than the other.
         for (a, b) in self.0.iter().zip(other.0.iter()) {
-            if a < b || a > b {
+            if a.cmp(b) != Ordering::Equal {
                 return Some(a.strength().cmp(&b.strength()));
             }
         }
-        return Some(Ordering::Equal);
+        Some(Ordering::Equal)
     }
 }
 

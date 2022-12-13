@@ -24,7 +24,7 @@ impl Ctx {
         Ok(to
             .into_iter()
             .permutations(from.len())
-            .map(|to| from.iter().map(|x| *x).zip(to).collect())
+            .map(|to| from.iter().copied().zip(to).collect())
             .collect())
     }
 
@@ -49,7 +49,7 @@ impl Ctx {
         Ok(from
             .into_iter()
             .permutations(to.len())
-            .map(|from| from.into_iter().zip(to.iter().map(|x| *x)).collect())
+            .map(|from| from.into_iter().zip(to.iter().copied()).collect())
             .collect())
     }
 }

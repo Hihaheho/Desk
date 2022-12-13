@@ -34,7 +34,7 @@ pub fn try_create_miri_builder(
 ) -> Result<MiriBuilder, MiriBuilderCreationError> {
     let parameters = mir
         .captured()
-        .into_iter()
+        .iter()
         .map(|ty| {
             let parameter = parameters
                 .get(ty)
@@ -207,7 +207,7 @@ impl Interpreter for EvalMir {
                     self.stack.push(eval_mir);
                     InterpreterOutput::Running
                 }
-                value::FnRef::Operator(op) => match op.call(&parameters.iter().next().unwrap().1) {
+                value::FnRef::Operator(op) => match op.call(parameters.iter().next().unwrap().1) {
                     value::OperatorOutput::Return(value) => {
                         self.stack().return_or_continue_with_value(value);
                         InterpreterOutput::Running

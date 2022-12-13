@@ -44,7 +44,7 @@ impl Ctx {
                 variable: self.get_ident_of(*variable),
                 bound: bound
                     .as_ref()
-                    .map(|bound| Ok(Box::new(self.gen_type(&bound)?)))
+                    .map(|bound| Ok(Box::new(self.gen_type(bound)?)))
                     .transpose()?,
                 body: Box::new(self.gen_type(body)?),
             },
@@ -81,7 +81,7 @@ impl Ctx {
         if let Ok(ty) = self.gen_type(ty) {
             TypeOrString::Type(ty)
         } else {
-            TypeOrString::String(format!("{:?}", ty))
+            TypeOrString::String(format!("{ty:?}"))
         }
     }
 

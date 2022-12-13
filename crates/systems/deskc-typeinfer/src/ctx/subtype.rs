@@ -11,6 +11,8 @@ use crate::{
     substitute::substitute,
 };
 
+pub(crate) type CtxWithMappings<'a> = (Ctx, Vec<(&'a Type, &'a Type)>);
+
 impl Ctx {
     pub fn subtype(&self, sub: &Type, ty: &Type) -> Result<WithSimilarities<Ctx>, TypeError> {
         let result = match (sub, ty) {
@@ -157,7 +159,6 @@ impl Ctx {
                                     .collect(),
                             ),
                         );
-                        dbg!(&max.list);
                         let mut similarities = max.list.max();
                         similarities.insert(Similarity::Sum);
                         ctx.with_similarities(similarities)
@@ -320,7 +321,7 @@ impl Ctx {
     // This is a helper function for bound check.
     pub fn bound_check(&self, sub: &Type, bound: &Option<Box<Type>>) -> Result<Self, TypeError> {
         if let Some(bound) = bound {
-            self.subtype(sub, &bound).map(|with| with.ctx)
+            self.subtype(sub, bound).map(|with| with.ctx)
         } else {
             Ok(self.clone())
         }
@@ -329,7 +330,7 @@ impl Ctx {
     fn max_mappings<'a>(
         &self,
         mappings: Vec<Vec<(&'a Type, &'a Type)>>,
-    ) -> Option<WithSimilaritiesList<(Ctx, Vec<(&'a Type, &'a Type)>)>> {
+    ) -> Option<WithSimilaritiesList<CtxWithMappings<'a>>> {
         let candidates: Vec<_> = mappings
             .into_iter()
             .filter_map(|mapping| {
@@ -861,7 +862,7 @@ mod tests {
                 sub: ty::Type::Integer.into(),
                 ty: ty::Type::Brand {
                     brand: "a".into(),
-                    item: Box::new(ty::Type::Integer.into()),
+                    item: Box::new(ty::Type::Integer),
                 }
                 .into(),
             })

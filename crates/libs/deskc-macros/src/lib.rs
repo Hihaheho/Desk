@@ -25,7 +25,7 @@ pub fn ty(item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn effect(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
-        format!("& ! {{ {} }} 'integer", string)
+        format!("& ! {{ {string} }} 'integer")
     }
     fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
         let Expr::Apply { function, .. } = expr.value
@@ -46,7 +46,7 @@ pub fn effect(item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn dson(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
-        format!("@ {} 1", string)
+        format!("@ {string} 1")
     }
     fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
         let Expr::Label { label, item: _ } = expr.value else {
@@ -64,7 +64,7 @@ fn parse(
 ) -> TokenStream {
     if let Some(literal) = item.into_iter().next() {
         let string = literal.to_string();
-        let string = if string.starts_with(r#"""#) {
+        let string = if string.starts_with('"') {
             // Remove the quotes
             string[1..string.len() - 1].to_string()
         } else if string.starts_with("r#") {
@@ -89,7 +89,7 @@ fn parse(
                 .into()
             }
             Err(err) => {
-                let err = format!("{:?}", err);
+                let err = format!("{err:?}");
                 quote! {
                     compile_error!(#err)
                 }
@@ -274,19 +274,13 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             }
         },
         Dson::Product(dsons) => {
-            let dsons = dsons
-                .into_iter()
-                .map(|dson| from_dson(dson))
-                .collect::<Vec<_>>();
+            let dsons = dsons.into_iter().map(from_dson).collect::<Vec<_>>();
             quote! {
                 Dson::Product(vec![#(#dsons),*])
             }
         }
         Dson::Vector(dsons) => {
-            let dsons = dsons
-                .into_iter()
-                .map(|dson| from_dson(dson))
-                .collect::<Vec<_>>();
+            let dsons = dsons.into_iter().map(from_dson).collect::<Vec<_>>();
             quote! {
                 Dson::Vector(vec![#(#dsons),*])
             }
@@ -426,19 +420,13 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
         dson::Type::Integer => quote! { dson::Type::Integer },
         dson::Type::String => quote! { dson::Type::String },
         dson::Type::Product(types) => {
-            let types = types
-                .into_iter()
-                .map(|ty| from_dson_type(ty))
-                .collect::<Vec<_>>();
+            let types = types.into_iter().map(from_dson_type).collect::<Vec<_>>();
             quote! {
                 dson::Type::Product(vec![#(#types),*])
             }
         }
         dson::Type::Sum(types) => {
-            let types = types
-                .into_iter()
-                .map(|ty| from_dson_type(ty))
-                .collect::<Vec<_>>();
+            let types = types.into_iter().map(from_dson_type).collect::<Vec<_>>();
             quote! {
                 dson::Type::Sum(vec![#(#types),*])
             }

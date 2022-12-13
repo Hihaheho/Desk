@@ -146,7 +146,7 @@ impl HirGen {
                 variable: variable.clone(),
                 bound: bound
                     .as_ref()
-                    .map(|bound| Ok(Box::new(self.gen_type(&bound)?)))
+                    .map(|bound| Ok(Box::new(self.gen_type(bound)?)))
                     .transpose()?,
                 body: Box::new(self.gen_type(body)?),
             }),
@@ -158,7 +158,7 @@ impl HirGen {
                 variable: variable.clone(),
                 bound: bound
                     .as_ref()
-                    .map(|bound| Ok(Box::new(self.gen_type(&bound)?)))
+                    .map(|bound| Ok(Box::new(self.gen_type(bound)?)))
                     .transpose()?,
                 body: Box::new(self.gen_type(body)?),
             }),
@@ -179,7 +179,7 @@ impl HirGen {
                 let next = self.gen_cards(next)?;
                 Ok(next)
             }
-            ast::expr::Expr::Comment { item, .. } => self.gen_cards(&item),
+            ast::expr::Expr::Comment { item, .. } => self.gen_cards(item),
             ast::expr::Expr::NewType { ident, ty, expr } => {
                 self.add_new_type(ty, ident)?;
                 self.gen_cards(expr)
@@ -336,14 +336,13 @@ impl HirGen {
         Ok(with_meta)
     }
 
-    #[must_use]
     pub(crate) fn add_new_type(
         &self,
         ty: &WithSpan<ast::ty::Type>,
-        ident: &String,
+        ident: &str,
     ) -> Result<(), HirGenError> {
         let ty = self.gen_type(ty)?.value;
-        self.type_aliases.borrow_mut().insert(ident.clone(), ty);
+        self.type_aliases.borrow_mut().insert(ident.to_string(), ty);
         Ok(())
     }
 

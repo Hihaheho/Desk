@@ -67,7 +67,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                 value: Expr::Literal(match *literal {
                     grammar_trait::Literal::Rational(LiteralRational { rational }) => {
                         let text = rational.rational.text().to_string();
-                        let splitted: Vec<_> = text.split("/").collect();
+                        let splitted: Vec<_> = text.split('/').collect();
                         let a = splitted[0].trim_end().parse().map_err(|_| {
                             MinimalistSyntaxError::OtherError(format!(
                                 "Could not parse numerator of rational: {}",
@@ -83,7 +83,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         Literal::Rational(a, b)
                     }
                     grammar_trait::Literal::Integer(LiteralInteger { integer }) => {
-                        let integer = match *integer {
+                        let integer = match &*integer {
                             Integer::Hex(integer) => i64::from_str_radix(
                                 integer.hex.hex.text().to_string().get(2..).unwrap(),
                                 16,
@@ -99,18 +99,20 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                             Integer::Dec(integer) => integer.dec.dec.text().parse::<i64>(),
                         }
                         .map_err(|_| {
-                            MinimalistSyntaxError::OtherError(format!("Could not parse integer",))
+                            MinimalistSyntaxError::OtherError(format!(
+                                "Could not parse integer {integer:?}"
+                            ))
                         })?;
                         Literal::Integer(integer)
                     }
-                    grammar_trait::Literal::Real(LiteralReal { real }) => Literal::Real(
-                        real.real.text().to_string().parse::<f64>().map_err(|_| {
+                    grammar_trait::Literal::Real(LiteralReal { real }) => {
+                        Literal::Real(real.real.text().parse::<f64>().map_err(|_| {
                             MinimalistSyntaxError::OtherError(format!(
                                 "Could not parse real: {}",
                                 real.real.text().to_string()
                             ))
-                        })?,
-                    ),
+                        })?)
+                    }
                     grammar_trait::Literal::String(LiteralString { string }) => {
                         let string = string
                             .string_list
@@ -123,7 +125,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                                         'n' => "\n",
                                         '"' => "\"",
                                         '\\' => "\\",
-                                        other => panic!("invalid escape sequence {}", other),
+                                        other => panic!("invalid escape sequence {other}"),
                                     }
                                     .into()
                                 }
@@ -579,8 +581,7 @@ impl TryFrom<grammar_trait::Expr<'_>> for Dson {
 
     fn try_from(value: grammar_trait::Expr<'_>) -> Result<Self, Self::Error> {
         let expr: WithSpan<Expr> = value.try_into()?;
-        expr.try_into()
-            .map_err(|err| MinimalistSyntaxError::DsonError(err))
+        expr.try_into().map_err(MinimalistSyntaxError::DsonError)
     }
 }
 
@@ -589,7 +590,7 @@ impl TryFrom<grammar_trait::Uuid<'_>> for Uuid {
 
     fn try_from(value: grammar_trait::Uuid<'_>) -> Result<Self, Self::Error> {
         let value = value.uuid_text.uuid_text.text().to_string();
-        Uuid::from_str(&value).map_err(|e| MinimalistSyntaxError::UuidError(e))
+        Uuid::from_str(&value).map_err(MinimalistSyntaxError::UuidError)
     }
 }
 
@@ -618,7 +619,7 @@ impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithSpan<Function>> {
     type Error = MinimalistSyntaxError;
 
     fn try_from(value: grammar_trait::Trait<'_>) -> Result<Self, Self::Error> {
-        Ok(value
+        value
             .trait_list
             .into_iter()
             .map(|t| {
@@ -631,7 +632,7 @@ impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithSpan<Function>> {
                     },
                 })
             })
-            .collect::<Result<_, MinimalistSyntaxError>>()?)
+            .collect::<Result<_, MinimalistSyntaxError>>()
     }
 }
 

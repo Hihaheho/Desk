@@ -211,7 +211,7 @@ mod tests {
 
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
-        let ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap().clone() {
+        let ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap() {
             ast.as_ref().clone()
         } else {
             panic!();

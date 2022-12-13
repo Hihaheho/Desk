@@ -34,14 +34,16 @@ license-files = []
 
 [bans]
 multiple-versions = "allow"
-wildcards = "deny"
+# This should be "deny" but for parol
+wildcards = "warn"
 highlight = "all"
-skip = [
-    { name = "salsa" }
-]
+skip = []
 
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
+allow-git = [
+    "https://github.com/jsinger67/parol.git",
+    "https://github.com/ryo33/bart.git",
+]

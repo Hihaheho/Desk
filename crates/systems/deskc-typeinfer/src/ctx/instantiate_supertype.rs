@@ -2,9 +2,9 @@ use errors::typeinfer::TypeError;
 
 use crate::{
     ctx::{Ctx, Id, Log},
+    internal_type::Type,
     mono_type::is_monotype,
     substitute::substitute,
-    internal_type::Type,
 };
 
 impl Ctx {

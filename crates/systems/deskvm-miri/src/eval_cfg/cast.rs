@@ -23,25 +23,25 @@ impl EvalCfg {
         }) {
             match strategy {
                 CastStrategy::ProductToProduct(mapping) => {
-                    let Value::Product(fields) = value else { panic!("Expected product but {:?}", value) };
+                    let Value::Product(fields) = value else { panic!("Expected product but {value:?}") };
                     Value::Product(
                         mapping
                             .iter()
                             .map(|(from, to)| {
                                 let field = fields
                                     .get(from)
-                                    .expect(&format!("Missing field {:?}", from));
+                                    .unwrap_or_else(|| panic!("Missing field {from:?}"));
                                 let field = Self::cast(conclusion.clone(), field, from, to);
-                                (to.clone(), field.clone())
+                                (to.clone(), field)
                             })
                             .collect(),
                     )
                 }
                 CastStrategy::SumToSum(mapping) => {
-                    let Value::Variant { ty: from, value } = value else { panic!("Expected variant but {:?}", value) };
+                    let Value::Variant { ty: from, value } = value else { panic!("Expected variant but {value:?}") };
                     let to = mapping
                         .get(from)
-                        .expect(&format!("Missing variant {:?}", from));
+                        .unwrap_or_else(|| panic!("Missing variant {from:?}"));
                     let value = Self::cast(conclusion.clone(), value, from, to);
                     Value::Variant {
                         ty: to.clone(),
@@ -49,8 +49,10 @@ impl EvalCfg {
                     }
                 }
                 CastStrategy::ProductToInner(ty) => {
-                    let Value::Product(fields) = value else { panic!("Expected product but {:?}", value) };
-                    let value = fields.get(ty).expect(&format!("Missing field {:?}", ty));
+                    let Value::Product(fields) = value else { panic!("Expected product but {value:?}") };
+                    let value = fields
+                        .get(ty)
+                        .unwrap_or_else(|| panic!("Missing field {ty:?}"));
                     Self::cast(conclusion.clone(), value, ty, target)
                 }
                 CastStrategy::InnerToSum(to) => Value::Variant {

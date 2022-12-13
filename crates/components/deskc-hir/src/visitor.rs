@@ -458,16 +458,11 @@ pub trait TypeVisitor {
         self.visit_type(key);
         self.visit_type(value);
     }
-    fn visit_let(
-        &mut self,
-        _variable: &String,
-        body: &WithMeta<Type>,
-        definition: &WithMeta<Type>,
-    ) {
+    fn visit_let(&mut self, _variable: &str, body: &WithMeta<Type>, definition: &WithMeta<Type>) {
         self.visit_type(body);
         self.visit_type(definition);
     }
-    fn visit_variable(&mut self, _ident: &String) {}
+    fn visit_variable(&mut self, _ident: &str) {}
     fn visit_brand(&mut self, _brand: &Dson, item: &WithMeta<Type>) {
         self.visit_type(item);
     }
@@ -476,7 +471,7 @@ pub trait TypeVisitor {
     }
     fn visit_forall(
         &mut self,
-        _variable: &String,
+        _variable: &str,
         bound: &Option<Box<WithMeta<Type>>>,
         body: &WithMeta<Type>,
     ) {
@@ -487,7 +482,7 @@ pub trait TypeVisitor {
     }
     fn visit_exists(
         &mut self,
-        _variable: &String,
+        _variable: &str,
         bound: &Option<Box<WithMeta<Type>>>,
         body: &WithMeta<Type>,
     ) {

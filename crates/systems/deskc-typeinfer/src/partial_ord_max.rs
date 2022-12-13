@@ -12,7 +12,7 @@ where
     fn partial_max(mut self) -> Option<Self::Item> {
         let mut out = vec![];
         let mut max_candidate = self.next();
-        while let Some(next) = self.next() {
+        for next in self {
             if let Some(max) = &max_candidate {
                 match max.partial_cmp(&next) {
                     None => {
@@ -24,17 +24,16 @@ where
                     Some(Ordering::Equal) | Some(Ordering::Greater) => {}
                 }
             } else {
-                if out.iter().any(|out| match out.partial_cmp(&next) {
-                    None => true,
-                    Some(Ordering::Greater) => true,
-                    _ => false,
-                }) {
+                if out
+                    .iter()
+                    .any(|out| matches!(out.partial_cmp(&next), None | Some(Ordering::Greater)))
+                {
                     continue;
                 }
                 max_candidate = Some(next)
             }
         }
-        return max_candidate;
+        max_candidate
     }
 }
 
@@ -98,15 +97,14 @@ mod tests {
         assert_eq!(iter.partial_max(), None);
     }
 
-	#[test]
-	fn partial_ord_some_next_is_greater() {
-		let iter = vec![Tuple(2, 3), Tuple(3, 2), Tuple(4, 3)].into_iter();
-		assert_eq!(iter.partial_max(), Some(Tuple(4, 3)));
-	}
-	#[test]
-	fn partial_ord_none_next_is_equal() {
-		let iter = vec![Tuple(2, 3), Tuple(3, 2), Tuple(3, 2)].into_iter();
-		assert_eq!(iter.partial_max(), None);
-	}
-
+    #[test]
+    fn partial_ord_some_next_is_greater() {
+        let iter = vec![Tuple(2, 3), Tuple(3, 2), Tuple(4, 3)].into_iter();
+        assert_eq!(iter.partial_max(), Some(Tuple(4, 3)));
+    }
+    #[test]
+    fn partial_ord_none_next_is_equal() {
+        let iter = vec![Tuple(2, 3), Tuple(3, 2), Tuple(3, 2)].into_iter();
+        assert_eq!(iter.partial_max(), None);
+    }
 }

@@ -53,7 +53,8 @@ impl Ctx {
                     &ctx.substitute_from_ctx(&synthed),
                     &ctx.substitute_from_ctx(ty),
                 )
-                .map_err(|error| to_expr_type_error(expr, error))?.ctx
+                .map_err(|error| to_expr_type_error(expr, error))?
+                .ctx
             }
         };
         let effects = ctx.end_scope(scope);

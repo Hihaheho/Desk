@@ -125,8 +125,8 @@ impl MirGen<'_> {
                         .bind_stmt(definition_ty.clone(), Stmt::Recursion);
                     self.mir_proto().create_named_var(recursion_var);
                     // gen definition
-                    let function = self.gen_function(&function.parameter, &body)?;
-                    let fn_ref = self.to_closure(function, Default::default());
+                    let function = self.gen_function(&function.parameter, body)?;
+                    let fn_ref = self.create_closure(function, Default::default());
                     // finish recursion
                     self.mir_proto().bind_stmt(definition_ty, Stmt::Fn(fn_ref))
                 } else {
@@ -163,10 +163,10 @@ impl MirGen<'_> {
                         let handler_cfg_id = self.end_mir(handler_end, stmt_ty.clone());
                         let handler_type = self.get_mir(&handler_cfg_id).get_type().clone();
                         // call effectful mir
-                        let fn_ref = self.to_closure(handler_cfg_id, Default::default());
+                        let fn_ref = self.create_closure(handler_cfg_id, Default::default());
                         let handler_var =
                             self.mir_proto().bind_stmt(handler_type, Stmt::Fn(fn_ref));
-                        Ok((effect.clone(), handler_var))
+                        Ok((effect, handler_var))
                     })
                     .collect::<Result<HashMap<_, _>, _>>()?;
 
@@ -176,7 +176,7 @@ impl MirGen<'_> {
                 let effectful_cfg_id = self.end_mir(effectful_end, stmt_ty.clone());
                 let effectful_type = self.get_mir(&effectful_cfg_id).get_type().clone();
 
-                let fn_ref = self.to_closure(effectful_cfg_id, handlers);
+                let fn_ref = self.create_closure(effectful_cfg_id, handlers);
                 let effectful_fun = self.mir_proto().bind_stmt(effectful_type, Stmt::Fn(fn_ref));
                 self.mir_proto().bind_stmt(
                     stmt_ty.clone(),
@@ -206,7 +206,7 @@ impl MirGen<'_> {
                         .iter()
                         .map(|arg| {
                             let Some(parameter) = parameters.next() else {
-                                return Err(GenMirError::InvalidFunctionCall { expr: hir.meta.clone(), ty: function_ty.clone(), arguments: arguments.into_iter().map(|arg| arg.meta.clone()).collect() });
+                                return Err(GenMirError::InvalidFunctionCall { expr: hir.meta.clone(), ty: function_ty.clone(), arguments: arguments.iter().map(|arg| arg.meta.clone()).collect() });
                             };
                             let var = self.gen_stmt(arg)?;
                             Ok(self.mir_proto().bind_stmt(parameter.clone(), Stmt::Cast(var)))
@@ -232,7 +232,7 @@ impl MirGen<'_> {
             Expr::Function { parameter, body } => {
                 let parameter = self.get_type(parameter)?.clone();
                 let function = self.gen_function(&parameter, body)?;
-                let fn_ref = self.to_closure(function, Default::default());
+                let fn_ref = self.create_closure(function, Default::default());
                 self.mir_proto()
                     .bind_stmt(stmt_ty.clone(), Stmt::Fn(fn_ref))
             }
@@ -311,7 +311,7 @@ impl MirGen<'_> {
         Ok(self.end_mir(var, ty))
     }
 
-    fn to_closure(
+    fn create_closure(
         &mut self,
         cfg_id: ControlFlowGraphId,
         handlers: HashMap<Effect, VarId>,
@@ -353,12 +353,11 @@ impl MirGen<'_> {
     }
 
     fn get_type<T: std::fmt::Debug>(&self, hir: &WithMeta<T>) -> Result<&Type, GenMirError> {
-        Ok(self
-            .conclusion
+        self.conclusion
             .get_type(&hir.meta.id)
             .ok_or_else(|| GenMirError::TypeNotFound {
                 for_expr: hir.meta.clone(),
-            })?)
+            })
     }
 }
 
