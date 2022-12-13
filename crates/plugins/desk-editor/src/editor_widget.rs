@@ -13,7 +13,7 @@ pub struct EditorWidget {
 
 impl Widget<egui::Context> for EditorWidget {
     fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
-        egui::Area::new(&self.node_id).show(ctx.backend, |ui| {
+        egui::Area::new(self.node_id.0.to_string()).show(ctx.backend, |ui| {
             ui.label("====");
             if let Some(node) = ctx.kernel.snapshot.flat_nodes.get(&self.node_id) {
                 match &node.content {
