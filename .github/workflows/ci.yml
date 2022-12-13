@@ -28,9 +28,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - run: tools/check-ci.sh --no-cargo-deny
+
       - uses: EmbarkStudios/cargo-deny-action@v1
         with:
           arguments: --all-features
           command-arguments: --config configs/deny.toml
-
-      - run: tools/check-ci.sh --no-cargo-deny
