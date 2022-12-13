@@ -51,11 +51,19 @@ pub struct Similarities(Vec<Similarity>);
 
 impl PartialOrd for Similarities {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // This zip truncates the longer one,
-        // and it's safe because terminator is always greater or less than the other.
-        for (a, b) in self.0.iter().zip(other.0.iter()) {
-            if a.cmp(b) != Ordering::Equal {
-                return Some(a.strength().cmp(&b.strength()));
+        let mut iter = self.0.iter();
+        let mut other = other.0.iter();
+        loop {
+            match (iter.next(), other.next()) {
+                (None, None) => break,
+                (None, Some(_)) => return Some(Ordering::Less),
+                (Some(_), None) => return Some(Ordering::Greater),
+                (Some(a), Some(b)) => {
+                    let cmp = a.cmp(b);
+                    if cmp != Ordering::Equal {
+                        return Some(cmp);
+                    }
+                }
             }
         }
         Some(Ordering::Equal)
@@ -301,5 +309,13 @@ mod tests {
             Similarities(vec![Similarity::ProductToInner]),
         ]);
         assert_eq!(list.max(), Similarities(vec![Similarity::Same]));
+    }
+
+    #[test]
+    fn test_similarities_longer_is_greater() {
+        let left = Similarities(vec![Similarity::Number]);
+        let right = Similarities(vec![Similarity::ProductToInner, Similarity::Number]);
+        assert!(left < right);
+        assert!(right > left);
     }
 }
