@@ -93,7 +93,7 @@ fn to_expr_type_error(expr: &WithMeta<Expr>, error: TypeError) -> ExprTypeError 
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, sync::Arc};
+    use std::sync::Arc;
 
     use ariadne::{Label, Report, ReportKind, Source};
     use dson::Dson;
