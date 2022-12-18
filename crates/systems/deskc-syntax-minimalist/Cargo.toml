@@ -18,7 +18,7 @@ dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 
 parol_runtime = { git = "https://github.com/jsinger67/parol", rev = "f0be5be6e37b9141eefe064055928bcef63318a5", features = ["auto_generation"] }
 anyhow = "1.0"
-thiserror = "1.0.37"
+thiserror = "1.0.38"
 uuid = { version = "1.2", features = ["v4"] }
 
 [build-dependencies]
