@@ -1,6 +1,6 @@
 mod follow_system;
 
-use system_ordering::DeskSystem;
+use desk_plugin::DeskSystem;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;

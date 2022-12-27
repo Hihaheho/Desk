@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
+use desk_plugin::DeskSystem;
 use desk_window::{
     ctx::Ctx,
     widget::{Widget, WidgetId},
     window::{DefaultWindow, Window},
 };
 use dworkspace::Workspace;
-use system_ordering::DeskSystem;
 pub struct TerminalPlugin;
 
 impl Plugin for TerminalPlugin {

@@ -1570,7 +1570,7 @@ name = "desk-editor"
 version = "0.0.0"
 dependencies = [
  "bevy",
- "desk-system-ordering",
+ "desk-plugin",
  "desk-window",
  "deskc-ids",
  "deskc-type",
@@ -1587,7 +1587,7 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "bevy_egui",
- "desk-system-ordering",
+ "desk-plugin",
  "desk-theme",
  "desk-window",
  "dworkspace",
@@ -1611,7 +1611,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "desk-system-ordering"
+name = "desk-playground"
+version = "0.0.0"
+dependencies = [
+ "bevy",
+ "desk-plugin",
+ "desk-window",
+ "dworkspace",
+ "egui 0.20.1",
+]
+
+[[package]]
+name = "desk-plugin"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
@@ -1623,7 +1634,7 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "desk-command",
- "desk-system-ordering",
+ "desk-plugin",
  "desk-window",
  "deskc-ids",
  "deskc-type",
@@ -1647,7 +1658,7 @@ dependencies = [
  "bevy",
  "desk-command",
  "desk-physics",
- "desk-system-ordering",
+ "desk-plugin",
 ]
 
 [[package]]
@@ -1670,7 +1681,7 @@ dependencies = [
  "console_error_panic_hook",
  "desk-editor",
  "desk-egui",
- "desk-system-ordering",
+ "desk-plugin",
  "desk-terminal",
  "desk-touchpanel",
  "desk-window",

@@ -14,7 +14,7 @@ edition = "2021"
 dworkspace-codebase = { package = "dworkspace-codebase", version = "0.0.0", path = "../dworkspace-codebase" }
 deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 # FIXME: component depends system
-dworkspace = { package = "dworkspace", version = "0.0.0", path = "../../systems/dworkspace" }
+dworkspace = { workspace = true }
 
 bevy_ecs = "0.9"
 uuid = { workspace = true}

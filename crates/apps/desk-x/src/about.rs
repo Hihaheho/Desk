@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use desk_system_ordering::DeskSystem;
+use desk_plugin::DeskSystem;
 use dworkspace::Workspace;
 
 use desk_window::{

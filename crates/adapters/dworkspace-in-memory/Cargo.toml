@@ -11,5 +11,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dworkspace = { package = "dworkspace", path = "../../systems/dworkspace", version = "0.0.0" }
+dworkspace = { workspace = true }
 dworkspace-codebase = { package = "dworkspace-codebase", path = "../../components/dworkspace-codebase", version = "0.0.0" }

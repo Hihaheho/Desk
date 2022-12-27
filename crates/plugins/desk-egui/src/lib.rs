@@ -3,7 +3,7 @@ use bevy_egui::{
     egui::{self, Color32},
     EguiContext,
 };
-use desk_system_ordering::DeskSystem;
+use desk_plugin::DeskSystem;
 use desk_window::ctx::Ctx;
 use desk_window::window::Window;
 use dworkspace::Workspace;

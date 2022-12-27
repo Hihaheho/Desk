@@ -4,12 +4,12 @@ mod editor_widget;
 mod runtime;
 
 use bevy::prelude::*;
+use desk_plugin::DeskSystem;
 use desk_window::window::Window;
 use desk_window::{widget::WidgetId, window::DefaultWindow};
 use dworkspace::Workspace;
 use editor_state::EditorState;
 use editor_widget::EditorWidget;
-use system_ordering::DeskSystem;
 
 pub struct EditorPlugin;
 

@@ -9,14 +9,14 @@ readme = "../../../README.md"
 edition = "2021"
 
 [dependencies]
-system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
-desk-window = { package = "desk-window", path = "../../components/desk-window", version = "0.0.0" }
-dworkspace = { path = "../../systems/dworkspace", version = "0.0.0", package = "dworkspace" }
+desk-plugin = { workspace = true }
+desk-window = { workspace = true }
+dworkspace = { workspace = true }
 dworkspace-codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
 
-bevy = "0.9"
-egui = "0.20.1"
+bevy = { workspace = true }
+egui = { workspace = true }
 uuid = { workspace = true}
 egui_cable = "0.3"

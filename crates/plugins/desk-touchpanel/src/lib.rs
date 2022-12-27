@@ -2,8 +2,8 @@ mod cursor_systems;
 mod drag_system;
 
 use cursor_systems::{add_cursor, move_cursor};
+use desk_plugin::{DeskSystem, ShellSystem};
 use physics::Velocity;
-use system_ordering::{DeskSystem, ShellSystem};
 
 use bevy::prelude::*;
 

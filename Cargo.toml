@@ -28,9 +28,14 @@ opt-level = 3
 parking_lot = "0.12"
 thiserror = "1.0"
 uuid = "1.2"
+bevy = "0.9"
+egui = "0.20"
 
 deskc = { path = "crates/systems/deskc", version = "0.0.0" }
 deskc-ids = { path = "crates/components/deskc-ids", version = "0.0.0" }
 deskc-type = { path = "crates/components/deskc-type", version = "0.0.0" }
 deskc-macros = { path = "crates/libs/deskc-macros", version = "0.0.0" }
 deskc-ast = { path = "crates/systems/deskc-ast", version = "0.0.0" }
+desk-plugin = { path = "crates/components/desk-plugin", version = "0.0.0" }
+desk-window = { path = "crates/components/desk-window", version = "0.0.0" }
+dworkspace = { path = "crates/systems/dworkspace", version = "0.0.0" }

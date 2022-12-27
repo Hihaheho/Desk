@@ -19,18 +19,18 @@ touchpanel-plugin = { path = "../../plugins/desk-touchpanel", version = "0.0.0",
 editor-plugin = { path = "../../plugins/desk-editor", version = "0.0.0", package = "desk-editor" }
 terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", package = "desk-terminal" }
 
-desk-window = { package = "desk-window", path = "../../components/desk-window", version = "0.0.0" }
-desk-system-ordering = { package = "desk-system-ordering", path = "../../components/desk-system-ordering", version = "0.0.0" }
-dworkspace = { package = "dworkspace", path = "../../systems/dworkspace", version = "0.0.0" }
+desk-window = { workspace = true }
+desk-plugin = { workspace = true }
+dworkspace = { workspace = true }
 dworkspace-in-memory = { package = "dworkspace-in-memory", path = "../../adapters/dworkspace-in-memory", version = "0.0.0" }
 dworkspace-codebase = { package = "dworkspace-codebase", path = "../../components/dworkspace-codebase", version = "0.0.0" }
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 
-bevy = "0.9"
+bevy = { workspace = true }
 bevy-inspector-egui = { version = "0.15", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3"
-egui = "0.20.1"
+egui = { workspace = true }
 
 # For prototyping playground
 deskc = { workspace = true }
