@@ -2,35 +2,35 @@
   @"files" [
     *<
       @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-8b80b75d43ca",
-      @"content" "
-        'type add \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer;
-        'type sub \\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"diff\" 'integer;
-        'type cmp \\ *<@\"self\" 'real, @\"other\" 'real> -> +<@\"greater\" *<>, @\"less\" *<>, @\"equal\" *<>>;
+      @"content" ‹
+        'type add \ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer;
+        'type sub \ *<@"l" 'integer, @"r" 'integer> -> @"diff" 'integer;
+        'type cmp \ *<@"self" 'real, @"other" 'real> -> +<@"greater" *<>, @"less" *<>, @"equal" *<>>;
 
         'card 9883b420-f7be-468d-95f6-43884d885a33
-          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \\'integer -> 'integer (10);
+          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \'integer -> 'integer (10);
         'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa
-        \\ 'integer -> <'integer> ^add *<
-            @\"l\" &'integer,
-            'match ^cmp *<@\"self\" &'integer, 3> '{
-              +< @\"greater\" *<>, @\"equal\" *<>> =>
-                ^ 'card 9883b420-f7be-468d-95f6-bbbbbbbbbbbb \\ 'integer -> 'integer (&'integer)
-              @\"less\" *<> =>
+        \ 'integer -> <'integer> ^add *<
+            @"l" &'integer,
+            'match ^cmp *<@"self" &'integer, 3> '{
+              +< @"greater" *<>, @"equal" *<>> =>
+                ^ 'card 9883b420-f7be-468d-95f6-bbbbbbbbbbbb \ 'integer -> 'integer (&'integer)
+              @"less" *<> =>
                 0
             }'
         >;
         'card 9883b420-f7be-468d-95f6-bbbbbbbbbbbb
-        \\ 'integer ->
-          ^ 'card 9883b420-f7be-468d-95f6-cccccccccccc \\ 'integer -> 'integer (
-            ^sub *<@\"minuend\" &'integer, 1>
+        \ 'integer ->
+          ^ 'card 9883b420-f7be-468d-95f6-cccccccccccc \ 'integer -> 'integer (
+            ^sub *<@"minuend" &'integer, 1>
           );
         'card 9883b420-f7be-468d-95f6-cccccccccccc
-        \\ 'integer ->
-          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \\ 'integer -> 'integer (
-            ^sub *<@\"minuend\" &'integer, 2>
+        \ 'integer ->
+          ^ 'card 9883b420-f7be-468d-95f6-aaaaaaaaaaaa \ 'integer -> 'integer (
+            ^sub *<@"minuend" &'integer, 2>
           );
         ?
-      "
+      ›
     >
   ],
   @"assertions" *<

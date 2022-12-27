@@ -6,6 +6,14 @@
     %auto_ws_off
     %auto_newline_off
 }
+%scanner RawString1 {
+    %auto_ws_off
+    %auto_newline_off
+}
+%scanner RawString2 {
+    %auto_ws_off
+    %auto_newline_off
+}
 %scanner BlockComment {
     %auto_ws_off
     %auto_newline_off
@@ -45,7 +53,7 @@ Expr: Comment Expr
     ;
     Do: DoKey^ Expr StmtEnd^ Expr;
     Cast: TypeBegin^ Ty TypeEnd^ Expr;
-    Literal: Rational | Integer | Real | String;
+    Literal: Rational | Integer | Real | String | RawString;
         // Rational must be before Integer for higher priority.
         Rational: "\-?\p{Nd}+\s*/\s*\p{Nd}+";
         // Real must be before Integer for higher priority.
@@ -60,6 +68,11 @@ Expr: Comment Expr
             Escaped: <String> /\\[nt"\\]/;
             Characters: <String> /[^\\"]+/;
             Newlines: <String> /\\n+/;
+        RawString: RawString1 | RawString2;
+        RawString1: '«'^ %push(RawString1) [ RawCharacters1 ] %pop() '»'^;
+            RawCharacters1: <RawString1> /[^»]+/;
+        RawString2: '‹'^ %push(RawString2) [ RawCharacters2 ] %pop() '›'^;
+            RawCharacters2: <RawString2> /[^›]+/;
     Let: LetSym^ Expr StmtEnd^ Expr;
     Perform: PerformSym^ Expr EArrow^ Ty;
     Continue: ContinueSym^ Expr EArrow^ Ty;

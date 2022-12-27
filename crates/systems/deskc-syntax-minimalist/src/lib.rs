@@ -111,6 +111,21 @@ mod tests {
     }
 
     #[test]
+    fn raw_string_1() {
+        assert_eq!(
+            parse(
+                r#"
+            «\\
+            '"abc»
+            "#
+            )
+            .value,
+            Expr::Literal(Literal::String(r#"\\
+            '"abc"#.into()))
+        );
+    }
+
+    #[test]
     fn parse_literal_int() {
         assert_eq!(parse("-12").value, Expr::Literal(Literal::Integer(-12)));
         assert_eq!(parse("0x11").value, Expr::Literal(Literal::Integer(17)));

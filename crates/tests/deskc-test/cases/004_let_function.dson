@@ -2,11 +2,11 @@
   @"files" [
     *<
       @"id" @"FileId" "7f9fc3e0-8b6e-4e7f-9e62-000000000000",
-      @"content" "
-        $ #1 \\ 'integer ->
-          ^\\ *<@\"l\" 'integer, @\"r\" 'integer> -> @\"sum\" 'integer (*<@\"l\" 1, @\"r\" #2 &'integer>);
-        ^ \\ 'integer -> @\"sum\" 'integer (2)
-      "
+      @"content" ‹
+        $ #1 \ 'integer ->
+          ^\ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer (*<@"l" 1, @"r" #2 &'integer>);
+        ^ \ 'integer -> @"sum" 'integer (2)
+      ›
     >
   ],
   @"assertions" *<

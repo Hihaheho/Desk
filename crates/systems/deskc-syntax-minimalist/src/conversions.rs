@@ -10,10 +10,10 @@ use crate::{
         ExprFunction, ExprHandle, ExprHole, ExprLabeled, ExprLet, ExprLiteral, ExprMap, ExprMatch,
         ExprNewType, ExprPerform, ExprProduct, ExprReference, ExprVector, IdentIdentWrapped,
         Integer, LinkNameCardKeyUuid, LinkNameVersionKeyUuid, LiteralInteger, LiteralRational,
-        LiteralReal, LiteralString, TyAttributedTy, TyCommentTy, TyEffectful, TyExistsTy,
-        TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyIntegerKey, TyLabeledTy,
-        TyLetTy, TyMapTy, TyProductTy, TyRationalKey, TyRealKey, TyStringKey, TySum, TyThis,
-        TyTrait, TyVariable, TyVecTy,
+        LiteralRawString, LiteralReal, LiteralString, RawString, TyAttributedTy, TyCommentTy,
+        TyEffectful, TyExistsTy, TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer,
+        TyIntegerKey, TyLabeledTy, TyLetTy, TyMapTy, TyProductTy, TyRationalKey, TyRealKey,
+        TyStringKey, TySum, TyThis, TyTrait, TyVariable, TyVecTy,
     },
     MinimalistSyntaxError,
 };
@@ -137,6 +137,25 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                                 }
                             })
                             .collect::<String>();
+                        Literal::String(string)
+                    }
+                    grammar_trait::Literal::RawString(LiteralRawString { raw_string }) => {
+                        let string = match *raw_string {
+                            RawString::RawString1(raw_string) => raw_string
+                                .raw_string1
+                                .raw_string1_opt
+                                .map(|token| {
+                                    token.raw_characters1.raw_characters1.text().to_string()
+                                })
+                                .unwrap_or_default(),
+                            RawString::RawString2(raw_string) => raw_string
+                                .raw_string2
+                                .raw_string2_opt
+                                .map(|token| {
+                                    token.raw_characters2.raw_characters2.text().to_string()
+                                })
+                                .unwrap_or_default(),
+                        };
                         Literal::String(string)
                     }
                 }),
