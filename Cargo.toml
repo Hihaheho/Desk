@@ -17,3 +17,9 @@ exclude = [
 # for smaller build size
 [profile.release]
 lto = "thin"
+
+# for parol
+[profile.dev.build-override]
+opt-level = 3
+[profile.release.build-override]
+opt-level = 3
