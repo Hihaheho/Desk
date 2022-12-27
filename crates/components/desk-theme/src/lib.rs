@@ -14,6 +14,7 @@ pub struct Theme {
     pub inactive: Widget,
     /// active widget
     pub active: Widget,
+    pub window_background: Color,
     pub window_corner_radius: f32,
     pub window_shadow: Shadow,
     pub extreme_background: Color,

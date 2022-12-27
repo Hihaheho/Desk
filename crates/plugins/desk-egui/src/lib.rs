@@ -60,7 +60,9 @@ fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Change
         }
 
         let mut style = bevy_egui::egui::Style::default();
-        style.visuals.dark_mode = true;
+
+        style.visuals.dark_mode = false;
+        style.visuals.window_fill = color(&theme.window_background);
         style.visuals.window_shadow.color = color(&theme.window_shadow.color);
         style.visuals.window_shadow.extrusion = theme.window_shadow.extrusion;
 

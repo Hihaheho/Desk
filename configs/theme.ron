@@ -53,16 +53,16 @@
     ),
     noninteractive: (
         background: Rgba(
-            red: 0.68696123,
-            green: 0.68696123,
-            blue: 0.68696123,
+            red: 0.6862745,
+            green: 0.6862745,
+            blue: 0.6862745,
             alpha: 1.0,
         ),
         border: (
             color: Rgba(
-                red: 0.3433844,
-                green: 0.3433844,
-                blue: 0.3433844,
+                red: 0.34117648,
+                green: 0.34117648,
+                blue: 0.34117648,
                 alpha: 1.0,
             ),
             size: 2.0,
@@ -86,9 +86,9 @@
         ),
         border: (
             color: Rgba(
-                red: 0.57931143,
-                green: 0.57931143,
-                blue: 0.57931143,
+                red: 0.5764706,
+                green: 0.5764706,
+                blue: 0.5764706,
                 alpha: 1.0,
             ),
             size: 1.0,
@@ -129,12 +129,18 @@
             size: 1.0,
         ),
     ),
+    window_background: Rgba(
+        red: 0.9372549,
+        green: 0.9372549,
+        blue: 0.9372549,
+        alpha: 1.0,
+    ),
     window_corner_radius: 3.0,
     window_shadow: (
         color: Rgba(
-            red: 0.76763356,
-            green: 0.4794699,
-            blue: 0.85866624,
+            red: 0.7647059,
+            green: 0.47843137,
+            blue: 0.85490197,
             alpha: 1.0,
         ),
         extrusion: 6.0,
