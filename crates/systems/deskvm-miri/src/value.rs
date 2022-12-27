@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use deskc_type::{Effect, Type};
 use dprocess::value::Number;
 use mir::mir::ControlFlowGraphId;
-use ty::{Effect, Type};
 
 use crate::{eval_cfg::Handler, operators::Operator};
 

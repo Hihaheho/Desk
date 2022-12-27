@@ -1,4 +1,5 @@
 mod about;
+mod playground;
 mod windows;
 use about::AboutPlugin;
 use bevy::prelude::*;

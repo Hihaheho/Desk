@@ -15,12 +15,12 @@ use std::{
     time::Duration,
 };
 
+use deskc_type::{conclusion::TypeConclusions, Effect, Type};
 use dprocess::{interpreter::Interpreter, interpreter_output::InterpreterOutput};
 use mir::{
     block::BlockId,
     mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
 };
-use ty::{conclusion::TypeConclusions, Effect, Type};
 
 use crate::{
     eval_cfg::{EvalCfg, Handler, InnerOutput},

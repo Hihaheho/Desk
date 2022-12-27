@@ -16,6 +16,9 @@ ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc
 ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc-ast" }
 parser = { path = "../../systems/deskc-syntax-minimalist", version = "0.0.0", package = "deskc-syntax-minimalist" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
+deskc-ids = { workspace = true }
 
 quote = "1.0"
 proc-macro2 = "1.0"
+
+uuid = { workspace = true }

@@ -66,9 +66,9 @@ pub trait ExprVisitorMut {
         self.visit_effect(&mut handler.effect);
         self.visit_expr(&mut handler.handler);
     }
-    fn visit_effect(&mut self, effect: &mut Effect) {
-        self.visit_type(&mut effect.input);
-        self.visit_type(&mut effect.output);
+    fn visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
+        self.visit_type(&mut effect.value.input);
+        self.visit_type(&mut effect.value.output);
     }
     fn visit_apply(
         &mut self,

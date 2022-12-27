@@ -197,4 +197,7 @@ test!(case005_division_by_zero);
 test!(case006_continuation);
 test!(case007_fibonacci);
 // link is not implemented yet
-// test!(case008_cards);
+#[test]
+#[ignore]
+fn case008_cards() {
+}

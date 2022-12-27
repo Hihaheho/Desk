@@ -18,5 +18,5 @@ deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = 
 
 bevy = "0.9"
 egui = "0.20.1"
-uuid = "1.2"
+uuid = { workspace = true}
 egui_cable = "0.3"

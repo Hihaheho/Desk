@@ -196,10 +196,10 @@ mod tests {
             Expr::Handle {
                 expr: bw(Expr::Hole),
                 handlers: vec![Handler {
-                    effect: Effect {
+                    effect: w(Effect {
                         input: w(Type::Integer),
                         output: w(Type::String),
-                    },
+                    }),
                     handler: w(Expr::Literal(Literal::Integer(3))),
                 }],
             }

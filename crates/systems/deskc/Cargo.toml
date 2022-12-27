@@ -23,6 +23,6 @@ typeinfer = { path = "../../systems/deskc-typeinfer", version = "0.0.0", package
 mirgen = { path = "../../systems/deskc-mirgen", version = "0.0.0", package = "deskc-mirgen" }
 
 salsa = "0.16"
-uuid = "1.2"
+uuid = { workspace = true}
 anyhow = "1.0"
-thiserror = "1.0.37"
+thiserror = { workspace = true }

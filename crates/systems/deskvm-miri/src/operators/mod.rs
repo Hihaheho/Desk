@@ -2,11 +2,12 @@ mod cmp;
 mod helpers;
 mod int;
 
+use deskc_macros::ty;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
 
+use deskc_type::Type;
 use once_cell::sync::Lazy;
-use ty::Type;
 
 use crate::value::{OperatorOutput, Value};
 
@@ -31,33 +32,29 @@ impl Operator {
     pub fn ty(&self) -> Type {
         match self {
             Operator::IntAdd => {
-                macros::ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer"#)
+                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer"#)
             }
             Operator::IntSub => {
-                macros::ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"diff" 'integer"#)
+                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"diff" 'integer"#)
             }
             Operator::IntMul => {
-                macros::ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"prod" 'integer"#)
+                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"prod" 'integer"#)
             }
-            Operator::IntDiv => macros::ty!(
-                r#"
+            Operator::IntDiv => ty!(r#"
 				\ *<@"l" 'integer, @"r" 'integer> -> ! {
 			    	@"division by zero" 'integer ~> @"quot" 'integer
 				} @"quot" 'integer
-				"#
-            ),
-            Operator::Rem => macros::ty!(
-                r#"
+				"#),
+            Operator::Rem => ty!(r#"
 				\ *<@"l" 'integer, @"r" 'integer> -> ! {
 					@"division by zero" 'integer ~> *<@"quot" 'integer, @"rem" 'integer>
 				} *<@"quot" 'integer, @"rem" 'integer>
-				"#
-            ),
+				"#),
             Operator::RealEq => {
-                macros::ty!(r#"\ *<@"l" 'real, @"r" 'real> -> +<@"equal" *<>, @"unequal" *<>>"#)
+                ty!(r#"\ *<@"l" 'real, @"r" 'real> -> +<@"equal" *<>, @"unequal" *<>>"#)
             }
             Operator::RealCmp => {
-                macros::ty!(
+                ty!(
                     r#"\ *<@"l" 'real, @"r" 'real> -> +<@"less" *<>, @"equal" *<>, @"greater" *<>>"#
                 )
             }

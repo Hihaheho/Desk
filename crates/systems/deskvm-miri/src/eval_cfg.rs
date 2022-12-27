@@ -3,11 +3,11 @@ mod cast;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use deskc_type::{Effect, Type};
+use deskc_type::conclusion::TypeConclusions;
 use mir::block::BlockId;
 use mir::mir::ControlFlowGraph;
 use mir::stmt::{Stmt, Terminator};
-use ty::conclusion::TypeConclusions;
-use ty::{Effect, Type};
 
 use crate::const_stmt;
 

@@ -232,8 +232,8 @@ impl HirGen {
                     .map(|ast::expr::Handler { effect, handler }| {
                         Ok(Handler {
                             effect: Effect {
-                                input: self.gen_type(&effect.input)?,
-                                output: self.gen_type(&effect.output)?,
+                                input: self.gen_type(&effect.value.input)?,
+                                output: self.gen_type(&effect.value.output)?,
                             },
                             handler: self.gen_card(handler)?,
                         })

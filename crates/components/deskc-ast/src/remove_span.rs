@@ -16,6 +16,12 @@ pub fn remove_span(expr: &mut WithSpan<Expr>) {
         fn visit_type(&mut self, ty: &mut WithSpan<Type>) {
             remove_span_ty(ty);
         }
+        fn visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
+            effect.id = Default::default();
+            effect.span = Default::default();
+            self.visit_type(&mut effect.value.input);
+            self.visit_type(&mut effect.value.output);
+        }
     }
     RemoveSpan.visit_expr(expr)
 }

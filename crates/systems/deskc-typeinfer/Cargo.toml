@@ -17,7 +17,7 @@ ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
-thiserror = "1.0"
+thiserror = { workspace = true }
 itertools = "0.10"
 
 [dev-dependencies]

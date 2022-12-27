@@ -194,9 +194,13 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .into_iter()
                         .map(|handler| {
                             Ok(Handler {
-                                effect: Effect {
-                                    input: (*handler.handler.ty).try_into()?,
-                                    output: (*handler.handler.ty0).try_into()?,
+                                effect: WithSpan {
+                                    id: NodeId::new(),
+                                    span: 0..0,
+                                    value: Effect {
+                                        input: (*handler.handler.ty).try_into()?,
+                                        output: (*handler.handler.ty0).try_into()?,
+                                    },
                                 },
                                 handler: (*handler.handler.expr).try_into()?,
                             })

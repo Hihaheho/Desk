@@ -21,7 +21,7 @@ impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
-    pub effect: Effect,
+    pub effect: WithSpan<Effect>,
     pub handler: WithSpan<Expr>,
 }
 

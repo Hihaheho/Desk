@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
+use deskc_type::{conclusion::TypeConclusions, Type};
 use dprocess::{interpreter::Interpreter, interpreter_builder::InterpreterBuilder};
 use mir::mir::Mir;
 use thiserror::Error;
-use ty::{conclusion::TypeConclusions, Type};
 
 use crate::{eval_mir, value::Value};
 

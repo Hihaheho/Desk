@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ty::{
+use deskc_type::{
     conclusion::{CastStrategy, TypeConclusions, TypeToType},
     Type,
 };
@@ -68,7 +68,7 @@ impl EvalCfg {
 
 #[cfg(test)]
 mod tests {
-    use ty::conclusion::{CastStrategy, TypeToType};
+    use deskc_type::conclusion::{CastStrategy, TypeToType};
 
     use super::*;
 

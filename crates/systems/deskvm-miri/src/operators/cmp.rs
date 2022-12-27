@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 
+use deskc_macros::ty;
+
 use crate::value::{OperatorOutput, Value};
 
 use super::helpers::lr;
@@ -7,11 +9,11 @@ use super::helpers::lr;
 pub fn real_eq(value: &Value) -> OperatorOutput {
     let value = match compare(value) {
         Ordering::Less | Ordering::Greater => Value::Variant {
-            ty: macros::ty!(r#"@"unequal" *<>"#),
+            ty: ty!(r#"@"unequal" *<>"#),
             value: Box::new(Value::Unit),
         },
         Ordering::Equal => Value::Variant {
-            ty: macros::ty!(r#"@"equal" *<>"#),
+            ty: ty!(r#"@"equal" *<>"#),
             value: Box::new(Value::Unit),
         },
     };
@@ -21,15 +23,15 @@ pub fn real_eq(value: &Value) -> OperatorOutput {
 pub fn real_cmp(value: &Value) -> OperatorOutput {
     let value = match compare(value) {
         Ordering::Less => Value::Variant {
-            ty: macros::ty!(r#"@"less" *<>"#),
+            ty: ty!(r#"@"less" *<>"#),
             value: Box::new(Value::Unit),
         },
         Ordering::Greater => Value::Variant {
-            ty: macros::ty!(r#"@"greater" *<>"#),
+            ty: ty!(r#"@"greater" *<>"#),
             value: Box::new(Value::Unit),
         },
         Ordering::Equal => Value::Variant {
-            ty: macros::ty!(r#"@"equal" *<>"#),
+            ty: ty!(r#"@"equal" *<>"#),
             value: Box::new(Value::Unit),
         },
     };
@@ -72,8 +74,8 @@ mod tests {
     fn test_int_int() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(1)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -81,8 +83,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(1)),
             ]
             .into_iter()
             .collect(),
@@ -90,8 +92,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -103,8 +105,8 @@ mod tests {
     fn test_rational_rational() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(1, 2)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(1, 3)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(1, 2)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(1, 3)),
             ]
             .into_iter()
             .collect(),
@@ -112,8 +114,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(1, 3)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(1, 2)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(1, 3)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(1, 2)),
             ]
             .into_iter()
             .collect(),
@@ -121,8 +123,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(1, 2)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(2, 4)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(1, 2)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(2, 4)),
             ]
             .into_iter()
             .collect(),
@@ -134,8 +136,8 @@ mod tests {
     fn test_real_real() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(1.0)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),
@@ -143,8 +145,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'real"#), Value::Real(1.0)),
             ]
             .into_iter()
             .collect(),
@@ -152,8 +154,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),
@@ -165,8 +167,8 @@ mod tests {
     fn test_real_integer() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(1.0)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -174,8 +176,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(1)),
             ]
             .into_iter()
             .collect(),
@@ -183,8 +185,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -196,8 +198,8 @@ mod tests {
     fn test_integer_real() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(1)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),
@@ -205,8 +207,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'real"#), Value::Real(1.0)),
             ]
             .into_iter()
             .collect(),
@@ -214,8 +216,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),
@@ -227,8 +229,8 @@ mod tests {
     fn test_integer_rational() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(1)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
             ]
             .into_iter()
             .collect(),
@@ -236,8 +238,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(2, 3)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(2, 3)),
             ]
             .into_iter()
             .collect(),
@@ -245,8 +247,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'integer"#), Value::Int(2)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(4, 2)),
+                (ty!(r#"@"l" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(4, 2)),
             ]
             .into_iter()
             .collect(),
@@ -258,8 +260,8 @@ mod tests {
     fn test_rational_integer() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(1)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(1)),
             ]
             .into_iter()
             .collect(),
@@ -267,8 +269,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -276,8 +278,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(4, 2)),
-                (macros::ty!(r#"@"r" 'integer"#), Value::Int(2)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(4, 2)),
+                (ty!(r#"@"r" 'integer"#), Value::Int(2)),
             ]
             .into_iter()
             .collect(),
@@ -289,8 +291,8 @@ mod tests {
     fn test_real_rational() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(1.0)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"l" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
             ]
             .into_iter()
             .collect(),
@@ -298,8 +300,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(3, 2)),
             ]
             .into_iter()
             .collect(),
@@ -307,8 +309,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'real"#), Value::Real(2.0)),
-                (macros::ty!(r#"@"r" 'rational"#), Value::Rational(4, 2)),
+                (ty!(r#"@"l" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"r" 'rational"#), Value::Rational(4, 2)),
             ]
             .into_iter()
             .collect(),
@@ -320,8 +322,8 @@ mod tests {
     fn test_rational_real() {
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(1.0)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"r" 'real"#), Value::Real(1.0)),
             ]
             .into_iter()
             .collect(),
@@ -329,8 +331,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Greater);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(3, 2)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),
@@ -338,8 +340,8 @@ mod tests {
         assert_eq!(compare(&value), Ordering::Less);
         let value = Value::Product(
             [
-                (macros::ty!(r#"@"l" 'rational"#), Value::Rational(4, 2)),
-                (macros::ty!(r#"@"r" 'real"#), Value::Real(2.0)),
+                (ty!(r#"@"l" 'rational"#), Value::Rational(4, 2)),
+                (ty!(r#"@"r" 'real"#), Value::Real(2.0)),
             ]
             .into_iter()
             .collect(),

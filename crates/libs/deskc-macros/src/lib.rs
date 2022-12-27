@@ -1,11 +1,15 @@
+use std::ops::Range;
+
 use ast::{
-    expr::Expr,
+    expr::{Expr, LinkName},
     span::WithSpan,
     ty::{Effect, EffectExpr, Function, Type},
 };
+use deskc_ids::NodeId;
 use dson::{Dson, MapElem};
 use proc_macro::TokenStream;
 use quote::quote;
+use uuid::Uuid;
 
 #[proc_macro]
 pub fn ty(item: TokenStream) -> TokenStream {
@@ -19,7 +23,15 @@ pub fn ty(item: TokenStream) -> TokenStream {
             panic!("Failed to parse reference")
         }
     }
-    parse(item, input, map)
+    parse(
+        item,
+        input,
+        map,
+        quote! {
+            use deskc_type::{Effect, Function, Type, EffectExpr};
+            use dson::{Dson, Literal};
+        },
+    )
 }
 
 #[proc_macro]
@@ -40,7 +52,15 @@ pub fn effect(item: TokenStream) -> TokenStream {
         };
         from_effect(effects[0].value.clone())
     }
-    parse(item, input, map)
+    parse(
+        item,
+        input,
+        map,
+        quote! {
+            use deskc_type::{Effect, Function, Type, EffectExpr};
+            use dson::{Dson, Literal};
+        },
+    )
 }
 
 #[proc_macro]
@@ -54,13 +74,40 @@ pub fn dson(item: TokenStream) -> TokenStream {
         };
         from_dson(label)
     }
-    parse(item, input, map)
+    parse(
+        item,
+        input,
+        map,
+        quote! {
+            use dson::{Dson, Literal};
+        },
+    )
+}
+
+#[proc_macro]
+pub fn ast(item: TokenStream) -> TokenStream {
+    fn input(string: String) -> String {
+        string
+    }
+    fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+        from_expr(expr)
+    }
+    parse(
+        item,
+        input,
+        map,
+        quote! {
+            use deskc_ast::{expr::Expr, span::WithSpan, ty::{Effect, EffectExpr, Function, Type}};
+            use dson::{Dson, Literal};
+        },
+    )
 }
 
 fn parse(
     item: TokenStream,
     input: fn(String) -> String,
     map: fn(WithSpan<Expr>) -> proc_macro2::TokenStream,
+    uses: proc_macro2::TokenStream,
 ) -> TokenStream {
     if let Some(literal) = item.into_iter().next() {
         let string = literal.to_string();
@@ -81,8 +128,7 @@ fn parse(
                 let tokens = map(expr);
                 quote! {
                     {
-                        use ty::{Effect, Function, Type, EffectExpr};
-                        use dson::{Dson, Literal};
+                        #uses
                         #tokens
                     }
                 }
@@ -485,6 +531,522 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
             quote! {
                 dson::Type::Variable(#ident.into())
             }
+        }
+    }
+}
+
+fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+    let tokens = match expr.value {
+        Expr::Literal(literal) => {
+            let literal = match literal {
+                ast::expr::Literal::String(string) => {
+                    quote!(Literal::String(#string.into()))
+                }
+                ast::expr::Literal::Integer(integer) => {
+                    quote!(Literal::Integer(#integer))
+                }
+                ast::expr::Literal::Rational(a, b) => {
+                    quote!(Literal::Rational(#a, #b))
+                }
+                ast::expr::Literal::Real(real) => {
+                    quote!(Literal::Real(#real))
+                }
+            };
+            quote! {
+                Expr::Literal(#literal)
+            }
+        }
+        Expr::Do { stmt, expr } => {
+            let stmt = from_expr(*stmt);
+            let expr = from_expr(*expr);
+            quote! {
+                Expr::Do {
+                    stmt: Box::new(#stmt),
+                    expr: Box::new(#expr),
+                }
+            }
+        }
+        Expr::Let { definition, body } => {
+            let definition = from_expr(*definition);
+            let body = from_expr(*body);
+            quote! {
+                Expr::Let {
+                    definition: Box::new(#definition),
+                    body: Box::new(#body),
+                }
+            }
+        }
+        Expr::Perform { input, output } => {
+            let input = from_expr(*input);
+            let output = from_type_for_ast(output);
+            quote! {
+                Expr::Perform {
+                    input: Box::new(#input),
+                    output: #output,
+                }
+            }
+        }
+        Expr::Continue { input, output } => {
+            let input = from_expr(*input);
+            let output = from_type_for_ast(output);
+            quote! {
+                Expr::Continue {
+                    input: Box::new(#input),
+                    output: #output,
+                }
+            }
+        }
+        Expr::Handle { expr, handlers } => {
+            let expr = from_expr(*expr);
+            let handlers = handlers
+                .into_iter()
+                .map(|handler| {
+                    let expr = from_expr(handler.handler);
+                    let effect = from_effect_for_ast(handler.effect);
+                    quote! {
+                        Handler {
+                            effect: #effect,
+                            handler: Box::new(#expr),
+                        }
+                    }
+                })
+                .collect::<Vec<_>>();
+            quote! {
+                Expr::Handle {
+                    expr: Box::new(#expr),
+                    handlers: vec![#(#handlers),*],
+                }
+            }
+        }
+        Expr::Apply {
+            function,
+            link_name,
+            arguments,
+        } => {
+            let function = from_type_for_ast(function);
+            let link_name = match link_name {
+                LinkName::None => quote!(LinkName::None),
+                LinkName::Version(vession) => {
+                    let uuid = from_uuid(vession);
+                    quote!(LinkName::Version(#uuid))
+                }
+                LinkName::Card(card_id) => {
+                    let uuid = from_uuid(card_id);
+                    quote!(LinkName::Card(#uuid))
+                }
+            };
+            let arguments = arguments
+                .into_iter()
+                .map(|argument| from_expr(argument))
+                .collect::<Vec<_>>();
+
+            quote! {
+                Expr::Apply {
+                    function: #function,
+                    link_name: #link_name,
+                    arguments: vec![#(#arguments),*],
+                }
+            }
+        }
+        Expr::Product(exprs) => {
+            let exprs = exprs
+                .into_iter()
+                .map(|expr| from_expr(expr))
+                .collect::<Vec<_>>();
+            quote! {
+                Expr::Product(vec![#(#exprs),*])
+            }
+        }
+        Expr::Match { of, cases } => {
+            let of = from_expr(*of);
+            let cases = cases
+                .into_iter()
+                .map(|case| {
+                    let ty = from_type_for_ast(case.ty);
+                    let expr = from_expr(case.expr);
+                    quote! {
+                        MatchCase {
+                            ty: #ty,
+                            expr: Box::new(#expr),
+                        }
+                    }
+                })
+                .collect::<Vec<_>>();
+            quote! {
+                Expr::Match {
+                    of: Box::new(#of),
+                    cases: vec![#(#cases),*],
+                }
+            }
+        }
+        Expr::Typed { ty, item } => {
+            let ty = from_type_for_ast(ty);
+            let item = from_expr(*item);
+            quote! {
+                Expr::Typed {
+                    ty: #ty,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Expr::Hole => quote!(Expr::Hole),
+        Expr::Function { parameter, body } => {
+            let parameter = from_type_for_ast(parameter);
+            let body = from_expr(*body);
+            quote! {
+                Expr::Function {
+                    parameter: #parameter,
+                    body: Box::new(#body),
+                }
+            }
+        }
+        Expr::Vector(exprs) => {
+            let exprs = exprs
+                .into_iter()
+                .map(|expr| from_expr(expr))
+                .collect::<Vec<_>>();
+            quote! {
+                Expr::Vector(vec![#(#exprs),*])
+            }
+        }
+        Expr::Map(elems) => {
+            let elems = elems
+                .into_iter()
+                .map(|elem| {
+                    let key = from_expr(elem.key);
+                    let value = from_expr(elem.value);
+                    quote! {
+                        MapElem {
+                            key: Box::new(#key),
+                            value: Box::new(#value),
+                        }
+                    }
+                })
+                .collect::<Vec<_>>();
+            quote! {
+                Expr::Map(vec![#(#elems),*])
+            }
+        }
+        Expr::Attributed { attr, item } => {
+            let attr = from_dson(attr);
+            let item = from_expr(*item);
+            quote! {
+                Expr::Attributed {
+                    attr: #attr,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Expr::Brand { brand, item } => {
+            let brand = from_dson(brand);
+            let item = from_expr(*item);
+            quote! {
+                Expr::Brand {
+                    brand: #brand,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Expr::Label { label, item } => {
+            let label = from_dson(label);
+            let item = from_expr(*item);
+            quote! {
+                Expr::Label {
+                    label: #label,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Expr::NewType { ident, ty, expr } => {
+            let ty = from_type_for_ast(ty);
+            let expr = from_expr(*expr);
+            quote! {
+                Expr::NewType {
+                    ident: #ident,
+                    ty: #ty,
+                    expr: Box::new(#expr),
+                }
+            }
+        }
+        Expr::Comment { text, item } => {
+            let item = from_expr(*item);
+            quote! {
+                Expr::Comment {
+                    text: #text,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Expr::Card { id, item, next } => {
+            let id = from_uuid(id.0);
+            let item = from_expr(*item);
+            let next = from_expr(*next);
+            quote! {
+                Expr::Card {
+                    id: CardId(#id),
+                    item: Box::new(#item),
+                    next: Box::new(#next),
+                }
+            }
+        }
+    };
+    with_span(expr.id, expr.span, tokens)
+}
+
+fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
+    let tokens = match ty.value {
+        Type::Labeled { brand, item } => {
+            let brand = from_dson(brand);
+            let item = from_type_for_ast(*item);
+            quote! {
+                Type::Labeled {
+                    brand: #brand,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Type::Real => quote!(Type::Real),
+        Type::Rational => quote!(Type::Rational),
+        Type::Integer => quote!(Type::Integer),
+        Type::String => quote!(Type::String),
+        Type::Trait(functions) => {
+            let functions = functions
+                .into_iter()
+                .map(|function| {
+                    let tokens = from_function(function.value);
+                    with_span(function.id, function.span, tokens)
+                })
+                .collect::<Vec<_>>();
+            quote! {
+                Type::Trait(vec![#(#functions),*])
+            }
+        }
+        Type::Effectful { ty, effects } => {
+            let ty = from_type_for_ast(*ty);
+            let effects = from_effect_expr_for_ast(effects);
+            quote! {
+                Type::Effectful {
+                    ty: Box::new(#ty),
+                    effects: #effects,
+                }
+            }
+        }
+        Type::Infer => quote!(Type::Infer),
+        Type::This => quote!(Type::This),
+        Type::Product(types) => {
+            let types = types.into_iter().map(from_type_for_ast).collect::<Vec<_>>();
+            quote! {
+                Type::Product(vec![#(#types),*])
+            }
+        }
+        Type::Sum(types) => {
+            let types = types.into_iter().map(from_type_for_ast).collect::<Vec<_>>();
+            quote! {
+                Type::Sum(vec![#(#types),*])
+            }
+        }
+        Type::Function(function) => {
+            let function = from_function(*function);
+            quote! {
+                Type::Function(Box::new(#function))
+            }
+        }
+        Type::Vector(ty) => {
+            let ty = from_type_for_ast(*ty);
+            quote! {
+                Type::Vector(Box::new(#ty))
+            }
+        }
+        Type::Map { key, value } => {
+            let key = from_type_for_ast(*key);
+            let value = from_type_for_ast(*value);
+            quote! {
+                Type::Map {
+                    key: Box::new(#key),
+                    value: Box::new(#value),
+                }
+            }
+        }
+        Type::Let {
+            variable,
+            definition,
+            body,
+        } => {
+            let definition = from_type_for_ast(*definition);
+            let body = from_type_for_ast(*body);
+            quote! {
+                Type::Let {
+                    variable: #variable,
+                    definition: Box::new(#definition),
+                    body: Box::new(#body),
+                }
+            }
+        }
+        Type::Variable(ident) => quote!(Type::Variable(#ident)),
+        Type::Attributed { attr, ty } => {
+            let attr = from_dson(attr);
+            let ty = from_type_for_ast(*ty);
+            quote! {
+                Type::Attributed {
+                    attr: #attr,
+                    ty: Box::new(#ty),
+                }
+            }
+        }
+        Type::Comment { text, item } => {
+            let item = from_type_for_ast(*item);
+            quote! {
+                Type::Comment {
+                    text: #text,
+                    item: Box::new(#item),
+                }
+            }
+        }
+        Type::Forall {
+            variable,
+            bound,
+            body,
+        } => {
+            let bound = from_bound(bound);
+            let body = from_type_for_ast(*body);
+            quote! {
+                Type::Forall {
+                    variable: #variable,
+                    bound: #bound,
+                    body: Box::new(#body),
+                }
+            }
+        }
+        Type::Exists {
+            variable,
+            bound,
+            body,
+        } => {
+            let bound = from_bound(bound);
+            let body = from_type_for_ast(*body);
+            quote! {
+                Type::Exists {
+                    variable: #variable,
+                    bound: #bound,
+                    body: Box::new(#body),
+                }
+            }
+        }
+    };
+    with_span(ty.id, ty.span, tokens)
+}
+
+fn from_bound(bound: Option<Box<WithSpan<Type>>>) -> proc_macro2::TokenStream {
+    match bound {
+        Some(bound) => {
+            let tokens = from_type_for_ast(*bound);
+            quote!(Box::new(#tokens))
+        }
+        None => quote!(None),
+    }
+}
+
+fn from_effect_expr_for_ast(expr: WithSpan<EffectExpr>) -> proc_macro2::TokenStream {
+    let tokens = match expr.value {
+        EffectExpr::Effects(effects) => {
+            let effects = effects
+                .into_iter()
+                .map(from_effect_for_ast)
+                .collect::<Vec<_>>();
+            quote! {
+                EffectExpr::Effects(vec![#(#effects),*])
+            }
+        }
+        EffectExpr::Add(exprs) => {
+            let exprs = exprs
+                .into_iter()
+                .map(from_effect_expr_for_ast)
+                .collect::<Vec<_>>();
+            quote! {
+                EffectExpr::Add(vec![#(#exprs),*])
+            }
+        }
+        EffectExpr::Sub {
+            minuend,
+            subtrahend,
+        } => {
+            let minuend = from_effect_expr_for_ast(*minuend);
+            let subtrahend = from_effect_expr_for_ast(*subtrahend);
+            quote! {
+                EffectExpr::Sub {
+                    minuend: Box::new(#minuend),
+                    subtrahend: Box::new(#subtrahend),
+                }
+            }
+        }
+        EffectExpr::Apply {
+            function,
+            arguments,
+        } => {
+            let function = from_type_for_ast(*function);
+            let arguments = arguments
+                .into_iter()
+                .map(from_type_for_ast)
+                .collect::<Vec<_>>();
+            quote! {
+                EffectExpr::Apply {
+                    function: Box::new(#function),
+                    arguments: vec![#(#arguments),*],
+                }
+            }
+        }
+    };
+    with_span(expr.id, expr.span, tokens)
+}
+
+fn from_effect_for_ast(effect: WithSpan<Effect>) -> proc_macro2::TokenStream {
+    let input = from_type_for_ast(effect.value.input);
+    let output = from_type_for_ast(effect.value.output);
+    let tokens = quote! {
+        Effect {
+            input: #input,
+            output: #output,
+        }
+    };
+    with_span(effect.id, effect.span, tokens)
+}
+
+fn from_function(function: Function) -> proc_macro2::TokenStream {
+    let parameter = from_type_for_ast(function.parameter);
+    let body = from_type_for_ast(function.body);
+    quote! {
+        Function {
+            parameter: #parameter,
+            body: #body,
+        }
+    }
+}
+
+fn from_uuid(uuid: Uuid) -> proc_macro2::TokenStream {
+    let string = uuid.to_string();
+    quote!(uuid::uuid!(#string))
+}
+
+fn with_span(
+    id: NodeId,
+    span: Range<usize>,
+    value: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    let id = from_uuid(id.0);
+    let id = quote!(uuid::uuid!(#id));
+    let start = span.start;
+    let end = span.end;
+    let span = quote! {
+        Span {
+            start: #start,
+            end: #end,
+        }
+    };
+    quote! {
+        WithSpan {
+            id: #id,
+            span: #span,
+            value: #value,
         }
     }
 }

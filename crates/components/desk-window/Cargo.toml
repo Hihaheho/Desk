@@ -17,4 +17,4 @@ deskc-ids = { package = "deskc-ids", version = "0.0.0", path = "../deskc-ids" }
 dworkspace = { package = "dworkspace", version = "0.0.0", path = "../../systems/dworkspace" }
 
 bevy_ecs = "0.9"
-uuid = "1.2"
+uuid = { workspace = true}

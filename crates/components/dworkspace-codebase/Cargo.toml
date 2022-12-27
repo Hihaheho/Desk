@@ -16,4 +16,4 @@ ty = { path = "../deskc-type", version = "0.0.0", package = "deskc-type" }
 ast = { path = "../deskc-ast", version = "0.0.0", package = "deskc-ast" }
 hir = { path = "../deskc-hir", version = "0.0.0", package = "deskc-hir" }
 
-uuid = "1.2"
+uuid = { workspace = true}

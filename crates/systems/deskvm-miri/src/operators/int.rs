@@ -1,3 +1,5 @@
+use deskc_macros::effect;
+
 use crate::value::{OperatorOutput, Value};
 
 use super::helpers::lr;
@@ -21,7 +23,7 @@ pub fn div(value: &Value) -> OperatorOutput {
     let (l, r) = int_lr(value);
     if r == 0 {
         OperatorOutput::Perform {
-            effect: macros::effect!(r#"@"division by zero" 'integer ~> @"quot" 'integer"#),
+            effect: effect!(r#"@"division by zero" 'integer ~> @"quot" 'integer"#),
             input: Value::Int(l),
         }
     } else {
