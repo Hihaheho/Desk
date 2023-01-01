@@ -9,10 +9,10 @@ pub struct WithSpan<T> {
     pub value: T,
 }
 
-pub fn dummy_span<T>(value: T) -> WithSpan<T> {
+pub fn with_span<T>(value: T) -> WithSpan<T>  where T: parol_runtime::ToSpan {
     WithSpan {
         id: NodeId::default(),
-        span: 0..0,
+        span: (&value).span().into(),
         value,
     }
 }

@@ -19,7 +19,7 @@ pub fn parse(input: &str) -> Result<WithSpan<Expr>, MinimalistSyntaxError> {
 #[derive(Error, Debug)]
 pub enum MinimalistSyntaxError {
     #[error("Parse error: {0:?}")]
-    ParseError(parol_runtime::miette::Error),
+    ParseError(anyhow::Error),
     #[error("Uuid error: {0}")]
     UuidError(#[from] uuid::Error),
     #[error("Dson error: {0}")]

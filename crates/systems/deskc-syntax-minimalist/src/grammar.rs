@@ -1,5 +1,5 @@
 use crate::grammar_trait::{Expr, GrammarTrait};
-use parol_runtime::miette::Result;
+use anyhow::Result;
 
 ///
 /// Data structure that implements the semantic actions for our grammar

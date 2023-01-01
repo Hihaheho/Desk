@@ -16,13 +16,13 @@ ast = { path = "../../components/deskc-ast", version = "0.0.0", package = "deskc
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 
-parol_runtime = { git = "https://github.com/jsinger67/parol", rev = "f0be5be6e37b9141eefe064055928bcef63318a5", features = ["auto_generation"] }
+parol_runtime = { git = "https://github.com/jsinger67/parol", rev = "e0c4a1d59bd6dc05b5ba9f85d28e1e1bbdf78d5a", features = ["auto_generation"] }
 anyhow = "1.0"
 thiserror = "1.0.37"
 uuid = { version = "1.2", features = ["v4"] }
 
 [build-dependencies]
-parol = { git = "https://github.com/jsinger67/parol", rev = "f0be5be6e37b9141eefe064055928bcef63318a5" }
+parol = { git = "https://github.com/jsinger67/parol", rev = "e0c4a1d59bd6dc05b5ba9f85d28e1e1bbdf78d5a" }
 
 [dev-dependencies]
 env_logger = "0.10.0"

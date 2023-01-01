@@ -389,7 +389,7 @@ impl HirGen {
 mod tests {
     use std::sync::Arc;
 
-    use ast::span::dummy_span;
+    use ast::span::with_span;
     use deskc::card::DeskcQueries;
     use deskc::{Code, SyntaxKind};
     use hir::{
@@ -420,14 +420,14 @@ mod tests {
         let gen = HirGen::default();
         assert_eq!(
             remove_meta(
-                gen.gen_card(&dummy_span(ast::expr::Expr::Apply {
-                    function: dummy_span(ast::ty::Type::Real),
+                gen.gen_card(&with_span(ast::expr::Expr::Apply {
+                    function: with_span(ast::ty::Type::Real),
                     link_name: Default::default(),
-                    arguments: vec![dummy_span(ast::expr::Expr::Attributed {
+                    arguments: vec![with_span(ast::expr::Expr::Attributed {
                         attr: Dson::Literal(dson::Literal::Integer(1)),
-                        item: Box::new(dummy_span(ast::expr::Expr::Attributed {
+                        item: Box::new(with_span(ast::expr::Expr::Attributed {
                             attr: Dson::Literal(dson::Literal::Integer(2)),
-                            item: Box::new(dummy_span(ast::expr::Expr::Literal(
+                            item: Box::new(with_span(ast::expr::Expr::Literal(
                                 ast::expr::Literal::Integer(3)
                             ))),
                         },)),
