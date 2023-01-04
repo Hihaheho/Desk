@@ -9,10 +9,25 @@ pub struct WithSpan<T> {
     pub value: T,
 }
 
-pub fn with_span<T>(value: T) -> WithSpan<T>  where T: parol_runtime::ToSpan {
+/// This trait should be implemented by generated AST data types
+pub trait ToSpan {
+    /// Calculates the span of the implementing item
+    fn span(&self) -> Span;
+}
+
+
+pub fn dummy_span<T>(value: T) -> WithSpan<T> {
     WithSpan {
         id: NodeId::default(),
-        span: (&value).span().into(),
+        span: 0..0,
+        value,
+    }
+}
+
+pub fn with_span<T>(value: T) -> WithSpan<T>  where T: ToSpan {
+    WithSpan {
+        id: NodeId::default(),
+        span: value.span(),
         value,
     }
 }

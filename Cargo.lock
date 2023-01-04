@@ -1703,7 +1703,6 @@ version = "0.0.0"
 dependencies = [
  "deskc-ids",
  "dson",
- "parol_runtime",
  "thiserror",
 ]
 
