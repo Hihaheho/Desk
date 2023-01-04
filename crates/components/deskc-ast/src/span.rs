@@ -9,12 +9,12 @@ pub struct WithSpan<T> {
     pub value: T,
 }
 
-/// This trait should be implemented by generated AST data types
+/// This trait should be implemented by items that can provide span information
 pub trait ToSpan {
-    /// Calculates the span of the implementing item
+    /// Calculates the span of the implementing item, ideally by passing it through to
+    /// the generated `parol_runtime::ToSpan::span`.
     fn span(&self) -> Span;
 }
-
 
 pub fn dummy_span<T>(value: T) -> WithSpan<T> {
     WithSpan {
@@ -24,10 +24,26 @@ pub fn dummy_span<T>(value: T) -> WithSpan<T> {
     }
 }
 
-pub fn with_span<T>(value: T) -> WithSpan<T>  where T: ToSpan {
+/// Equips a value with its span information
+pub fn with_span<T>(id: NodeId, value: T) -> WithSpan<T>
+where
+    T: ToSpan,
+{
     WithSpan {
-        id: NodeId::default(),
+        id,
         span: value.span(),
+        value,
+    }
+}
+
+/// Equips a value with span information from a span provider
+pub fn with_span_from<S, T>(id: NodeId, value: T, span_provider: &S) -> WithSpan<T>
+where
+    S: ToSpan,
+{
+    WithSpan {
+        id,
+        span: span_provider.span(),
         value,
     }
 }
