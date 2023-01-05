@@ -1,4 +1,7 @@
 pub mod conclusion;
+mod conversions;
+
+pub use conversions::*;
 
 use dson::Dson;
 use serde::{Deserialize, Serialize};

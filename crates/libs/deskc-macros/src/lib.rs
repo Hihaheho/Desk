@@ -97,8 +97,13 @@ pub fn ast(item: TokenStream) -> TokenStream {
         input,
         map,
         quote! {
-            use deskc_ast::{expr::Expr, span::WithSpan, ty::{Effect, EffectExpr, Function, Type}};
-            use dson::{Dson, Literal};
+            use deskc_ast::{
+                expr::{Expr, Literal, MatchCase},
+                span::{Span, WithSpan},
+                ty::{Effect, EffectExpr, Function, Type},
+            };
+            use deskc_ids::LinkName;
+            use dson::Dson;
         },
     )
 }
@@ -601,14 +606,15 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             let handlers = handlers
                 .into_iter()
                 .map(|handler| {
-                    let expr = from_expr(handler.handler);
-                    let effect = from_effect_for_ast(handler.effect);
-                    quote! {
+                    let expr = from_expr(handler.value.handler);
+                    let effect = from_effect_for_ast(handler.value.effect);
+                    let tokens = quote! {
                         Handler {
                             effect: #effect,
-                            handler: Box::new(#expr),
+                            handler: #expr,
                         }
-                    }
+                    };
+                    with_span(handler.id, handler.span, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -662,14 +668,15 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             let cases = cases
                 .into_iter()
                 .map(|case| {
-                    let ty = from_type_for_ast(case.ty);
-                    let expr = from_expr(case.expr);
-                    quote! {
+                    let ty = from_type_for_ast(case.value.ty);
+                    let expr = from_expr(case.value.expr);
+                    let tokens = quote! {
                         MatchCase {
                             ty: #ty,
-                            expr: Box::new(#expr),
+                            expr: #expr,
                         }
-                    }
+                    };
+                    with_span(case.id, case.span, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -713,14 +720,15 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             let elems = elems
                 .into_iter()
                 .map(|elem| {
-                    let key = from_expr(elem.key);
-                    let value = from_expr(elem.value);
-                    quote! {
+                    let key = from_expr(elem.value.key);
+                    let value = from_expr(elem.value.value);
+                    let tokens = quote! {
                         MapElem {
                             key: Box::new(#key),
                             value: Box::new(#value),
                         }
-                    }
+                    };
+                    with_span(elem.id, elem.span, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -762,7 +770,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             let expr = from_expr(*expr);
             quote! {
                 Expr::NewType {
-                    ident: #ident,
+                    ident: #ident.to_string(),
                     ty: #ty,
                     expr: Box::new(#expr),
                 }
@@ -772,7 +780,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             let item = from_expr(*item);
             quote! {
                 Expr::Comment {
-                    text: #text,
+                    text: #text.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -876,13 +884,13 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
             let body = from_type_for_ast(*body);
             quote! {
                 Type::Let {
-                    variable: #variable,
+                    variable: #variable.to_string(),
                     definition: Box::new(#definition),
                     body: Box::new(#body),
                 }
             }
         }
-        Type::Variable(ident) => quote!(Type::Variable(#ident)),
+        Type::Variable(ident) => quote!(Type::Variable(#ident.to_string())),
         Type::Attributed { attr, ty } => {
             let attr = from_dson(attr);
             let ty = from_type_for_ast(*ty);
@@ -897,7 +905,7 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
             let item = from_type_for_ast(*item);
             quote! {
                 Type::Comment {
-                    text: #text,
+                    text: #text.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -911,7 +919,7 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
             let body = from_type_for_ast(*body);
             quote! {
                 Type::Forall {
-                    variable: #variable,
+                    variable: #variable.to_string(),
                     bound: #bound,
                     body: Box::new(#body),
                 }
@@ -926,7 +934,7 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
             let body = from_type_for_ast(*body);
             quote! {
                 Type::Exists {
-                    variable: #variable,
+                    variable: #variable.to_string(),
                     bound: #bound,
                     body: Box::new(#body),
                 }
@@ -1033,7 +1041,6 @@ fn with_span(
     value: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let id = from_uuid(id.0);
-    let id = quote!(uuid::uuid!(#id));
     let start = span.start;
     let end = span.end;
     let span = quote! {
@@ -1044,7 +1051,7 @@ fn with_span(
     };
     quote! {
         WithSpan {
-            id: #id,
+            id: deskc_ids::NodeId(#id),
             span: #span,
             value: #value,
         }

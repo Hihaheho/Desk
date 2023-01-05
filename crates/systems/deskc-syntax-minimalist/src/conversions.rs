@@ -193,16 +193,20 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .handle_list
                         .into_iter()
                         .map(|handler| {
-                            Ok(Handler {
-                                effect: WithSpan {
-                                    id: NodeId::new(),
-                                    span: 0..0,
-                                    value: Effect {
-                                        input: (*handler.handler.ty).try_into()?,
-                                        output: (*handler.handler.ty0).try_into()?,
+                            Ok(WithSpan {
+                                id: NodeId::new(),
+                                span: 0..0,
+                                value: Handler {
+                                    effect: WithSpan {
+                                        id: NodeId::new(),
+                                        span: 0..0,
+                                        value: Effect {
+                                            input: (*handler.handler.ty).try_into()?,
+                                            output: (*handler.handler.ty0).try_into()?,
+                                        },
                                     },
+                                    handler: (*handler.handler.expr).try_into()?,
                                 },
-                                handler: (*handler.handler.expr).try_into()?,
                             })
                         })
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
@@ -237,9 +241,13 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                     map.map_list
                         .into_iter()
                         .map(|map| {
-                            Ok(MapElem {
-                                key: (*map.expr).try_into()?,
-                                value: (*map.expr0).try_into()?,
+                            Ok(WithSpan {
+                                id: NodeId::new(),
+                                span: 0..0,
+                                value: MapElem {
+                                    key: (*map.expr).try_into()?,
+                                    value: (*map.expr0).try_into()?,
+                                },
                             })
                         })
                         .collect::<Result<_, MinimalistSyntaxError>>()?,
@@ -262,9 +270,13 @@ impl TryFrom<grammar_trait::Expr<'_>> for WithSpan<Expr> {
                         .match_list
                         .into_iter()
                         .map(|r#match| {
-                            Ok(MatchCase {
-                                ty: (*r#match.case.ty).try_into()?,
-                                expr: (*r#match.case.expr).try_into()?,
+                            Ok(WithSpan {
+                                id: NodeId::new(),
+                                span: 0..0,
+                                value: MatchCase {
+                                    ty: (*r#match.case.ty).try_into()?,
+                                    expr: (*r#match.case.expr).try_into()?,
+                                },
                             })
                         })
                         .collect::<Result<_, MinimalistSyntaxError>>()?,

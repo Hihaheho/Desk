@@ -43,6 +43,7 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
                 })
                 .collect::<Result<Vec<_>, anyhow::Error>>()?,
         },
+        _ => todo!(),
     };
     Ok(Code::Ast(Arc::new(WithSpan {
         id: node.id.clone(),

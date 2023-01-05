@@ -96,8 +96,8 @@ impl MirGen<'_> {
                     .iter()
                     .map(|elem| {
                         Ok(MapElem {
-                            key: self.gen_stmt(&elem.key)?,
-                            value: self.gen_stmt(&elem.value)?,
+                            key: self.gen_stmt(&elem.value.key)?,
+                            value: self.gen_stmt(&elem.value.value)?,
                         })
                     })
                     .collect::<Result<Vec<_>, _>>()?;
@@ -152,7 +152,8 @@ impl MirGen<'_> {
                 // handlers mir
                 let handlers = handlers
                     .iter()
-                    .map(|Handler { effect, handler }| {
+                    .map(|handler| {
+                        let Handler { effect, handler } = &handler.value;
                         let effect = Effect {
                             input: self.get_type(&effect.input)?.clone(),
                             output: self.get_type(&effect.output)?.clone(),
@@ -241,7 +242,7 @@ impl MirGen<'_> {
                 let sum_type = Type::sum(
                     cases
                         .iter()
-                        .map(|c| Ok(self.get_type(&c.ty)?.clone()))
+                        .map(|c| Ok(self.get_type(&c.value.ty)?.clone()))
                         .collect::<Result<_, _>>()?,
                 );
                 let input = self.gen_stmt(of)?;
@@ -254,7 +255,8 @@ impl MirGen<'_> {
                 let match_result_var = self.mir_proto().create_var(stmt_ty.clone());
                 let cases: Vec<_> = cases
                     .iter()
-                    .map(|hir::expr::MatchCase { ty, expr }| {
+                    .map(|case| {
+                        let hir::expr::MatchCase { ty, expr } = &case.value;
                         // gen the case block
                         let case_block_id = self.mir_proto().begin_block();
                         let match_case_result = self.gen_stmt(expr)?;

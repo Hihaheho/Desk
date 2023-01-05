@@ -8,19 +8,12 @@ use crate::{
 pub fn remove_span(expr: &mut WithSpan<Expr>) {
     struct RemoveSpan;
     impl ExprVisitorMut for RemoveSpan {
-        fn visit_expr(&mut self, expr: &mut WithSpan<Expr>) {
-            expr.id = Default::default();
-            expr.span = Default::default();
-            self.super_visit_expr(expr);
+        fn visit_span(&mut self, id: &mut ids::NodeId, span: &mut crate::span::Span) {
+            *id = Default::default();
+            *span = Default::default();
         }
         fn visit_type(&mut self, ty: &mut WithSpan<Type>) {
             remove_span_ty(ty);
-        }
-        fn visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
-            effect.id = Default::default();
-            effect.span = Default::default();
-            self.visit_type(&mut effect.value.input);
-            self.visit_type(&mut effect.value.output);
         }
     }
     RemoveSpan.visit_expr(expr)

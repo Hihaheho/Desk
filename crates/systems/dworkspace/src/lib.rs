@@ -9,6 +9,7 @@ pub mod query_error;
 mod references;
 pub mod repository;
 pub mod state;
+pub mod conversions;
 
 use std::{any::TypeId, collections::HashMap};
 

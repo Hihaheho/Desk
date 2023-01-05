@@ -229,14 +229,16 @@ impl HirGen {
             ast::expr::Expr::Handle { handlers, expr } => self.with_meta(Expr::Handle {
                 handlers: handlers
                     .iter()
-                    .map(|ast::expr::Handler { effect, handler }| {
-                        Ok(Handler {
+                    .map(|handler| {
+                        self.push_span(handler.id.clone(), handler.span.clone());
+                        let ast::expr::Handler { effect, handler } = &handler.value;
+                        Ok(self.with_meta(Handler {
                             effect: Effect {
                                 input: self.gen_type(&effect.value.input)?,
                                 output: self.gen_type(&effect.value.output)?,
                             },
                             handler: self.gen_card(handler)?,
-                        })
+                        }))
                     })
                     .collect::<Result<Vec<_>, _>>()?,
                 expr: Box::new(self.gen_card(expr)?),
@@ -277,10 +279,11 @@ impl HirGen {
                 elems
                     .iter()
                     .map(|elem| {
-                        Ok(MapElem {
-                            key: self.gen_card(&elem.key)?,
-                            value: self.gen_card(&elem.value)?,
-                        })
+                        self.push_span(elem.id.clone(), elem.span.clone());
+                        Ok(self.with_meta(MapElem {
+                            key: self.gen_card(&elem.value.key)?,
+                            value: self.gen_card(&elem.value.value)?,
+                        }))
                     })
                     .collect::<Result<_, _>>()?,
             )),
@@ -301,11 +304,13 @@ impl HirGen {
                 of: Box::new(self.gen_card(of)?),
                 cases: cases
                     .iter()
-                    .map(|ast::expr::MatchCase { ty, expr }| {
-                        Ok(MatchCase {
+                    .map(|case| {
+                        self.push_span(case.id.clone(), case.span.clone());
+                        let ast::expr::MatchCase { ty, expr } = &case.value;
+                        Ok(self.with_meta(MatchCase {
                             ty: self.gen_type(ty)?,
                             expr: self.gen_card(expr)?,
-                        })
+                        }))
                     })
                     .collect::<Result<Vec<_>, _>>()?,
             }),

@@ -12,6 +12,20 @@ pub enum Content {
     Rational(i64, u64),
     Real(f64),
     Apply { ty: Type, link_name: LinkName },
+    Do,
+    Let,
+    Perform { output: Type },
+    Continue { output: Type },
+    Handle,
+    Product,
+    Match,
+    Typed { ty: Type },
+    Hole,
+    Function { parameter: Type },
+    Vector,
+    Map,
+    MapElem,
+    Case { ty: Type },
 }
 
 // Content::Real should not be NaN
@@ -36,6 +50,7 @@ impl Content {
             Content::Rational(_, _) => ContentKind::Rational,
             Content::Real(_) => ContentKind::Real,
             Content::Apply { .. } => ContentKind::Apply,
+            _ => todo!(),
         }
     }
 }

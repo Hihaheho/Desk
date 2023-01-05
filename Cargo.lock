@@ -1617,8 +1617,15 @@ dependencies = [
  "bevy",
  "desk-plugin",
  "desk-window",
+ "deskc-ast",
+ "deskc-ids",
+ "deskc-macros",
+ "deskc-type",
+ "dson",
  "dworkspace",
  "egui 0.20.1",
+ "once_cell",
+ "uuid",
 ]
 
 [[package]]
@@ -1681,11 +1688,11 @@ dependencies = [
  "console_error_panic_hook",
  "desk-editor",
  "desk-egui",
+ "desk-playground",
  "desk-plugin",
  "desk-terminal",
  "desk-touchpanel",
  "desk-window",
- "deskc",
  "deskc-ids",
  "dworkspace",
  "dworkspace-codebase",
@@ -1982,6 +1989,7 @@ dependencies = [
  "deskc-hir",
  "deskc-ids",
  "deskc-type",
+ "dson",
  "uuid",
 ]
 

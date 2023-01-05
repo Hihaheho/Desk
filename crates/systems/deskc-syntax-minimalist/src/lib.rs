@@ -120,8 +120,11 @@ mod tests {
             "#
             )
             .value,
-            Expr::Literal(Literal::String(r#"\\
-            '"abc"#.into()))
+            Expr::Literal(Literal::String(
+                r#"\\
+            '"abc"#
+                    .into()
+            ))
         );
     }
 
@@ -195,13 +198,13 @@ mod tests {
             .value,
             Expr::Handle {
                 expr: bw(Expr::Hole),
-                handlers: vec![Handler {
+                handlers: vec![w(Handler {
                     effect: w(Effect {
                         input: w(Type::Integer),
                         output: w(Type::String),
                     }),
                     handler: w(Expr::Literal(Literal::Integer(3))),
-                }],
+                })],
             }
         );
     }
@@ -269,18 +272,18 @@ mod tests {
         assert_eq!(
             parse("{1 => 1, 2 => ?, ? => 3}").value,
             Expr::Map(vec![
-                MapElem {
+                w(MapElem {
                     key: w(Expr::Literal(Literal::Integer(1))),
                     value: w(Expr::Literal(Literal::Integer(1))),
-                },
-                MapElem {
+                }),
+                w(MapElem {
                     key: w(Expr::Literal(Literal::Integer(2))),
                     value: w(Expr::Hole)
-                },
-                MapElem {
+                }),
+                w(MapElem {
                     key: w(Expr::Hole),
                     value: w(Expr::Literal(Literal::Integer(3)))
-                },
+                }),
             ])
         );
     }
@@ -333,14 +336,14 @@ mod tests {
             Expr::Match {
                 of: bw(Expr::Hole),
                 cases: vec![
-                    MatchCase {
+                    w(MatchCase {
                         ty: w(Type::Integer),
                         expr: w(Expr::Literal(Literal::String("number".into()))),
-                    },
-                    MatchCase {
+                    }),
+                    w(MatchCase {
                         ty: w(Type::String),
                         expr: w(Expr::Literal(Literal::String("string".into()))),
-                    },
+                    }),
                 ]
             }
         );

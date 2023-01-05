@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use editor_plugin::EditorPlugin;
 use egui_plugin::EguiPlugin;
+use playground_plugin::PlaygroundPlugin;
 // use rapier2d_plugin::PhysicsPlugin;
 use terminal_plugin::TerminalPlugin;
 use touchpanel_plugin::TouchpanelPlugin;
@@ -26,6 +27,7 @@ fn main() {
         .add_plugin(TerminalPlugin)
         .add_plugin(WindowsPlugin)
         .add_plugin(AboutPlugin)
+        .add_plugin(PlaygroundPlugin)
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(ClearColor(Color::rgb(0.0, 120.0 / 255.0, 120.0 / 255.0)))
         .add_startup_system(setup_cameras);

@@ -1,17 +1,19 @@
 use dson::Dson;
-use ids::{CardId, LinkName};
+use ids::{CardId, LinkName, NodeId};
 
 use crate::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
-    span::WithSpan,
+    span::{Span, WithSpan},
     ty::{Effect, EffectExpr, Function, Type},
 };
 
+// FIXME generate this with a derive macro
 pub trait ExprVisitorMut {
     fn visit_expr(&mut self, expr: &mut WithSpan<Expr>) {
         self.super_visit_expr(expr);
     }
     fn super_visit_expr(&mut self, expr: &mut WithSpan<Expr>) {
+        self.visit_span(&mut expr.id, &mut expr.span);
         match &mut expr.value {
             Expr::Literal(literal) => self.visit_literal(literal),
             Expr::Do { stmt, expr } => self.visit_do(stmt, expr),
@@ -56,17 +58,25 @@ pub trait ExprVisitorMut {
         self.visit_expr(input);
         self.visit_type(output);
     }
-    fn visit_handle(&mut self, expr: &mut WithSpan<Expr>, handlers: &mut Vec<Handler>) {
+    fn visit_handle(&mut self, expr: &mut WithSpan<Expr>, handlers: &mut Vec<WithSpan<Handler>>) {
         self.visit_expr(expr);
         for handler in handlers {
             self.visit_handler(handler);
         }
     }
-    fn visit_handler(&mut self, handler: &mut Handler) {
-        self.visit_effect(&mut handler.effect);
-        self.visit_expr(&mut handler.handler);
+    fn visit_handler(&mut self, handler: &mut WithSpan<Handler>) {
+        self.visit_span(&mut handler.id, &mut handler.span);
+        self.super_visit_handler(handler);
+    }
+    fn super_visit_handler(&mut self, handler: &mut WithSpan<Handler>) {
+        self.visit_effect(&mut handler.value.effect);
+        self.visit_expr(&mut handler.value.handler);
     }
     fn visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
+        self.visit_span(&mut effect.id, &mut effect.span);
+        self.super_visit_effect(effect);
+    }
+    fn super_visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
         self.visit_type(&mut effect.value.input);
         self.visit_type(&mut effect.value.output);
     }
@@ -86,15 +96,19 @@ pub trait ExprVisitorMut {
             self.visit_expr(expr);
         }
     }
-    fn visit_match(&mut self, of: &mut WithSpan<Expr>, cases: &mut Vec<MatchCase>) {
+    fn visit_match(&mut self, of: &mut WithSpan<Expr>, cases: &mut Vec<WithSpan<MatchCase>>) {
         self.visit_expr(of);
         for case in cases {
             self.visit_match_case(case);
         }
     }
-    fn visit_match_case(&mut self, case: &mut MatchCase) {
-        self.visit_type(&mut case.ty);
-        self.visit_expr(&mut case.expr);
+    fn visit_match_case(&mut self, case: &mut WithSpan<MatchCase>) {
+        self.visit_span(&mut case.id, &mut case.span);
+        self.super_visit_match_case(case);
+    }
+    fn super_visit_match_case(&mut self, case: &mut WithSpan<MatchCase>) {
+        self.visit_type(&mut case.value.ty);
+        self.visit_expr(&mut case.value.expr);
     }
     fn visit_typed(&mut self, ty: &mut WithSpan<Type>, item: &mut WithSpan<Expr>) {
         self.visit_type(ty);
@@ -110,11 +124,18 @@ pub trait ExprVisitorMut {
             self.visit_expr(expr);
         }
     }
-    fn visit_map(&mut self, exprs: &mut Vec<MapElem>) {
+    fn visit_map(&mut self, exprs: &mut Vec<WithSpan<MapElem>>) {
         for elem in exprs {
-            self.visit_expr(&mut elem.key);
-            self.visit_expr(&mut elem.value);
+            self.visit_map_elem(elem);
         }
+    }
+    fn visit_map_elem(&mut self, elem: &mut WithSpan<MapElem>) {
+        self.visit_span(&mut elem.id, &mut elem.span);
+        self.super_visit_map_elem(elem);
+    }
+    fn super_visit_map_elem(&mut self, elem: &mut WithSpan<MapElem>) {
+        self.visit_expr(&mut elem.value.key);
+        self.visit_expr(&mut elem.value.value);
     }
     fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithSpan<Expr>) {
         self.visit_expr(item);
@@ -147,6 +168,7 @@ pub trait ExprVisitorMut {
         self.visit_expr(next);
     }
     fn visit_type(&mut self, _ty: &mut WithSpan<Type>) {}
+    fn visit_span(&mut self, _id: &mut NodeId, _span: &mut Span) {}
 }
 
 pub trait TypeVisitorMut {
@@ -320,9 +342,8 @@ pub trait TypeVisitorMut {
 pub fn remove_node_id(mut expr: WithSpan<Expr>) -> WithSpan<Expr> {
     struct RemoveNodeIdVisitor;
     impl ExprVisitorMut for RemoveNodeIdVisitor {
-        fn visit_expr(&mut self, item: &mut WithSpan<Expr>) {
-            item.id = Default::default();
-            self.super_visit_expr(item);
+        fn visit_span(&mut self, id: &mut NodeId, _span: &mut Span) {
+            *id = Default::default();
         }
         fn visit_type(&mut self, item: &mut WithSpan<Type>) {
             struct RemoveNodeIdVisitorType;

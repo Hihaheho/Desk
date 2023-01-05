@@ -79,7 +79,8 @@ impl TryFrom<WithSpan<Expr>> for Dson {
             Expr::Map(elems) => Ok(Dson::Map(
                 elems
                     .into_iter()
-                    .map(|MapElem { key, value }| {
+                    .map(|elem| {
+                        let MapElem { key, value } = elem.value;
                         Ok(dson::MapElem {
                             key: Dson::try_from(key)?,
                             value: Dson::try_from(value)?,

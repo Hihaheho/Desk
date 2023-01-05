@@ -79,6 +79,7 @@ impl Widget<egui::Context> for EditorWidget {
                                 .child_addition_target = Some(self.node_id.clone());
                         }
                     }
+                    _ => todo!(),
                 }
             }
             if let Some(target) = ctx

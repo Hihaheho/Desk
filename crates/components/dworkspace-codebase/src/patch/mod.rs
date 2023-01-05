@@ -1,6 +1,6 @@
 mod diff_match_patch;
 use deskc_ids::{LinkName, NodeId};
-use hir::expr::Expr;
+use dson::Dson;
 use ty::Type;
 
 use crate::{code::SyntaxKind, content::Content};
@@ -37,6 +37,6 @@ pub enum OperandPatch {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AttributePatch {
-    Update { key: Type, value: Box<Expr> },
+    Update { key: Type, value: Dson },
     Remove { key: Type },
 }

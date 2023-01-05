@@ -90,7 +90,8 @@ impl Ctx {
                 // check handler
                 handlers
                     .iter()
-                    .map(|Handler { effect, handler }| {
+                    .map(|handler| {
+                        let Handler { effect, handler } = &handler.value;
                         let output = self.save_from_hir_type(&effect.output);
                         // push handler input type
                         ctx.continue_input.borrow_mut().push(output.clone());
@@ -244,9 +245,9 @@ impl Ctx {
                 elems
                     .iter()
                     .try_fold(self.clone(), |ctx, elem| {
-                        let WithType(ctx, key) = ctx.synth(&elem.key)?.recover_effects();
+                        let WithType(ctx, key) = ctx.synth(&elem.value.key)?.recover_effects();
                         keys.push(key);
-                        let WithType(ctx, value) = ctx.synth(&elem.value)?.recover_effects();
+                        let WithType(ctx, value) = ctx.synth(&elem.value.value)?.recover_effects();
                         values.push(value);
                         Ok(ctx)
                     })?
@@ -258,7 +259,8 @@ impl Ctx {
             Expr::Match { of, cases } => {
                 let (ty, out): (Vec<_>, Vec<_>) = cases
                     .iter()
-                    .map(|MatchCase { ty, expr }| {
+                    .map(|case| {
+                        let MatchCase { ty, expr } = &case.value;
                         Ok((
                             self.save_from_hir_type(ty),
                             self.synth(expr)?.recover_effects().1,

@@ -567,7 +567,7 @@ mod tests {
             node_id: node_id.clone(),
             patch: AttributePatch::Update {
                 key: Type::Real,
-                value: Box::new(Expr::Literal(Literal::Integer(0))),
+                value: 0.into(),
             },
         };
         assert_eq!(

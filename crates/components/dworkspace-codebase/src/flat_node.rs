@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use deskc_ids::NodeId;
+use dson::Dson;
 use hir::expr::Expr;
 use ty::Type;
 
@@ -11,7 +12,7 @@ use crate::{
 };
 
 pub type Operands = Vec<NodeId>;
-pub type Attributes = HashMap<Type, Expr>;
+pub type Attributes = HashMap<Type, Dson>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FlatNode {
@@ -43,7 +44,7 @@ impl FlatNode {
     pub fn patch_attribute(&mut self, patch: &AttributePatch) {
         match patch {
             AttributePatch::Update { key, value } => {
-                self.attributes.insert(key.clone(), *value.clone());
+                self.attributes.insert(key.clone(), value.clone());
             }
             AttributePatch::Remove { key } => {
                 self.attributes.remove(key);
@@ -90,8 +91,6 @@ impl FlatNode {
 
 #[cfg(test)]
 mod tests {
-    use hir::expr::Literal;
-
     use super::*;
 
     #[test]
@@ -99,12 +98,9 @@ mod tests {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         flat_node.patch_attribute(&AttributePatch::Update {
             key: Type::Real,
-            value: Box::new(Expr::Literal(Literal::Integer(1))),
+            value: 1.into(),
         });
-        assert_eq!(
-            flat_node.attributes.get(&Type::Real),
-            Some(&Expr::Literal(Literal::Integer(1)))
-        );
+        assert_eq!(flat_node.attributes.get(&Type::Real), Some(&1.into()));
     }
 
     #[test]
@@ -112,7 +108,7 @@ mod tests {
         let mut flat_node = FlatNode::new(Content::String("a".into()));
         flat_node.patch_attribute(&AttributePatch::Update {
             key: Type::Real,
-            value: Box::new(Expr::Literal(Literal::Integer(1))),
+            value: 1.into(),
         });
         flat_node.patch_attribute(&AttributePatch::Remove { key: Type::Real });
 

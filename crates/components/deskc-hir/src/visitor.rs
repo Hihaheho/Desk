@@ -3,7 +3,7 @@ use ids::{LinkName, NodeId};
 
 use crate::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
-    meta::WithMeta,
+    meta::{Meta, WithMeta},
     ty::{Effect, EffectExpr, Function, Type},
 };
 
@@ -55,16 +55,16 @@ pub trait HirVisitor {
         self.visit_expr(input);
         self.visit_type(output);
     }
-    fn visit_handle(&mut self, handlers: &[Handler], expr: &WithMeta<Expr>) {
+    fn visit_handle(&mut self, handlers: &[WithMeta<Handler>], expr: &WithMeta<Expr>) {
         for handler in handlers {
             self.visit_handler(handler);
         }
         self.visit_expr(expr);
     }
-    fn visit_handler(&mut self, handler: &Handler) {
-        self.visit_type(&handler.effect.input);
-        self.visit_type(&handler.effect.output);
-        self.visit_expr(&handler.handler);
+    fn visit_handler(&mut self, handler: &WithMeta<Handler>) {
+        self.visit_type(&handler.value.effect.input);
+        self.visit_type(&handler.value.effect.output);
+        self.visit_expr(&handler.value.handler);
     }
     fn visit_apply(
         &mut self,
@@ -82,15 +82,15 @@ pub trait HirVisitor {
             self.visit_expr(expr);
         }
     }
-    fn visit_match(&mut self, of: &WithMeta<Expr>, cases: &[MatchCase]) {
+    fn visit_match(&mut self, of: &WithMeta<Expr>, cases: &[WithMeta<MatchCase>]) {
         self.visit_expr(of);
         for case in cases {
             self.visit_match_case(case);
         }
     }
-    fn visit_match_case(&mut self, case: &MatchCase) {
-        self.visit_type(&case.ty);
-        self.visit_expr(&case.expr);
+    fn visit_match_case(&mut self, case: &WithMeta<MatchCase>) {
+        self.visit_type(&case.value.ty);
+        self.visit_expr(&case.value.expr);
     }
     fn visit_typed(&mut self, ty: &WithMeta<Type>, item: &WithMeta<Expr>) {
         self.visit_type(ty);
@@ -105,14 +105,14 @@ pub trait HirVisitor {
             self.visit_expr(expr);
         }
     }
-    fn visit_map(&mut self, elems: &[MapElem]) {
+    fn visit_map(&mut self, elems: &[WithMeta<MapElem>]) {
         for elem in elems {
             self.visit_map_elem(elem);
         }
     }
-    fn visit_map_elem(&mut self, elem: &MapElem) {
-        self.visit_expr(&elem.key);
-        self.visit_expr(&elem.value);
+    fn visit_map_elem(&mut self, elem: &WithMeta<MapElem>) {
+        self.visit_expr(&elem.value.key);
+        self.visit_expr(&elem.value.value);
     }
     fn visit_label(&mut self, _label: &Dson, item: &WithMeta<Expr>) {
         self.visit_expr(item);
@@ -128,6 +128,7 @@ pub trait HirVisitorMut {
         self.super_visit_expr(expr);
     }
     fn super_visit_expr(&mut self, expr: &mut WithMeta<Expr>) {
+        self.visit_meta(&mut expr.meta);
         match &mut expr.value {
             Expr::Literal(literal) => self.visit_literal(literal),
             Expr::Do { stmt, expr } => self.visit_do(stmt, expr),
@@ -170,14 +171,15 @@ pub trait HirVisitorMut {
         self.visit_expr(input);
         self.visit_type(output);
     }
-    fn visit_handle(&mut self, handlers: &mut [Handler], expr: &mut WithMeta<Expr>) {
+    fn visit_handle(&mut self, handlers: &mut [WithMeta<Handler>], expr: &mut WithMeta<Expr>) {
         for handler in handlers {
             self.visit_handler(handler);
         }
         self.visit_expr(expr);
     }
-    fn visit_handler(&mut self, handler: &mut Handler) {
-        self.visit_expr(&mut handler.handler);
+    fn visit_handler(&mut self, handler: &mut WithMeta<Handler>) {
+        self.visit_meta(&mut handler.meta);
+        self.visit_expr(&mut handler.value.handler);
     }
     fn visit_apply(
         &mut self,
@@ -195,14 +197,15 @@ pub trait HirVisitorMut {
             self.visit_expr(expr);
         }
     }
-    fn visit_match(&mut self, of: &mut WithMeta<Expr>, cases: &mut [MatchCase]) {
+    fn visit_match(&mut self, of: &mut WithMeta<Expr>, cases: &mut [WithMeta<MatchCase>]) {
         self.visit_expr(of);
         for case in cases {
             self.visit_match_case(case);
         }
     }
-    fn visit_match_case(&mut self, case: &mut MatchCase) {
-        self.visit_expr(&mut case.expr);
+    fn visit_match_case(&mut self, case: &mut WithMeta<MatchCase>) {
+        self.visit_meta(&mut case.meta);
+        self.visit_expr(&mut case.value.expr);
     }
     fn visit_typed(&mut self, ty: &mut WithMeta<Type>, item: &mut WithMeta<Expr>) {
         self.visit_type(ty);
@@ -217,13 +220,15 @@ pub trait HirVisitorMut {
             self.visit_expr(expr);
         }
     }
-    fn visit_map(&mut self, elems: &mut [MapElem]) {
+    fn visit_map(&mut self, elems: &mut [WithMeta<MapElem>]) {
         for elem in elems {
             self.visit_map_elem(elem);
         }
     }
-    fn visit_map_elem(&mut self, elem: &mut MapElem) {
-        self.visit_expr(&mut elem.value);
+    fn visit_map_elem(&mut self, elem: &mut WithMeta<MapElem>) {
+        self.visit_meta(&mut elem.meta);
+        self.visit_expr(&mut elem.value.key);
+        self.visit_expr(&mut elem.value.value);
     }
     fn visit_label(&mut self, _label: &mut Dson, item: &mut WithMeta<Expr>) {
         self.visit_expr(item);
@@ -231,7 +236,10 @@ pub trait HirVisitorMut {
     fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithMeta<Expr>) {
         self.visit_expr(item);
     }
-    fn visit_type(&mut self, _ty: &mut WithMeta<Type>) {}
+    fn visit_type(&mut self, _ty: &mut WithMeta<Type>) {
+        self.visit_meta(&mut _ty.meta);
+    }
+    fn visit_meta(&mut self, _meta: &mut Meta) {}
 }
 
 pub trait TypeVisitorMut {
@@ -541,10 +549,9 @@ fn remove_meta_ty(ty: &mut WithMeta<Type>) {
 pub fn remove_meta(mut expr: WithMeta<Expr>) -> WithMeta<Expr> {
     struct RemoveMeta;
     impl HirVisitorMut for RemoveMeta {
-        fn visit_expr(&mut self, expr: &mut WithMeta<Expr>) {
-            expr.meta.id = NodeId::default();
-            expr.meta.span = None;
-            self.super_visit_expr(expr);
+        fn visit_meta(&mut self, meta: &mut Meta) {
+            meta.id = NodeId::default();
+            meta.span = None;
         }
         fn visit_type(&mut self, ty: &mut WithMeta<Type>) {
             remove_meta_ty(ty);

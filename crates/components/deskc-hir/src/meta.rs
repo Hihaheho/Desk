@@ -16,6 +16,7 @@ pub struct WithMeta<T: std::fmt::Debug> {
     pub value: T,
 }
 
+// This is intended to be used in tests.
 pub fn dummy_meta<T: std::fmt::Debug>(value: T) -> WithMeta<T> {
     WithMeta {
         meta: Meta::default(),

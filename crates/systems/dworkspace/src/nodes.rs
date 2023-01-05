@@ -120,15 +120,13 @@ mod tests {
             node_id: node_id.clone(),
             patch: AttributePatch::Update {
                 key: Type::Real,
-                value: Box::new(Expr::Literal(Literal::Integer(0))),
+                value: 0.into(),
             },
         });
 
         assert_eq!(
             db.flat_node(node_id).attributes,
-            vec![(Type::Real, Expr::Literal(Literal::Integer(0)))]
-                .into_iter()
-                .collect()
+            vec![(Type::Real, 0.into())].into_iter().collect()
         );
     }
 

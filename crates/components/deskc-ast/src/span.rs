@@ -9,6 +9,7 @@ pub struct WithSpan<T> {
     pub value: T,
 }
 
+// This is intended to be used in tests.
 pub fn dummy_span<T>(value: T) -> WithSpan<T> {
     WithSpan {
         id: NodeId::default(),

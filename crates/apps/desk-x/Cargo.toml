@@ -18,6 +18,7 @@ egui-plugin = { path = "../../plugins/desk-egui", version = "0.0.0", package = "
 touchpanel-plugin = { path = "../../plugins/desk-touchpanel", version = "0.0.0", package = "desk-touchpanel" }
 editor-plugin = { path = "../../plugins/desk-editor", version = "0.0.0", package = "desk-editor" }
 terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", package = "desk-terminal" }
+playground-plugin = { path = "../../plugins/desk-playground", version = "0.0.0", package = "desk-playground" }
 
 desk-window = { workspace = true }
 desk-plugin = { workspace = true }
@@ -31,6 +32,3 @@ bevy-inspector-egui = { version = "0.15", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3"
 egui = { workspace = true }
-
-# For prototyping playground
-deskc = { workspace = true }

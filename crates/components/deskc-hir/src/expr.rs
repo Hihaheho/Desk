@@ -44,7 +44,7 @@ pub enum Expr {
         output: WithMeta<Type>,
     },
     Handle {
-        handlers: Vec<Handler>,
+        handlers: Vec<WithMeta<Handler>>,
         expr: Box<WithMeta<Self>>,
     },
     Apply {
@@ -55,7 +55,7 @@ pub enum Expr {
     Product(Vec<WithMeta<Self>>),
     Match {
         of: Box<WithMeta<Self>>,
-        cases: Vec<MatchCase>,
+        cases: Vec<WithMeta<MatchCase>>,
     },
     Typed {
         ty: WithMeta<Type>,
@@ -66,7 +66,7 @@ pub enum Expr {
         body: Box<WithMeta<Self>>,
     },
     Vector(Vec<WithMeta<Self>>),
-    Map(Vec<MapElem>),
+    Map(Vec<WithMeta<MapElem>>),
     Label {
         label: Dson,
         item: Box<WithMeta<Self>>,
