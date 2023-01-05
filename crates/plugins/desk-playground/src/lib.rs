@@ -73,7 +73,7 @@ const FIBONACCI: Lazy<WithMeta<Expr>> = Lazy::new(|| {
     )
 });
 
-fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithMeta<Expr>) {
+fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Expr>) -> &'a NodeId {
     struct Visitor<'a, 'b> {
         ctx: &'a mut Ctx<'b, egui::Context>,
     }
@@ -442,10 +442,22 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithMeta<Expr>) {
                         },
                     });
                 }
-                Expr::Card { id, item, next } => todo!(),
+                Expr::Card { id, item, next } => {
+                    let item = self.visit_expr(item);
+                    self.add_event(Event::PatchAttribute {
+                        node_id: item.clone(),
+                        patch: AttributePatch::Update {
+                            key: todo!(),
+                            value: todo!(),
+                        },
+                    });
+                    let _ = self.visit_expr(next);
+                    // Use the node_id of the next, not the card node.
+                    return item;
+                }
             };
             node_id
         }
     }
-    Visitor { ctx }.visit_expr(expr);
+    Visitor { ctx }.visit_expr(expr)
 }
