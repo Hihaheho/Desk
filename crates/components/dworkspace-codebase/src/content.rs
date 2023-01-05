@@ -1,5 +1,6 @@
 use deskc_ids::LinkName;
-use ty::Type;
+use dson::Dson;
+use ty::{Effect, Type};
 
 use crate::code::SyntaxKind;
 
@@ -26,6 +27,10 @@ pub enum Content {
     Map,
     MapElem,
     Case { ty: Type },
+    Handler { effect: Effect },
+    DeclareBrand { brand: Dson },
+    Label { label: dson::Dson },
+    NewType { ident: String, ty: Type },
 }
 
 // Content::Real should not be NaN

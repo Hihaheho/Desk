@@ -1,4 +1,4 @@
-%start Expr
+%start ExprC
 %title "Minimalist syntax for Desk-lang"
 %comment ""
 
@@ -26,8 +26,8 @@
 
 %%
 
-Expr: Comment Expr
-    | ExprBegin^ Expr ExprEnd^
+ExprC: { Comment } Expr;
+Expr: ExprBegin^ ExprC ExprEnd^
     | Hole
     | Do
     | Cast
@@ -51,8 +51,8 @@ Expr: Comment Expr
     | Card
     | Brand
     ;
-    Do: DoKey^ Expr StmtEnd^ Expr;
-    Cast: TypeBegin^ Ty TypeEnd^ Expr;
+    Do: DoKey^ ExprC StmtEnd^ ExprC;
+    Cast: TypeBegin^ Ty TypeEnd^ ExprC;
     Literal: Rational | Integer | Real | String | RawString;
         // Rational must be before Integer for higher priority.
         Rational: "\-?\p{Nd}+\s*/\s*\p{Nd}+";
@@ -73,29 +73,29 @@ Expr: Comment Expr
             RawCharacters1: <RawString1> /[^»]+/;
         RawString2: '‹'^ %push(RawString2) [ RawCharacters2 ] %pop() '›'^;
             RawCharacters2: <RawString2> /[^›]+/;
-    Let: LetSym^ Expr StmtEnd^ Expr;
-    Perform: PerformSym^ Expr EArrow^ Ty;
-    Continue: ContinueSym^ Expr EArrow^ Ty;
-    Handle: HandleKey^ Expr Begin^ { Handler [ Comma^ ] } End^;
-        Handler: Ty EArrow^ Ty Arrow^ Expr;
-    Product: ProductSym^ TypeBegin^ { Expr [ Comma^ ] } TypeEnd^;
-    Vector: VecBegin^ { Expr [ Comma^ ] } VecEnd^;
-    Map: MapBegin^ { Expr Arrow^ Expr [ Comma^ ] } MapEnd^;
-    Attributed: Attribute Expr;
-    Match: MatchKey^ Expr Begin^ { Case [ Comma^ ] } End^;
-        Case: Ty Arrow^ Expr;
-    Function: FunctionSym^ Ty FArrow^ Expr;
+    Let: LetSym^ ExprC StmtEnd^ ExprC;
+    Perform: PerformSym^ ExprC EArrow^ Ty;
+    Continue: ContinueSym^ ExprC EArrow^ Ty;
+    Handle: HandleKey^ ExprC Begin^ { Handler [ Comma^ ] } End^;
+        Handler: { Comment } Ty EArrow^ Ty Arrow^ ExprC;
+    Product: ProductSym^ TypeBegin^ { ExprC [ Comma^ ] } TypeEnd^;
+    Vector: VecBegin^ { ExprC [ Comma^ ] } VecEnd^;
+    Map: MapBegin^ { ExprC Arrow^ ExprC [ Comma^ ] } MapEnd^;
+    Attributed: Attribute ExprC;
+    Match: MatchKey^ ExprC Begin^ { Case [ Comma^ ] } End^;
+        Case: { Comment } Ty Arrow^ ExprC;
+    Function: FunctionSym^ Ty FArrow^ ExprC;
     // We need `ApplySym` to make it deterministic on such a token: `*`.
     Apply: ApplySym^ [ LinkName ] Ty ( Param | Params );
-        Param: Expr;
-        Params: ParamsBegin^ { Expr [ Comma^ ] } ParamsEnd^;
+        Param: ExprC;
+        Params: ParamsBegin^ { ExprC [ Comma^ ] } ParamsEnd^;
     Reference: ReferenceSym^ [ LinkName ] Ty;
-    Labeled: Label Expr;
-    Forall: ForallKey^ BoundedVariable Expr;
-    Exists: ExistsKey^ BoundedVariable Expr;
-    NewType: TyKey^ Ident Ty StmtEnd^ Expr;
-    Card: CardKey^ Uuid Expr StmtEnd^ Expr;
-    Brand: BrandKey^ Expr StmtEnd^ Expr;
+    Labeled: Label ExprC;
+    Forall: ForallKey^ BoundedVariable ExprC;
+    Exists: ExistsKey^ BoundedVariable ExprC;
+    NewType: TyKey^ Ident Ty StmtEnd^ ExprC;
+    Card: CardKey^ Uuid ExprC StmtEnd^ ExprC;
+    Brand: BrandKey^ ExprC StmtEnd^ ExprC;
 
 Ty: ExprBegin^ Ty ExprEnd^
   | Infer
@@ -105,7 +105,6 @@ Ty: ExprBegin^ Ty ExprEnd^
   | IntegerKey
   | StringKey
   | Effectful
-  | Comment Ty
   | Trait
   | ProductTy
   | Sum
@@ -139,6 +138,7 @@ Ty: ExprBegin^ Ty ExprEnd^
     ExistsTy: ExistsKey^ BoundedVariable Ty;
 
 // Utilities
+// TODO: Add this to the beginning of all nodes.
 Comment: BlockComment
        | InlineComment;
     // This must come before ParamsEnd for higher priority.
@@ -147,8 +147,8 @@ Comment: BlockComment
     CommentEnd: <BlockComment> ')~';
     BlockCommentContent: <BlockComment> /[^\)]+(\)[^~\)])?/;
     CommentCharacters: <InlineComment> /.*/;
-Attribute: AttributeSym^ Expr;
-Label: LabelSym^ Expr;
+Attribute: AttributeSym^ ExprC;
+Label: LabelSym^ ExprC;
 Ident: IdentRaw
      | IdentWrapped;
     IdentWrapped: IdentDelimiter^ %push(Ident) IdentPart { IdentPart } IdentDelimiter^ %pop();

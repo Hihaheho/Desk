@@ -9,7 +9,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use ast::span::{Span, WithSpan};
+use ast::meta::WithMeta as AstWithMeta;
 use error::HirGenError;
 use hir::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
@@ -18,7 +18,7 @@ use hir::{
     Card, Cards,
 };
 
-pub fn gen_cards(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Cards), HirGenError> {
+pub fn gen_cards(src: &AstWithMeta<ast::expr::Expr>) -> Result<(HirGen, Cards), HirGenError> {
     let hirgen = HirGen::default();
     let file = hirgen.gen_cards(src)?;
     let hir = Cards {
@@ -28,7 +28,9 @@ pub fn gen_cards(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, Cards), Hir
     Ok((hirgen, hir))
 }
 
-pub fn gen_hir(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, WithMeta<Expr>), HirGenError> {
+pub fn gen_hir(
+    src: &AstWithMeta<ast::expr::Expr>,
+) -> Result<(HirGen, WithMeta<Expr>), HirGenError> {
     let hirgen = HirGen::default();
     let card = hirgen.gen_card(src)?;
     Ok((hirgen, card))
@@ -37,7 +39,7 @@ pub fn gen_hir(src: &WithSpan<ast::expr::Expr>) -> Result<(HirGen, WithMeta<Expr
 #[derive(Default, Debug)]
 pub struct HirGen {
     next_id: RefCell<usize>,
-    next_span: RefCell<Vec<(NodeId, Span)>>,
+    next_meta: RefCell<Vec<NodeId>>,
     pub attrs: RefCell<HashMap<NodeId, Vec<Dson>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
     brands: RefCell<HashSet<Dson>>,
@@ -45,13 +47,9 @@ pub struct HirGen {
 }
 
 impl HirGen {
-    pub fn gen_type(&self, ty: &WithSpan<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
-        let WithSpan {
-            id,
-            value: ty,
-            span,
-        } = ty;
-        self.push_span(id.clone(), span.clone());
+    pub fn gen_type(&self, ty: &AstWithMeta<ast::ty::Type>) -> Result<WithMeta<Type>, HirGenError> {
+        let AstWithMeta { meta, value: ty } = ty;
+        self.push_meta(meta);
 
         let with_meta = match ty {
             ast::ty::Type::Real => self.with_meta(Type::Real),
@@ -62,7 +60,7 @@ impl HirGen {
                 trait_
                     .iter()
                     .map(|function| {
-                        self.push_span(function.id.clone(), function.span.clone());
+                        self.push_meta(&function.meta);
                         Ok(self.with_meta(Function {
                             parameter: self.gen_type(&function.value.parameter)?,
                             body: self.gen_type(&function.value.body)?,
@@ -168,7 +166,7 @@ impl HirGen {
 
     pub fn gen_cards(
         &self,
-        ast: &WithSpan<ast::expr::Expr>,
+        ast: &AstWithMeta<ast::expr::Expr>,
     ) -> Result<WithMeta<Expr>, HirGenError> {
         match &ast.value {
             ast::expr::Expr::Card { id, item, next } => {
@@ -179,7 +177,6 @@ impl HirGen {
                 let next = self.gen_cards(next)?;
                 Ok(next)
             }
-            ast::expr::Expr::Comment { item, .. } => self.gen_cards(item),
             ast::expr::Expr::NewType { ident, ty, expr } => {
                 self.add_new_type(ty, ident)?;
                 self.gen_cards(expr)
@@ -188,13 +185,12 @@ impl HirGen {
         }
     }
 
-    pub fn gen_card(&self, ast: &WithSpan<ast::expr::Expr>) -> Result<WithMeta<Expr>, HirGenError> {
-        let WithSpan {
-            value: expr,
-            id,
-            span,
-        } = ast;
-        self.push_span(id.clone(), span.clone());
+    pub fn gen_card(
+        &self,
+        ast: &AstWithMeta<ast::expr::Expr>,
+    ) -> Result<WithMeta<Expr>, HirGenError> {
+        let AstWithMeta { value: expr, meta } = ast;
+        self.push_meta(meta);
 
         let with_meta = match expr {
             ast::expr::Expr::Literal(literal) => self.with_meta(Expr::Literal(match literal {
@@ -230,7 +226,7 @@ impl HirGen {
                 handlers: handlers
                     .iter()
                     .map(|handler| {
-                        self.push_span(handler.id.clone(), handler.span.clone());
+                        self.push_meta(&handler.meta);
                         let ast::expr::Handler { effect, handler } = &handler.value;
                         Ok(self.with_meta(Handler {
                             effect: Effect {
@@ -279,7 +275,7 @@ impl HirGen {
                 elems
                     .iter()
                     .map(|elem| {
-                        self.push_span(elem.id.clone(), elem.span.clone());
+                        self.push_meta(&elem.meta);
                         Ok(self.with_meta(MapElem {
                             key: self.gen_card(&elem.value.key)?,
                             value: self.gen_card(&elem.value.value)?,
@@ -296,7 +292,7 @@ impl HirGen {
                     .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
-            ast::expr::Expr::Brand { brand, item: expr } => {
+            ast::expr::Expr::DeclareBrand { brand, item: expr } => {
                 self.brands.borrow_mut().insert(brand.clone());
                 self.gen_card(expr)?
             }
@@ -305,7 +301,7 @@ impl HirGen {
                 cases: cases
                     .iter()
                     .map(|case| {
-                        self.push_span(case.id.clone(), case.span.clone());
+                        self.push_meta(&case.meta);
                         let ast::expr::MatchCase { ty, expr } = &case.value;
                         Ok(self.with_meta(MatchCase {
                             ty: self.gen_type(ty)?,
@@ -331,7 +327,6 @@ impl HirGen {
                 self.add_new_type(ty, ident)?;
                 self.gen_card(expr)?
             }
-            ast::expr::Expr::Comment { item, .. } => self.gen_card(item)?,
             ast::expr::Expr::Card { id, .. } => {
                 return Err(HirGenError::UnexpectedCard {
                     card_id: id.clone(),
@@ -343,7 +338,7 @@ impl HirGen {
 
     pub(crate) fn add_new_type(
         &self,
-        ty: &WithSpan<ast::ty::Type>,
+        ty: &AstWithMeta<ast::ty::Type>,
         ident: &str,
     ) -> Result<(), HirGenError> {
         let ty = self.gen_type(ty)?.value;
@@ -351,12 +346,12 @@ impl HirGen {
         Ok(())
     }
 
-    pub(crate) fn push_span(&self, node_id: NodeId, span: Span) {
-        self.next_span.borrow_mut().push((node_id, span));
+    pub(crate) fn push_meta(&self, meta: &ast::meta::Meta) {
+        self.next_meta.borrow_mut().push(meta.id.clone());
     }
 
-    pub(crate) fn pop_span(&self) -> Option<(NodeId, Span)> {
-        self.next_span.borrow_mut().pop()
+    pub(crate) fn pop_span(&self) -> Option<NodeId> {
+        self.next_meta.borrow_mut().pop()
     }
 
     pub fn next_id(&self) -> usize {
@@ -366,14 +361,9 @@ impl HirGen {
     }
 
     fn with_meta<T: std::fmt::Debug>(&self, value: T) -> WithMeta<T> {
-        let span = self.pop_span().unwrap();
+        let id = self.pop_span().unwrap();
         WithMeta {
-            meta: Meta {
-                id: span.0,
-                attrs: vec![],
-                // no span is a bug of hirgen, so unwrap is safe
-                span: Some(span.1),
-            },
+            meta: Meta { id, attrs: vec![] },
             value,
         }
     }
@@ -383,7 +373,6 @@ impl HirGen {
             meta: Meta {
                 id: NodeId::new(),
                 attrs: vec![],
-                span: None,
             },
             value,
         }
@@ -394,7 +383,7 @@ impl HirGen {
 mod tests {
     use std::sync::Arc;
 
-    use ast::span::dummy_span;
+    use ast::meta::dummy_meta as dummy_meta_ast;
     use deskc::card::DeskcQueries;
     use deskc::{Code, SyntaxKind};
     use hir::{
@@ -407,7 +396,7 @@ mod tests {
 
     use super::*;
 
-    fn parse(input: &str) -> Arc<WithSpan<ast::expr::Expr>> {
+    fn parse(input: &str) -> Arc<AstWithMeta<ast::expr::Expr>> {
         let file_id = FileId::new();
         let mut compiler = deskc::card::DeskCompiler::default();
         compiler.set_code(
@@ -425,14 +414,14 @@ mod tests {
         let gen = HirGen::default();
         assert_eq!(
             remove_meta(
-                gen.gen_card(&dummy_span(ast::expr::Expr::Apply {
-                    function: dummy_span(ast::ty::Type::Real),
+                gen.gen_card(&dummy_meta_ast(ast::expr::Expr::Apply {
+                    function: dummy_meta_ast(ast::ty::Type::Real),
                     link_name: Default::default(),
-                    arguments: vec![dummy_span(ast::expr::Expr::Attributed {
+                    arguments: vec![dummy_meta_ast(ast::expr::Expr::Attributed {
                         attr: Dson::Literal(dson::Literal::Integer(1)),
-                        item: Box::new(dummy_span(ast::expr::Expr::Attributed {
+                        item: Box::new(dummy_meta_ast(ast::expr::Expr::Attributed {
                             attr: Dson::Literal(dson::Literal::Integer(2)),
-                            item: Box::new(dummy_span(ast::expr::Expr::Literal(
+                            item: Box::new(dummy_meta_ast(ast::expr::Expr::Literal(
                                 ast::expr::Literal::Integer(3)
                             ))),
                         },)),
@@ -455,7 +444,6 @@ mod tests {
                                 Dson::Literal(dson::Literal::Integer(2)),
                                 Dson::Literal(dson::Literal::Integer(1)),
                             ],
-                            span: Default::default()
                         },
                         value: Expr::Literal(Literal::Integer(3))
                     }],

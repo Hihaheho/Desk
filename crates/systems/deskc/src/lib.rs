@@ -14,10 +14,10 @@ mod tests {
 
     use ast::{
         expr::{Expr, Literal},
-        span::WithSpan,
+        meta::{Meta, WithMeta},
     };
     use codebase::code::{Code, SyntaxKind};
-    use ids::{Entrypoint, FileId, NodeId};
+    use ids::{Entrypoint, FileId};
     use mir::{
         block::BasicBlock,
         mir::{ControlFlowGraph, ControlFlowGraphId, Mir},
@@ -72,9 +72,8 @@ mod tests {
         let file_id = FileId::new();
         cards.set_code(
             file_id.clone(),
-            Code::Ast(Arc::new(WithSpan {
-                id: NodeId::new(),
-                span: 0..0,
+            Code::Ast(Arc::new(WithMeta {
+                meta: Meta::new_no_comments(),
                 value: Expr::Literal(Literal::Integer(1)),
             })),
         );

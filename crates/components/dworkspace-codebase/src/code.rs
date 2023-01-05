@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ast::{expr::Expr, span::WithSpan};
+use ast::{expr::Expr, meta::WithMeta};
 
 /// A unit of code in a codebase.
 ///
@@ -11,7 +11,7 @@ pub enum Code {
         syntax: SyntaxKind,
         source: Arc<String>,
     },
-    Ast(Arc<WithSpan<Expr>>),
+    Ast(Arc<WithMeta<Expr>>),
 }
 
 // Some syntax are not supported yet.

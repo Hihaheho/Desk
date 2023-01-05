@@ -3,7 +3,7 @@ use ids::CardId;
 pub use ids::LinkName;
 
 use crate::{
-    span::WithSpan,
+    meta::WithMeta,
     ty::{Effect, Type},
 };
 
@@ -21,90 +21,87 @@ impl Eq for Literal {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Handler {
-    pub effect: WithSpan<Effect>,
-    pub handler: WithSpan<Expr>,
+    pub effect: WithMeta<Effect>,
+    pub handler: WithMeta<Expr>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Literal(Literal),
     Do {
-        stmt: Box<WithSpan<Self>>,
-        expr: Box<WithSpan<Self>>,
+        stmt: Box<WithMeta<Self>>,
+        expr: Box<WithMeta<Self>>,
     },
     Let {
-        definition: Box<WithSpan<Self>>,
-        body: Box<WithSpan<Self>>,
+        definition: Box<WithMeta<Self>>,
+        body: Box<WithMeta<Self>>,
     },
     Perform {
-        input: Box<WithSpan<Self>>,
-        output: WithSpan<Type>,
+        input: Box<WithMeta<Self>>,
+        output: WithMeta<Type>,
     },
     Continue {
-        input: Box<WithSpan<Self>>,
-        output: WithSpan<Type>,
+        input: Box<WithMeta<Self>>,
+        output: WithMeta<Type>,
     },
     Handle {
-        expr: Box<WithSpan<Self>>,
-        handlers: Vec<WithSpan<Handler>>,
+        expr: Box<WithMeta<Self>>,
+        handlers: Vec<WithMeta<Handler>>,
     },
     Apply {
-        function: WithSpan<Type>,
+        function: WithMeta<Type>,
         link_name: LinkName,
-        arguments: Vec<WithSpan<Self>>,
+        arguments: Vec<WithMeta<Self>>,
     },
-    Product(Vec<WithSpan<Self>>),
+    Product(Vec<WithMeta<Self>>),
     Match {
-        of: Box<WithSpan<Self>>,
-        cases: Vec<WithSpan<MatchCase>>,
+        of: Box<WithMeta<Self>>,
+        cases: Vec<WithMeta<MatchCase>>,
     },
     Typed {
-        ty: WithSpan<Type>,
-        item: Box<WithSpan<Self>>,
+        ty: WithMeta<Type>,
+        item: Box<WithMeta<Self>>,
     },
     Hole,
     Function {
-        parameter: WithSpan<Type>,
-        body: Box<WithSpan<Self>>,
+        parameter: WithMeta<Type>,
+        body: Box<WithMeta<Self>>,
     },
-    Vector(Vec<WithSpan<Self>>),
-    Map(Vec<WithSpan<MapElem>>),
+    Vector(Vec<WithMeta<Self>>),
+    Map(Vec<WithMeta<MapElem>>),
     Attributed {
         attr: Dson,
-        item: Box<WithSpan<Self>>,
+        item: Box<WithMeta<Self>>,
     },
-    Brand {
+    /// Declare the dson is a brand of the item.
+    DeclareBrand {
         brand: Dson,
-        item: Box<WithSpan<Self>>,
+        item: Box<WithMeta<Self>>,
     },
     Label {
         label: Dson,
-        item: Box<WithSpan<Self>>,
+        item: Box<WithMeta<Self>>,
     },
     NewType {
         ident: String,
-        ty: WithSpan<Type>,
-        expr: Box<WithSpan<Self>>,
-    },
-    Comment {
-        text: String,
-        item: Box<WithSpan<Self>>,
+        ty: WithMeta<Type>,
+        expr: Box<WithMeta<Self>>,
     },
     Card {
         id: CardId,
-        item: Box<WithSpan<Self>>,
-        next: Box<WithSpan<Self>>,
+        item: Box<WithMeta<Self>>,
+        next: Box<WithMeta<Self>>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MatchCase {
-    pub ty: WithSpan<Type>,
-    pub expr: WithSpan<Expr>,
+    pub ty: WithMeta<Type>,
+    pub expr: WithMeta<Expr>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MapElem {
-    pub key: WithSpan<Expr>,
-    pub value: WithSpan<Expr>,
+    pub key: WithMeta<Expr>,
+    pub value: WithMeta<Expr>,
 }

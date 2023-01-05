@@ -71,7 +71,7 @@ impl From<&ExprTypeError> for TextualDiagnostics {
         TextualDiagnostics {
             title: "Typeinfer error".into(),
             reports: vec![Report {
-                span: error.meta.span.clone().unwrap_or(0..0),
+                span: todo!(),
                 text: format!("{:?}", error.error),
             }],
         }

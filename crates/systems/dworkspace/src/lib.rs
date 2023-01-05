@@ -1,4 +1,5 @@
 mod audit;
+pub mod conversions;
 mod descendants;
 mod error;
 mod history;
@@ -9,7 +10,6 @@ pub mod query_error;
 mod references;
 pub mod repository;
 pub mod state;
-pub mod conversions;
 
 use std::{any::TypeId, collections::HashMap};
 
@@ -97,11 +97,11 @@ mod tests {
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
     use components::{content::Content, patch::OperandPatch};
+    use deskc_ast::remove_span::replace_node_id_to_default;
     use deskc_ast::ty::Function;
-    use deskc_ast::visitor::remove_node_id;
     use deskc_ast::{
         expr::{Expr, Literal},
-        span::WithSpan,
+        meta::WithMeta,
         ty::Type as AstType,
     };
     use deskc_ids::{LinkName, NodeId};
@@ -212,37 +212,33 @@ mod tests {
 
         assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
         assert_eq!(kernel.snapshot.owners.len(), 1);
-        let ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap() {
+        let mut ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap() {
             ast.as_ref().clone()
         } else {
             panic!();
         };
+        replace_node_id_to_default(&mut ast);
         assert_eq!(
-            remove_node_id(ast),
-            WithSpan {
-                id: NodeId::default(),
-                span: 0..0,
+            ast,
+            WithMeta {
+                meta: Default::default(),
                 value: Expr::Apply {
-                    function: WithSpan {
-                        id: NodeId::default(),
-                        span: 0..0,
+                    function: WithMeta {
+                        meta: Default::default(),
                         value: AstType::Function(Box::new(Function {
-                            parameter: WithSpan {
-                                id: NodeId::default(),
-                                span: 0..0,
+                            parameter: WithMeta {
+                                meta: Default::default(),
                                 value: AstType::String
                             },
-                            body: WithSpan {
-                                id: NodeId::default(),
-                                span: 0..0,
+                            body: WithMeta {
+                                meta: Default::default(),
                                 value: AstType::Real
                             },
                         }))
                     },
                     link_name: LinkName::None,
-                    arguments: vec![WithSpan {
-                        id: NodeId::default(),
-                        span: 0..0,
+                    arguments: vec![WithMeta {
+                        meta: Default::default(),
                         value: Expr::Literal(Literal::String("string".into()))
                     }]
                 }

@@ -1,49 +1,46 @@
 use crate::{
     expr::Expr,
-    span::WithSpan,
+    meta::{Meta, WithMeta},
     ty::{Effect, Function, Type},
     visitor::{ExprVisitorMut, TypeVisitorMut},
 };
 
-pub fn remove_span(expr: &mut WithSpan<Expr>) {
+// A helper function for testing to remove span information from AST.
+pub fn replace_node_id_to_default(expr: &mut WithMeta<Expr>) {
     struct RemoveSpan;
     impl ExprVisitorMut for RemoveSpan {
-        fn visit_span(&mut self, id: &mut ids::NodeId, span: &mut crate::span::Span) {
-            *id = Default::default();
-            *span = Default::default();
+        fn visit_meta(&mut self, meta: &mut Meta) {
+            meta.id = Default::default();
         }
-        fn visit_type(&mut self, ty: &mut WithSpan<Type>) {
-            remove_span_ty(ty);
+        fn visit_type(&mut self, ty: &mut WithMeta<Type>) {
+            replace_node_id_to_default_ty(ty);
         }
     }
     RemoveSpan.visit_expr(expr)
 }
 
-fn remove_span_ty(ty: &mut WithSpan<Type>) {
+// A helper function for testing to remove span information from AST.
+pub fn replace_node_id_to_default_ty(ty: &mut WithMeta<Type>) {
     struct RemoveSpanTy;
     impl TypeVisitorMut for RemoveSpanTy {
-        fn visit_type(&mut self, ty: &mut WithSpan<Type>) {
-            ty.id = Default::default();
-            ty.span = Default::default();
+        fn visit_type(&mut self, ty: &mut WithMeta<Type>) {
+            ty.meta.id = Default::default();
             self.super_visit_type(ty);
         }
-        fn visit_effect(&mut self, effect: &mut WithSpan<Effect>) {
-            effect.id = Default::default();
-            effect.span = Default::default();
+        fn visit_effect(&mut self, effect: &mut WithMeta<Effect>) {
+            effect.meta.id = Default::default();
             self.visit_type(&mut effect.value.input);
             self.visit_type(&mut effect.value.output);
         }
-        fn visit_trait(&mut self, types: &mut [WithSpan<Function>]) {
+        fn visit_trait(&mut self, types: &mut [WithMeta<Function>]) {
             for ty in types {
-                ty.id = Default::default();
-                ty.span = Default::default();
+                ty.meta.id = Default::default();
                 self.visit_type(&mut ty.value.parameter);
                 self.visit_type(&mut ty.value.body);
             }
         }
-        fn visit_effect_expr(&mut self, item: &mut WithSpan<crate::ty::EffectExpr>) {
-            item.id = Default::default();
-            item.span = Default::default();
+        fn visit_effect_expr(&mut self, item: &mut WithMeta<crate::ty::EffectExpr>) {
+            item.meta.id = Default::default();
             self.super_visit_effect_expr(item);
         }
     }

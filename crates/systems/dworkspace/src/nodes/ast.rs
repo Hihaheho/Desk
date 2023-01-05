@@ -4,7 +4,7 @@ use components::{code::Code, content::Content, node::Node};
 use deskc::parse_source_code;
 use deskc_ast::{
     expr::{Expr, Literal},
-    span::WithSpan,
+    meta::{Meta, WithMeta},
     ty::{Effect, EffectExpr, Function, Type},
 };
 use deskc_ids::NodeId;
@@ -45,14 +45,13 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
         },
         _ => todo!(),
     };
-    Ok(Code::Ast(Arc::new(WithSpan {
-        id: node.id.clone(),
+    Ok(Code::Ast(Arc::new(WithMeta {
+        meta: node.id.clone().into(),
         value: expr,
-        span: 0..0,
     })))
 }
 
-fn from_types(ty: &deskc_ty::Type) -> WithSpan<Type> {
+fn from_types(ty: &deskc_ty::Type) -> WithMeta<Type> {
     use deskc_ty::Type as DeskcType;
     let value = match ty {
         DeskcType::Real => Type::Real,
@@ -62,9 +61,8 @@ fn from_types(ty: &deskc_ty::Type) -> WithSpan<Type> {
         DeskcType::Trait(trait_) => Type::Trait(
             trait_
                 .iter()
-                .map(|function| WithSpan {
-                    id: NodeId::new(),
-                    span: 0..0,
+                .map(|function| WithMeta {
+                    meta: Meta::new_no_comments(),
                     value: Function {
                         parameter: from_types(&function.parameter),
                         body: from_types(&function.body),
@@ -98,21 +96,19 @@ fn from_types(ty: &deskc_ty::Type) -> WithSpan<Type> {
             item: Box::new(from_types(item)),
         },
     };
-    WithSpan {
-        id: NodeId::new(),
-        span: 0..0,
+    WithMeta {
+        meta: Meta::new_no_comments(),
         value,
     }
 }
 
-fn from_types_effects(effects: &deskc_ty::EffectExpr) -> WithSpan<EffectExpr> {
+fn from_types_effects(effects: &deskc_ty::EffectExpr) -> WithMeta<EffectExpr> {
     let value = match effects {
         deskc_ty::EffectExpr::Effects(effects) => EffectExpr::Effects(
             effects
                 .iter()
-                .map(|deskc_ty::Effect { input, output }| WithSpan {
-                    id: NodeId::new(),
-                    span: 0..0,
+                .map(|deskc_ty::Effect { input, output }| WithMeta {
+                    meta: Meta::new_no_comments(),
                     value: Effect {
                         input: from_types(input),
                         output: from_types(output),
@@ -138,9 +134,8 @@ fn from_types_effects(effects: &deskc_ty::EffectExpr) -> WithSpan<EffectExpr> {
             arguments: arguments.iter().map(from_types).collect(),
         },
     };
-    WithSpan {
-        id: NodeId::new(),
-        span: 0..0,
+    WithMeta {
+        meta: Meta::new_no_comments(),
         value,
     }
 }

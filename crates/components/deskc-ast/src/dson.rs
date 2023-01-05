@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{
     expr::{Expr, MapElem},
-    span::WithSpan,
+    meta::WithMeta,
     ty::Type,
 };
 
@@ -49,10 +49,10 @@ pub enum ExprToDsonError {
     UnexpectedExists,
 }
 
-impl TryFrom<WithSpan<Expr>> for Dson {
+impl TryFrom<WithMeta<Expr>> for Dson {
     type Error = ExprToDsonError;
 
-    fn try_from(expr: WithSpan<Expr>) -> Result<Self, Self::Error> {
+    fn try_from(expr: WithMeta<Expr>) -> Result<Self, Self::Error> {
         match expr.value {
             Expr::Literal(literal) => Ok(Dson::Literal(match literal {
                 crate::expr::Literal::String(string) => dson::Literal::String(string),
@@ -96,10 +96,6 @@ impl TryFrom<WithSpan<Expr>> for Dson {
                 label: Box::new(label),
                 expr: Box::new(Dson::try_from(*item)?),
             }),
-            Expr::Comment { text, item } => Ok(Dson::Comment {
-                text,
-                expr: Box::new(Dson::try_from(*item)?),
-            }),
             Expr::Do { .. } => Err(ExprToDsonError::UnexpectedDo),
             Expr::Let { .. } => Err(ExprToDsonError::UnexpectedLet),
             Expr::Perform { .. } => Err(ExprToDsonError::UnexpectedPerform),
@@ -109,17 +105,17 @@ impl TryFrom<WithSpan<Expr>> for Dson {
             Expr::Match { .. } => Err(ExprToDsonError::UnexpectedMatch),
             Expr::Hole => Err(ExprToDsonError::UnexpectedHole),
             Expr::Function { .. } => Err(ExprToDsonError::UnexpectedFunction),
-            Expr::Brand { .. } => Err(ExprToDsonError::UnexpectedBrand),
+            Expr::DeclareBrand { .. } => Err(ExprToDsonError::UnexpectedBrand),
             Expr::NewType { .. } => Err(ExprToDsonError::UnexpectedNewType),
             Expr::Card { .. } => Err(ExprToDsonError::UnexpectedCard),
         }
     }
 }
 
-impl TryFrom<WithSpan<Type>> for dson::Type {
+impl TryFrom<WithMeta<Type>> for dson::Type {
     type Error = ExprToDsonError;
 
-    fn try_from(ty: WithSpan<Type>) -> Result<Self, Self::Error> {
+    fn try_from(ty: WithMeta<Type>) -> Result<Self, Self::Error> {
         match ty.value {
             Type::Labeled { brand, item } => Ok(dson::Type::Brand {
                 brand: Box::new(brand),

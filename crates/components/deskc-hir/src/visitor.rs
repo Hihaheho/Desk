@@ -540,7 +540,6 @@ fn remove_meta_ty(ty: &mut WithMeta<Type>) {
     impl TypeVisitorMut for RemoveMetaTy {
         fn visit_type(&mut self, ty: &mut WithMeta<Type>) {
             ty.meta.id = NodeId::default();
-            ty.meta.span = None;
             self.super_visit_type(ty);
         }
     }
@@ -551,7 +550,6 @@ pub fn remove_meta(mut expr: WithMeta<Expr>) -> WithMeta<Expr> {
     impl HirVisitorMut for RemoveMeta {
         fn visit_meta(&mut self, meta: &mut Meta) {
             meta.id = NodeId::default();
-            meta.span = None;
         }
         fn visit_type(&mut self, ty: &mut WithMeta<Type>) {
             remove_meta_ty(ty);

@@ -6,9 +6,10 @@ use desk_window::{
     widget::{Widget, WidgetId},
     window::{DefaultWindow, Window},
 };
-use deskc_ast::{expr::Expr, span::WithSpan};
+use deskc_ast::{expr::Expr, meta::WithMeta};
+use deskc_ids::NodeId;
 use deskc_macros::ast;
-use deskc_type::DsonTypeDeduction;
+use deskc_type::{DsonTypeDeduction, Effect};
 use dworkspace::{
     conversions::ast_type_to_type,
     prelude::{AttributePatch, Content, Event, OperandPatch},
@@ -43,7 +44,7 @@ impl Widget<egui::Context> for PlaygroundWidget {
     }
 }
 
-const FIBONACCI: Lazy<WithSpan<Expr>> = Lazy::new(|| {
+const FIBONACCI: Lazy<WithMeta<Expr>> = Lazy::new(|| {
     ast!(
         r#"
         ~~ type aliases
@@ -72,7 +73,7 @@ const FIBONACCI: Lazy<WithSpan<Expr>> = Lazy::new(|| {
     )
 });
 
-fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
+fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithMeta<Expr>) {
     struct Visitor<'a, 'b> {
         ctx: &'a mut Ctx<'b, egui::Context>,
     }
@@ -81,8 +82,9 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
         fn add_event(&mut self, event: Event) {
             self.ctx.add_event(event);
         }
-        fn visit_expr(&mut self, expr: &WithSpan<Expr>) {
-            let node_id = &expr.id;
+        #[must_use]
+        fn visit_expr<'a>(&mut self, expr: &'a WithMeta<Expr>) -> &'a NodeId {
+            let node_id = &expr.meta.id;
             match &expr.value {
                 Expr::Literal(literal) => {
                     use deskc_ast::expr::Literal::*;
@@ -98,8 +100,8 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                     });
                 }
                 Expr::Do { stmt, expr } => {
-                    self.visit_expr(stmt);
-                    self.visit_expr(expr);
+                    let stmt = self.visit_expr(stmt);
+                    let expr = self.visit_expr(expr);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Do,
@@ -108,20 +110,20 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: stmt.id.clone(),
+                            node_id: stmt.clone(),
                         },
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 1,
-                            node_id: expr.id.clone(),
+                            node_id: expr.clone(),
                         },
                     });
                 }
                 Expr::Let { definition, body } => {
-                    self.visit_expr(definition);
-                    self.visit_expr(body);
+                    let definition = self.visit_expr(definition);
+                    let body = self.visit_expr(body);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Let,
@@ -130,19 +132,19 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: definition.id.clone(),
+                            node_id: definition.clone(),
                         },
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 1,
-                            node_id: body.id.clone(),
+                            node_id: body.clone(),
                         },
                     });
                 }
                 Expr::Perform { input, output } => {
-                    self.visit_expr(input);
+                    let input = self.visit_expr(input);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Perform {
@@ -153,12 +155,12 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: input.id.clone(),
+                            node_id: input.clone(),
                         },
                     });
                 }
                 Expr::Continue { input, output } => {
-                    self.visit_expr(input);
+                    let input = self.visit_expr(input);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Continue {
@@ -169,12 +171,12 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: input.id.clone(),
+                            node_id: input.clone(),
                         },
                     });
                 }
                 Expr::Handle { expr, handlers } => {
-                    self.visit_expr(expr);
+                    let expr = self.visit_expr(expr);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Handle,
@@ -183,13 +185,35 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: expr.id.clone(),
+                            node_id: expr.clone(),
                         },
                     });
-                    for handler in handlers {
+                    for (index, handler) in handlers.iter().enumerate() {
                         let effect = &handler.value.effect;
-                        self.visit_expr(&handler.value.handler);
-                        todo!()
+                        let expr = self.visit_expr(&handler.value.handler);
+                        self.add_event(Event::CreateNode {
+                            node_id: handler.meta.id.clone(),
+                            content: Content::Handler {
+                                effect: Effect {
+                                    input: ast_type_to_type(&effect.value.input),
+                                    output: ast_type_to_type(&effect.value.output),
+                                },
+                            },
+                        });
+                        self.add_event(Event::PatchOperand {
+                            node_id: handler.meta.id.clone(),
+                            patch: OperandPatch::Insert {
+                                index: 0,
+                                node_id: expr.clone(),
+                            },
+                        });
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index: index + 1,
+                                node_id: handler.meta.id.clone(),
+                            },
+                        });
                     }
                 }
                 Expr::Apply {
@@ -205,12 +229,12 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         },
                     });
                     for (index, argument) in arguments.iter().enumerate() {
-                        self.visit_expr(argument);
+                        let argument = self.visit_expr(argument);
                         self.add_event(Event::PatchOperand {
                             node_id: node_id.clone(),
                             patch: OperandPatch::Insert {
                                 index,
-                                node_id: argument.id.clone(),
+                                node_id: argument.clone(),
                             },
                         });
                     }
@@ -221,18 +245,18 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         content: Content::Product,
                     });
                     for (index, expr) in exprs.iter().enumerate() {
-                        self.visit_expr(expr);
+                        let expr = self.visit_expr(expr);
                         self.add_event(Event::PatchOperand {
                             node_id: node_id.clone(),
                             patch: OperandPatch::Insert {
                                 index,
-                                node_id: expr.id.clone(),
+                                node_id: expr.clone(),
                             },
                         });
                     }
                 }
                 Expr::Match { of, cases } => {
-                    self.visit_expr(of);
+                    let of = self.visit_expr(of);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Match,
@@ -241,35 +265,35 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: of.id.clone(),
+                            node_id: of.clone(),
                         },
                     });
                     for (index, case) in cases.iter().enumerate() {
-                        self.visit_expr(&case.value.expr);
+                        let expr = self.visit_expr(&case.value.expr);
                         self.add_event(Event::CreateNode {
-                            node_id: case.id.clone(),
+                            node_id: case.meta.id.clone(),
                             content: Content::Case {
                                 ty: ast_type_to_type(&case.value.ty),
                             },
                         });
                         self.add_event(Event::PatchOperand {
-                            node_id: case.id.clone(),
+                            node_id: case.meta.id.clone(),
                             patch: OperandPatch::Insert {
                                 index: 0,
-                                node_id: case.value.expr.id.clone(),
+                                node_id: expr.clone(),
                             },
                         });
                         self.add_event(Event::PatchOperand {
-                            node_id: node_id.clone(),
+                            node_id: of.clone(),
                             patch: OperandPatch::Insert {
                                 index: index + 1,
-                                node_id: case.id.clone(),
+                                node_id: case.meta.id.clone(),
                             },
                         });
                     }
                 }
                 Expr::Typed { ty, item } => {
-                    self.visit_expr(item);
+                    let item = self.visit_expr(item);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Typed {
@@ -280,7 +304,7 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: item.id.clone(),
+                            node_id: item.clone(),
                         },
                     });
                 }
@@ -291,7 +315,7 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                     });
                 }
                 Expr::Function { parameter, body } => {
-                    self.visit_expr(body);
+                    let body = self.visit_expr(body);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Function {
@@ -302,7 +326,7 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
-                            node_id: body.id.clone(),
+                            node_id: body.clone(),
                         },
                     });
                 }
@@ -312,12 +336,12 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         content: Content::Vector,
                     });
                     for (index, expr) in exprs.iter().enumerate() {
-                        self.visit_expr(expr);
+                        let expr = self.visit_expr(expr);
                         self.add_event(Event::PatchOperand {
                             node_id: node_id.clone(),
                             patch: OperandPatch::Insert {
                                 index,
-                                node_id: expr.id.clone(),
+                                node_id: expr.clone(),
                             },
                         });
                     }
@@ -328,51 +352,99 @@ fn create_nodes_for_ast(ctx: &mut Ctx<egui::Context>, expr: &WithSpan<Expr>) {
                         content: Content::Map,
                     });
                     for (index, elem) in elems.iter().enumerate() {
-                        self.visit_expr(&elem.value.key);
-                        self.visit_expr(&elem.value.value);
+                        let key = self.visit_expr(&elem.value.key);
+                        let value = self.visit_expr(&elem.value.value);
                         self.add_event(Event::CreateNode {
-                            node_id: elem.id.clone(),
+                            node_id: elem.meta.id.clone(),
                             content: Content::MapElem,
                         });
                         self.add_event(Event::PatchOperand {
-                            node_id: elem.id.clone(),
+                            node_id: elem.meta.id.clone(),
                             patch: OperandPatch::Insert {
                                 index: 0,
-                                node_id: elem.value.key.id.clone(),
+                                node_id: key.clone(),
                             },
                         });
                         self.add_event(Event::PatchOperand {
-                            node_id: elem.id.clone(),
+                            node_id: elem.meta.id.clone(),
                             patch: OperandPatch::Insert {
                                 index: 1,
-                                node_id: elem.value.value.id.clone(),
+                                node_id: value.clone(),
                             },
                         });
                         self.add_event(Event::PatchOperand {
                             node_id: node_id.clone(),
                             patch: OperandPatch::Insert {
                                 index,
-                                node_id: elem.id.clone(),
+                                node_id: elem.meta.id.clone(),
                             },
                         });
                     }
                 }
                 Expr::Attributed { attr, item } => {
-                    self.visit_expr(item);
+                    let node_id = self.visit_expr(item);
                     self.add_event(Event::PatchAttribute {
-                        node_id: item.id.clone(),
+                        node_id: node_id.clone(),
                         patch: AttributePatch::Update {
                             key: attr.deduct_type(),
                             value: attr.clone(),
                         },
                     });
+                    // Use the node_id of the item, not the attributed node.
+                    return node_id;
                 }
-                Expr::Brand { brand, item } => todo!(),
-                Expr::Label { label, item } => todo!(),
-                Expr::NewType { ident, ty, expr } => todo!(),
-                Expr::Comment { text, item } => todo!(),
+                Expr::DeclareBrand { brand, item } => {
+                    let item = self.visit_expr(item);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::DeclareBrand {
+                            brand: brand.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: item.clone(),
+                        },
+                    });
+                }
+                Expr::Label { label, item } => {
+                    let item = self.visit_expr(item);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::Label {
+                            label: label.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: item.clone(),
+                        },
+                    });
+                }
+                Expr::NewType { ident, ty, expr } => {
+                    let expr = self.visit_expr(expr);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::NewType {
+                            ident: ident.clone(),
+                            ty: ast_type_to_type(ty),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: expr.clone(),
+                        },
+                    });
+                }
                 Expr::Card { id, item, next } => todo!(),
-            }
+            };
+            node_id
         }
     }
     Visitor { ctx }.visit_expr(expr);

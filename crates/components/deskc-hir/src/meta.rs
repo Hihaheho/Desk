@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 use dson::Dson;
 use ids::NodeId;
 
@@ -7,7 +5,6 @@ use ids::NodeId;
 pub struct Meta {
     pub id: NodeId,
     pub attrs: Vec<Dson>,
-    pub span: Option<Range<usize>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

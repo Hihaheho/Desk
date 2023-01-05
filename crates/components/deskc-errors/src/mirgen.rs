@@ -30,28 +30,28 @@ impl From<&GenMirError> for TextualDiagnostics {
             } => TextualDiagnostics {
                 title: "MIR generation error".into(),
                 reports: vec![Report {
-                    span: expr.span.clone().unwrap_or(0..0),
+                    span: todo!(),
                     text: format!("{error}"),
                 }],
             },
             GenMirError::TypeNotFound { for_expr: meta } => TextualDiagnostics {
                 title: "MIR generation error".into(),
                 reports: vec![Report {
-                    span: meta.span.clone().unwrap_or(0..0),
+                    span: todo!(),
                     text: format!("{error}"),
                 }],
             },
             GenMirError::FunctionInferredAsNonFunction { for_expr: meta } => TextualDiagnostics {
                 title: "MIR generation error".into(),
                 reports: vec![Report {
-                    span: meta.span.clone().unwrap_or(0..0),
+                    span: todo!(),
                     text: format!("{error}"),
                 }],
             },
             GenMirError::EffectfulInferredAsNonEffectful { for_expr: meta } => TextualDiagnostics {
                 title: "MIR generation error".into(),
                 reports: vec![Report {
-                    span: meta.span.clone().unwrap_or(0..0),
+                    span: todo!(),
                     text: format!("{error}"),
                 }],
             },

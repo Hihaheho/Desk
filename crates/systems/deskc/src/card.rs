@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ast::span::WithSpan;
+use ast::meta::WithMeta as AstWithMeta;
 use codebase::code::Code;
 use hir::meta::WithMeta;
 use ids::{Entrypoint, FileId};
@@ -15,7 +15,7 @@ use crate::{
 pub trait DeskcQueries {
     #[salsa::input]
     fn code(&self, id: FileId) -> Code;
-    fn ast(&self, id: FileId) -> QueryResult<WithSpan<ast::expr::Expr>>;
+    fn ast(&self, id: FileId) -> QueryResult<AstWithMeta<ast::expr::Expr>>;
     fn cards(&self, id: FileId) -> QueryResult<CardsResult>;
     fn hir(&self, entrypoint: Entrypoint) -> QueryResult<WithMeta<hir::expr::Expr>>;
     fn typeinfer(&self, entrypoint: Entrypoint) -> QueryResult<TypeConclusions>;
@@ -30,7 +30,7 @@ pub struct DeskCompiler {
 
 impl salsa::Database for DeskCompiler {}
 
-fn ast(db: &dyn DeskcQueries, id: FileId) -> QueryResult<WithSpan<ast::expr::Expr>> {
+fn ast(db: &dyn DeskcQueries, id: FileId) -> QueryResult<AstWithMeta<ast::expr::Expr>> {
     let code = db.code(id);
     match code {
         Code::SourceCode { syntax, source } => {

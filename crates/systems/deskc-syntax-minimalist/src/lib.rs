@@ -5,12 +5,12 @@ pub mod parser;
 mod conversions;
 mod grammar;
 
-use ast::{expr::Expr, span::WithSpan};
+use ast::{expr::Expr, meta::WithMeta};
 use thiserror::Error;
 
 pub use parol_runtime::derive_builder;
 
-pub fn parse(input: &str) -> Result<WithSpan<Expr>, MinimalistSyntaxError> {
+pub fn parse(input: &str) -> Result<WithMeta<Expr>, MinimalistSyntaxError> {
     let mut grammar = grammar::Grammar::new();
     parser::parse(input, "dummy", &mut grammar).map_err(MinimalistSyntaxError::ParseError)?;
     grammar.expr.unwrap().try_into()
@@ -32,24 +32,24 @@ pub enum MinimalistSyntaxError {
 mod tests {
     use ast::{
         expr::{Handler, Literal, MapElem, MatchCase},
-        remove_span::remove_span,
+        meta::Comment,
+        remove_span::replace_node_id_to_default,
         ty::{Effect, EffectExpr, Function, Type},
     };
     use dson::Dson;
-    use ids::{LinkName, NodeId};
+    use ids::LinkName;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    fn w<T>(value: T) -> WithSpan<T> {
-        WithSpan {
-            id: NodeId::default(),
-            span: 0..0,
+    fn w<T>(value: T) -> WithMeta<T> {
+        WithMeta {
+            meta: Default::default(),
             value,
         }
     }
 
-    fn bw<T>(value: T) -> Box<WithSpan<T>> {
+    fn bw<T>(value: T) -> Box<WithMeta<T>> {
         Box::new(w(value))
     }
 
@@ -61,9 +61,9 @@ mod tests {
         }
     }
 
-    fn parse(input: &str) -> WithSpan<Expr> {
+    fn parse(input: &str) -> WithMeta<Expr> {
         let mut expr = super::parse(input).unwrap();
-        remove_span(&mut expr);
+        replace_node_id_to_default(&mut expr);
         expr
     }
 
@@ -314,7 +314,7 @@ mod tests {
     fn parse_brand() {
         assert_eq!(
             parse(r#"'brand "a"; ?"#).value,
-            Expr::Brand {
+            Expr::DeclareBrand {
                 brand: Dson::Literal(dson::Literal::String("a".into())),
                 item: bw(Expr::Hole),
             }
@@ -363,11 +363,17 @@ mod tests {
     #[test]
     fn parse_comment() {
         assert_eq!(
-            parse("~(a))~*<>").value,
-            Expr::Comment {
-                text: "a)".into(),
-                item: bw(Expr::Product(vec![])),
-            }
+            parse(
+                "
+            ~ comment
+            ~(a))~*<>"
+            )
+            .meta
+            .comments,
+            vec![
+                Comment::Line(" comment".into()),
+                Comment::Block("a)".into())
+            ]
         );
     }
 
@@ -548,17 +554,6 @@ mod tests {
                 variable: "x".into(),
                 definition: bw(Type::Variable("a".into())),
                 body: bw(Type::Variable("x".into())),
-            })
-        );
-    }
-
-    #[test]
-    fn parse_comment_ty() {
-        assert_eq!(
-            parse("& ~(a)~*<>").value,
-            r(Type::Comment {
-                text: "a".into(),
-                item: bw(Type::Product(vec![])),
             })
         );
     }

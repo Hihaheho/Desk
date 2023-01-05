@@ -1,80 +1,80 @@
 use dson::Dson;
 
-use crate::span::WithSpan;
+use crate::meta::WithMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Effect {
-    pub input: WithSpan<Type>,
-    pub output: WithSpan<Type>,
+    pub input: WithMeta<Type>,
+    pub output: WithMeta<Type>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Labeled {
         brand: Dson,
-        item: Box<WithSpan<Type>>,
+        item: Box<WithMeta<Type>>,
     },
     Real,
     Rational,
     Integer,
     String,
-    Trait(Vec<WithSpan<Function>>),
+    Trait(Vec<WithMeta<Function>>),
     Effectful {
-        ty: Box<WithSpan<Self>>,
-        effects: WithSpan<EffectExpr>,
+        ty: Box<WithMeta<Self>>,
+        effects: WithMeta<EffectExpr>,
     },
     Infer,
     This,
-    Product(Vec<WithSpan<Self>>),
-    Sum(Vec<WithSpan<Self>>),
+    Product(Vec<WithMeta<Self>>),
+    Sum(Vec<WithMeta<Self>>),
     Function(Box<Function>),
-    Vector(Box<WithSpan<Self>>),
+    Vector(Box<WithMeta<Self>>),
     Map {
-        key: Box<WithSpan<Self>>,
-        value: Box<WithSpan<Self>>,
+        key: Box<WithMeta<Self>>,
+        value: Box<WithMeta<Self>>,
     },
     Let {
         variable: String,
-        definition: Box<WithSpan<Self>>,
-        body: Box<WithSpan<Self>>,
+        definition: Box<WithMeta<Self>>,
+        body: Box<WithMeta<Self>>,
     },
     Variable(String),
     Attributed {
         attr: Dson,
-        ty: Box<WithSpan<Self>>,
+        ty: Box<WithMeta<Self>>,
     },
     Comment {
         text: String,
-        item: Box<WithSpan<Self>>,
+        item: Box<WithMeta<Self>>,
     },
     Forall {
         variable: String,
-        bound: Option<Box<WithSpan<Self>>>,
-        body: Box<WithSpan<Self>>,
+        bound: Option<Box<WithMeta<Self>>>,
+        body: Box<WithMeta<Self>>,
     },
     Exists {
         variable: String,
-        bound: Option<Box<WithSpan<Self>>>,
-        body: Box<WithSpan<Self>>,
+        bound: Option<Box<WithMeta<Self>>>,
+        body: Box<WithMeta<Self>>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Function {
-    pub parameter: WithSpan<Type>,
-    pub body: WithSpan<Type>,
+    pub parameter: WithMeta<Type>,
+    pub body: WithMeta<Type>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum EffectExpr {
-    Effects(Vec<WithSpan<Effect>>),
-    Add(Vec<WithSpan<EffectExpr>>),
+    Effects(Vec<WithMeta<Effect>>),
+    Add(Vec<WithMeta<EffectExpr>>),
     Sub {
-        minuend: Box<WithSpan<EffectExpr>>,
-        subtrahend: Box<WithSpan<EffectExpr>>,
+        minuend: Box<WithMeta<EffectExpr>>,
+        subtrahend: Box<WithMeta<EffectExpr>>,
     },
     Apply {
-        function: Box<WithSpan<Type>>,
-        arguments: Vec<WithSpan<Type>>,
+        function: Box<WithMeta<Type>>,
+        arguments: Vec<WithMeta<Type>>,
     },
 }

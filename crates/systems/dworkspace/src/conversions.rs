@@ -1,7 +1,7 @@
-use deskc_ast::{span::WithSpan, ty::Type};
+use deskc_ast::{meta::WithMeta, ty::Type};
 use deskc_ty::Type as DeskcType;
 
-pub fn ast_type_to_type(ty: &WithSpan<Type>) -> DeskcType {
+pub fn ast_type_to_type(ty: &WithMeta<Type>) -> DeskcType {
     match &ty.value {
         Type::Labeled { brand, item } => todo!(),
         Type::Real => todo!(),

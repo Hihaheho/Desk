@@ -1,11 +1,8 @@
-use std::ops::Range;
-
 use ast::{
     expr::{Expr, LinkName},
-    span::WithSpan,
+    meta::{Comment, Meta, WithMeta},
     ty::{Effect, EffectExpr, Function, Type},
 };
-use deskc_ids::NodeId;
 use dson::{Dson, MapElem};
 use proc_macro::TokenStream;
 use quote::quote;
@@ -16,7 +13,7 @@ pub fn ty(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         "&".to_string() + &string
     }
-    fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         if let Expr::Apply { function, .. } = expr.value {
             from_type(function.value)
         } else {
@@ -39,7 +36,7 @@ pub fn effect(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         format!("& ! {{ {string} }} 'integer")
     }
-    fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         let Expr::Apply { function, .. } = expr.value
          else {
             panic!("Failed to parse reference")
@@ -68,7 +65,7 @@ pub fn dson(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         format!("@ {string} 1")
     }
-    fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         let Expr::Label { label, item: _ } = expr.value else {
             panic!("Failed to parse label")
         };
@@ -89,7 +86,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         string
     }
-    fn map(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         from_expr(expr)
     }
     parse(
@@ -99,7 +96,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
         quote! {
             use deskc_ast::{
                 expr::{Expr, Literal, MatchCase},
-                span::{Span, WithSpan},
+                meta::{WithMeta, Meta, Comment},
                 ty::{Effect, EffectExpr, Function, Type},
             };
             use deskc_ids::LinkName;
@@ -111,7 +108,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
 fn parse(
     item: TokenStream,
     input: fn(String) -> String,
-    map: fn(WithSpan<Expr>) -> proc_macro2::TokenStream,
+    map: fn(WithMeta<Expr>) -> proc_macro2::TokenStream,
     uses: proc_macro2::TokenStream,
 ) -> TokenStream {
     if let Some(literal) = item.into_iter().next() {
@@ -342,7 +339,7 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
                 .map(|MapElem { key, value }| {
                     let key = from_dson(key);
                     let value = from_dson(value);
-                    quote! { (#key, #value) }
+                    quote! { dson::MapElem { key: #key, value: #value } }
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -540,7 +537,7 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
+fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
     let tokens = match expr.value {
         Expr::Literal(literal) => {
             let literal = match literal {
@@ -614,7 +611,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
                             handler: #expr,
                         }
                     };
-                    with_span(handler.id, handler.span, tokens)
+                    with_meta(handler.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -676,7 +673,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
                             expr: #expr,
                         }
                     };
-                    with_span(case.id, case.span, tokens)
+                    with_meta(case.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -728,7 +725,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
                             value: Box::new(#value),
                         }
                     };
-                    with_span(elem.id, elem.span, tokens)
+                    with_meta(elem.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -745,7 +742,7 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
                 }
             }
         }
-        Expr::Brand { brand, item } => {
+        Expr::DeclareBrand { brand, item } => {
             let brand = from_dson(brand);
             let item = from_expr(*item);
             quote! {
@@ -776,15 +773,6 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
                 }
             }
         }
-        Expr::Comment { text, item } => {
-            let item = from_expr(*item);
-            quote! {
-                Expr::Comment {
-                    text: #text.to_string(),
-                    item: Box::new(#item),
-                }
-            }
-        }
         Expr::Card { id, item, next } => {
             let id = from_uuid(id.0);
             let item = from_expr(*item);
@@ -798,10 +786,10 @@ fn from_expr(expr: WithSpan<Expr>) -> proc_macro2::TokenStream {
             }
         }
     };
-    with_span(expr.id, expr.span, tokens)
+    with_meta(expr.meta, tokens)
 }
 
-fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
+fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
     let tokens = match ty.value {
         Type::Labeled { brand, item } => {
             let brand = from_dson(brand);
@@ -822,7 +810,7 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
                 .into_iter()
                 .map(|function| {
                     let tokens = from_function(function.value);
-                    with_span(function.id, function.span, tokens)
+                    with_meta(function.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -941,10 +929,10 @@ fn from_type_for_ast(ty: WithSpan<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
     };
-    with_span(ty.id, ty.span, tokens)
+    with_meta(ty.meta, tokens)
 }
 
-fn from_bound(bound: Option<Box<WithSpan<Type>>>) -> proc_macro2::TokenStream {
+fn from_bound(bound: Option<Box<WithMeta<Type>>>) -> proc_macro2::TokenStream {
     match bound {
         Some(bound) => {
             let tokens = from_type_for_ast(*bound);
@@ -954,7 +942,7 @@ fn from_bound(bound: Option<Box<WithSpan<Type>>>) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_effect_expr_for_ast(expr: WithSpan<EffectExpr>) -> proc_macro2::TokenStream {
+fn from_effect_expr_for_ast(expr: WithMeta<EffectExpr>) -> proc_macro2::TokenStream {
     let tokens = match expr.value {
         EffectExpr::Effects(effects) => {
             let effects = effects
@@ -1004,10 +992,10 @@ fn from_effect_expr_for_ast(expr: WithSpan<EffectExpr>) -> proc_macro2::TokenStr
             }
         }
     };
-    with_span(expr.id, expr.span, tokens)
+    with_meta(expr.meta, tokens)
 }
 
-fn from_effect_for_ast(effect: WithSpan<Effect>) -> proc_macro2::TokenStream {
+fn from_effect_for_ast(effect: WithMeta<Effect>) -> proc_macro2::TokenStream {
     let input = from_type_for_ast(effect.value.input);
     let output = from_type_for_ast(effect.value.output);
     let tokens = quote! {
@@ -1016,7 +1004,7 @@ fn from_effect_for_ast(effect: WithSpan<Effect>) -> proc_macro2::TokenStream {
             output: #output,
         }
     };
-    with_span(effect.id, effect.span, tokens)
+    with_meta(effect.meta, tokens)
 }
 
 fn from_function(function: Function) -> proc_macro2::TokenStream {
@@ -1035,24 +1023,22 @@ fn from_uuid(uuid: Uuid) -> proc_macro2::TokenStream {
     quote!(uuid::uuid!(#string))
 }
 
-fn with_span(
-    id: NodeId,
-    span: Range<usize>,
-    value: proc_macro2::TokenStream,
-) -> proc_macro2::TokenStream {
-    let id = from_uuid(id.0);
-    let start = span.start;
-    let end = span.end;
-    let span = quote! {
-        Span {
-            start: #start,
-            end: #end,
-        }
-    };
+fn with_meta(meta: Meta, value: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let id = from_uuid(meta.id.0);
+    let comments = meta
+        .comments
+        .into_iter()
+        .map(|comment| match comment {
+            Comment::Line(line) => quote!(Comment::Line(#line.to_string())),
+            Comment::Block(block) => quote!(Comment::Block(#block.to_string())),
+        })
+        .collect::<Vec<_>>();
     quote! {
-        WithSpan {
-            id: deskc_ids::NodeId(#id),
-            span: #span,
+        WithMeta {
+            meta: Meta {
+                id: NodeId(#id),
+                comments: vec![#(#comments),*],
+            },
             value: #value,
         }
     }
