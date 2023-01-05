@@ -38,7 +38,9 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
                 .operands
                 .iter()
                 .map(|node| match genast(node)? {
-                    Code::SourceCode { syntax, source } => Ok(parse_source_code(&syntax, &source)?),
+                    Code::SourceCode { syntax, source } => {
+                        Ok(parse_source_code(&syntax, &source)?.expr.as_ref().clone())
+                    }
                     Code::Ast(ast) => Ok(ast.as_ref().clone()),
                 })
                 .collect::<Result<Vec<_>, anyhow::Error>>()?,

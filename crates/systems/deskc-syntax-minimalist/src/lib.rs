@@ -4,16 +4,27 @@ pub mod parser;
 
 mod conversions;
 mod grammar;
+mod span_storage;
 
-use ast::{expr::Expr, meta::WithMeta};
+use ast::parser::{ParseResult, Parser};
+pub use parol_runtime::derive_builder;
+pub use span_storage::*;
+use std::sync::Arc;
 use thiserror::Error;
 
-pub use parol_runtime::derive_builder;
+pub struct MinimalistSyntaxParser;
 
-pub fn parse(input: &str) -> Result<WithMeta<Expr>, MinimalistSyntaxError> {
-    let mut grammar = grammar::Grammar::new();
-    parser::parse(input, "dummy", &mut grammar).map_err(MinimalistSyntaxError::ParseError)?;
-    grammar.expr.unwrap().try_into()
+impl Parser for MinimalistSyntaxParser {
+    type Error = MinimalistSyntaxError;
+
+    fn parse(input: &str) -> Result<ParseResult, MinimalistSyntaxError> {
+        let mut grammar = grammar::Grammar::new();
+        parser::parse(input, "dummy", &mut grammar).map_err(MinimalistSyntaxError::ParseError)?;
+        Ok(ParseResult::new(
+            Arc::new(grammar.expr.unwrap().try_into()?),
+            MinimalistSyntaxSpanStorage {},
+        ))
+    }
 }
 
 #[derive(Error, Debug)]
@@ -31,8 +42,8 @@ pub enum MinimalistSyntaxError {
 #[cfg(test)]
 mod tests {
     use ast::{
-        expr::{Handler, Literal, MapElem, MatchCase},
-        meta::Comment,
+        expr::{Expr, Handler, Literal, MapElem, MatchCase},
+        meta::{Comment, WithMeta},
         remove_span::replace_node_id_to_default,
         ty::{Effect, EffectExpr, Function, Type},
     };
@@ -62,7 +73,8 @@ mod tests {
     }
 
     fn parse(input: &str) -> WithMeta<Expr> {
-        let mut expr = super::parse(input).unwrap();
+        let result = super::MinimalistSyntaxParser::parse(input).unwrap();
+        let mut expr = Arc::try_unwrap(result.expr).unwrap();
         replace_node_id_to_default(&mut expr);
         expr
     }

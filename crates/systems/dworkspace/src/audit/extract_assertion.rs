@@ -168,7 +168,6 @@ mod tests {
         rules::Rules,
         user::UserId,
     };
-    use deskc_hir::expr::{Expr, Literal};
     use deskc_ids::{LinkName, NodeId};
     use deskc_ty::Type;
 

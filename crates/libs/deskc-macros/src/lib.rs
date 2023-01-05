@@ -1,6 +1,7 @@
 use ast::{
     expr::{Expr, LinkName},
     meta::{Comment, Meta, WithMeta},
+    parser::Parser,
     ty::{Effect, EffectExpr, Function, Type},
 };
 use dson::{Dson, MapElem};
@@ -13,9 +14,9 @@ pub fn ty(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         "&".to_string() + &string
     }
-    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
-        if let Expr::Apply { function, .. } = expr.value {
-            from_type(function.value)
+    fn map(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
+        if let Expr::Apply { function, .. } = &expr.value {
+            from_type(&function.value)
         } else {
             panic!("Failed to parse reference")
         }
@@ -36,18 +37,18 @@ pub fn effect(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         format!("& ! {{ {string} }} 'integer")
     }
-    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
-        let Expr::Apply { function, .. } = expr.value
+    fn map(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
+        let Expr::Apply { function, .. } = &expr.value
          else {
             panic!("Failed to parse reference")
         };
-        let Type::Effectful { ty: _, effects } = function.value else {
+        let Type::Effectful { ty: _, effects } = &function.value else {
             panic!("Failed to parse effectful")
         };
-        let EffectExpr::Effects(effects) = effects.value else {
+        let EffectExpr::Effects(effects) = &effects.value else {
             panic!("Failed to parse effects")
         };
-        from_effect(effects[0].value.clone())
+        from_effect(&effects[0].value)
     }
     parse(
         item,
@@ -65,8 +66,8 @@ pub fn dson(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         format!("@ {string} 1")
     }
-    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
-        let Expr::Label { label, item: _ } = expr.value else {
+    fn map(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
+        let Expr::Label { label, item: _ } = &expr.value else {
             panic!("Failed to parse label")
         };
         from_dson(label)
@@ -86,7 +87,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
         string
     }
-    fn map(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
+    fn map(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
         from_expr(expr)
     }
     parse(
@@ -108,7 +109,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
 fn parse(
     item: TokenStream,
     input: fn(String) -> String,
-    map: fn(WithMeta<Expr>) -> proc_macro2::TokenStream,
+    map: fn(&WithMeta<Expr>) -> proc_macro2::TokenStream,
     uses: proc_macro2::TokenStream,
 ) -> TokenStream {
     if let Some(literal) = item.into_iter().next() {
@@ -125,9 +126,9 @@ fn parse(
             }
             .into();
         };
-        match parser::parse(&input(string)) {
+        match parser::MinimalistSyntaxParser::parse(&input(string)) {
             Ok(expr) => {
-                let tokens = map(expr);
+                let tokens = map(&expr.expr);
                 quote! {
                     {
                         #uses
@@ -152,11 +153,11 @@ fn parse(
     }
 }
 
-fn from_type(ty: Type) -> proc_macro2::TokenStream {
+fn from_type(ty: &Type) -> proc_macro2::TokenStream {
     match ty {
         Type::Labeled { brand, item } => {
-            let brand = from_dson(brand);
-            let item = from_type(item.value);
+            let brand = from_dson(&brand);
+            let item = from_type(&item.value);
             quote! {
                 Type::Label {
                     label: #brand,
@@ -170,8 +171,8 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
         Type::String => quote! { Type::String },
         Type::Trait(_) => todo!(),
         Type::Effectful { ty, effects } => {
-            let ty = from_type(ty.value);
-            let effects = from_effect_expr(effects.value);
+            let ty = from_type(&ty.value);
+            let effects = from_effect_expr(&effects.value);
             quote! {
                 Type::Effectful {
                     ty: Box::new(#ty),
@@ -184,7 +185,7 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
         Type::Product(types) => {
             let types = types
                 .into_iter()
-                .map(|ty| from_type(ty.value))
+                .map(|ty| from_type(&ty.value))
                 .collect::<Vec<_>>();
             quote! {
                 Type::Product(vec![#(#types),*])
@@ -193,16 +194,16 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
         Type::Sum(types) => {
             let types = types
                 .into_iter()
-                .map(|ty| from_type(ty.value))
+                .map(|ty| from_type(&ty.value))
                 .collect::<Vec<_>>();
             quote! {
                 Type::Sum(vec![#(#types),*])
             }
         }
         Type::Function(function) => {
-            let Function { parameter, body } = *function;
-            let parameter = from_type(parameter.value);
-            let body = from_type(body.value);
+            let Function { parameter, body } = &**function;
+            let parameter = from_type(&parameter.value);
+            let body = from_type(&body.value);
             quote! {
                 Type::Function(Box::new(Function {
                     parameter: #parameter,
@@ -211,14 +212,14 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
             }
         }
         Type::Vector(ty) => {
-            let ty = from_type(ty.value);
+            let ty = from_type(&ty.value);
             quote! {
                 Type::Vector(Box::new(#ty))
             }
         }
         Type::Map { key, value } => {
-            let key = from_type(key.value);
-            let value = from_type(value.value);
+            let key = from_type(&key.value);
+            let value = from_type(&value.value);
             quote! {
                 Type::Map {
                     key: Box::new(#key),
@@ -231,8 +232,8 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
             definition,
             body,
         } => {
-            let definition = from_type(definition.value);
-            let body = from_type(body.value);
+            let definition = from_type(&definition.value);
+            let body = from_type(&body.value);
             quote! {
                 Type::Let {
                     variable: #variable.into(),
@@ -243,8 +244,8 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
         }
         Type::Variable(ident) => quote! { Type::Variable(#ident.into()) },
         Type::Attributed { attr, ty } => {
-            let attr = from_dson(attr);
-            let ty = from_type(ty.value);
+            let attr = from_dson(&attr);
+            let ty = from_type(&ty.value);
             quote! {
                 Type::Attributed {
                     attr: #attr,
@@ -253,7 +254,7 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
             }
         }
         Type::Comment { text, item } => {
-            let item = from_type(item.value);
+            let item = from_type(&item.value);
             quote! {
                 Type::Comment {
                     text: #text.into(),
@@ -267,12 +268,12 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
             body,
         } => {
             let bound = if let Some(bound) = bound {
-                let bound = from_type(bound.value);
+                let bound = from_type(&bound.value);
                 quote! { Some(Box::new(#bound)) }
             } else {
                 quote! { None }
             };
-            let body = from_type(body.value);
+            let body = from_type(&body.value);
             quote! {
                 Type::Forall {
                     variable: #variable.into(),
@@ -287,12 +288,12 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
             body,
         } => {
             let bound = if let Some(bound) = bound {
-                let bound = from_type(bound.value);
+                let bound = from_type(&bound.value);
                 quote! { Some(Box::new(#bound)) }
             } else {
                 quote! { None }
             };
-            let body = from_type(body.value);
+            let body = from_type(&body.value);
             quote! {
                 Type::Exists {
                     variable: #variable.into(),
@@ -304,7 +305,7 @@ fn from_type(ty: Type) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
+fn from_dson(dson: &Dson) -> proc_macro2::TokenStream {
     match dson {
         Dson::Literal(literal) => match literal {
             dson::Literal::String(string) => {
@@ -337,8 +338,8 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             let elems = elems
                 .into_iter()
                 .map(|MapElem { key, value }| {
-                    let key = from_dson(key);
-                    let value = from_dson(value);
+                    let key = from_dson(&key);
+                    let value = from_dson(&value);
                     quote! { dson::MapElem { key: #key, value: #value } }
                 })
                 .collect::<Vec<_>>();
@@ -347,8 +348,8 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             }
         }
         Dson::Attributed { attr, expr } => {
-            let attr = from_dson(*attr);
-            let expr = from_dson(*expr);
+            let attr = from_dson(&*attr);
+            let expr = from_dson(&*expr);
             quote! {
                 Dson::Attributed {
                     attr: Box::new(#attr),
@@ -357,8 +358,8 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             }
         }
         Dson::Labeled { label, expr } => {
-            let label = from_dson(*label);
-            let expr = from_dson(*expr);
+            let label = from_dson(&*label);
+            let expr = from_dson(&*expr);
             quote! {
                 Dson::Labeled {
                     label: Box::new(#label),
@@ -367,8 +368,8 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             }
         }
         Dson::Typed { ty, expr } => {
-            let ty = from_dson_type(ty);
-            let expr = from_dson(*expr);
+            let ty = from_dson_type(&ty);
+            let expr = from_dson(&*expr);
             quote! {
                 Dson::Typed {
                     ty: Box::new(#ty),
@@ -377,7 +378,7 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
             }
         }
         Dson::Comment { text, expr } => {
-            let expr = from_dson(*expr);
+            let expr = from_dson(&*expr);
             quote! {
                 Dson::Comment {
                     text: #text.into(),
@@ -388,12 +389,12 @@ fn from_dson(dson: Dson) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_effect_expr(expr: EffectExpr) -> proc_macro2::TokenStream {
+fn from_effect_expr(expr: &EffectExpr) -> proc_macro2::TokenStream {
     match expr {
         EffectExpr::Effects(effects) => {
             let effects = effects
                 .into_iter()
-                .map(|effect| from_effect(effect.value))
+                .map(|effect| from_effect(&effect.value))
                 .collect::<Vec<_>>();
             quote! {
                 EffectExpr::Effects(vec![#(#effects),*])
@@ -402,7 +403,7 @@ fn from_effect_expr(expr: EffectExpr) -> proc_macro2::TokenStream {
         EffectExpr::Add(exprs) => {
             let exprs = exprs
                 .into_iter()
-                .map(|expr| from_effect_expr(expr.value))
+                .map(|expr| from_effect_expr(&expr.value))
                 .collect::<Vec<_>>();
             quote! {
                 EffectExpr::Add(vec![#(#exprs),*])
@@ -412,8 +413,8 @@ fn from_effect_expr(expr: EffectExpr) -> proc_macro2::TokenStream {
             minuend,
             subtrahend,
         } => {
-            let minuend = from_effect_expr(minuend.value);
-            let subtrahend = from_effect_expr(subtrahend.value);
+            let minuend = from_effect_expr(&minuend.value);
+            let subtrahend = from_effect_expr(&subtrahend.value);
             quote! {
                 EffectExpr::Sub {
                     minuend: Box::new(#minuend),
@@ -425,10 +426,10 @@ fn from_effect_expr(expr: EffectExpr) -> proc_macro2::TokenStream {
             function,
             arguments,
         } => {
-            let function = from_type(function.value);
+            let function = from_type(&function.value);
             let arguments = arguments
                 .into_iter()
-                .map(|argument| from_type(argument.value))
+                .map(|argument| from_type(&argument.value))
                 .collect::<Vec<_>>();
             quote! {
                 EffectExpr::Apply {
@@ -440,9 +441,9 @@ fn from_effect_expr(expr: EffectExpr) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_effect(effect: Effect) -> proc_macro2::TokenStream {
-    let input = from_type(effect.input.value);
-    let output = from_type(effect.output.value);
+fn from_effect(effect: &Effect) -> proc_macro2::TokenStream {
+    let input = from_type(&effect.input.value);
+    let output = from_type(&effect.output.value);
     quote! {
         Effect {
             input: #input,
@@ -451,11 +452,11 @@ fn from_effect(effect: Effect) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
+fn from_dson_type(ty: &dson::Type) -> proc_macro2::TokenStream {
     match ty {
         dson::Type::Brand { brand, item } => {
-            let brand = from_dson(*brand);
-            let item = from_dson_type(*item);
+            let brand = from_dson(&*brand);
+            let item = from_dson_type(&*item);
             quote! {
                 dson::Type::Brand {
                     brand: Box::new(#brand),
@@ -480,14 +481,14 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
             }
         }
         dson::Type::Vector(ty) => {
-            let ty = from_dson_type(*ty);
+            let ty = from_dson_type(&*ty);
             quote! {
                 dson::Type::Vector(Box::new(#ty))
             }
         }
         dson::Type::Map { key, value } => {
-            let key = from_dson_type(*key);
-            let value = from_dson_type(*value);
+            let key = from_dson_type(&*key);
+            let value = from_dson_type(&*value);
             quote! {
                 dson::Type::Map {
                     key: Box::new(#key),
@@ -496,8 +497,8 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
             }
         }
         dson::Type::Attributed { attr, ty } => {
-            let attr = from_dson(*attr);
-            let ty = from_dson_type(*ty);
+            let attr = from_dson(&*attr);
+            let ty = from_dson_type(&*ty);
             quote! {
                 dson::Type::Attributed {
                     attr: Box::new(#attr),
@@ -506,7 +507,7 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
             }
         }
         dson::Type::Comment { text, item } => {
-            let item = from_dson_type(*item);
+            let item = from_dson_type(&*item);
             quote! {
                 dson::Type::Comment {
                     text: #text.into(),
@@ -519,8 +520,8 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
             definition,
             body,
         } => {
-            let definition = from_dson_type(*definition);
-            let body = from_dson_type(*body);
+            let definition = from_dson_type(&*definition);
+            let body = from_dson_type(&*body);
             quote! {
                 dson::Type::Let {
                     variable: #variable.into(),
@@ -537,8 +538,8 @@ fn from_dson_type(ty: dson::Type) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
-    let tokens = match expr.value {
+fn from_expr(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
+    let tokens = match &expr.value {
         Expr::Literal(literal) => {
             let literal = match literal {
                 ast::expr::Literal::String(string) => {
@@ -559,8 +560,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Do { stmt, expr } => {
-            let stmt = from_expr(*stmt);
-            let expr = from_expr(*expr);
+            let stmt = from_expr(&*stmt);
+            let expr = from_expr(&*expr);
             quote! {
                 Expr::Do {
                     stmt: Box::new(#stmt),
@@ -569,8 +570,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Let { definition, body } => {
-            let definition = from_expr(*definition);
-            let body = from_expr(*body);
+            let definition = from_expr(&*definition);
+            let body = from_expr(&*body);
             quote! {
                 Expr::Let {
                     definition: Box::new(#definition),
@@ -579,8 +580,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Perform { input, output } => {
-            let input = from_expr(*input);
-            let output = from_type_for_ast(output);
+            let input = from_expr(&*input);
+            let output = from_type_for_ast(&output);
             quote! {
                 Expr::Perform {
                     input: Box::new(#input),
@@ -589,8 +590,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Continue { input, output } => {
-            let input = from_expr(*input);
-            let output = from_type_for_ast(output);
+            let input = from_expr(&*input);
+            let output = from_type_for_ast(&output);
             quote! {
                 Expr::Continue {
                     input: Box::new(#input),
@@ -599,19 +600,19 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Handle { expr, handlers } => {
-            let expr = from_expr(*expr);
+            let expr = from_expr(&*expr);
             let handlers = handlers
                 .into_iter()
                 .map(|handler| {
-                    let expr = from_expr(handler.value.handler);
-                    let effect = from_effect_for_ast(handler.value.effect);
+                    let expr = from_expr(&handler.value.handler);
+                    let effect = from_effect_for_ast(&handler.value.effect);
                     let tokens = quote! {
                         Handler {
                             effect: #effect,
                             handler: #expr,
                         }
                     };
-                    with_meta(handler.meta, tokens)
+                    with_meta(&handler.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -626,21 +627,21 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             link_name,
             arguments,
         } => {
-            let function = from_type_for_ast(function);
+            let function = from_type_for_ast(&function);
             let link_name = match link_name {
                 LinkName::None => quote!(LinkName::None),
                 LinkName::Version(vession) => {
-                    let uuid = from_uuid(vession);
+                    let uuid = from_uuid(&vession);
                     quote!(LinkName::Version(#uuid))
                 }
                 LinkName::Card(card_id) => {
-                    let uuid = from_uuid(card_id);
+                    let uuid = from_uuid(&card_id);
                     quote!(LinkName::Card(#uuid))
                 }
             };
             let arguments = arguments
                 .into_iter()
-                .map(|argument| from_expr(argument))
+                .map(|argument| from_expr(&argument))
                 .collect::<Vec<_>>();
 
             quote! {
@@ -654,26 +655,26 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         Expr::Product(exprs) => {
             let exprs = exprs
                 .into_iter()
-                .map(|expr| from_expr(expr))
+                .map(|expr| from_expr(&expr))
                 .collect::<Vec<_>>();
             quote! {
                 Expr::Product(vec![#(#exprs),*])
             }
         }
         Expr::Match { of, cases } => {
-            let of = from_expr(*of);
+            let of = from_expr(&*of);
             let cases = cases
                 .into_iter()
                 .map(|case| {
-                    let ty = from_type_for_ast(case.value.ty);
-                    let expr = from_expr(case.value.expr);
+                    let ty = from_type_for_ast(&case.value.ty);
+                    let expr = from_expr(&case.value.expr);
                     let tokens = quote! {
                         MatchCase {
                             ty: #ty,
                             expr: #expr,
                         }
                     };
-                    with_meta(case.meta, tokens)
+                    with_meta(&case.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -684,8 +685,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Typed { ty, item } => {
-            let ty = from_type_for_ast(ty);
-            let item = from_expr(*item);
+            let ty = from_type_for_ast(&ty);
+            let item = from_expr(&*item);
             quote! {
                 Expr::Typed {
                     ty: #ty,
@@ -695,8 +696,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         }
         Expr::Hole => quote!(Expr::Hole),
         Expr::Function { parameter, body } => {
-            let parameter = from_type_for_ast(parameter);
-            let body = from_expr(*body);
+            let parameter = from_type_for_ast(&parameter);
+            let body = from_expr(&*body);
             quote! {
                 Expr::Function {
                     parameter: #parameter,
@@ -707,7 +708,7 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
         Expr::Vector(exprs) => {
             let exprs = exprs
                 .into_iter()
-                .map(|expr| from_expr(expr))
+                .map(|expr| from_expr(&expr))
                 .collect::<Vec<_>>();
             quote! {
                 Expr::Vector(vec![#(#exprs),*])
@@ -717,15 +718,15 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             let elems = elems
                 .into_iter()
                 .map(|elem| {
-                    let key = from_expr(elem.value.key);
-                    let value = from_expr(elem.value.value);
+                    let key = from_expr(&elem.value.key);
+                    let value = from_expr(&elem.value.value);
                     let tokens = quote! {
                         MapElem {
                             key: Box::new(#key),
                             value: Box::new(#value),
                         }
                     };
-                    with_meta(elem.meta, tokens)
+                    with_meta(&elem.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -733,8 +734,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Attributed { attr, item } => {
-            let attr = from_dson(attr);
-            let item = from_expr(*item);
+            let attr = from_dson(&attr);
+            let item = from_expr(&*item);
             quote! {
                 Expr::Attributed {
                     attr: #attr,
@@ -743,8 +744,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::DeclareBrand { brand, item } => {
-            let brand = from_dson(brand);
-            let item = from_expr(*item);
+            let brand = from_dson(&brand);
+            let item = from_expr(&*item);
             quote! {
                 Expr::Brand {
                     brand: #brand,
@@ -753,8 +754,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Label { label, item } => {
-            let label = from_dson(label);
-            let item = from_expr(*item);
+            let label = from_dson(&label);
+            let item = from_expr(&*item);
             quote! {
                 Expr::Label {
                     label: #label,
@@ -763,8 +764,8 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::NewType { ident, ty, expr } => {
-            let ty = from_type_for_ast(ty);
-            let expr = from_expr(*expr);
+            let ty = from_type_for_ast(&ty);
+            let expr = from_expr(&*expr);
             quote! {
                 Expr::NewType {
                     ident: #ident.to_string(),
@@ -774,9 +775,9 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::Card { id, item, next } => {
-            let id = from_uuid(id.0);
-            let item = from_expr(*item);
-            let next = from_expr(*next);
+            let id = from_uuid(&id.0);
+            let item = from_expr(&*item);
+            let next = from_expr(&*next);
             quote! {
                 Expr::Card {
                     id: CardId(#id),
@@ -786,14 +787,14 @@ fn from_expr(expr: WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
     };
-    with_meta(expr.meta, tokens)
+    with_meta(&expr.meta, tokens)
 }
 
-fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
-    let tokens = match ty.value {
+fn from_type_for_ast(ty: &WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
+    let tokens = match &ty.value {
         Type::Labeled { brand, item } => {
-            let brand = from_dson(brand);
-            let item = from_type_for_ast(*item);
+            let brand = from_dson(&brand);
+            let item = from_type_for_ast(&*item);
             quote! {
                 Type::Labeled {
                     brand: #brand,
@@ -809,8 +810,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             let functions = functions
                 .into_iter()
                 .map(|function| {
-                    let tokens = from_function(function.value);
-                    with_meta(function.meta, tokens)
+                    let tokens = from_function(&function.value);
+                    with_meta(&function.meta, tokens)
                 })
                 .collect::<Vec<_>>();
             quote! {
@@ -818,8 +819,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
         Type::Effectful { ty, effects } => {
-            let ty = from_type_for_ast(*ty);
-            let effects = from_effect_expr_for_ast(effects);
+            let ty = from_type_for_ast(&*ty);
+            let effects = from_effect_expr_for_ast(&effects);
             quote! {
                 Type::Effectful {
                     ty: Box::new(#ty),
@@ -842,20 +843,20 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
         Type::Function(function) => {
-            let function = from_function(*function);
+            let function = from_function(&*function);
             quote! {
                 Type::Function(Box::new(#function))
             }
         }
         Type::Vector(ty) => {
-            let ty = from_type_for_ast(*ty);
+            let ty = from_type_for_ast(&*ty);
             quote! {
                 Type::Vector(Box::new(#ty))
             }
         }
         Type::Map { key, value } => {
-            let key = from_type_for_ast(*key);
-            let value = from_type_for_ast(*value);
+            let key = from_type_for_ast(&*key);
+            let value = from_type_for_ast(&*value);
             quote! {
                 Type::Map {
                     key: Box::new(#key),
@@ -868,8 +869,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             definition,
             body,
         } => {
-            let definition = from_type_for_ast(*definition);
-            let body = from_type_for_ast(*body);
+            let definition = from_type_for_ast(&*definition);
+            let body = from_type_for_ast(&*body);
             quote! {
                 Type::Let {
                     variable: #variable.to_string(),
@@ -880,8 +881,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
         }
         Type::Variable(ident) => quote!(Type::Variable(#ident.to_string())),
         Type::Attributed { attr, ty } => {
-            let attr = from_dson(attr);
-            let ty = from_type_for_ast(*ty);
+            let attr = from_dson(&attr);
+            let ty = from_type_for_ast(&*ty);
             quote! {
                 Type::Attributed {
                     attr: #attr,
@@ -890,7 +891,7 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
         Type::Comment { text, item } => {
-            let item = from_type_for_ast(*item);
+            let item = from_type_for_ast(&*item);
             quote! {
                 Type::Comment {
                     text: #text.to_string(),
@@ -903,8 +904,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             bound,
             body,
         } => {
-            let bound = from_bound(bound);
-            let body = from_type_for_ast(*body);
+            let bound = from_bound(&bound);
+            let body = from_type_for_ast(&*body);
             quote! {
                 Type::Forall {
                     variable: #variable.to_string(),
@@ -918,8 +919,8 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             bound,
             body,
         } => {
-            let bound = from_bound(bound);
-            let body = from_type_for_ast(*body);
+            let bound = from_bound(&bound);
+            let body = from_type_for_ast(&*body);
             quote! {
                 Type::Exists {
                     variable: #variable.to_string(),
@@ -929,21 +930,21 @@ fn from_type_for_ast(ty: WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
     };
-    with_meta(ty.meta, tokens)
+    with_meta(&ty.meta, tokens)
 }
 
-fn from_bound(bound: Option<Box<WithMeta<Type>>>) -> proc_macro2::TokenStream {
+fn from_bound(bound: &Option<Box<WithMeta<Type>>>) -> proc_macro2::TokenStream {
     match bound {
         Some(bound) => {
-            let tokens = from_type_for_ast(*bound);
+            let tokens = from_type_for_ast(&*bound);
             quote!(Box::new(#tokens))
         }
         None => quote!(None),
     }
 }
 
-fn from_effect_expr_for_ast(expr: WithMeta<EffectExpr>) -> proc_macro2::TokenStream {
-    let tokens = match expr.value {
+fn from_effect_expr_for_ast(expr: &WithMeta<EffectExpr>) -> proc_macro2::TokenStream {
+    let tokens = match &expr.value {
         EffectExpr::Effects(effects) => {
             let effects = effects
                 .into_iter()
@@ -966,8 +967,8 @@ fn from_effect_expr_for_ast(expr: WithMeta<EffectExpr>) -> proc_macro2::TokenStr
             minuend,
             subtrahend,
         } => {
-            let minuend = from_effect_expr_for_ast(*minuend);
-            let subtrahend = from_effect_expr_for_ast(*subtrahend);
+            let minuend = from_effect_expr_for_ast(&*minuend);
+            let subtrahend = from_effect_expr_for_ast(&*subtrahend);
             quote! {
                 EffectExpr::Sub {
                     minuend: Box::new(#minuend),
@@ -979,7 +980,7 @@ fn from_effect_expr_for_ast(expr: WithMeta<EffectExpr>) -> proc_macro2::TokenStr
             function,
             arguments,
         } => {
-            let function = from_type_for_ast(*function);
+            let function = from_type_for_ast(&*function);
             let arguments = arguments
                 .into_iter()
                 .map(from_type_for_ast)
@@ -992,24 +993,24 @@ fn from_effect_expr_for_ast(expr: WithMeta<EffectExpr>) -> proc_macro2::TokenStr
             }
         }
     };
-    with_meta(expr.meta, tokens)
+    with_meta(&expr.meta, tokens)
 }
 
-fn from_effect_for_ast(effect: WithMeta<Effect>) -> proc_macro2::TokenStream {
-    let input = from_type_for_ast(effect.value.input);
-    let output = from_type_for_ast(effect.value.output);
+fn from_effect_for_ast(effect: &WithMeta<Effect>) -> proc_macro2::TokenStream {
+    let input = from_type_for_ast(&effect.value.input);
+    let output = from_type_for_ast(&effect.value.output);
     let tokens = quote! {
         Effect {
             input: #input,
             output: #output,
         }
     };
-    with_meta(effect.meta, tokens)
+    with_meta(&effect.meta, tokens)
 }
 
-fn from_function(function: Function) -> proc_macro2::TokenStream {
-    let parameter = from_type_for_ast(function.parameter);
-    let body = from_type_for_ast(function.body);
+fn from_function(function: &Function) -> proc_macro2::TokenStream {
+    let parameter = from_type_for_ast(&function.parameter);
+    let body = from_type_for_ast(&function.body);
     quote! {
         Function {
             parameter: #parameter,
@@ -1018,16 +1019,16 @@ fn from_function(function: Function) -> proc_macro2::TokenStream {
     }
 }
 
-fn from_uuid(uuid: Uuid) -> proc_macro2::TokenStream {
+fn from_uuid(uuid: &Uuid) -> proc_macro2::TokenStream {
     let string = uuid.to_string();
     quote!(uuid::uuid!(#string))
 }
 
-fn with_meta(meta: Meta, value: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    let id = from_uuid(meta.id.0);
+fn with_meta(meta: &Meta, value: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let id = from_uuid(&meta.id.0);
     let comments = meta
         .comments
-        .into_iter()
+        .iter()
         .map(|comment| match comment {
             Comment::Line(line) => quote!(Comment::Line(#line.to_string())),
             Comment::Block(block) => quote!(Comment::Block(#block.to_string())),

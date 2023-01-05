@@ -4,3 +4,4 @@ pub mod meta;
 pub mod remove_span;
 pub mod ty;
 pub mod visitor;
+pub mod parser;

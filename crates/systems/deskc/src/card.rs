@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ast::meta::WithMeta as AstWithMeta;
+use ast::parser::{DummySpanStorage, ParseResult};
 use codebase::code::Code;
 use hir::meta::WithMeta;
 use ids::{Entrypoint, FileId};
@@ -8,14 +8,17 @@ use mir::mir::Mir;
 use ty::conclusion::TypeConclusions;
 
 use crate::{
-    error::DeskcError, hir_result::CardsResult, parse_source_code, query_result::QueryResult,
+    error::DeskcError,
+    hir_result::CardsResult,
+    parse_source_code,
+    query_result::{QueryError, QueryResult},
 };
 
 #[salsa::query_group(CardStorage)]
 pub trait DeskcQueries {
     #[salsa::input]
     fn code(&self, id: FileId) -> Code;
-    fn ast(&self, id: FileId) -> QueryResult<AstWithMeta<ast::expr::Expr>>;
+    fn ast(&self, id: FileId) -> Result<ParseResult, QueryError>;
     fn cards(&self, id: FileId) -> QueryResult<CardsResult>;
     fn hir(&self, entrypoint: Entrypoint) -> QueryResult<WithMeta<hir::expr::Expr>>;
     fn typeinfer(&self, entrypoint: Entrypoint) -> QueryResult<TypeConclusions>;
@@ -30,20 +33,17 @@ pub struct DeskCompiler {
 
 impl salsa::Database for DeskCompiler {}
 
-fn ast(db: &dyn DeskcQueries, id: FileId) -> QueryResult<AstWithMeta<ast::expr::Expr>> {
+fn ast(db: &dyn DeskcQueries, id: FileId) -> Result<ParseResult, QueryError> {
     let code = db.code(id);
     match code {
-        Code::SourceCode { syntax, source } => {
-            let ast = parse_source_code(&syntax, &source)?;
-            Ok(Arc::new(ast))
-        }
-        Code::Ast(ast) => Ok(ast),
+        Code::SourceCode { syntax, source } => Ok(parse_source_code(&syntax, &source)?),
+        Code::Ast(ast) => Ok(ParseResult::new(ast, DummySpanStorage)),
     }
 }
 
 fn cards(db: &dyn DeskcQueries, id: FileId) -> QueryResult<CardsResult> {
-    let ast = db.ast(id)?;
-    let (genhir, hir) = hirgen::gen_cards(&ast)?;
+    let parsed = db.ast(id)?;
+    let (genhir, hir) = hirgen::gen_cards(&parsed.expr)?;
     Ok(Arc::new(CardsResult {
         cards: hir,
         next_id: genhir.next_id(),

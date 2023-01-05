@@ -1,9 +1,9 @@
 use dson::Dson;
-use ids::{CardId, LinkName, NodeId};
+use ids::{CardId, LinkName};
 
 use crate::{
     expr::{Expr, Handler, Literal, MapElem, MatchCase},
-    meta::{Meta, Span, WithMeta},
+    meta::{Meta, WithMeta},
     ty::{Effect, EffectExpr, Function, Type},
 };
 

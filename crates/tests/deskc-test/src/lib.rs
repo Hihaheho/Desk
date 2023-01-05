@@ -67,12 +67,17 @@ macro_rules! test {
             let _ = compiler
                 .typeinfer(Entrypoint::File(case_file_id.clone()))
                 .unwrap_or_else(|err| print_errors(&input, err));
-            let ast = compiler
+            let parsed = compiler
                 .ast(case_file_id)
                 .unwrap_or_else(|err| print_errors(&input, err));
-            let dson = ast.as_ref().clone().try_into().unwrap_or_else(|err| {
-                panic!("failed to convert ast to dson: {:?}", err);
-            });
+            let dson = parsed
+                .expr
+                .as_ref()
+                .clone()
+                .try_into()
+                .unwrap_or_else(|err| {
+                    panic!("failed to convert ast to dson: {:?}", err);
+                });
             let test_case: TestCase = from_dson(dson).unwrap();
 
             // assertions
@@ -199,5 +204,4 @@ test!(case007_fibonacci);
 // link is not implemented yet
 #[test]
 #[ignore]
-fn case008_cards() {
-}
+fn case008_cards() {}

@@ -1,14 +1,8 @@
-use ast::{expr::Expr, meta::WithMeta};
+use ast::parser::{ParseResult, Parser};
 use codebase::code::SyntaxKind;
 
-pub fn parse_source_code(
-    syntax: &SyntaxKind,
-    source: &str,
-) -> Result<WithMeta<Expr>, anyhow::Error> {
+pub fn parse_source_code(syntax: &SyntaxKind, source: &str) -> Result<ParseResult, anyhow::Error> {
     match syntax {
-        SyntaxKind::Minimalist => Ok(minimalist::parse(source)?),
-        SyntaxKind::TypeScriptLike => todo!(),
-        SyntaxKind::OCamlLike => todo!(),
-        SyntaxKind::RustLike => todo!(),
+        SyntaxKind::Minimalist => Ok(minimalist::MinimalistSyntaxParser::parse(source)?),
     }
 }

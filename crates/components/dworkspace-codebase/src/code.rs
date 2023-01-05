@@ -18,7 +18,7 @@ pub enum Code {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SyntaxKind {
     Minimalist,
-    TypeScriptLike,
-    OCamlLike,
-    RustLike,
+    // TypeScriptLike,
+    // OCamlLike,
+    // RustLike,
 }

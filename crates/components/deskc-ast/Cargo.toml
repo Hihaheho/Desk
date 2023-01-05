@@ -13,4 +13,6 @@ edition = "2021"
 [dependencies]
 ids = { path = "../deskc-ids", version = "0.0.0", package = "deskc-ids" }
 dson = { path = "../dson", version = "0.0.0", package = "dson" }
+
 thiserror = { workspace = true }
+downcast-rs = "1.2"

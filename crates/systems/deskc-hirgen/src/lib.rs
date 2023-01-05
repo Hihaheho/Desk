@@ -396,7 +396,7 @@ mod tests {
 
     use super::*;
 
-    fn parse(input: &str) -> Arc<AstWithMeta<ast::expr::Expr>> {
+    fn parse(input: &str) -> AstWithMeta<ast::expr::Expr> {
         let file_id = FileId::new();
         let mut compiler = deskc::card::DeskCompiler::default();
         compiler.set_code(
@@ -406,7 +406,9 @@ mod tests {
                 source: Arc::new(input.to_string()),
             },
         );
-        compiler.ast(file_id).unwrap()
+        let parsed = compiler.ast(file_id).unwrap();
+        drop(compiler);
+        Arc::try_unwrap(parsed.expr).unwrap()
     }
 
     #[test]

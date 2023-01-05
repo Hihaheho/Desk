@@ -1726,6 +1726,7 @@ name = "deskc-ast"
 version = "0.0.0"
 dependencies = [
  "deskc-ids",
+ "downcast-rs",
  "dson",
  "thiserror",
 ]
@@ -1754,7 +1755,6 @@ version = "0.0.0"
 dependencies = [
  "deskc-ids",
  "dson",
- "thiserror",
 ]
 
 [[package]]
