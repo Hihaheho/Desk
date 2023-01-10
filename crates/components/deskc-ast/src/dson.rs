@@ -33,8 +33,6 @@ pub enum ExprToDsonError {
     UnexpectedNewType,
     #[error("unexpected card")]
     UnexpectedCard,
-    #[error("unexpected trait")]
-    UnexpectedTrait,
     #[error("unexpected effectful")]
     UnexpectedEffectful,
     #[error("unexpected infer")]
@@ -156,7 +154,6 @@ impl TryFrom<WithMeta<Type>> for dson::Type {
                 attr: Box::new(attr),
                 ty: Box::new(dson::Type::try_from(*ty)?),
             }),
-            Type::Trait(_) => Err(ExprToDsonError::UnexpectedTrait),
             Type::Effectful { .. } => Err(ExprToDsonError::UnexpectedEffectful),
             Type::Infer => Err(ExprToDsonError::UnexpectedInfer),
             Type::This => Err(ExprToDsonError::UnexpectedThis),

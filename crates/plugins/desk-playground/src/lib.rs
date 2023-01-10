@@ -551,7 +551,6 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                         content: Content::TyString,
                     });
                 }
-                Type::Trait(_) => todo!(),
                 Type::Effectful { ty, effects } => {
                     let ty = self.visit_type(ty);
                     let effects = self.visit_effect_expr(effects);

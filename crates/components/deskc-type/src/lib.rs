@@ -23,7 +23,6 @@ pub enum Type {
     Product(Vec<Self>),
     Sum(Vec<Self>),
     Function(Box<Function>),
-    Trait(Vec<Function>),
     Vector(Box<Self>),
     Map {
         key: Box<Self>,

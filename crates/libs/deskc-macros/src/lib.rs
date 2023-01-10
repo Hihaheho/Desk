@@ -169,7 +169,6 @@ fn from_type(ty: &Type) -> proc_macro2::TokenStream {
         Type::Rational => quote! { Type::Rational },
         Type::Integer => quote! { Type::Integer },
         Type::String => quote! { Type::String },
-        Type::Trait(_) => todo!(),
         Type::Effectful { ty, effects } => {
             let ty = from_type(&ty.value);
             let effects = from_effect_expr(&effects.value);
@@ -797,18 +796,6 @@ fn from_type_for_ast(ty: &WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
         Type::Rational => quote!(Type::Rational),
         Type::Integer => quote!(Type::Integer),
         Type::String => quote!(Type::String),
-        Type::Trait(functions) => {
-            let functions = functions
-                .into_iter()
-                .map(|function| {
-                    let tokens = from_function(&function.value);
-                    with_meta(&function.meta, tokens)
-                })
-                .collect::<Vec<_>>();
-            quote! {
-                Type::Trait(vec![#(#functions),*])
-            }
-        }
         Type::Effectful { ty, effects } => {
             let ty = from_type_for_ast(&*ty);
             let effects = from_effect_expr_for_ast(&effects);

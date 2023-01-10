@@ -56,18 +56,6 @@ impl HirGen {
             ast::ty::Type::Rational => self.with_meta(Type::Rational),
             ast::ty::Type::Integer => self.with_meta(Type::Integer),
             ast::ty::Type::String => self.with_meta(Type::String),
-            ast::ty::Type::Trait(trait_) => self.with_meta(Type::Trait(
-                trait_
-                    .iter()
-                    .map(|function| {
-                        self.push_meta(&function.meta);
-                        Ok(self.with_meta(Function {
-                            parameter: self.gen_type(&function.value.parameter)?,
-                            body: self.gen_type(&function.value.body)?,
-                        }))
-                    })
-                    .collect::<Result<_, _>>()?,
-            )),
             ast::ty::Type::Effectful { ty, effects } => self.with_meta(Type::Effectful {
                 ty: Box::new(self.gen_type(ty)?),
                 effects: self.gen_effect_expr(effects)?,

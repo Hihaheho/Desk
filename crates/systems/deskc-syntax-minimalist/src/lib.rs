@@ -453,17 +453,6 @@ mod tests {
     }
 
     #[test]
-    fn parse_trait() {
-        assert_eq!(
-            parse(r#"& %<\'integer -> 'integer>"#).value,
-            r(Type::Trait(vec![w(Function {
-                parameter: w(Type::Integer),
-                body: w(Type::Integer),
-            })]))
-        );
-    }
-
-    #[test]
     fn parse_variable() {
         assert_eq!(
             parse("& something").value,
@@ -514,18 +503,6 @@ mod tests {
             r(Type::Map {
                 key: bw(Type::Integer),
                 value: bw(Type::String),
-            })
-        );
-    }
-
-    #[test]
-    fn parse_bound() {
-        assert_eq!(
-            parse("& 'forall a: %<> a").value,
-            r(Type::Forall {
-                variable: "a".into(),
-                bound: Some(bw(Type::Trait(vec![]))),
-                body: bw(Type::Variable("a".into())),
             })
         );
     }

@@ -105,7 +105,6 @@ Ty: ExprBegin^ Ty ExprEnd^
   | IntegerKey
   | StringKey
   | Effectful
-  | Trait
   | ProductTy
   | Sum
   | VecTy
@@ -124,7 +123,6 @@ Ty: ExprBegin^ Ty ExprEnd^
         AddEffects: SumSym^ TypeBegin^ { EffectExpr [ Comma^ ] } TypeEnd^;
         SubEffects: Minus^ TypeBegin^ EffectExpr [ Comma^ ] EffectExpr TypeEnd^;
         ApplyEffects: ApplySym^ Ty ParamsBegin^ { Ty [ Comma^ ] } ParamsEnd^;
-    Trait: TraitSym^ TypeBegin^ { FunctionTy [ Comma^ ] } TypeEnd^;
     ProductTy: ProductSym^ TypeBegin^ { Ty [ Comma^ ] } TypeEnd^;
     Sum: SumSym^ TypeBegin^ { Ty [ Comma^ ] } TypeEnd^;
     VecTy: VecBegin^ Ty VecEnd^;
@@ -198,7 +196,6 @@ ProductSym: '*';
 SumSym: '+';
 Minus: '-';
 LetSym: '$';
-TraitSym: '%';
 AttributeSym: '#';
 // \u{5c} is '\'.
 FunctionSym: /\u{5c}/;

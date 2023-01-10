@@ -20,7 +20,6 @@ pub enum Type {
     Rational,
     Integer,
     String,
-    Trait(Vec<WithMeta<Function>>),
     Effectful {
         ty: Box<WithMeta<Self>>,
         effects: WithMeta<EffectExpr>,

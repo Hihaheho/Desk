@@ -60,18 +60,6 @@ fn from_types(ty: &deskc_ty::Type) -> WithMeta<Type> {
         DeskcType::Rational => Type::Rational,
         DeskcType::Integer => Type::Integer,
         DeskcType::String => Type::String,
-        DeskcType::Trait(trait_) => Type::Trait(
-            trait_
-                .iter()
-                .map(|function| WithMeta {
-                    meta: Meta::new_no_comments(),
-                    value: Function {
-                        parameter: from_types(&function.parameter),
-                        body: from_types(&function.body),
-                    },
-                })
-                .collect(),
-        ),
         DeskcType::Product(types) => Type::Product(types.iter().map(from_types).collect()),
         DeskcType::Sum(types) => Type::Sum(types.iter().map(from_types).collect()),
         DeskcType::Function(function) => Type::Function(Box::new(Function {

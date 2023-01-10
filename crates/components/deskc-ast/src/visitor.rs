@@ -178,7 +178,6 @@ pub trait TypeVisitorMut {
             Type::Rational => self.visit_rational(),
             Type::Integer => self.visit_integer(),
             Type::String => self.visit_string(),
-            Type::Trait(types) => self.visit_trait(types),
             Type::Effectful { ty, effects } => self.visit_effectful(ty, effects),
             Type::Infer => self.visit_infer(),
             Type::This => self.visit_this(),

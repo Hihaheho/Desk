@@ -13,7 +13,6 @@ impl Ctx {
             Rational => Type::Rational,
             Integer => Type::Integer,
             String => Type::String,
-            Trait(_types) => todo!(),
             Effectful { ty, effects } => self.with_effects(
                 self.gen_from_hir_type(ty),
                 self.gen_from_hir_effect_expr(effects),

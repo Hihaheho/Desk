@@ -13,7 +13,7 @@ use crate::{
         LiteralRawString, LiteralReal, LiteralString, RawString, TyAttributedTy, TyEffectful,
         TyExistsTy, TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyIntegerKey,
         TyLabeledTy, TyLetTy, TyMapTy, TyProductTy, TyRationalKey, TyRealKey, TyStringKey, TySum,
-        TyThis, TyTrait, TyVariable, TyVecTy,
+        TyThis, TyVariable, TyVecTy,
     },
     MinimalistSyntaxError,
 };
@@ -484,31 +484,6 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
                     effects: (*effectful.effect_expr).try_into()?,
                 },
             },
-            grammar_trait::Ty::Trait(TyTrait { r#trait }) => WithMeta {
-                meta: Meta {
-                    id: NodeId::new(),
-                    comments,
-                },
-                value: ast::ty::Type::Trait(
-                    r#trait
-                        .trait_list
-                        .into_iter()
-                        .map(|t| {
-                            let comments = vec![].into();
-                            Ok(WithMeta {
-                                meta: Meta {
-                                    id: NodeId::new(),
-                                    comments,
-                                },
-                                value: Function {
-                                    parameter: (*t.function_ty.ty).try_into()?,
-                                    body: (*t.function_ty.ty0).try_into()?,
-                                },
-                            })
-                        })
-                        .collect::<Result<_, MinimalistSyntaxError>>()?,
-                ),
-            },
             grammar_trait::Ty::ProductTy(TyProductTy { product_ty }) => WithMeta {
                 meta: Meta {
                     id: NodeId::new(),
@@ -757,30 +732,6 @@ impl From<grammar_trait::Ident<'_>> for String {
                     .join(" ")
             }
         }
-    }
-}
-
-impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithMeta<Function>> {
-    type Error = MinimalistSyntaxError;
-
-    fn try_from(value: grammar_trait::Trait<'_>) -> Result<Self, Self::Error> {
-        value
-            .trait_list
-            .into_iter()
-            .map(|t| {
-                let comments = vec![].into();
-                Ok(WithMeta {
-                    meta: Meta {
-                        id: NodeId::new(),
-                        comments,
-                    },
-                    value: Function {
-                        parameter: (*t.function_ty.ty).try_into()?,
-                        body: (*t.function_ty.ty0).try_into()?,
-                    },
-                })
-            })
-            .collect::<Result<_, MinimalistSyntaxError>>()
     }
 }
 
