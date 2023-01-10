@@ -196,7 +196,6 @@ pub trait TypeVisitorMut {
             } => self.visit_let(variable, definition, body),
             Type::Variable(ident) => self.visit_variable(ident),
             Type::Attributed { attr, ty } => self.visit_attribute(attr, ty),
-            Type::Comment { text, item } => self.visit_comment(text, item),
             Type::Forall {
                 variable,
                 bound,
@@ -260,9 +259,6 @@ pub trait TypeVisitorMut {
     }
     fn visit_variable(&mut self, _ident: &mut String) {}
     fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithMeta<Type>) {
-        self.visit_type(item);
-    }
-    fn visit_comment(&mut self, _text: &mut String, item: &mut WithMeta<Type>) {
         self.visit_type(item);
     }
     fn visit_expr(&mut self, _item: &mut WithMeta<Expr>) {}

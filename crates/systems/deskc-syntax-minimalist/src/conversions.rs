@@ -33,7 +33,8 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
             .into_iter()
             .map(|comment| *comment.comment)
             .map(Into::into)
-            .collect();
+            .collect::<Vec<_>>()
+            .into();
         let expr = match *expr.expr {
             grammar_trait::Expr::ExprBeginExprCExprEnd(ExprExprBeginExprCExprEnd { expr_c }) => {
                 (*expr_c).try_into()?
@@ -213,7 +214,8 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                                 .into_iter()
                                 .map(|handler_list| *handler_list.comment)
                                 .map(Into::into)
-                                .collect();
+                                .collect::<Vec<_>>()
+                                .into();
                             Ok(WithMeta {
                                 meta: Meta {
                                     id: NodeId::new(),
@@ -223,7 +225,7 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                                     effect: WithMeta {
                                         meta: Meta {
                                             id: NodeId::new(),
-                                            comments: vec![],
+                                            comments: vec![].into(),
                                         },
                                         value: Effect {
                                             input: (*handler.handler.ty).try_into()?,
@@ -272,7 +274,7 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                     map.map_list
                         .into_iter()
                         .map(|map| {
-                            let comments = vec![];
+                            let comments = vec![].into();
                             Ok(WithMeta {
                                 meta: Meta {
                                     id: NodeId::new(),
@@ -314,7 +316,8 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                                 .into_iter()
                                 .map(|case_list| *case_list.comment)
                                 .map(Into::into)
-                                .collect();
+                                .collect::<Vec<_>>()
+                                .into();
                             Ok(WithMeta {
                                 meta: Meta {
                                     id: NodeId::new(),
@@ -424,7 +427,7 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
 impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
     type Error = MinimalistSyntaxError;
     fn try_from(ty: grammar_trait::Ty) -> Result<Self, Self::Error> {
-        let comments = vec![];
+        let comments = vec![].into();
         let ty = match ty {
             grammar_trait::Ty::ExprBeginTyExprEnd(TyExprBeginTyExprEnd { ty }) => {
                 (*ty).try_into()?
@@ -491,7 +494,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
                         .trait_list
                         .into_iter()
                         .map(|t| {
-                            let comments = vec![];
+                            let comments = vec![].into();
                             Ok(WithMeta {
                                 meta: Meta {
                                     id: NodeId::new(),
@@ -638,7 +641,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
 impl TryFrom<grammar_trait::EffectExpr<'_>> for WithMeta<ast::ty::EffectExpr> {
     type Error = MinimalistSyntaxError;
     fn try_from(effect_expr: grammar_trait::EffectExpr) -> Result<Self, Self::Error> {
-        let comments = vec![];
+        let comments = vec![].into();
         let effect_expr = match effect_expr {
             grammar_trait::EffectExpr::Effects(EffectExprEffects { effects }) => WithMeta {
                 meta: Meta {
@@ -704,7 +707,7 @@ impl TryFrom<grammar_trait::EffectExpr<'_>> for WithMeta<ast::ty::EffectExpr> {
 impl TryFrom<grammar_trait::Effect<'_>> for WithMeta<ast::ty::Effect> {
     type Error = MinimalistSyntaxError;
     fn try_from(effect: grammar_trait::Effect) -> Result<Self, Self::Error> {
-        let comments = vec![];
+        let comments = vec![].into();
         Ok(WithMeta {
             meta: Meta {
                 id: NodeId::new(),
@@ -765,7 +768,7 @@ impl TryFrom<grammar_trait::Trait<'_>> for Vec<WithMeta<Function>> {
             .trait_list
             .into_iter()
             .map(|t| {
-                let comments = vec![];
+                let comments = vec![].into();
                 Ok(WithMeta {
                     meta: Meta {
                         id: NodeId::new(),

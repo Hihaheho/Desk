@@ -6,12 +6,15 @@ use desk_window::{
     widget::{Widget, WidgetId},
     window::{DefaultWindow, Window},
 };
-use deskc_ast::{expr::Expr, meta::WithMeta};
+use deskc_ast::{
+    expr::Expr,
+    meta::WithMeta,
+    ty::{Effect, EffectExpr, Type},
+};
 use deskc_ids::NodeId;
 use deskc_macros::ast;
-use deskc_type::{DsonTypeDeduction, Effect};
+use deskc_type::DsonTypeDeduction;
 use dworkspace::{
-    conversions::ast_type_to_type,
     prelude::{AttributePatch, Content, Event, OperandPatch},
     Workspace,
 };
@@ -145,33 +148,45 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                 }
                 Expr::Perform { input, output } => {
                     let input = self.visit_expr(input);
+                    let output = self.visit_type(output);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
-                        content: Content::Perform {
-                            output: ast_type_to_type(output),
-                        },
+                        content: Content::Perform,
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
                             node_id: input.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: output.clone(),
                         },
                     });
                 }
                 Expr::Continue { input, output } => {
                     let input = self.visit_expr(input);
+                    let output = self.visit_type(output);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
-                        content: Content::Continue {
-                            output: ast_type_to_type(output),
-                        },
+                        content: Content::Continue,
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
                             node_id: input.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: output.clone(),
                         },
                     });
                 }
@@ -189,21 +204,23 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                         },
                     });
                     for (index, handler) in handlers.iter().enumerate() {
-                        let effect = &handler.value.effect;
+                        let effect = self.visit_effect(&handler.value.effect);
                         let expr = self.visit_expr(&handler.value.handler);
                         self.add_event(Event::CreateNode {
                             node_id: handler.meta.id.clone(),
-                            content: Content::Handler {
-                                effect: Effect {
-                                    input: ast_type_to_type(&effect.value.input),
-                                    output: ast_type_to_type(&effect.value.output),
-                                },
-                            },
+                            content: Content::Handler,
                         });
                         self.add_event(Event::PatchOperand {
                             node_id: handler.meta.id.clone(),
                             patch: OperandPatch::Insert {
                                 index: 0,
+                                node_id: effect.clone(),
+                            },
+                        });
+                        self.add_event(Event::PatchOperand {
+                            node_id: handler.meta.id.clone(),
+                            patch: OperandPatch::Insert {
+                                index: 1,
                                 node_id: expr.clone(),
                             },
                         });
@@ -221,11 +238,18 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     link_name,
                     arguments,
                 } => {
+                    let function = self.visit_type(function);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Apply {
-                            ty: ast_type_to_type(function),
                             link_name: link_name.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: function.clone(),
                         },
                     });
                     for (index, argument) in arguments.iter().enumerate() {
@@ -233,7 +257,7 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                         self.add_event(Event::PatchOperand {
                             node_id: node_id.clone(),
                             patch: OperandPatch::Insert {
-                                index,
+                                index: index + 1,
                                 node_id: argument.clone(),
                             },
                         });
@@ -270,16 +294,22 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     });
                     for (index, case) in cases.iter().enumerate() {
                         let expr = self.visit_expr(&case.value.expr);
+                        let ty = self.visit_type(&case.value.ty);
                         self.add_event(Event::CreateNode {
                             node_id: case.meta.id.clone(),
-                            content: Content::Case {
-                                ty: ast_type_to_type(&case.value.ty),
-                            },
+                            content: Content::Case,
                         });
                         self.add_event(Event::PatchOperand {
                             node_id: case.meta.id.clone(),
                             patch: OperandPatch::Insert {
                                 index: 0,
+                                node_id: ty.clone(),
+                            },
+                        });
+                        self.add_event(Event::PatchOperand {
+                            node_id: case.meta.id.clone(),
+                            patch: OperandPatch::Insert {
+                                index: 1,
                                 node_id: expr.clone(),
                             },
                         });
@@ -293,17 +323,23 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     }
                 }
                 Expr::Typed { ty, item } => {
+                    let ty = self.visit_type(ty);
                     let item = self.visit_expr(item);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
-                        content: Content::Typed {
-                            ty: ast_type_to_type(ty),
-                        },
+                        content: Content::Typed,
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
+                            node_id: ty.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
                             node_id: item.clone(),
                         },
                     });
@@ -316,16 +352,22 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                 }
                 Expr::Function { parameter, body } => {
                     let body = self.visit_expr(body);
+                    let parameter = self.visit_type(parameter);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
-                        content: Content::Function {
-                            parameter: ast_type_to_type(parameter),
-                        },
+                        content: Content::Function,
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
+                            node_id: parameter.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
                             node_id: body.clone(),
                         },
                     });
@@ -426,18 +468,25 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     });
                 }
                 Expr::NewType { ident, ty, expr } => {
+                    let ty = self.visit_type(ty);
                     let expr = self.visit_expr(expr);
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::NewType {
                             ident: ident.clone(),
-                            ty: ast_type_to_type(ty),
                         },
                     });
                     self.add_event(Event::PatchOperand {
                         node_id: node_id.clone(),
                         patch: OperandPatch::Insert {
                             index: 0,
+                            node_id: ty.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
                             node_id: expr.clone(),
                         },
                     });
@@ -456,6 +505,350 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     return item;
                 }
             };
+            node_id
+        }
+        #[must_use]
+        fn visit_type<'a>(&mut self, ty: &'a WithMeta<Type>) -> &'a NodeId {
+            let node_id = &ty.meta.id;
+            match &ty.value {
+                Type::Labeled { brand, item } => {
+                    let item = self.visit_type(item);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyLabeled {
+                            brand: brand.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: item.clone(),
+                        },
+                    });
+                }
+                Type::Real => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyReal,
+                    });
+                }
+                Type::Rational => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyRational,
+                    });
+                }
+                Type::Integer => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyInteger,
+                    });
+                }
+                Type::String => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyString,
+                    });
+                }
+                Type::Trait(_) => todo!(),
+                Type::Effectful { ty, effects } => {
+                    let ty = self.visit_type(ty);
+                    let effects = self.visit_effect_expr(effects);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyEffectful,
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: ty.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: effects.clone(),
+                        },
+                    });
+                }
+                Type::Infer => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::Infer,
+                    });
+                }
+                Type::This => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::This,
+                    });
+                }
+                Type::Product(types) => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyProduct,
+                    });
+                    for (index, ty) in types.iter().enumerate() {
+                        let ty = self.visit_type(ty);
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index,
+                                node_id: ty.clone(),
+                            },
+                        });
+                    }
+                }
+                Type::Sum(types) => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::Sum,
+                    });
+                    for (index, ty) in types.iter().enumerate() {
+                        let ty = self.visit_type(ty);
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index,
+                                node_id: ty.clone(),
+                            },
+                        });
+                    }
+                }
+                Type::Function(function) => {
+                    let parameter = self.visit_type(&function.parameter);
+                    let body = self.visit_type(&function.body);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyFunction,
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: parameter.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: body.clone(),
+                        },
+                    });
+                }
+                Type::Vector(ty) => {
+                    let ty = self.visit_type(ty);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyVector,
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: ty.clone(),
+                        },
+                    });
+                }
+                Type::Map { key, value } => {
+                    let key = self.visit_type(key);
+                    let value = self.visit_type(value);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyMap,
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: key.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: value.clone(),
+                        },
+                    });
+                }
+                Type::Let {
+                    variable,
+                    definition,
+                    body,
+                } => {
+                    let definition = self.visit_type(definition);
+                    let body = self.visit_type(body);
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::TyLet {
+                            ident: variable.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: definition.clone(),
+                        },
+                    });
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: body.clone(),
+                        },
+                    });
+                }
+                Type::Variable(ident) => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::Variable {
+                            ident: ident.clone(),
+                        },
+                    });
+                }
+                Type::Attributed { attr, ty } => {
+                    let node_id = self.visit_type(ty);
+                    self.add_event(Event::PatchAttribute {
+                        node_id: node_id.clone(),
+                        patch: AttributePatch::Update {
+                            key: attr.deduct_type(),
+                            value: attr.clone(),
+                        },
+                    });
+                    // Use the node_id of the item, not the attributed node.
+                    return node_id;
+                }
+                Type::Forall {
+                    variable,
+                    bound,
+                    body,
+                } => todo!(),
+                Type::Exists {
+                    variable,
+                    bound,
+                    body,
+                } => todo!(),
+            };
+            node_id
+        }
+        fn visit_effect_expr<'a>(&mut self, effects: &'a WithMeta<EffectExpr>) -> &'a NodeId {
+            let node_id = &effects.meta.id;
+            match &effects.value {
+                EffectExpr::Effects(effects) => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::Effects,
+                    });
+                    for (index, effect) in effects.iter().enumerate() {
+                        let effect = self.visit_effect(effect);
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index,
+                                node_id: effect.clone(),
+                            },
+                        });
+                    }
+                }
+                EffectExpr::Add(exprs) => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::EAdd,
+                    });
+                    for (index, expr) in exprs.iter().enumerate() {
+                        let expr = self.visit_effect_expr(expr);
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index,
+                                node_id: expr.clone(),
+                            },
+                        });
+                    }
+                }
+                EffectExpr::Sub {
+                    minuend,
+                    subtrahend,
+                } => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::ESub,
+                    });
+                    let minuend = self.visit_effect_expr(minuend);
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: minuend.clone(),
+                        },
+                    });
+                    let subtrahend = self.visit_effect_expr(subtrahend);
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 1,
+                            node_id: subtrahend.clone(),
+                        },
+                    });
+                }
+                EffectExpr::Apply {
+                    function,
+                    arguments,
+                } => {
+                    self.add_event(Event::CreateNode {
+                        node_id: node_id.clone(),
+                        content: Content::EApply,
+                    });
+                    let function = self.visit_type(function);
+                    self.add_event(Event::PatchOperand {
+                        node_id: node_id.clone(),
+                        patch: OperandPatch::Insert {
+                            index: 0,
+                            node_id: function.clone(),
+                        },
+                    });
+                    for (index, argument) in arguments.iter().enumerate() {
+                        let argument = self.visit_type(argument);
+                        self.add_event(Event::PatchOperand {
+                            node_id: node_id.clone(),
+                            patch: OperandPatch::Insert {
+                                index: index + 1,
+                                node_id: argument.clone(),
+                            },
+                        });
+                    }
+                }
+            };
+            node_id
+        }
+        fn visit_effect<'a>(&mut self, effect: &'a WithMeta<Effect>) -> &'a NodeId {
+            let node_id = &effect.meta.id;
+            let input = self.visit_type(&effect.value.input);
+            let output = self.visit_type(&effect.value.output);
+            self.add_event(Event::CreateNode {
+                node_id: node_id.clone(),
+                content: Content::Effect,
+            });
+            self.add_event(Event::PatchOperand {
+                node_id: node_id.clone(),
+                patch: OperandPatch::Insert {
+                    index: 0,
+                    node_id: input.clone(),
+                },
+            });
+            self.add_event(Event::PatchOperand {
+                node_id: node_id.clone(),
+                patch: OperandPatch::Insert {
+                    index: 1,
+                    node_id: output.clone(),
+                },
+            });
             node_id
         }
     }

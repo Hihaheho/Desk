@@ -17,7 +17,7 @@ impl Widget<egui::Context> for EditorWidget {
             ui.label("====");
             if let Some(node) = ctx.kernel.snapshot.flat_nodes.get(&self.node_id) {
                 match &node.content {
-                    dworkspace_codebase::content::Content::SourceCode {
+                    Content::SourceCode {
                         source: original,
                         syntax,
                     } => {
@@ -33,7 +33,7 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dworkspace_codebase::content::Content::String(original) => {
+                    Content::String(original) => {
                         let mut string = original.clone();
                         ui.text_edit_singleline(&mut string);
                         if *original != string {
@@ -43,7 +43,7 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dworkspace_codebase::content::Content::Integer(original) => {
+                    Content::Integer(original) => {
                         let mut number = *original;
                         ui.add(egui::DragValue::new(&mut number));
                         if *original != number {
@@ -53,32 +53,9 @@ impl Widget<egui::Context> for EditorWidget {
                             });
                         }
                     }
-                    dworkspace_codebase::content::Content::Rational(_a, _b) => todo!(),
-                    dworkspace_codebase::content::Content::Real(_float) => todo!(),
-                    dworkspace_codebase::content::Content::Apply { ty, .. } => {
-                        let mut clicked = None;
-                        ui.label(format!("{ty:?}"));
-                        for (index, child) in node.operands.iter().enumerate() {
-                            ui.horizontal(|ui| {
-                                ui.label(format!("{child:?}"));
-                                if ui.button("x").clicked() {
-                                    clicked = Some(Event::PatchOperand {
-                                        node_id: self.node_id.clone(),
-                                        patch: OperandPatch::Remove { index },
-                                    });
-                                }
-                            });
-                        }
-                        if let Some(event) = clicked {
-                            ctx.kernel.commit(event);
-                        }
-                        if ui.button("add a node as a child").clicked() {
-                            ctx.kernel
-                                .get_state_mut::<EditorState>()
-                                .unwrap()
-                                .child_addition_target = Some(self.node_id.clone());
-                        }
-                    }
+                    Content::Rational(_a, _b) => todo!(),
+                    Content::Real(_float) => todo!(),
+                    Content::Apply { link_name } => {}
                     _ => todo!(),
                 }
             }

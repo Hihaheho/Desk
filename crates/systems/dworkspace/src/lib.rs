@@ -1,5 +1,4 @@
 mod audit;
-pub mod conversions;
 mod descendants;
 mod error;
 mod history;
@@ -105,7 +104,6 @@ mod tests {
         ty::Type as AstType,
     };
     use deskc_ids::{LinkName, NodeId};
-    use deskc_ty::Type;
     use nodes::NodeQueries;
 
     use crate::repository::TestRepository;
@@ -163,10 +161,6 @@ mod tests {
                 event: Event::CreateNode {
                     node_id: node_a.clone(),
                     content: Content::Apply {
-                        ty: Type::Function(Box::new(deskc_ty::Function {
-                            parameter: Type::String,
-                            body: Type::Real,
-                        })),
                         link_name: Default::default(),
                     },
                 },

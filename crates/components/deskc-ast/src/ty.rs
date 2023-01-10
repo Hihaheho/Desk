@@ -43,10 +43,6 @@ pub enum Type {
         attr: Dson,
         ty: Box<WithMeta<Self>>,
     },
-    Comment {
-        text: String,
-        item: Box<WithMeta<Self>>,
-    },
     Forall {
         variable: String,
         bound: Option<Box<WithMeta<Self>>>,

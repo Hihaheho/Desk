@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use deskc_ids::NodeId;
 use dson::Dson;
-use hir::expr::Expr;
 use ty::Type;
 
 use crate::{

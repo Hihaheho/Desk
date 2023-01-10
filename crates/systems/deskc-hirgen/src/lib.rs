@@ -135,7 +135,6 @@ impl HirGen {
                     .insert(ret.meta.id.clone(), ret.meta.attrs.clone());
                 ret
             }
-            ast::ty::Type::Comment { item, .. } => self.gen_type(item)?,
             ast::ty::Type::Forall {
                 variable,
                 bound,

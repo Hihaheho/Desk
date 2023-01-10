@@ -1,6 +1,6 @@
+use ast::meta::Comments;
 use deskc_ids::LinkName;
 use dson::Dson;
-use ty::{Effect, Type};
 
 use crate::code::SyntaxKind;
 
@@ -12,25 +12,45 @@ pub enum Content {
     // b must be unsigned to avoid ambiguity.
     Rational(i64, u64),
     Real(f64),
-    Apply { ty: Type, link_name: LinkName },
+    Apply { link_name: LinkName },
     Do,
     Let,
-    Perform { output: Type },
-    Continue { output: Type },
+    Perform,
+    Continue,
     Handle,
     Product,
     Match,
-    Typed { ty: Type },
+    Typed,
     Hole,
-    Function { parameter: Type },
+    Function,
     Vector,
     Map,
     MapElem,
-    Case { ty: Type },
-    Handler { effect: Effect },
+    Case,
+    Handler,
+    Effect,
     DeclareBrand { brand: Dson },
     Label { label: dson::Dson },
-    NewType { ident: String, ty: Type },
+    NewType { ident: String },
+    TyLabeled { brand: dson::Dson },
+    TyMap,
+    TyVector,
+    TyProduct,
+    Sum,
+    TyLet { ident: String },
+    TyReal,
+    TyRational,
+    TyInteger,
+    TyString,
+    TyEffectful,
+    Effects,
+    EAdd,
+    ESub,
+    EApply,
+    Infer,
+    This,
+    TyFunction,
+    Variable { ident: String },
 }
 
 // Content::Real should not be NaN
@@ -80,7 +100,6 @@ mod tests {
         assert_eq!(Content::Real(0.0).kind(), ContentKind::Real);
         assert_eq!(
             Content::Apply {
-                ty: Type::Real,
                 link_name: LinkName::None
             }
             .kind(),

@@ -31,8 +31,8 @@ fn genast(node: &Node) -> Result<Code, anyhow::Error> {
         Content::Integer(integer) => Expr::Literal(Literal::Integer(*integer)),
         Content::Rational(a, b) => Expr::Literal(Literal::Rational(*a, *b)),
         Content::Real(float) => Expr::Literal(Literal::Real(*float)),
-        Content::Apply { ty, link_name } => Expr::Apply {
-            function: from_types(ty),
+        Content::Apply { link_name } => Expr::Apply {
+            function: todo!(),
             link_name: link_name.clone(),
             arguments: node
                 .operands

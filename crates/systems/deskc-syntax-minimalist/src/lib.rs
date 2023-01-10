@@ -405,6 +405,7 @@ mod tests {
                 Comment::Line(" comment".into()),
                 Comment::Block("a)".into())
             ]
+            .into()
         );
     }
 

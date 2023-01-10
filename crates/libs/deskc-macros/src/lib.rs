@@ -97,7 +97,7 @@ pub fn ast(item: TokenStream) -> TokenStream {
         quote! {
             use deskc_ast::{
                 expr::{Expr, Literal, MatchCase},
-                meta::{WithMeta, Meta, Comment},
+                meta::{WithMeta, Meta, Comment, Comments},
                 ty::{Effect, EffectExpr, Function, Type},
             };
             use deskc_ids::LinkName;
@@ -250,15 +250,6 @@ fn from_type(ty: &Type) -> proc_macro2::TokenStream {
                 Type::Attributed {
                     attr: #attr,
                     ty: Box::new(#ty),
-                }
-            }
-        }
-        Type::Comment { text, item } => {
-            let item = from_type(&item.value);
-            quote! {
-                Type::Comment {
-                    text: #text.into(),
-                    item: Box::new(#item),
                 }
             }
         }
@@ -890,15 +881,6 @@ fn from_type_for_ast(ty: &WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
                 }
             }
         }
-        Type::Comment { text, item } => {
-            let item = from_type_for_ast(&*item);
-            quote! {
-                Type::Comment {
-                    text: #text.to_string(),
-                    item: Box::new(#item),
-                }
-            }
-        }
         Type::Forall {
             variable,
             bound,
@@ -1028,17 +1010,25 @@ fn with_meta(meta: &Meta, value: proc_macro2::TokenStream) -> proc_macro2::Token
     let id = from_uuid(&meta.id.0);
     let comments = meta
         .comments
+        .before
         .iter()
         .map(|comment| match comment {
             Comment::Line(line) => quote!(Comment::Line(#line.to_string())),
             Comment::Block(block) => quote!(Comment::Block(#block.to_string())),
         })
         .collect::<Vec<_>>();
+    let after = match &meta.comments.after {
+        Some(string) => quote!(Some(#string.to_string())),
+        None => quote!(None),
+    };
     quote! {
         WithMeta {
             meta: Meta {
                 id: NodeId(#id),
-                comments: vec![#(#comments),*],
+                comments: Comments {
+                    before: vec![#(#comments),*],
+                    after: #after,
+                }
             },
             value: #value,
         }

@@ -156,10 +156,6 @@ impl TryFrom<WithMeta<Type>> for dson::Type {
                 attr: Box::new(attr),
                 ty: Box::new(dson::Type::try_from(*ty)?),
             }),
-            Type::Comment { text, item } => Ok(dson::Type::Comment {
-                text,
-                item: Box::new(dson::Type::try_from(*item)?),
-            }),
             Type::Trait(_) => Err(ExprToDsonError::UnexpectedTrait),
             Type::Effectful { .. } => Err(ExprToDsonError::UnexpectedEffectful),
             Type::Infer => Err(ExprToDsonError::UnexpectedInfer),
