@@ -30,7 +30,7 @@ impl Parser for MinimalistSyntaxParser {
 #[derive(Error, Debug)]
 pub enum MinimalistSyntaxError {
     #[error("Parse error: {0:?}")]
-    ParseError(parol_runtime::miette::Error),
+    ParseError(parol_runtime::ParolError),
     #[error("Uuid error: {0}")]
     UuidError(#[from] uuid::Error),
     #[error("Dson error: {0}")]

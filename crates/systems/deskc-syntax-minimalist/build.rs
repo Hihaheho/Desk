@@ -5,6 +5,7 @@ fn main() {
         .parser_output_file("parser.rs")
         .actions_output_file("grammar_trait.rs")
         .enable_auto_generation()
+        .range()
         .max_lookahead(1)
         .unwrap()
         .generate_parser()
