@@ -15,4 +15,4 @@ desk-plugin = { workspace = true }
 physics = { package = "desk-physics", path = "../../components/desk-physics", version = "0.0.0" }
 
 bevy = { workspace = true }
-bevy_rapier2d = { version = "0.19", features = ["wasm-bindgen", "debug-render"] }
+bevy_rapier2d = { version = "0.20", features = ["wasm-bindgen", "debug-render"] }
