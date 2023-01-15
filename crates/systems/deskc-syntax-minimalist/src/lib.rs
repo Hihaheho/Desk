@@ -6,7 +6,11 @@ mod conversions;
 mod grammar;
 mod span_storage;
 
-use ast::parser::{ParseResult, Parser};
+use ast::{
+    expr::Expr,
+    meta::WithMeta,
+    parser::{ParseResult, Parser},
+};
 pub use parol_runtime::derive_builder;
 pub use span_storage::*;
 use std::sync::Arc;
@@ -20,9 +24,11 @@ impl Parser for MinimalistSyntaxParser {
     fn parse(input: &str) -> Result<ParseResult, MinimalistSyntaxError> {
         let mut grammar = grammar::Grammar::new();
         parser::parse(input, "dummy", &mut grammar).map_err(MinimalistSyntaxError::ParseError)?;
-        Ok(ParseResult::new(
-            Arc::new(grammar.expr.unwrap().try_into()?),
-            MinimalistSyntaxSpanStorage {},
+        let expr: WithMeta<Expr> = grammar.expr.clone().unwrap().try_into()?;
+        let id = expr.meta.id.clone();
+        Ok(ParseResult::new::<MinimalistSyntaxSpanStorage>(
+            Arc::new(expr),
+            (id, grammar.expr.as_ref()).into(),
         ))
     }
 }
@@ -30,7 +36,7 @@ impl Parser for MinimalistSyntaxParser {
 #[derive(Error, Debug)]
 pub enum MinimalistSyntaxError {
     #[error("Parse error: {0:?}")]
-    ParseError(parol_runtime::miette::Error),
+    ParseError(parol_runtime::ParolError),
     #[error("Uuid error: {0}")]
     UuidError(#[from] uuid::Error),
     #[error("Dson error: {0}")]
@@ -44,6 +50,7 @@ mod tests {
     use ast::{
         expr::{Expr, Handler, Literal, MapElem, MatchCase},
         meta::{Comment, WithMeta},
+        parser::SpanStorage,
         remove_span::replace_node_id_to_default,
         ty::{Effect, EffectExpr, Function, Type},
     };
@@ -77,6 +84,18 @@ mod tests {
         let mut expr = Arc::try_unwrap(result.expr).unwrap();
         replace_node_id_to_default(&mut expr);
         expr
+    }
+
+    fn parse_for_span(input: &str) -> (ids::NodeId, MinimalistSyntaxSpanStorage) {
+        let ParseResult { expr, span_storage } =
+            super::MinimalistSyntaxParser::parse(input).unwrap();
+        (
+            Arc::try_unwrap(expr).unwrap().meta.id,
+            *Arc::try_unwrap(span_storage)
+                .unwrap()
+                .downcast::<MinimalistSyntaxSpanStorage>()
+                .unwrap(),
+        )
     }
 
     #[test]
@@ -573,5 +592,13 @@ mod tests {
     #[test]
     fn parse_begin_end_ty() {
         assert_eq!(parse("& '( a )'").value, r(Type::Variable("a".into())),);
+    }
+
+    #[test]
+    fn span_begin_end_ty() {
+        let (id, stg) = parse_for_span("& '( a )'");
+        let span = stg.calculate_span(&id);
+        assert!(span.is_some());
+        assert_eq!(span.unwrap(), 5..6);
     }
 }
