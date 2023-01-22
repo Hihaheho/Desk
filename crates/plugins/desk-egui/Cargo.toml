@@ -16,4 +16,4 @@ dworkspace = { workspace = true }
 
 bevy = { workspace = true }
 ron = "0.8"
-bevy_egui = "0.18"
+bevy_egui = "0.19"
