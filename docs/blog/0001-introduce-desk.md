@@ -190,7 +190,7 @@ Desk Grid is a code-oriented BI app.
 - more users
   - We need feed-backs to make Desk better.
 - financial supporter or sponsor
-  - Currently, I have a full-time work to pay the rent and to support my wife for education.
+  - Currently, I have a full-time work to pay the rent.
 - Desk Apps developer
   - Desk has an enormous range of applications, so we need developers with interest or experience in each field.
 - language developer

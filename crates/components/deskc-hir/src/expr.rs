@@ -68,11 +68,11 @@ pub enum Expr {
     Vector(Vec<WithMeta<Self>>),
     Map(Vec<WithMeta<MapElem>>),
     Label {
-        label: Dson,
+        label: String,
         item: Box<WithMeta<Self>>,
     },
     Brand {
-        brand: Dson,
+        brand: String,
         item: Box<WithMeta<Self>>,
     },
 }

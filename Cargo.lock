@@ -1516,13 +1516,16 @@ version = "0.0.0"
 dependencies = [
  "bevy",
  "desk-plugin",
+ "desk-theme",
  "desk-window",
  "deskc-ids",
  "deskc-type",
+ "dson",
  "dworkspace",
  "dworkspace-codebase",
  "egui 0.20.1",
  "egui_cable",
+ "once_cell",
  "uuid",
 ]
 

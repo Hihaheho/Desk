@@ -64,13 +64,13 @@ pub fn effect(item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn dson(item: TokenStream) -> TokenStream {
     fn input(string: String) -> String {
-        format!("@ {string} 1")
+        format!("# {string} 1")
     }
     fn map(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
-        let Expr::Label { label, item: _ } = &expr.value else {
+        let Expr::Attributed { attr, item: _ } = &expr.value else {
             panic!("Failed to parse label")
         };
-        from_dson(label)
+        from_dson(attr)
     }
     parse(
         item,
@@ -156,11 +156,10 @@ fn parse(
 fn from_type(ty: &Type) -> proc_macro2::TokenStream {
     match ty {
         Type::Labeled { brand, item } => {
-            let brand = from_dson(&brand);
             let item = from_type(&item.value);
             quote! {
                 Type::Label {
-                    label: #brand,
+                    label: #brand.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -180,7 +179,6 @@ fn from_type(ty: &Type) -> proc_macro2::TokenStream {
             }
         }
         Type::Infer => quote! { Type::Infer },
-        Type::This => quote! { Type::This },
         Type::Product(types) => {
             let types = types
                 .into_iter()
@@ -348,11 +346,10 @@ fn from_dson(dson: &Dson) -> proc_macro2::TokenStream {
             }
         }
         Dson::Labeled { label, expr } => {
-            let label = from_dson(&*label);
             let expr = from_dson(&*expr);
             quote! {
                 Dson::Labeled {
-                    label: Box::new(#label),
+                    label: #label.to_string(),
                     expr: Box::new(#expr),
                 }
             }
@@ -445,11 +442,10 @@ fn from_effect(effect: &Effect) -> proc_macro2::TokenStream {
 fn from_dson_type(ty: &dson::Type) -> proc_macro2::TokenStream {
     match ty {
         dson::Type::Brand { brand, item } => {
-            let brand = from_dson(&*brand);
             let item = from_dson_type(&*item);
             quote! {
                 dson::Type::Brand {
-                    brand: Box::new(#brand),
+                    brand: #brand.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -734,21 +730,19 @@ fn from_expr(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
             }
         }
         Expr::DeclareBrand { brand, item } => {
-            let brand = from_dson(&brand);
             let item = from_expr(&*item);
             quote! {
                 Expr::Brand {
-                    brand: #brand,
+                    brand: #brand.to_string(),
                     item: Box::new(#item),
                 }
             }
         }
         Expr::Label { label, item } => {
-            let label = from_dson(&label);
             let item = from_expr(&*item);
             quote! {
                 Expr::Label {
-                    label: #label,
+                    label: #label.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -783,11 +777,10 @@ fn from_expr(expr: &WithMeta<Expr>) -> proc_macro2::TokenStream {
 fn from_type_for_ast(ty: &WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
     let tokens = match &ty.value {
         Type::Labeled { brand, item } => {
-            let brand = from_dson(&brand);
             let item = from_type_for_ast(&*item);
             quote! {
                 Type::Labeled {
-                    brand: #brand,
+                    brand: #brand.to_string(),
                     item: Box::new(#item),
                 }
             }
@@ -807,7 +800,6 @@ fn from_type_for_ast(ty: &WithMeta<ast::ty::Type>) -> proc_macro2::TokenStream {
             }
         }
         Type::Infer => quote!(Type::Infer),
-        Type::This => quote!(Type::This),
         Type::Product(types) => {
             let types = types.into_iter().map(from_type_for_ast).collect::<Vec<_>>();
             quote! {

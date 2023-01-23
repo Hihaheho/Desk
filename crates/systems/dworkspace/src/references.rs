@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, ops::DerefMut, sync::Arc};
 
 use components::{
     event::Event,
@@ -22,6 +22,7 @@ pub trait ReferencesQueries {
 #[derive(Default)]
 pub struct References {
     storage: salsa::Storage<Self>,
+    top_level_nodes: HashSet<NodeId>,
 }
 
 impl salsa::Database for References {}
@@ -58,6 +59,7 @@ impl References {
             } => {
                 self.set_node(node_id.clone(), Arc::new(HashSet::new()));
                 self.set_operand_rules(node_id.clone(), Arc::new(Rules::default()));
+                self.top_level_nodes.insert(node_id.clone());
             }
             Event::PatchOperand {
                 node_id,
@@ -70,6 +72,7 @@ impl References {
                 let mut references = self.node(operand_id.clone()).as_ref().clone();
                 references.insert(node_id.clone());
                 self.set_node(operand_id.clone(), Arc::new(references));
+                self.top_level_nodes.remove(operand_id);
             }
             Event::PatchOperand {
                 node_id,
@@ -78,6 +81,9 @@ impl References {
                 let removed = snapshot.flat_nodes.get(node_id).unwrap().operands[*index].clone();
                 let mut references = self.node(removed.clone()).as_ref().clone();
                 references.remove(node_id);
+                if references.is_empty() {
+                    self.top_level_nodes.insert(removed.clone());
+                }
                 self.set_node(removed, Arc::new(references));
             }
             Event::UpdateOperandRules { node_id, rules } => {
@@ -85,6 +91,12 @@ impl References {
             }
             _ => {}
         }
+    }
+}
+
+impl References {
+    pub fn top_level_nodes(&self) -> impl Iterator<Item = &NodeId> {
+        self.top_level_nodes.iter()
     }
 }
 

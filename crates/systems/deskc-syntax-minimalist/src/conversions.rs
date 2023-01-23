@@ -13,7 +13,7 @@ use crate::{
         LiteralRawString, LiteralReal, LiteralString, RawString, TyAttributedTy, TyEffectful,
         TyExistsTy, TyExprBeginTyExprEnd, TyForallTy, TyFunctionTy, TyInfer, TyIntegerKey,
         TyLabeledTy, TyLetTy, TyMapTy, TyProductTy, TyRationalKey, TyRealKey, TyStringKey, TySum,
-        TyThis, TyVariable, TyVecTy,
+        TyVariable, TyVecTy,
     },
     MinimalistSyntaxError,
 };
@@ -381,7 +381,7 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                     comments,
                 },
                 value: Expr::Label {
-                    label: (*labeled.label.expr_c).try_into()?,
+                    label: (*labeled.label.ident).into(),
                     item: Box::new((*labeled.expr_c).try_into()?),
                 },
             },
@@ -415,8 +415,8 @@ impl TryFrom<grammar_trait::ExprC<'_>> for WithMeta<Expr> {
                     comments,
                 },
                 value: Expr::DeclareBrand {
-                    brand: (*brand.expr_c).try_into()?,
-                    item: Box::new((*brand.expr_c0).try_into()?),
+                    brand: (*brand.ident).into(),
+                    item: Box::new((*brand.expr_c).try_into()?),
                 },
             },
         };
@@ -438,13 +438,6 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
                     comments,
                 },
                 value: ast::ty::Type::Infer,
-            },
-            grammar_trait::Ty::This(TyThis { this: _ }) => WithMeta {
-                meta: Meta {
-                    id: NodeId::new(),
-                    comments,
-                },
-                value: ast::ty::Type::This,
             },
             grammar_trait::Ty::RealKey(TyRealKey { .. }) => WithMeta {
                 meta: Meta {
@@ -542,7 +535,7 @@ impl TryFrom<grammar_trait::Ty<'_>> for WithMeta<ast::ty::Type> {
                     comments,
                 },
                 value: ast::ty::Type::Labeled {
-                    brand: (*labeled_ty.label.expr_c).try_into()?,
+                    brand: (*labeled_ty.label.ident).into(),
                     item: Box::new((*labeled_ty.ty).try_into()?),
                 },
             },

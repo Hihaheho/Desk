@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Hash, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum LinkName {
     None,
     Version(Uuid),
@@ -20,13 +20,19 @@ pub struct LinkId<Type> {
     pub name: LinkName,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize,
+)]
 pub struct FileId(pub Uuid);
 
-#[derive(Clone, Debug, PartialEq, Hash, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Hash, Eq, PartialOrd, Ord, Default, Serialize, Deserialize,
+)]
 pub struct CardId(pub Uuid);
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default, Serialize, Deserialize,
+)]
 pub struct NodeId(pub Uuid);
 
 impl NodeId {
@@ -47,7 +53,7 @@ impl FileId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Entrypoint {
     Card { file_id: FileId, card_id: CardId },
     File(FileId),

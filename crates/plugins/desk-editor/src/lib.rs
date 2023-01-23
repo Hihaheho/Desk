@@ -45,11 +45,11 @@ pub fn compile_system(mut kernel: Query<&mut Workspace>) {
 
 pub fn editor(mut window: Query<(&mut Window<egui::Context>, &Workspace), With<DefaultWindow>>) {
     if let Ok((mut window, kernel)) = window.get_single_mut() {
-        for (id, _node) in kernel.snapshot.flat_nodes.iter() {
+        for id in kernel.top_level_nodes() {
             window.add_widget(
                 WidgetId::new(),
                 EditorWidget {
-                    node_id: id.clone(),
+                    top_level_node_id: id.clone(),
                 },
             );
         }

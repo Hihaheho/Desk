@@ -11,7 +11,7 @@ pub struct Effect {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Labeled {
-        brand: Dson,
+        brand: String,
         item: Box<WithMeta<Type>>,
     },
     Real,
@@ -23,7 +23,6 @@ pub enum Type {
         effects: WithMeta<EffectExpr>,
     },
     Infer,
-    This,
     Product(Vec<WithMeta<Self>>),
     Sum(Vec<WithMeta<Self>>),
     Function(Box<Function>),

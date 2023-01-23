@@ -32,31 +32,29 @@ impl Operator {
     pub fn ty(&self) -> Type {
         match self {
             Operator::IntAdd => {
-                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer"#)
+                ty!(r#"\ *<@l 'integer, @r 'integer> -> @sum 'integer"#)
             }
             Operator::IntSub => {
-                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"diff" 'integer"#)
+                ty!(r#"\ *<@l 'integer, @r 'integer> -> @diff 'integer"#)
             }
             Operator::IntMul => {
-                ty!(r#"\ *<@"l" 'integer, @"r" 'integer> -> @"prod" 'integer"#)
+                ty!(r#"\ *<@l 'integer, @r 'integer> -> @prod 'integer"#)
             }
             Operator::IntDiv => ty!(r#"
-				\ *<@"l" 'integer, @"r" 'integer> -> ! {
-			    	@"division by zero" 'integer ~> @"quot" 'integer
-				} @"quot" 'integer
+				\ *<@l 'integer, @r 'integer> -> ! {
+			    	@`division by zero` 'integer ~> @quot 'integer
+				} @quot 'integer
 				"#),
             Operator::Rem => ty!(r#"
-				\ *<@"l" 'integer, @"r" 'integer> -> ! {
-					@"division by zero" 'integer ~> *<@"quot" 'integer, @"rem" 'integer>
-				} *<@"quot" 'integer, @"rem" 'integer>
+				\ *<@l 'integer, @r 'integer> -> ! {
+					@`division by zero` 'integer ~> *<@quot 'integer, @rem 'integer>
+				} *<@quot 'integer, @rem 'integer>
 				"#),
             Operator::RealEq => {
-                ty!(r#"\ *<@"l" 'real, @"r" 'real> -> +<@"equal" *<>, @"unequal" *<>>"#)
+                ty!(r#"\ *<@l 'real, @r 'real> -> +<@equal *<>, @unequal *<>>"#)
             }
             Operator::RealCmp => {
-                ty!(
-                    r#"\ *<@"l" 'real, @"r" 'real> -> +<@"less" *<>, @"equal" *<>, @"greater" *<>>"#
-                )
+                ty!(r#"\ *<@l 'real, @r 'real> -> +<@less *<>, @equal *<>, @greater *<>>"#)
             }
         }
     }

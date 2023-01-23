@@ -14,6 +14,7 @@ use std::{any::TypeId, collections::HashMap};
 
 use bevy_ecs::prelude::Component;
 use components::{event::Event, snapshot::Snapshot};
+use deskc_ids::NodeId;
 use history::History;
 use loop_detector::LoopDetector;
 use nodes::Nodes;
@@ -86,6 +87,10 @@ impl Workspace {
         self.states
             .get_mut(&TypeId::of::<T>())
             .map(|state| state.as_any_mut().downcast_mut::<T>().unwrap())
+    }
+
+    pub fn top_level_nodes(&self) -> Vec<NodeId> {
+        self.references.lock().top_level_nodes().cloned().collect()
     }
 }
 

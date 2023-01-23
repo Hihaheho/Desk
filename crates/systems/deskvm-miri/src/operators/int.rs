@@ -23,7 +23,7 @@ pub fn div(value: &Value) -> OperatorOutput {
     let (l, r) = int_lr(value);
     if r == 0 {
         OperatorOutput::Perform {
-            effect: effect!(r#"@"division by zero" 'integer ~> @"quot" 'integer"#),
+            effect: effect!(r#"@`division by zero` 'integer ~> @quot 'integer"#),
             input: Value::Int(l),
         }
     } else {

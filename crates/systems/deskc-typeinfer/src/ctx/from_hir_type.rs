@@ -18,7 +18,6 @@ impl Ctx {
                 self.gen_from_hir_effect_expr(effects),
             ),
             Infer => Type::Infer(ty.meta.id.clone()),
-            This => todo!(),
             Product(types) => {
                 Type::Product(types.iter().map(|t| self.gen_from_hir_type(t)).collect())
             }

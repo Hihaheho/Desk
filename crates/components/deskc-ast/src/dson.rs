@@ -37,8 +37,6 @@ pub enum ExprToDsonError {
     UnexpectedEffectful,
     #[error("unexpected infer")]
     UnexpectedInfer,
-    #[error("unexpected this")]
-    UnexpectedThis,
     #[error("unexpected function type")]
     UnexpectedFunctionTy,
     #[error("unexpected forall")]
@@ -91,7 +89,7 @@ impl TryFrom<WithMeta<Expr>> for Dson {
                 expr: Box::new(Dson::try_from(*item)?),
             }),
             Expr::Label { label, item } => Ok(Dson::Labeled {
-                label: Box::new(label),
+                label,
                 expr: Box::new(Dson::try_from(*item)?),
             }),
             Expr::Do { .. } => Err(ExprToDsonError::UnexpectedDo),
@@ -116,7 +114,7 @@ impl TryFrom<WithMeta<Type>> for dson::Type {
     fn try_from(ty: WithMeta<Type>) -> Result<Self, Self::Error> {
         match ty.value {
             Type::Labeled { brand, item } => Ok(dson::Type::Brand {
-                brand: Box::new(brand),
+                brand,
                 item: Box::new(dson::Type::try_from(*item)?),
             }),
             Type::Real => Ok(dson::Type::Real),
@@ -156,7 +154,6 @@ impl TryFrom<WithMeta<Type>> for dson::Type {
             }),
             Type::Effectful { .. } => Err(ExprToDsonError::UnexpectedEffectful),
             Type::Infer => Err(ExprToDsonError::UnexpectedInfer),
-            Type::This => Err(ExprToDsonError::UnexpectedThis),
             Type::Function(_) => Err(ExprToDsonError::UnexpectedFunctionTy),
             Type::Forall { .. } => Err(ExprToDsonError::UnexpectedForall),
             Type::Exists { .. } => Err(ExprToDsonError::UnexpectedExists),

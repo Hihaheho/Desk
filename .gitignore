@@ -17,6 +17,10 @@
 !/configs/**/*.toml
 !/configs/**/*.ron
 !/tools/**/*.sh
+!/assets/fonts/*.ttf
+!/assets/fonts/*.otf
+!/assets/**/*license*
+
 
 # desk-x
 !/crates/apps/desk-x/public/index.html

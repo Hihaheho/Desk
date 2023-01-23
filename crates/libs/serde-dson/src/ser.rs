@@ -32,9 +32,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 
     fn serialize_bool(self, v: bool) -> Result<Self::Ok> {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(
-                if v { "true" } else { "false" }.into(),
-            ))),
+            label: if v { "true" } else { "false" }.into(),
             expr: Box::new(Dson::Product(vec![])),
         })
     }
@@ -112,7 +110,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 
     fn serialize_unit_struct(self, name: &'static str) -> Result<Self::Ok> {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(name.into()))),
+            label: name.into(),
             expr: Box::new(Dson::Product(vec![])),
         })
     }
@@ -124,7 +122,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         variant: &'static str,
     ) -> Result<Self::Ok> {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(variant.into()))),
+            label: variant.into(),
             expr: Box::new(Dson::Product(vec![])),
         })
     }
@@ -134,7 +132,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         T: Serialize,
     {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(name.into()))),
+            label: name.into(),
             expr: Box::new(value.serialize(self)?),
         })
     }
@@ -150,7 +148,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         T: Serialize,
     {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(variant.into()))),
+            label: variant.into(),
             expr: Box::new(value.serialize(self)?),
         })
     }
@@ -271,7 +269,7 @@ impl SerializeTupleVariant for VariantSerializer {
 
     fn end(self) -> Result<Self::Ok> {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(self.label))),
+            label: self.label,
             expr: Box::new(Dson::Product(self.values)),
         })
     }
@@ -320,7 +318,7 @@ impl SerializeStruct for SeqSerializer {
         T: Serialize,
     {
         self.0.push(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(name.into()))),
+            label: name.into(),
             expr: Box::new(value.serialize(&mut Serializer)?),
         });
         Ok(())
@@ -345,7 +343,7 @@ impl SerializeStructVariant for VariantSerializer {
         T: Serialize,
     {
         self.values.push(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(name.into()))),
+            label: name.into(),
             expr: Box::new(value.serialize(&mut Serializer)?),
         });
         Ok(())
@@ -353,7 +351,7 @@ impl SerializeStructVariant for VariantSerializer {
 
     fn end(self) -> Result<Self::Ok> {
         Ok(Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String(self.label))),
+            label: self.label,
             expr: Box::new(Dson::Product(self.values)),
         })
     }
@@ -380,11 +378,11 @@ mod tests {
             to_dson(&test).unwrap(),
             Dson::Product(vec![
                 Dson::Labeled {
-                    label: Box::new(Dson::Literal(Literal::String("int".into()))),
+                    label: "int".into(),
                     expr: Box::new(Dson::Literal(Literal::Integer(1)))
                 },
                 Dson::Labeled {
-                    label: Box::new(Dson::Literal(Literal::String("seq".into()))),
+                    label: "seq".into(),
                     expr: Box::new(Dson::Vector(vec![
                         Dson::Literal(Literal::String("a".into())),
                         Dson::Literal(Literal::String("b".into()))
@@ -407,7 +405,7 @@ mod tests {
         assert_eq!(
             to_dson(&E::Unit).unwrap(),
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("Unit".into()))),
+                label: "Unit".into(),
                 expr: Box::new(Dson::Product(vec![]))
             }
         );
@@ -415,7 +413,7 @@ mod tests {
         assert_eq!(
             to_dson(&E::Newtype(1)).unwrap(),
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("Newtype".into()))),
+                label: "Newtype".into(),
                 expr: Box::new(Dson::Literal(Literal::Integer(1)))
             }
         );
@@ -423,7 +421,7 @@ mod tests {
         assert_eq!(
             to_dson(&E::Tuple(1, 2)).unwrap(),
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("Tuple".into()))),
+                label: "Tuple".into(),
                 expr: Box::new(Dson::Product(vec![
                     Dson::Literal(Literal::Integer(1)),
                     Dson::Literal(Literal::Integer(2))
@@ -434,9 +432,9 @@ mod tests {
         assert_eq!(
             to_dson(&E::Struct { a: 1 }).unwrap(),
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("Struct".into()))),
+                label: "Struct".into(),
                 expr: Box::new(Dson::Product(vec![Dson::Labeled {
-                    label: Box::new(Dson::Literal(Literal::String("a".into()))),
+                    label: "a".into(),
                     expr: Box::new(Dson::Literal(Literal::Integer(1)))
                 }]))
             }

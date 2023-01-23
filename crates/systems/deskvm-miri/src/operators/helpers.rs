@@ -6,7 +6,7 @@ pub fn lr(value: &Value) -> (&Value, &Value) {
         .iter()
         .map(|(key, value)| match key {
             deskc_type::Type::Label { label, item: _ } => {
-                let left = *label == "l".into();
+                let left = label == "l";
                 (left, value)
             }
             _ => (false, value),

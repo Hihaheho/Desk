@@ -71,16 +71,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         match &self.0 {
-            Dson::Labeled { label: v, expr: _ }
-                if **v == Dson::Literal(Literal::String("true".into())) =>
-            {
-                visitor.visit_bool(true)
-            }
-            Dson::Labeled { label: v, expr: _ }
-                if **v == Dson::Literal(Literal::String("false".into())) =>
-            {
-                visitor.visit_bool(false)
-            }
+            Dson::Labeled { label: v, expr: _ } if v == "true" => visitor.visit_bool(true),
+            Dson::Labeled { label: v, expr: _ } if v == "false" => visitor.visit_bool(false),
             _ => Err(Error::ExpectedBool {
                 got: self.0.clone(),
             }),
@@ -142,15 +134,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         match &self.0 {
-            Dson::Labeled { label, expr } => {
-                if let Dson::Literal(Literal::String(variant)) = label.as_ref() {
-                    visitor.visit_enum(EnumDeserializer(variant.clone(), *expr.clone()))
-                } else {
-                    Err(Error::ExpectedString {
-                        got: (**label).clone(),
-                    })
-                }
-            }
+            Dson::Labeled {
+                label: variant,
+                expr,
+            } => visitor.visit_enum(EnumDeserializer(variant.clone(), *expr.clone())),
             _ => Err(Error::ExpectedLabel {
                 got: self.0.clone(),
             }),
@@ -163,20 +150,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         match &self.0 {
             Dson::Labeled { label, expr } => {
-                if let Dson::Literal(Literal::String(label)) = label.as_ref() {
-                    if name == label {
-                        visitor.visit_newtype_struct(&mut Deserializer::from_dson(
-                            expr.as_ref().clone(),
-                        ))
-                    } else {
-                        Err(Error::LabelMismatch {
-                            expected: name.into(),
-                            got: label.clone(),
-                        })
-                    }
+                if name == label {
+                    visitor
+                        .visit_newtype_struct(&mut Deserializer::from_dson(expr.as_ref().clone()))
                 } else {
-                    Err(Error::ExpectedString {
-                        got: (**label).clone(),
+                    Err(Error::LabelMismatch {
+                        expected: name.into(),
+                        got: label.clone(),
                     })
                 }
             }
@@ -231,18 +211,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                 let values = values
                     .iter()
                     .map(|dson| match dson {
-                        Dson::Labeled { label, expr } => {
-                            if let Dson::Literal(Literal::String(key)) = label.as_ref() {
-                                Ok(MapElem {
-                                    key: Dson::Literal(Literal::String(key.clone())),
-                                    value: *expr.clone(),
-                                })
-                            } else {
-                                Err(Error::ExpectedString {
-                                    got: (**label).clone(),
-                                })
-                            }
-                        }
+                        Dson::Labeled { label, expr } => Ok(MapElem {
+                            key: Dson::Literal(Literal::String(label.clone())),
+                            value: *expr.clone(),
+                        }),
                         _ => Err(Error::ExpectedLabel {
                             got: (*dson).clone(),
                         }),
@@ -372,11 +344,11 @@ mod tests {
 
         let dson = Dson::Product(vec![
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("int".into()))),
+                label: "int".into(),
                 expr: Box::new(Dson::Literal(Literal::Integer(1))),
             },
             Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("seq".into()))),
+                label: "seq".into(),
                 expr: Box::new(Dson::Vector(vec![
                     Dson::Literal(Literal::String("a".into())),
                     Dson::Literal(Literal::String("b".into())),
@@ -401,21 +373,21 @@ mod tests {
         }
 
         let dson = Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String("Unit".into()))),
+            label: "Unit".into(),
             expr: Box::new(Dson::Product(vec![])),
         };
         let expected = E::Unit;
         assert_eq!(expected, from_dson(dson).unwrap());
 
         let dson = Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String("Newtype".into()))),
+            label: "Newtype".into(),
             expr: Box::new(Dson::Literal(Literal::Integer(1))),
         };
         let expected = E::Newtype(1);
         assert_eq!(expected, from_dson(dson).unwrap());
 
         let dson = Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String("Tuple".into()))),
+            label: "Tuple".into(),
             expr: Box::new(Dson::Product(vec![
                 Dson::Literal(Literal::Integer(1)),
                 Dson::Literal(Literal::String("a".into())),
@@ -425,9 +397,9 @@ mod tests {
         assert_eq!(expected, from_dson(dson).unwrap());
 
         let dson = Dson::Labeled {
-            label: Box::new(Dson::Literal(Literal::String("Struct".into()))),
+            label: "Struct".into(),
             expr: Box::new(Dson::Product(vec![Dson::Labeled {
-                label: Box::new(Dson::Literal(Literal::String("a".into()))),
+                label: "a".into(),
                 expr: Box::new(Dson::Literal(Literal::Integer(1))),
             }])),
         };
@@ -484,9 +456,9 @@ mod tests {
         pub struct Inner(pub u32);
         let expected = Wrapper { inner: Inner(1) };
         let dson = Dson::Product(vec![Dson::Labeled {
-            label: Box::new("inner".into()),
+            label: "inner".into(),
             expr: Box::new(Dson::Labeled {
-                label: Box::new("Inner".into()),
+                label: "Inner".into(),
                 expr: Box::new(1.into()),
             }),
         }]);

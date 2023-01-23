@@ -1,3 +1,5 @@
+pub mod colorscheme;
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -46,4 +48,36 @@ pub struct Widget {
     pub background: Color,
     pub border: Stroke,
     pub stroke: Stroke,
+}
+
+#[derive(Reflect, Serialize, Deserialize, Clone)]
+pub struct EditorStyle {
+    // How many spaces for each indentation level
+    pub indent_width: u8,
+    pub indent_guide: IndentGuide,
+    pub line_spacing: f32,
+    pub line_number: bool,
+}
+
+impl Default for EditorStyle {
+    fn default() -> Self {
+        Self {
+            indent_width: 2,
+            indent_guide: Default::default(),
+            line_spacing: 0.2,
+            line_number: true,
+        }
+    }
+}
+
+#[derive(Reflect, Serialize, Deserialize, Clone)]
+pub enum IndentGuide {
+    None,
+    SingleColorLine { size: f32 },
+}
+
+impl Default for IndentGuide {
+    fn default() -> Self {
+        Self::SingleColorLine { size: 0.2 }
+    }
 }

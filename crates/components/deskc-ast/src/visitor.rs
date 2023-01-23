@@ -139,10 +139,10 @@ pub trait ExprVisitorMut {
     fn visit_attribute(&mut self, _attr: &mut Dson, item: &mut WithMeta<Expr>) {
         self.visit_expr(item);
     }
-    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithMeta<Expr>) {
+    fn visit_brand(&mut self, _brand: &mut String, item: &mut WithMeta<Expr>) {
         self.visit_expr(item);
     }
-    fn visit_label(&mut self, _label: &mut Dson, item: &mut WithMeta<Expr>) {
+    fn visit_label(&mut self, _label: &mut String, item: &mut WithMeta<Expr>) {
         self.visit_expr(item);
     }
     fn visit_new_type(
@@ -180,7 +180,6 @@ pub trait TypeVisitorMut {
             Type::String => self.visit_string(),
             Type::Effectful { ty, effects } => self.visit_effectful(ty, effects),
             Type::Infer => self.visit_infer(),
-            Type::This => self.visit_this(),
             Type::Product(types) => self.visit_product(types),
             Type::Sum(types) => self.visit_sum(types),
             Type::Function(function) => {
@@ -207,7 +206,7 @@ pub trait TypeVisitorMut {
             } => self.visit_exists(variable, bound, body),
         }
     }
-    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut WithMeta<Type>) {
+    fn visit_brand(&mut self, _brand: &mut String, item: &mut WithMeta<Type>) {
         self.visit_type(item);
     }
     fn visit_real(&mut self) {}

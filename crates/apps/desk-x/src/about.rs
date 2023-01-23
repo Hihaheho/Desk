@@ -29,7 +29,7 @@ struct AboutWidget;
 
 impl Widget<egui::Context> for AboutWidget {
     fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
-        egui::Window::new("About").show(ctx.backend, |ui| {
+        egui::Window::new("About").show(&ctx.backend(), |ui| {
             ui.label("Hello World");
         });
     }

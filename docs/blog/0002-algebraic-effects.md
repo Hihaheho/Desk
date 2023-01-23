@@ -40,7 +40,7 @@ There is another simple explanatory article[^overreacted], but our post is more 
 
 A language can be a purely functional language like Desk-lang by implementing the following features:
 - Every side effect is treated as an `effect`.
-- Every `effect` is tracked by the type system. 
+- Every `effect` is tracked by the type system.
 
 Also, Desk-lang's type system has a strong inference system that covers effects.
 This allows us to know what effect will occur just by looking at the inferred type.
@@ -70,13 +70,13 @@ Let's look at various effect examples as it's faster to understand what are effe
 
 ### print effect (to print a string to somewhere)
 
-This is `print` effect. The input is `'string` and the output is `@"printed" *<>`.
+This is `print` effect. The input is `'string` and the output is `@printed *<>`.
 
 $$
-\texttt{'string} \ \leadsto \ \texttt{@"printed"} \ \texttt{*<>}
+\texttt{'string} \ \leadsto \ \texttt{@printed} \ \texttt{*<>}
 $$
 
-`@"printed"` is a label attached to the type, and `*<>` is an empty tuple (Rust's `()`). If you write it in a Rust-like style, it will look like this:
+`@printed` is a label attached to the type, and `*<>` is an empty tuple (Rust's `()`). If you write it in a Rust-like style, it will look like this:
 
 ```rust
 &str ~> Printed<()>
@@ -87,20 +87,20 @@ It takes a string and returns `()`, so it's similar to `println!`. It actually b
 **Note**
 > `print` effect can be used to print **anywhere**.
 > This is because you can specify handlers such as `print-to-stdout handler` and `print-to-screen handler` (`handler` is described later).
-> On the other hand, if you want to distinguish the destination in the code, just rewrite `@"printed"` to `@"printed to stdout"` or `@"printed to screen"`.
+> On the other hand, if you want to distinguish the destination in the code, just rewrite `@printed` to `@printed to stdout` or `@printed to screen`.
 
 ### get/set (to get/set a state)
 
 `get` effect is as follows:
 
 $$
-\texttt{\*<>} \ \leadsto \ \texttt{+<} \ \texttt{@"state"} \ \tau \ , \texttt{@"none"} \ \texttt{\*<>} \texttt{>}
+\texttt{\*<>} \ \leadsto \ \texttt{+<} \ \texttt{@state} \ \tau \ , \texttt{@none} \ \texttt{\*<>} \texttt{>}
 $$
 
 `set` effect is as follows:
 
 $$
-\texttt{@"state"} \ \tau \ \leadsto \ \texttt{\*<>}
+\texttt{@state} \ \tau \ \leadsto \ \texttt{\*<>}
 $$
 
 Rust-like rewrites of each are as follows:
@@ -120,14 +120,14 @@ I think that both `get` and `set` are intuitive in terms of input and output. If
 
 **Note**
 > These `get`/`set` are storage-agnostic as `print` is destination-agnostic.
-> If you want to distinguish storage in the code, just rewrite `@"state"` to `@"app global state"` or `@"thread local state"`.
+> If you want to distinguish storage in the code, just rewrite `@state` to `@app global state` or `@thread local state`.
 
 ### throw (to throw an exception)
 
 Here is `throw` effect:
 
 $$
-\texttt{@"exception"} \ \tau \ \leadsto \ \texttt{\*<>}
+\texttt{@exception} \ \tau \ \leadsto \ \texttt{\*<>}
 $$
 
 I guess you can read this without further explanation.
@@ -148,8 +148,8 @@ A handler is something that handles a specific effect. The following is (compila
 
 ```desk
 'handle ^`effectful function`(*<>) {
-  'string ~> @"printed" *<> => <~! @"printed" *<> ~> *<>,
-  @"division by zero" 'integer ~> 'integer => "ok",
+  'string ~> @printed *<> => <~! @printed *<> ~> *<>,
+  @division by zero 'integer ~> 'integer => "ok",
 }
 ```
 
@@ -171,7 +171,7 @@ I used a lot of syntax that I haven't explained yet, so let's explain them all a
 
 `'handle expr { effect => handler, ... }` is a `handle` expression.
 
-In this example, we handle two effects, `'string ~> @"printed" *<>` and `@"division by zero" 'integer ~> 'integer`.
+In this example, we handle two effects, `'string ~> @printed *<>` and `@division by zero 'integer ~> 'integer`.
 The former is `print` effect described above, and the latter is, you may guess, a division by zero exception.
 Although it is an exception, there is an output here, and it's not `*<>` (described later).
 
@@ -183,8 +183,8 @@ First, the function called by the `handle` expression seems to have two side eff
 
 $$
 \backslash \ \texttt{\*<>} \ \rightarrow \ \texttt{!} \ \\{
-\ \texttt{'string} \ \leadsto \ \texttt{@"printed"} \ \texttt{\*<>},
-\texttt{@"division by zero"} \ \texttt{'integer} \ \leadsto \ \texttt{'integer}
+\ \texttt{'string} \ \leadsto \ \texttt{@printed} \ \texttt{\*<>},
+\texttt{@division by zero} \ \texttt{'integer} \ \leadsto \ \texttt{'integer}
 \ \\} \ \texttt{\*<>}
 $$
 
@@ -202,19 +202,19 @@ fn(()) -> ()
 
 If we look back at the original one, we can see that the difference is the part `! { ... }`.
 This is a set of effects that the expression may perform, and this is inferred by the type system.
-As the type is like this, we can imagine that there are expressions such as `! "hello world" ~> @"printed" *<>` and `! @"division by zero" 1 ~> 'integer` inside the function.
+As the type is like this, we can imagine that there are expressions such as `! "hello world" ~> @printed *<>` and `! @division by zero 1 ~> 'integer` inside the function.
 
 First, what happens when `! "hello world" ~> @printed *<>` is called inside the function?
 
 The correct answer is "nothing happens, and the function continues its processing as it is."
 The function side performed `print` effect, but the handler did not output anything
-and passed the output `@"printed" *<>`, and the target expression resume the processing.
+and passed the output `@printed *<>`, and the target expression resume the processing.
 
 I explained that effects are expressed as $\tau_1 \ \leadsto \ \tau_2$.
 This is like an interface, and as long as the interface is followed, the handler can do anything.
 This is the characteristic of algebraic effects and handlers.
 
-Next, what happens if `! @"division by zero" 1 ~> 'integer` happens inside the function?
+Next, what happens if `! @division by zero 1 ~> 'integer` happens inside the function?
 
 The correct answer is "the execution of the function is halted, and the evaluation result of the whole `handle` expression becomes `"ok"`.
 
@@ -231,7 +231,7 @@ In other words, exceptions also have a continuation like this:
 
 ```desk
 'handle ^`function may have zero division`(*<>) {
-  @"division by zero" 'integer ~> 'integer => <~! 0 ~> *<>,
+  @division by zero 'integer ~> 'integer => <~! 0 ~> *<>,
 }
 ```
 
@@ -243,7 +243,7 @@ As I explained earlier, we can use `perform` expression instead of `continue` ex
 
 ```desk
 'handle ^`effectful function`(*<>) {
-  'string ~> @"printed" *<> => ! @"printed" *<> ~> *<>,
+  'string ~> @printed *<> => ! @printed *<> ~> *<>,
 }
 ```
 
@@ -265,7 +265,7 @@ Therefore, when you want to define a handler external, you need to use `!`.
 > By using polymorphism like the following, you can reuse the same handler for any expression.
 >
 > ```desk
-> 'forall output \ *<> -> ! { @"division by zero" 'integer ~> output } *<>
+> 'forall output \ *<> -> ! { @division by zero 'integer ~> output } *<>
 > ```
 
 ## Multi-shot continuation
@@ -274,7 +274,7 @@ As I explained earlier, we can pass output to effect and continue the processing
 In fact, we can pass output multiple times like:
 
 ```desk
-'type add \ *<@1 'integer, @2 'integer> -> @"sum" 'integer;
+'type add \ *<@1 'integer, @2 'integer> -> @sum 'integer;
 'handle (
   $ ! "a" ~> 'integer;
   <'integer> ^add(&'integer, &'integer)
@@ -320,8 +320,8 @@ So, the result of the expression is `6`.
 
 **Note**
 > `<type> expr`, which the example uses, is a type annotation syntax and like `(type) expr` in C.
-> The code makes `@"sum" 'number` to `'number`.
-> 
+> The code makes `@sum 'number` to `'number`.
+>
 > Of course, the compiler denies invalid type annotations like `<'number> "a"`.
 
 ## Effect as a system call

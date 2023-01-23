@@ -2,7 +2,6 @@ pub mod effect_expr;
 
 use std::collections::HashMap;
 
-use dson::Dson;
 use ids::NodeId;
 
 use self::effect_expr::EffectExpr;
@@ -51,11 +50,11 @@ pub enum Type {
         effects: EffectExpr,
     },
     Brand {
-        brand: Dson,
+        brand: String,
         item: Box<Self>,
     },
     Label {
-        label: Dson,
+        label: String,
         item: Box<Self>,
     },
 }
@@ -139,10 +138,10 @@ pub(crate) trait TypeVisitorMut {
         self.visit(&mut effect.input);
         self.visit(&mut effect.output);
     }
-    fn visit_brand(&mut self, _brand: &mut Dson, item: &mut Type) {
+    fn visit_brand(&mut self, _brand: &mut String, item: &mut Type) {
         self.visit(item);
     }
-    fn visit_label(&mut self, _label: &mut Dson, item: &mut Type) {
+    fn visit_label(&mut self, _label: &mut String, item: &mut Type) {
         self.visit(item);
     }
     fn visit(&mut self, ty: &mut Type) {
@@ -249,10 +248,10 @@ pub(crate) trait TypeVisitor {
         self.visit(&effect.input);
         self.visit(&effect.output);
     }
-    fn visit_brand(&mut self, _brand: &Dson, item: &Type) {
+    fn visit_brand(&mut self, _brand: &str, item: &Type) {
         self.visit(item);
     }
-    fn visit_label(&mut self, _label: &Dson, item: &Type) {
+    fn visit_label(&mut self, _label: &str, item: &Type) {
         self.visit(item);
     }
     fn visit(&mut self, ty: &Type) {

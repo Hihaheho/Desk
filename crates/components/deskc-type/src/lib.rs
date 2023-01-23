@@ -3,7 +3,6 @@ mod conversions;
 
 pub use conversions::*;
 
-use dson::Dson;
 use serde::{Deserialize, Serialize};
 
 pub type Id = usize;
@@ -39,11 +38,11 @@ pub enum Type {
         effects: EffectExpr,
     },
     Brand {
-        brand: Dson,
+        brand: String,
         item: Box<Self>,
     },
     Label {
-        label: Dson,
+        label: String,
         item: Box<Self>,
     },
 }

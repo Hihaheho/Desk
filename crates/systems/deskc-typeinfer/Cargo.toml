@@ -14,7 +14,6 @@ edition = "2021"
 ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
 hir = { path = "../../components/deskc-hir", version = "0.0.0", package = "deskc-hir" }
 ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
-dson = { path = "../../components/dson", version = "0.0.0", package = "dson" }
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
 thiserror = { workspace = true }
@@ -22,6 +21,8 @@ itertools = "0.10"
 
 [dev-dependencies]
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
+dson = { workspace = true }
+
 chumsky = "0.8.0"
 ariadne = "0.1"
 pretty_assertions = "1.3.0"

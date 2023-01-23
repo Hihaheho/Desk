@@ -344,9 +344,9 @@ mod tests {
     #[test]
     fn parse_brand() {
         assert_eq!(
-            parse(r#"'brand "a"; ?"#).value,
+            parse(r#"'brand a; ?"#).value,
             Expr::DeclareBrand {
-                brand: Dson::Literal(dson::Literal::String("a".into())),
+                brand: "a".into(),
                 item: bw(Expr::Hole),
             }
         );
@@ -383,9 +383,9 @@ mod tests {
     #[test]
     fn parse_label() {
         assert_eq!(
-            parse(r#"@"true" *<>"#).value,
+            parse(r#"@true *<>"#).value,
             Expr::Label {
-                label: Dson::Literal(dson::Literal::String("true".into())),
+                label: "true".into(),
                 item: bw(Expr::Product(vec![])),
             }
         );
@@ -463,7 +463,6 @@ mod tests {
     #[test]
     fn parse_single_token() {
         assert_eq!(parse("& _").value, r(Type::Infer));
-        assert_eq!(parse("& 'this").value, r(Type::This));
     }
 
     #[test]
@@ -536,9 +535,9 @@ mod tests {
     #[test]
     fn parse_brand_ty() {
         assert_eq!(
-            parse(r#"& @"added" 'integer"#).value,
+            parse(r#"& @added 'integer"#).value,
             r(Type::Labeled {
-                brand: Dson::Literal(dson::Literal::String("added".into())),
+                brand: "added".into(),
                 item: bw(Type::Integer),
             })
         );

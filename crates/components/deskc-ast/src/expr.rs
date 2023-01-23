@@ -73,13 +73,13 @@ pub enum Expr {
         attr: Dson,
         item: Box<WithMeta<Self>>,
     },
-    /// Declare the dson is a brand of the item.
+    /// Declare ident is a brand of the item.
     DeclareBrand {
-        brand: Dson,
+        brand: String,
         item: Box<WithMeta<Self>>,
     },
     Label {
-        label: Dson,
+        label: String,
         item: Box<WithMeta<Self>>,
     },
     NewType {

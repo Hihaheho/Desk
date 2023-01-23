@@ -9,8 +9,10 @@ readme = "../../../README.md"
 edition = "2021"
 
 [dependencies]
+dson = { workspace = true }
 desk-plugin = { workspace = true }
 desk-window = { workspace = true }
+desk-theme = { workspace = true }
 dworkspace = { workspace = true }
 dworkspace-codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
 deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
@@ -19,4 +21,5 @@ deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = 
 bevy = { workspace = true }
 egui = { workspace = true }
 uuid = { workspace = true}
+once_cell = { workspace = true }
 egui_cable = "0.3"

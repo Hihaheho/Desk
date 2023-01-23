@@ -95,11 +95,10 @@ Expr: ExprBegin^ ExprC ExprEnd^
     Exists: ExistsKey^ BoundedVariable ExprC;
     NewType: TyKey^ Ident Ty StmtEnd^ ExprC;
     Card: CardKey^ Uuid ExprC StmtEnd^ ExprC;
-    Brand: BrandKey^ ExprC StmtEnd^ ExprC;
+    Brand: BrandKey^ Ident StmtEnd^ ExprC;
 
 Ty: ExprBegin^ Ty ExprEnd^
   | Infer
-  | This
   | RealKey
   | RationalKey
   | IntegerKey
@@ -146,7 +145,7 @@ Comment: BlockComment
     BlockCommentContent: <BlockComment> /[^\)]+(\)[^~\)])?/;
     CommentCharacters: <InlineComment> /.*/;
 Attribute: AttributeSym^ ExprC;
-Label: LabelSym^ ExprC;
+Label: LabelSym^ Ident;
 Ident: IdentRaw
      | IdentWrapped;
     IdentWrapped: IdentDelimiter^ %push(Ident) IdentPart { IdentPart } IdentDelimiter^ %pop();
@@ -202,7 +201,6 @@ FunctionSym: /\u{5c}/;
 StringDelimiter: <INITIAL, String>'"';
 
 // Keywords
-This: "'this";
 DoKey: "'do";
 TyKey: "'type";
 ForallKey: "'forall";

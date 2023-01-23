@@ -96,7 +96,6 @@ mod tests {
     use std::sync::Arc;
 
     use ariadne::{Label, Report, ReportKind, Source};
-    use dson::Dson;
     use errors::{textual_diagnostics::TextualDiagnostics, typeinfer::TypeOrString};
     use hir::visitor::HirVisitor;
     use ids::{Entrypoint, FileId, NodeId};
@@ -143,7 +142,9 @@ mod tests {
         }
         impl HirVisitor for HirIds {
             fn visit_expr(&mut self, expr: &WithMeta<Expr>) {
-                if let Some(Dson::Literal(dson::Literal::Integer(int))) = expr.meta.attrs.first() {
+                if let Some(dson::Dson::Literal(dson::Literal::Integer(int))) =
+                    expr.meta.attrs.first()
+                {
                     self.ids.push((*int as usize, expr.meta.id.clone()));
                 }
                 self.super_visit_expr(expr);
@@ -467,13 +468,13 @@ mod tests {
               'integer ~> 'string -> ^ y 2
             }';
             #3 ^fun(
-              \ @"x" 'integer -> '{
+              \ @x 'integer -> '{
                 'do ! 1 ~> 'string;
-                ! @"a" *<> ~> 'integer,
+                ! @a *<> ~> 'integer,
               }'
-              \ @"y" 'integer -> '{
+              \ @y 'integer -> '{
                 'do ! "a" ~> 'integer;
-                ! @"b" *<> ~> 'integer
+                ! @b *<> ~> 'integer
               }'
             )
             "#;
@@ -506,14 +507,14 @@ mod tests {
                         effects: EffectExpr::Effects(vec![
                             Effect {
                                 input: Type::Label {
-                                    label: Dson::Literal(dson::Literal::String("a".into())),
+                                    label: "a".into(),
                                     item: Box::new(Type::Product(vec![]))
                                 },
                                 output: Type::Integer,
                             },
                             Effect {
                                 input: Type::Label {
-                                    label: Dson::Literal(dson::Literal::String("b".into())),
+                                    label: "b".into(),
                                     item: Box::new(Type::Product(vec![]))
                                 },
                                 output: Type::Integer,
@@ -529,7 +530,7 @@ mod tests {
     fn label() {
         let expr = parse(
             r#"
-            #1 <@"labeled" 'integer> <'integer> <@"labeled" 'integer> 1
+            #1 <@labeled 'integer> <'integer> <@labeled 'integer> 1
         "#,
         );
         let conclusion = synth(&expr).unwrap();
@@ -538,7 +539,7 @@ mod tests {
             vec![(
                 1,
                 Type::Label {
-                    label: Dson::Literal(dson::Literal::String("labeled".into())),
+                    label: "labeled".into(),
                     item: Box::new(Type::Integer),
                 },
             ),]
@@ -549,7 +550,7 @@ mod tests {
     fn instantiate_label() {
         let expr = parse(
             r#"
-            #1 \ x -> <@"labeled" 'integer> &x
+            #1 \ x -> <@labeled 'integer> &x
         "#,
         );
         let conclusion = synth(&expr).unwrap();
@@ -559,11 +560,11 @@ mod tests {
                 1,
                 Type::Function(Box::new(Function {
                     parameter: Type::Label {
-                        label: Dson::Literal(dson::Literal::String("labeled".into())),
+                        label: "labeled".into(),
                         item: Box::new(Type::Integer),
                     },
                     body: Type::Label {
-                        label: Dson::Literal(dson::Literal::String("labeled".into())),
+                        label: "labeled".into(),
                         item: Box::new(Type::Integer),
                     },
                 })),
@@ -575,8 +576,8 @@ mod tests {
     fn brand_supertype() {
         let expr = parse(
             r#"
-            'brand "brand";
-            <@"brand" 'integer> 1
+            'brand brand;
+            <@brand 'integer> 1
         "#,
         );
         assert_eq!(
@@ -584,7 +585,7 @@ mod tests {
             Err(TypeError::NotSubtype {
                 sub: ty::Type::Integer.into(),
                 ty: ty::Type::Brand {
-                    brand: Dson::Literal(dson::Literal::String("brand".into())),
+                    brand: "brand".into(),
                     item: Box::new(ty::Type::Integer),
                 }
                 .into(),
@@ -596,8 +597,8 @@ mod tests {
     fn brand_subtype() {
         let expr = parse(
             r#"
-            'brand "brand";
-            #1 <'integer> &@"brand" 'integer
+            'brand brand;
+            #1 <'integer> &@brand 'integer
         "#,
         );
         let conclusion = synth(&expr).unwrap();
@@ -622,8 +623,8 @@ mod tests {
             r#"
             \ x ->
               #2 'match #1 &x '{
-                'integer => <@"a" 'integer> 1,
-                'string => <@"b" 'integer> 2,
+                'integer => <@a 'integer> 1,
+                'string => <@b 'integer> 2,
               }'
             "#,
         );
@@ -700,7 +701,7 @@ mod tests {
     fn test_cast_strategy_product_to_type() {
         let expr = parse(
             r#"
-            #1 <@"l" 'real> *<@"l" 1, @"r" 2>
+            #1 <@l 'real> *<@l 1, @r 2>
             "#,
         );
         let conclusion = synth(&expr).unwrap();

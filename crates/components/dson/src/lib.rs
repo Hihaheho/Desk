@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -46,7 +48,7 @@ pub enum Dson {
     Vector(Vec<Self>),
     Map(Vec<MapElem>),
     Attributed { attr: Box<Self>, expr: Box<Self> },
-    Labeled { label: Box<Self>, expr: Box<Self> },
+    Labeled { label: String, expr: Box<Self> },
     Typed { ty: Type, expr: Box<Self> },
     Comment { text: String, expr: Box<Self> },
 }
@@ -60,7 +62,7 @@ pub struct MapElem {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Type {
     Brand {
-        brand: Box<Dson>,
+        brand: String,
         item: Box<Self>,
     },
     Real,
@@ -99,5 +101,25 @@ impl From<&str> for Dson {
 impl From<i64> for Dson {
     fn from(i: i64) -> Self {
         Dson::Literal(Literal::Integer(i))
+    }
+}
+
+impl Display for Dson {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Dson::Literal(literal) => match literal {
+                Literal::String(string) => write!(f, "{:?}", string),
+                Literal::Integer(i) => write!(f, "{}", i),
+                Literal::Rational(a, b) => write!(f, "{} / {}", a, b),
+                Literal::Real(real) => write!(f, "{}", real.0),
+            },
+            Dson::Product(_) => todo!(),
+            Dson::Vector(_) => todo!(),
+            Dson::Map(_) => todo!(),
+            Dson::Attributed { attr, expr } => todo!(),
+            Dson::Labeled { label, expr } => todo!(),
+            Dson::Typed { ty, expr } => todo!(),
+            Dson::Comment { text, expr } => todo!(),
+        }
     }
 }

@@ -25,7 +25,7 @@ struct TerminalWidget;
 
 impl Widget<egui::Context> for TerminalWidget {
     fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
-        egui::Window::new("Terminal").show(ctx.backend, |ui| {
+        egui::Window::new("Terminal").show(&ctx.backend(), |ui| {
             ui.label("Hello World");
         });
     }

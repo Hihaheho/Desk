@@ -42,7 +42,7 @@ pub struct HirGen {
     next_meta: RefCell<Vec<NodeId>>,
     pub attrs: RefCell<HashMap<NodeId, Vec<Dson>>>,
     pub type_aliases: RefCell<HashMap<String, Type>>,
-    brands: RefCell<HashSet<Dson>>,
+    brands: RefCell<HashSet<String>>,
     cards: RefCell<Vec<Card>>,
 }
 
@@ -61,7 +61,6 @@ impl HirGen {
                 effects: self.gen_effect_expr(effects)?,
             }),
             ast::ty::Type::Infer => self.with_meta(Type::Infer),
-            ast::ty::Type::This => self.with_meta(Type::This),
             ast::ty::Type::Variable(ident) => self.with_meta(
                 self.type_aliases
                     .borrow()
@@ -454,10 +453,10 @@ mod tests {
     fn label_and_brand() {
         let expr = parse(
             r#"
-        $ & @"brand" 'integer;
-        'brand "brand";
-        $ & @"brand" 'integer;
-        & @"label" 'integer
+        $ & @brand 'integer;
+        'brand brand;
+        $ & @brand 'integer;
+        & @label 'integer
         "#,
         );
 
@@ -467,7 +466,7 @@ mod tests {
             dummy_meta(Expr::Let {
                 definition: Box::new(dummy_meta(Expr::Apply {
                     function: dummy_meta(Type::Label {
-                        label: Dson::Literal(dson::Literal::String("brand".into())),
+                        label: "brand".into(),
                         item: Box::new(dummy_meta(Type::Integer)),
                     }),
                     link_name: Default::default(),
@@ -476,7 +475,7 @@ mod tests {
                 expr: Box::new(dummy_meta(Expr::Let {
                     definition: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Brand {
-                            brand: Dson::Literal(dson::Literal::String("brand".into())),
+                            brand: "brand".into(),
                             item: Box::new(dummy_meta(Type::Integer)),
                         }),
                         link_name: Default::default(),
@@ -484,7 +483,7 @@ mod tests {
                     })),
                     expr: Box::new(dummy_meta(Expr::Apply {
                         function: dummy_meta(Type::Label {
-                            label: Dson::Literal(dson::Literal::String("label".into())),
+                            label: "label".into(),
                             item: Box::new(dummy_meta(Type::Integer)),
                         }),
                         link_name: Default::default(),

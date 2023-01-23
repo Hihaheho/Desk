@@ -25,7 +25,6 @@ pub enum Type {
         effects: WithMeta<EffectExpr>,
     },
     Infer,
-    This,
     Product(Vec<WithMeta<Self>>),
     Sum(Vec<WithMeta<Self>>),
     Function(Box<Function>),
@@ -42,12 +41,12 @@ pub enum Type {
     },
     Variable(String),
     Brand {
-        brand: Dson,
+        brand: String,
         item: Box<WithMeta<Self>>,
     },
     // just label brand
     Label {
-        label: Dson,
+        label: String,
         item: Box<WithMeta<Self>>,
     },
     Forall {

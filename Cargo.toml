@@ -39,5 +39,6 @@ deskc-macros = { path = "crates/libs/deskc-macros", version = "0.0.0" }
 deskc-ast = { path = "crates/components/deskc-ast", version = "0.0.0" }
 desk-plugin = { path = "crates/components/desk-plugin", version = "0.0.0" }
 desk-window = { path = "crates/components/desk-window", version = "0.0.0" }
+desk-theme = { path = "crates/components/desk-theme", version = "0.0.0" }
 dworkspace = { path = "crates/systems/dworkspace", version = "0.0.0" }
 dson = { path = "crates/components/dson", version = "0.0.0" }

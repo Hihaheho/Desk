@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_egui::{
-    egui::{self, Color32},
+    egui::{self, Color32, FontData, FontDefinitions, FontTweak},
     EguiContext,
 };
 use desk_plugin::DeskSystem;
@@ -16,6 +16,7 @@ impl Plugin for EguiPlugin {
         app.add_plugin(bevy_egui::EguiPlugin)
             .register_type::<Theme>()
             .add_startup_system(add_theme)
+            .add_startup_system(load_font)
             .add_system(egui_theme)
             .add_system(
                 render
@@ -30,9 +31,9 @@ fn render(
     mut windows: Query<(&mut Workspace, &mut Window<egui::Context>)>,
 ) {
     for (mut kernel, mut window) in windows.iter_mut() {
-        let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut());
+        let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut().clone());
         window.render(&mut ctx);
-        for event in ctx.events {
+        for event in ctx.events() {
             kernel.commit(event);
         }
     }
@@ -40,6 +41,31 @@ fn render(
 
 fn add_theme(mut commands: Commands) {
     commands.spawn(ron::from_str::<Theme>(include_str!("../../../../configs/theme.ron")).unwrap());
+}
+
+fn load_font(mut egui_context: ResMut<EguiContext>) {
+    let mut fonts = FontDefinitions::default();
+    fonts.font_data.insert(
+        "Iosevka Fixed Extended".into(),
+        FontData::from_static(include_bytes!(
+            "../../../../assets/fonts/iosevka-fixed-extended.ttf"
+        )),
+    );
+    fonts.font_data.insert(
+        "Noto Sans Mono CJK JP".into(),
+        FontData::from_static(include_bytes!(
+            "../../../../assets/fonts/NotoSansMonoCJKjp-Regular.otf"
+        )),
+    );
+    // TODO insert more CJK fonts
+    fonts.families.insert(
+        egui::FontFamily::Monospace,
+        vec![
+            "Iosevka Fixed Extended".into(),
+            "Noto Sans Mono CJK JP".into(),
+        ],
+    );
+    egui_context.ctx_mut().set_fonts(fonts);
 }
 
 fn color(color: &Color) -> Color32 {

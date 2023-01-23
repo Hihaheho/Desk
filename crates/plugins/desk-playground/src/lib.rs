@@ -39,7 +39,7 @@ pub struct PlaygroundWidget;
 
 impl Widget<egui::Context> for PlaygroundWidget {
     fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
-        egui::Window::new("Editor").show(ctx.backend, |ui| {
+        egui::Window::new("Editor").show(&ctx.backend(), |ui| {
             if ui.button("Fibonacci").clicked() {
                 create_nodes_for_ast(ctx, &FIBONACCI);
             }
@@ -51,23 +51,23 @@ const FIBONACCI: Lazy<WithMeta<Expr>> = Lazy::new(|| {
     ast!(
         r#"
         ~~ type aliases
-        'type add \ *<@"l" 'integer, @"r" 'integer> -> @"sum" 'integer;
-        'type sub \ *<@"l" 'integer, @"r" 'integer> -> @"diff" 'integer;
-        'type eq \ *<@"l" 'real, @"r" 'real> -> +<@"equal" *<>, @"unequal" *<>>;
+        'type add \ *<@l 'integer, @r 'integer> -> @sum 'integer;
+        'type sub \ *<@l 'integer, @r 'integer> -> @diff 'integer;
+        'type eq \ *<@l 'real, @r 'real> -> +<@equal *<>, @unequal *<>>;
         'type fib \ 'integer -> 'integer;
 
         ~~ let fib
-        $ \ 'integer -> 'match ^eq *<@"l" &'integer, @"r" 0> '{
+        $ \ 'integer -> 'match ^eq *<@l &'integer, @r 0> '{
           ~~ if number == 0)
-          @"equal" *<> => 0
+          @equal *<> => 0
           ~~ if number != 0
-          @"unequal" *<> => 'match ^eq *<@"l" &'integer, @"r" 1> '{
-            @"equal" *<> => 1
-            @"unequal" *<> =>
+          @unequal *<> => 'match ^eq *<@l &'integer, @r 1> '{
+            @equal *<> => 1
+            @unequal *<> =>
               ~~ adds fib(number - 1) and fib(number - 2)
               <'integer> ^add *<
-                @"l" ^fib ^sub *<@"l" &'integer, @"r" 1>
-                @"r" ^fib ^sub *<@"l" &'integer, @"r" 2>
+                @l ^fib ^sub *<@l &'integer, @r 1>
+                @r ^fib ^sub *<@l &'integer, @r 2>
               >
           }'
         }';
@@ -314,7 +314,7 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                             },
                         });
                         self.add_event(Event::PatchOperand {
-                            node_id: of.clone(),
+                            node_id: *node_id,
                             patch: OperandPatch::Insert {
                                 index: index + 1,
                                 node_id: case.meta.id.clone(),
@@ -577,12 +577,6 @@ fn create_nodes_for_ast<'a>(ctx: &mut Ctx<egui::Context>, expr: &'a WithMeta<Exp
                     self.add_event(Event::CreateNode {
                         node_id: node_id.clone(),
                         content: Content::Infer,
-                    });
-                }
-                Type::This => {
-                    self.add_event(Event::CreateNode {
-                        node_id: node_id.clone(),
-                        content: Content::This,
                     });
                 }
                 Type::Product(types) => {
