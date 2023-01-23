@@ -1,8 +1,9 @@
-use components::event::Event;
+use components::{event::Event, user::UserId};
 
 pub trait Repository {
     fn poll(&mut self) -> Vec<Event>;
     fn commit(&mut self, event: Event);
+    fn user_id(&self) -> UserId;
 }
 
 #[cfg(test)]
@@ -17,6 +18,9 @@ impl Repository for TestRepository {
         panic!()
     }
     fn commit(&mut self, log: Event) {
+        panic!()
+    }
+    fn user_id(&self) -> UserId {
         panic!()
     }
 }

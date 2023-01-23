@@ -10,19 +10,19 @@ pub struct History {}
 
 impl State for History {
     fn handle_event(&mut self, projection: &Projection, event: &Event) {
-        match &event.payload {
-            EventPayload::AddOwner { user_id } => todo!(),
-            EventPayload::RemoveOwner { user_id } => todo!(),
-            EventPayload::UpdateSpaceRules { rules } => todo!(),
-            EventPayload::CreateNode { node_id, content } => todo!(),
-            EventPayload::RemoveNode { node_id } => todo!(),
-            EventPayload::PatchContent { node_id, patch } => todo!(),
-            EventPayload::PatchOperand { node_id, patch } => todo!(),
-            EventPayload::PatchAttribute { node_id, patch } => todo!(),
-            EventPayload::UpdateNodeRules { node_id, rules } => todo!(),
-            EventPayload::UpdateOperandRules { node_id, rules } => todo!(),
-            EventPayload::AddSnapshot { index, snapshot } => todo!(),
-        }
+        // match &event.payload {
+        //     EventPayload::AddOwner { user_id } => todo!(),
+        //     EventPayload::RemoveOwner { user_id } => todo!(),
+        //     EventPayload::UpdateSpaceRules { rules } => todo!(),
+        //     EventPayload::CreateNode { node_id, content } => todo!(),
+        //     EventPayload::RemoveNode { node_id } => todo!(),
+        //     EventPayload::PatchContent { node_id, patch } => todo!(),
+        //     EventPayload::PatchOperand { node_id, patch } => todo!(),
+        //     EventPayload::PatchAttribute { node_id, patch } => todo!(),
+        //     EventPayload::UpdateNodeRules { node_id, rules } => todo!(),
+        //     EventPayload::UpdateOperandRules { node_id, rules } => todo!(),
+        //     EventPayload::AddSnapshot { index, snapshot } => todo!(),
+        // }
     }
 }
 

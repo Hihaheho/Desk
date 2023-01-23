@@ -1,8 +1,9 @@
-use dworkspace::repository::Repository;
-use dworkspace_codebase::{event::Event, user::UserId};
+use dworkspace::{prelude::UserId, repository::Repository};
+use dworkspace_codebase::event::Event;
 
+#[derive(Debug)]
 pub struct InMemoryRepository {
-    user_id: UserId,
+    pub user_id: UserId,
     pub entries: Vec<Event>,
 }
 
@@ -22,5 +23,9 @@ impl Repository for InMemoryRepository {
 
     fn commit(&mut self, event: Event) {
         self.entries.push(event);
+    }
+
+    fn user_id(&self) -> UserId {
+        self.user_id
     }
 }

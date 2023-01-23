@@ -13,7 +13,7 @@ pub mod state;
 use std::{any::TypeId, collections::HashMap};
 
 use bevy_ecs::prelude::Component;
-use components::{event::Event, projection::Projection};
+use components::{event::Event, projection::Projection, user::UserId};
 use deskc_ids::NodeId;
 use history::History;
 use loop_detector::LoopDetector;
@@ -91,6 +91,10 @@ impl Workspace {
 
     pub fn top_level_nodes(&self) -> Vec<NodeId> {
         self.references.lock().top_level_nodes().cloned().collect()
+    }
+
+    pub fn user_id(&self) -> UserId {
+        self.repository.user_id()
     }
 }
 

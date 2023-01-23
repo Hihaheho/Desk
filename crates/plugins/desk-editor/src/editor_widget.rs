@@ -1,22 +1,16 @@
-use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
-
 use bevy::prelude::Color;
-use bevy::render::color;
 use desk_theme::colorscheme::{CodeColorScheme, CodeColorTag as Tag};
 use desk_theme::{EditorStyle, IndentGuide};
 use desk_window::ctx::Ctx;
 use desk_window::widget::Widget;
 use deskc_ids::{LinkName, NodeId};
 use dson::Dson;
-use dworkspace::prelude::{EventPayload, FlatNode, UserId};
+use dworkspace::prelude::{EventPayload, FlatNode};
 use dworkspace_codebase::code::SyntaxKind;
 use dworkspace_codebase::content::Content;
 use dworkspace_codebase::event::{Event, EventId};
-use dworkspace_codebase::patch::{ContentPatch, OperandPatch};
-use egui::epaint::TextShape;
-use egui::{Color32, FontId, Layout, Rect, Rgba, RichText, Sense, Stroke, TextEdit, TextStyle};
-use once_cell::sync::Lazy;
+use dworkspace_codebase::patch::ContentPatch;
+use egui::{Rgba, RichText, Stroke, TextEdit, TextStyle};
 
 use crate::editor_state::{EditorState, NodeState};
 
@@ -115,6 +109,13 @@ impl<'context> NodeRenderer<'_, 'context> {
             colorscheme: self.colorscheme,
             node_type: self.node_type,
         }
+    }
+    fn add_event(&mut self, payload: EventPayload) {
+        self.ctx.add_event(Event {
+            id: EventId::new(),
+            user_id: self.ctx.workspace.user_id(),
+            payload,
+        });
     }
     fn has_focus(&self) -> bool {
         self.state().selected_node == Some(self.node_id)
@@ -290,16 +291,12 @@ impl<'context> NodeRenderer<'_, 'context> {
         let mut source = original.clone();
         self.ui.code_editor(&mut source);
         if *original != source {
-            self.ctx.add_event(Event {
-                id: EventId::new(),
-                user_id: self.ctx.user_id,
-                payload: EventPayload::PatchContent {
-                    node_id: self.node_id.clone(),
-                    patch: ContentPatch::Replace(Content::SourceCode {
-                        source,
-                        syntax: syntax.clone(),
-                    }),
-                },
+            self.add_event(EventPayload::PatchContent {
+                node_id: self.node_id.clone(),
+                patch: ContentPatch::Replace(Content::SourceCode {
+                    source,
+                    syntax: syntax.clone(),
+                }),
             });
         }
         self.handle_remaining_operands(node.operands.iter())
@@ -309,13 +306,9 @@ impl<'context> NodeRenderer<'_, 'context> {
         let mut string = original.clone();
         self.ui.text_edit_singleline(&mut string);
         if *original != string {
-            self.ctx.add_event(Event {
-                id: EventId::new(),
-                user_id: self.ctx.user_id,
-                payload: EventPayload::PatchContent {
-                    node_id: self.node_id.clone(),
-                    patch: ContentPatch::Replace(Content::String(string)),
-                },
+            self.add_event(EventPayload::PatchContent {
+                node_id: self.node_id.clone(),
+                patch: ContentPatch::Replace(Content::String(string)),
             });
         }
         self.handle_remaining_operands(node.operands.iter())
@@ -347,7 +340,7 @@ impl<'context> NodeRenderer<'_, 'context> {
                 .font(TextStyle::Monospace)
                 .desired_width(0.0)
                 .cursor_at_end(true)
-                .show(self.ui.deref_mut());
+                .show(&mut self.ui);
             if res.response.lost_focus() {
                 self.node_state_mut().editing_text = None;
                 // TODO

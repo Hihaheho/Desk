@@ -1,9 +1,9 @@
 pub use crate::state::State;
 pub use crate::Workspace;
 pub use components::content::Content;
-pub use components::event::{Event, EventPayload};
+pub use components::event::{Event, EventId, EventPayload};
 pub use components::flat_node::{Attributes, FlatNode, Operands};
-pub use components::patch::{AttributePatch, ContentPatch, OperandPatch};
+pub use components::patch::{AttributePatch, ContentPatch, OperandPatch, OperandPosition};
 pub use components::projection::Projection;
 pub use components::rules::{NodeOperation, SpaceOperation};
 pub use components::user::UserId;
