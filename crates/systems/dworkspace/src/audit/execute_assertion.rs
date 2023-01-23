@@ -51,7 +51,7 @@ pub enum AssertionError {
 impl Workspace {
     pub fn execute_assertion(
         &self,
-        user_id: &UserId,
+        user_id: UserId,
         assertion: Assertion,
     ) -> Result<(), AssertionError> {
         match assertion {
@@ -87,7 +87,7 @@ impl Workspace {
                 Ok(())
             }
             Assertion::Owner => {
-                if self.snapshot.owners.contains(user_id) {
+                if self.snapshot.owners.contains(&user_id) {
                     Ok(())
                 } else {
                     Err(AssertionError::NotOwner)
@@ -229,7 +229,7 @@ impl Workspace {
 mod tests {
     use components::{
         content::Content,
-        event::Event,
+        event::{Event, EventId, EventPayload},
         flat_node::FlatNode,
         patch::{OperandPatch, OperandPosition},
         rules::{Rules, SpaceOperation},
@@ -240,12 +240,21 @@ mod tests {
 
     use super::*;
 
+    fn e(payload: EventPayload) -> Event {
+        Event {
+            id: EventId::new(),
+            user_id: UserId::new(),
+            payload,
+        }
+    }
+
     #[test]
     fn space_denies() {
         let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::SpaceAllows(SpaceOperation::CreateNode);
+        let user_a = UserId::new();
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::SpaceDenied(SpaceOperation::CreateNode))
         );
     }
@@ -253,21 +262,20 @@ mod tests {
     #[test]
     fn space_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         kernel
             .snapshot
             .rules
             .default
             .insert(SpaceOperation::CreateNode);
         let assertion = Assertion::SpaceAllows(SpaceOperation::CreateNode);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn node_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         kernel
             .snapshot
@@ -278,7 +286,7 @@ mod tests {
             operation: NodeOperation::RemoveNode,
         };
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::NodeDenied {
                 node_id,
                 operation: NodeOperation::RemoveNode
@@ -289,61 +297,60 @@ mod tests {
     #[test]
     fn node_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::NodeAllows {
             node_id,
             operation: NodeOperation::RemoveNode,
         };
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn parent_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: parent_id,
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_id.clone(),
             },
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::NodeAllows {
             node_id,
             operation: NodeOperation::RemoveNode,
         };
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::ParentDenied {
                 node_id,
                 operation: NodeOperation::RemoveNode
@@ -354,37 +361,38 @@ mod tests {
     #[test]
     fn parent_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: parent_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_id.clone(),
             },
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
-        kernel.handle_event(&Event::UpdateOperandRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateOperandRules {
             node_id: parent_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         kernel
             .snapshot
             .flat_nodes
@@ -397,18 +405,16 @@ mod tests {
             node_id,
             operation: NodeOperation::RemoveNode,
         };
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn owner_denies() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_b = UserId::new();
         let assertion = Assertion::Owner;
         assert_eq!(
-            kernel.execute_assertion(&UserId("b".into()), assertion),
+            kernel.execute_assertion(user_b, assertion),
             Err(AssertionError::NotOwner)
         );
     }
@@ -416,25 +422,20 @@ mod tests {
     #[test]
     fn owner_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.handle_event(&Event::AddOwner {
-            user_id: UserId("a".into()),
-        });
+        let user_a = UserId::new();
+        kernel.handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         let assertion = Assertion::Owner;
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn no_owner_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.handle_event(&Event::AddOwner {
-            user_id: UserId("a".into()),
-        });
+        let user_a = UserId::new();
+        kernel.handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         let assertion = Assertion::NoOwner;
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::NotOwner)
         );
     }
@@ -442,20 +443,19 @@ mod tests {
     #[test]
     fn no_owner_allows() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let assertion = Assertion::NoOwner;
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn node_exists_denies() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let assertion = Assertion::NodeExists(node_id);
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::NodeNotFound(node_id))
         );
     }
@@ -463,49 +463,48 @@ mod tests {
     #[test]
     fn node_exists_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
+        }));
         let assertion = Assertion::NodeExists(node_id);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn has_operand() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_a = NodeId::new();
         let node_b = NodeId::new();
         let node_c = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_b,
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_c,
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_b,
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_c,
             },
-        });
+        }));
         let assertion = Assertion::HasOperand {
             node_id: node_a,
             operand_id: node_c,
         };
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::OperandNotFound {
                 node_id: node_a,
                 operand_id: node_c
@@ -515,35 +514,33 @@ mod tests {
             node_id: node_b,
             operand_id: node_c,
         };
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn not_referenced_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: parent_id,
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_id.clone(),
             },
-        });
+        }));
         let assertion = Assertion::NotReferenced(node_id);
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::Referenced(node_id))
         );
     }
@@ -551,49 +548,48 @@ mod tests {
     #[test]
     fn not_referenced_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id,
             content: Content::Integer(0),
-        });
+        }));
         let assertion = Assertion::NotReferenced(node_id);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn no_operand_loop_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: parent_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_id.clone(),
             },
-        });
+        }));
         let assertion = Assertion::NoOperandLoop {
             node_id,
             operand_id: parent_id,
         };
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::OperandLoop {
                 node_id,
                 operand_id: parent_id
@@ -604,84 +600,71 @@ mod tests {
     #[test]
     fn no_operand_loop_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let parent_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: parent_id.clone(),
             content: Content::Integer(0),
-        });
+        }));
         let assertion = Assertion::NoOperandLoop {
             node_id,
             operand_id: parent_id,
         };
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn operands_has_size() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
         let node_a = NodeId::new();
         let node_b = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_b.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_a,
             },
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::Last,
                 node_id: node_b,
             },
-        });
+        }));
         assert_eq!(
-            kernel.execute_assertion(
-                &UserId("a".into()),
-                Assertion::OperandsHasSize { node_id, size: 0 }
-            ),
+            kernel.execute_assertion(user_a, Assertion::OperandsHasSize { node_id, size: 0 }),
             Ok(())
         );
         assert_eq!(
-            kernel.execute_assertion(
-                &UserId("a".into()),
-                Assertion::OperandsHasSize { node_id, size: 1 }
-            ),
+            kernel.execute_assertion(user_a, Assertion::OperandsHasSize { node_id, size: 1 }),
             Ok(())
         );
         assert_eq!(
-            kernel.execute_assertion(
-                &UserId("a".into()),
-                Assertion::OperandsHasSize { node_id, size: 2 }
-            ),
+            kernel.execute_assertion(user_a, Assertion::OperandsHasSize { node_id, size: 2 }),
             Ok(())
         );
         assert_eq!(
-            kernel.execute_assertion(
-                &UserId("a".into()),
-                Assertion::OperandsHasSize { node_id, size: 3 }
-            ),
+            kernel.execute_assertion(user_a, Assertion::OperandsHasSize { node_id, size: 3 }),
             Err(AssertionError::InsufficientOperands {
                 node_id: node_id.clone(),
                 target: 3,
@@ -689,10 +672,7 @@ mod tests {
             })
         );
         assert_eq!(
-            kernel.execute_assertion(
-                &UserId("a".into()),
-                Assertion::OperandsHasSize { node_id, size: 4 }
-            ),
+            kernel.execute_assertion(user_a, Assertion::OperandsHasSize { node_id, size: 4 }),
             Err(AssertionError::InsufficientOperands {
                 node_id: node_id.clone(),
                 target: 4,
@@ -704,14 +684,15 @@ mod tests {
     #[test]
     fn content_kind_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
+        }));
         assert_eq!(
             kernel.execute_assertion(
-                &UserId("a".into()),
+                user_a,
                 Assertion::ContentKind {
                     node_id,
                     kind: ContentKind::Integer,
@@ -724,14 +705,15 @@ mod tests {
     #[test]
     fn content_kind_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
+        }));
         assert_eq!(
             kernel.execute_assertion(
-                &UserId("a".into()),
+                user_a,
                 Assertion::ContentKind {
                     node_id,
                     kind: ContentKind::String,
@@ -748,12 +730,13 @@ mod tests {
     #[test]
     fn all_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode, NodeOperation::ReplaceContent]
@@ -762,7 +745,7 @@ mod tests {
                     .collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::All(vec![
             Assertion::NodeAllows {
                 node_id,
@@ -773,27 +756,25 @@ mod tests {
                 operation: NodeOperation::ReplaceContent,
             },
         ]);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn all_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::All(vec![
             Assertion::NodeAllows {
                 node_id,
@@ -809,7 +790,7 @@ mod tests {
             },
         ]);
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::NodeDenied {
                 node_id,
                 operation: NodeOperation::ReplaceContent,
@@ -820,28 +801,27 @@ mod tests {
     #[test]
     fn all_allows_empty() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let assertion = Assertion::All(vec![]);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn any_allows() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::Any(vec![
             Assertion::NodeAllows {
                 node_id,
@@ -852,27 +832,25 @@ mod tests {
                 operation: NodeOperation::ReplaceContent,
             },
         ]);
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn any_denies() {
         let mut kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let node_id = NodeId::new();
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_id.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::UpdateNodeRules {
+        }));
+        kernel.handle_event(&e(EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules {
                 default: [NodeOperation::RemoveNode].iter().cloned().collect(),
                 ..Default::default()
             },
-        });
+        }));
         let assertion = Assertion::Any(vec![
             Assertion::NodeAllows {
                 node_id,
@@ -884,7 +862,7 @@ mod tests {
             },
         ]);
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::Any(vec![
                 AssertionError::NodeDenied {
                     node_id: node_id.clone(),
@@ -901,9 +879,10 @@ mod tests {
     #[test]
     fn any_denies_empty() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let assertion = Assertion::Any(vec![]);
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::Any(vec![]))
         );
     }
@@ -911,20 +890,19 @@ mod tests {
     #[test]
     fn tautology() {
         let kernel = Workspace::new(TestRepository::default());
+        let user_a = UserId::new();
         let assertion = Assertion::tautology();
-        assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
-            Ok(())
-        );
+        assert_eq!(kernel.execute_assertion(user_a, assertion), Ok(()));
     }
 
     #[test]
     fn contradiction() {
         let node_id = NodeId::new();
+        let user_a = UserId::new();
         let kernel = Workspace::new(TestRepository::default());
         let assertion = Assertion::Contradiction(AssertionError::MovingItself { node_id });
         assert_eq!(
-            kernel.execute_assertion(&UserId("a".into()), assertion),
+            kernel.execute_assertion(user_a, assertion),
             Err(AssertionError::MovingItself { node_id })
         );
     }

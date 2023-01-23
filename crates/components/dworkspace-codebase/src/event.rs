@@ -5,18 +5,28 @@ use crate::{
     user::UserId,
 };
 use deskc_ids::NodeId;
+use uuid::Uuid;
 
 use crate::projection::Projection;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EventEntry {
-    pub index: usize,
-    pub user_id: UserId,
-    pub event: Event,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EventId(pub Uuid);
+
+impl EventId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Event {
+pub struct Event {
+    pub id: EventId,
+    pub user_id: UserId,
+    pub payload: EventPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EventPayload {
     AddOwner {
         user_id: UserId,
     },

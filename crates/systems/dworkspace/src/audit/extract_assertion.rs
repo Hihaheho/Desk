@@ -1,6 +1,6 @@
 use components::{
     content::ContentKind,
-    event::Event,
+    event::{Event, EventPayload},
     patch::{AttributePatch, ContentPatch, OperandPatch, OperandPosition},
     rules::{NodeOperation, SpaceOperation},
 };
@@ -12,18 +12,18 @@ use super::assertion::Assertion;
 pub fn extract_assertion(event: &Event) -> Assertion {
     use NodeOperation::*;
     use SpaceOperation::*;
-    match *event {
-        Event::AddOwner { .. } => Assertion::Any(vec![
+    match event.payload {
+        EventPayload::AddOwner { .. } => Assertion::Any(vec![
             Assertion::NoOwner,
             Assertion::Owner,
             Assertion::SpaceAllows(AddOwner),
         ]),
-        Event::RemoveOwner { .. } => Assertion::SpaceAllows(RemoveOwner),
-        Event::CreateNode { .. } => Assertion::Any(vec![
+        EventPayload::RemoveOwner { .. } => Assertion::SpaceAllows(RemoveOwner),
+        EventPayload::CreateNode { .. } => Assertion::Any(vec![
             Assertion::Owner,
             Assertion::SpaceAllows(SpaceOperation::CreateNode),
         ]),
-        Event::RemoveNode { node_id } => Assertion::All(vec![
+        EventPayload::RemoveNode { node_id } => Assertion::All(vec![
             Assertion::NodeExists(node_id),
             Assertion::NotReferenced(node_id),
             Assertion::Any(vec![
@@ -34,7 +34,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 },
             ]),
         ]),
-        Event::PatchContent { node_id, ref patch } => {
+        EventPayload::PatchContent { node_id, ref patch } => {
             use ContentKind::*;
             let (kind, operation) = match patch {
                 ContentPatch::Replace(_) => {
@@ -66,7 +66,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 ]),
             ])
         }
-        Event::PatchOperand { node_id, patch } => match patch {
+        EventPayload::PatchOperand { node_id, patch } => match patch {
             OperandPatch::Insert {
                 position,
                 node_id: operand_id,
@@ -159,7 +159,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 .collect(),
             ),
         },
-        Event::PatchAttribute { node_id, ref patch } => {
+        EventPayload::PatchAttribute { node_id, ref patch } => {
             let operation = match patch {
                 AttributePatch::Update { key, value: _ } => UpdateAttribute(key.clone()),
                 AttributePatch::Remove { key } => RemoveAttribute(key.clone()),
@@ -172,11 +172,11 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 ]),
             ])
         }
-        Event::AddSnapshot { .. } => {
+        EventPayload::AddSnapshot { .. } => {
             Assertion::Any(vec![Assertion::Owner, Assertion::SpaceAllows(AddSnapshot)])
         }
-        Event::UpdateSpaceRules { rules: _ } => Assertion::Owner,
-        Event::UpdateNodeRules { node_id, rules: _ } => Assertion::All(vec![
+        EventPayload::UpdateSpaceRules { rules: _ } => Assertion::Owner,
+        EventPayload::UpdateNodeRules { node_id, rules: _ } => Assertion::All(vec![
             Assertion::NodeExists(node_id),
             Assertion::Any(vec![
                 Assertion::Owner,
@@ -186,7 +186,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 },
             ]),
         ]),
-        Event::UpdateOperandRules { node_id, rules: _ } => Assertion::All(vec![
+        EventPayload::UpdateOperandRules { node_id, rules: _ } => Assertion::All(vec![
             Assertion::NodeExists(node_id),
             Assertion::Any(vec![
                 Assertion::Owner,
@@ -204,6 +204,7 @@ mod tests {
     use components::{
         code::SyntaxKind,
         content::{Content, ContentKind},
+        event::EventId,
         patch::{OperandPosition, StringPatch},
         rules::Rules,
         user::UserId,
@@ -213,13 +214,21 @@ mod tests {
 
     use super::*;
 
+    fn e(payload: EventPayload) -> Event {
+        Event {
+            id: EventId::new(),
+            user_id: UserId::new(),
+            payload,
+        }
+    }
+
     #[test]
     fn extract_assertion_for_add_owner() {
-        let event = Event::AddOwner {
-            user_id: UserId("owner_id".into()),
+        let event = EventPayload::AddOwner {
+            user_id: UserId::new(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::Any(vec![
                 Assertion::NoOwner,
                 Assertion::Owner,
@@ -230,23 +239,23 @@ mod tests {
 
     #[test]
     fn extract_assertion_for_remove_owner() {
-        let event = Event::RemoveOwner {
-            user_id: UserId("owner_id".into()),
+        let event = EventPayload::RemoveOwner {
+            user_id: UserId::new(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::SpaceAllows(SpaceOperation::RemoveOwner)
         );
     }
 
     #[test]
     fn extract_assertion_for_create_node() {
-        let event = Event::CreateNode {
+        let event = EventPayload::CreateNode {
             node_id: NodeId::new(),
             content: Content::Integer(1),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::Any(vec![
                 Assertion::Owner,
                 Assertion::SpaceAllows(SpaceOperation::CreateNode),
@@ -257,11 +266,11 @@ mod tests {
     #[test]
     fn extract_assertion_for_remove_node() {
         let node_id = NodeId::new();
-        let event = Event::RemoveNode {
+        let event = EventPayload::RemoveNode {
             node_id: node_id.clone(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(node_id),
@@ -279,12 +288,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_patch_content_replace() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::Replace(Content::Integer(1)),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
@@ -301,12 +310,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_patch_source_code() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::PatchSourceCode(StringPatch::Replace("1".into())),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -327,7 +336,7 @@ mod tests {
     #[test]
     fn extract_assertion_for_change_source_code_syntax() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::ChangeSourceCodeSyntax {
                 syntax: SyntaxKind::Minimalist,
@@ -335,7 +344,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -356,12 +365,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_patch_string() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::PatchString(StringPatch::Replace("a".into())),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -382,12 +391,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_integer() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::UpdateInteger(1),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -408,12 +417,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_float() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::UpdateReal(1.0),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -434,12 +443,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_rational() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::UpdateRational(1, 2),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -460,7 +469,7 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_apply_type() {
         let node_id = NodeId::new();
-        let event = Event::PatchContent {
+        let event = EventPayload::PatchContent {
             node_id: node_id.clone(),
             patch: ContentPatch::UpdateApply {
                 ty: Type::Real,
@@ -468,7 +477,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
@@ -490,7 +499,7 @@ mod tests {
     fn extract_assertion_for_insert_operand_at() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::At(2),
@@ -498,7 +507,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(operand_id),
@@ -525,7 +534,7 @@ mod tests {
     fn extract_assertion_for_insert_operand_first() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
@@ -533,7 +542,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(operand_id),
@@ -556,7 +565,7 @@ mod tests {
     fn extract_assertion_for_insert_operand_last() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::Last,
@@ -564,7 +573,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(operand_id),
@@ -588,7 +597,7 @@ mod tests {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         let before_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::Before(before_id.clone()),
@@ -596,7 +605,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(operand_id),
@@ -624,7 +633,7 @@ mod tests {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         let after_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::After(after_id.clone()),
@@ -632,7 +641,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::NotReferenced(operand_id),
@@ -659,14 +668,14 @@ mod tests {
     fn extract_assertion_for_remove_operand() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Remove {
                 node_id: operand_id,
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -688,7 +697,7 @@ mod tests {
     fn extract_assertion_for_move_operand_at() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Move {
                 node_id: operand_id,
@@ -696,7 +705,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -722,7 +731,7 @@ mod tests {
     fn extract_assertion_for_move_operand_first() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Move {
                 node_id: operand_id,
@@ -730,7 +739,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -752,7 +761,7 @@ mod tests {
     fn extract_assertion_for_move_operand_last() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Move {
                 node_id: operand_id,
@@ -760,7 +769,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -783,7 +792,7 @@ mod tests {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         let before_operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Move {
                 node_id: operand_id,
@@ -791,7 +800,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -818,7 +827,7 @@ mod tests {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         let after_operand_id = NodeId::new();
-        let event = Event::PatchOperand {
+        let event = EventPayload::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Move {
                 node_id: operand_id,
@@ -826,7 +835,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::HasOperand {
@@ -851,7 +860,7 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_attribute() {
         let node_id = NodeId::new();
-        let event = Event::PatchAttribute {
+        let event = EventPayload::PatchAttribute {
             node_id: node_id.clone(),
             patch: AttributePatch::Update {
                 key: Type::Real,
@@ -859,7 +868,7 @@ mod tests {
             },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
@@ -876,12 +885,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_remove_attribute() {
         let node_id = NodeId::new();
-        let event = Event::PatchAttribute {
+        let event = EventPayload::PatchAttribute {
             node_id: node_id.clone(),
             patch: AttributePatch::Remove { key: Type::Real },
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
@@ -897,12 +906,12 @@ mod tests {
 
     #[test]
     fn extract_assertion_for_add_snapshot() {
-        let event = Event::AddSnapshot {
+        let event = EventPayload::AddSnapshot {
             index: 0,
             snapshot: Default::default(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::Any(vec![
                 Assertion::Owner,
                 Assertion::SpaceAllows(SpaceOperation::AddSnapshot)
@@ -912,21 +921,21 @@ mod tests {
 
     #[test]
     fn extract_assertion_for_update_space_rule() {
-        let event = Event::UpdateSpaceRules {
+        let event = EventPayload::UpdateSpaceRules {
             rules: Rules::default(),
         };
-        assert_eq!(extract_assertion(&event), Assertion::Owner,);
+        assert_eq!(extract_assertion(&e(event)), Assertion::Owner,);
     }
 
     #[test]
     fn extract_assertion_for_update_node_rule() {
         let node_id = NodeId::new();
-        let event = Event::UpdateNodeRules {
+        let event = EventPayload::UpdateNodeRules {
             node_id: node_id.clone(),
             rules: Rules::default(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
@@ -943,12 +952,12 @@ mod tests {
     #[test]
     fn extract_assertion_for_update_operand_rule() {
         let node_id = NodeId::new();
-        let event = Event::UpdateOperandRules {
+        let event = EventPayload::UpdateOperandRules {
             node_id: node_id.clone(),
             rules: Rules::default(),
         };
         assert_eq!(
-            extract_assertion(&event),
+            extract_assertion(&e(event)),
             Assertion::All(vec![
                 Assertion::NodeExists(node_id),
                 Assertion::Any(vec![

@@ -16,6 +16,6 @@ impl Plugin for WindowsPlugin {
 pub fn setup(mut commands: Commands) {
     let user_id = UserId("me".into());
     let mut kernel = Workspace::new(InMemoryRepository::new(user_id.clone()));
-    kernel.commit(Event::AddOwner { user_id });
+    kernel.commit(EventPayload::AddOwner { user_id });
     commands.spawn((DefaultWindow, Window::<egui::Context>::default(), kernel));
 }

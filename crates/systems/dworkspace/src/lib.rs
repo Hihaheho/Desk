@@ -53,10 +53,10 @@ impl Workspace {
     }
 
     pub fn process(&mut self) {
-        let entries = self.repository.poll();
-        for entry in entries {
-            if self.audit(&entry).is_ok() {
-                self.handle_event(&entry.event);
+        let events = self.repository.poll();
+        for event in events {
+            if self.audit(&event).is_ok() {
+                self.handle_event(&event);
             }
         }
     }
@@ -97,7 +97,7 @@ impl Workspace {
 #[cfg(test)]
 mod tests {
     use components::code::Code;
-    use components::event::{Event, EventEntry};
+    use components::event::{Event, EventId, EventPayload};
     use components::patch::OperandPosition;
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
@@ -131,50 +131,52 @@ mod tests {
     fn integration() {
         let mut repository = TestRepository::default();
 
-        let user_a = UserId("a".into());
-        let user_b = UserId("b".into());
+        let user_a = UserId::new();
+        let user_b = UserId::new();
         let node_a = NodeId::new();
         let node_b = NodeId::new();
 
-        repository.mock_poll().returns(vec![
-            EventEntry {
-                index: 0,
+        let add_owner = Event {
+            id: EventId::new(),
+            user_id: user_a.clone(),
+            payload: EventPayload::AddOwner {
                 user_id: user_a.clone(),
-                event: Event::AddOwner {
-                    user_id: user_a.clone(),
-                },
             },
-            EventEntry {
-                index: 0,
+        };
+
+        repository.mock_poll().returns(vec![
+            add_owner.clone(),
+            Event {
+                id: EventId::new(),
                 user_id: user_b.clone(),
-                event: Event::AddOwner {
+                payload: EventPayload::AddOwner {
                     user_id: user_b.clone(),
                 },
             },
-            EventEntry {
-                index: 0,
+            Event {
+                id: EventId::new(),
                 user_id: user_a.clone(),
-                event: Event::UpdateSpaceRules {
+                payload: EventPayload::UpdateSpaceRules {
                     rules: Rules {
                         default: [SpaceOperation::CreateNode].into_iter().collect(),
                         users: Default::default(),
                     },
                 },
             },
-            EventEntry {
-                index: 0,
+            Event {
+                id: EventId::new(),
                 user_id: user_a.clone(),
-                event: Event::CreateNode {
+                payload: EventPayload::CreateNode {
                     node_id: node_a.clone(),
                     content: Content::Apply {
                         link_name: Default::default(),
                     },
                 },
             },
-            EventEntry {
-                index: 0,
+            Event {
+                id: EventId::new(),
                 user_id: user_a.clone(),
-                event: Event::UpdateNodeRules {
+                payload: EventPayload::UpdateNodeRules {
                     node_id: node_a.clone(),
                     rules: Rules {
                         default: [NodeOperation::InsertOperand].into_iter().collect(),
@@ -182,18 +184,18 @@ mod tests {
                     },
                 },
             },
-            EventEntry {
-                index: 1,
+            Event {
+                id: EventId::new(),
                 user_id: user_b.clone(),
-                event: Event::CreateNode {
+                payload: EventPayload::CreateNode {
                     node_id: node_b.clone(),
                     content: Content::String("string".into()),
                 },
             },
-            EventEntry {
-                index: 1,
+            Event {
+                id: EventId::new(),
                 user_id: user_b,
-                event: Event::PatchOperand {
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         position: OperandPosition::First,
@@ -255,7 +257,7 @@ mod tests {
         kernel
             .get_state_mut::<TestState>()
             .unwrap()
-            .mock_handle_event(Projection::default(), Event::AddOwner { user_id: user_a })
+            .mock_handle_event(Projection::default(), add_owner)
             .assert_called(1);
     }
 }

@@ -1,13 +1,8 @@
-use components::{
-    event::{Event, EventEntry},
-    user::UserId,
-};
+use components::event::Event;
 
 pub trait Repository {
-    fn poll(&mut self) -> Vec<EventEntry>;
+    fn poll(&mut self) -> Vec<Event>;
     fn commit(&mut self, event: Event);
-    fn add_owner(&mut self, user_id: UserId);
-    fn remove_owner(&mut self, user_id: UserId);
 }
 
 #[cfg(test)]
@@ -18,16 +13,10 @@ pub struct TestRepository {}
 #[cfg(test)]
 #[mry::mry]
 impl Repository for TestRepository {
-    fn poll(&mut self) -> Vec<EventEntry> {
+    fn poll(&mut self) -> Vec<Event> {
         panic!()
     }
     fn commit(&mut self, log: Event) {
-        panic!()
-    }
-    fn add_owner(&mut self, user_id: UserId) {
-        panic!()
-    }
-    fn remove_owner(&mut self, user_id: UserId) {
         panic!()
     }
 }

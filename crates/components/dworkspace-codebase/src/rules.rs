@@ -21,9 +21,9 @@ impl<Operation: Eq + std::hash::Hash> Default for Rules<Operation> {
 }
 
 impl<T: Eq + std::hash::Hash + Clone> Rules<T> {
-    pub fn user_has_operation(&self, user_id: &UserId, operation: &T) -> bool {
+    pub fn user_has_operation(&self, user_id: UserId, operation: &T) -> bool {
         self.users
-            .get(user_id)
+            .get(&user_id)
             .unwrap_or(&self.default)
             .contains(operation)
     }
@@ -87,41 +87,42 @@ mod tests {
     #[test]
     fn returns_denied() {
         let rules = Rules::default();
-        assert!(!rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
+        assert!(!rules.user_has_operation(UserId::new(), &SpaceOperation::AddOwner));
     }
 
     #[test]
     fn returns_allowed() {
         let mut rules = Rules::default();
         rules.default.insert(SpaceOperation::AddOwner);
-        assert!(rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
+        assert!(rules.user_has_operation(UserId::new(), &SpaceOperation::AddOwner));
     }
 
     #[test]
     fn returns_allowed_for_user() {
         let mut rules = Rules::default();
-        rules.users.insert(
-            UserId("a".into()),
-            [SpaceOperation::AddOwner].into_iter().collect(),
-        );
-        assert!(rules.user_has_operation(&UserId("a".into()), &SpaceOperation::AddOwner));
+        let a = UserId::new();
+        rules
+            .users
+            .insert(a, [SpaceOperation::AddOwner].into_iter().collect());
+        assert!(rules.user_has_operation(a, &SpaceOperation::AddOwner));
     }
 
     #[test]
     fn returns_intersection() {
         use NodeOperation::*;
+        let user_a = UserId::new();
+        let user_b = UserId::new();
+        let user_c = UserId::new();
+        let user_d = UserId::new();
         let a = Rules {
             default: [UpdateInteger, UpdateReal].into_iter().collect(),
             users: [
+                (user_a, [UpdateInteger, UpdateReal].into_iter().collect()),
                 (
-                    UserId("a".into()),
-                    [UpdateInteger, UpdateReal].into_iter().collect(),
-                ),
-                (
-                    UserId("b".into()),
+                    user_b,
                     [UpdateInteger, ReplaceContent].into_iter().collect(),
                 ),
-                (UserId("c".into()), [UpdateInteger].into_iter().collect()),
+                (user_c, [UpdateInteger].into_iter().collect()),
             ]
             .into_iter()
             .collect(),
@@ -129,15 +130,9 @@ mod tests {
         let b = Rules {
             default: [UpdateInteger, UpdateRules].into_iter().collect(),
             users: [
-                (
-                    UserId("a".into()),
-                    [UpdateReal, ReplaceContent].into_iter().collect(),
-                ),
-                (
-                    UserId("b".into()),
-                    [UpdateReal, ReplaceContent].into_iter().collect(),
-                ),
-                (UserId("d".into()), [UpdateInteger].into_iter().collect()),
+                (user_a, [UpdateReal, ReplaceContent].into_iter().collect()),
+                (user_b, [UpdateReal, ReplaceContent].into_iter().collect()),
+                (user_d, [UpdateInteger].into_iter().collect()),
             ]
             .into_iter()
             .collect(),
@@ -147,8 +142,8 @@ mod tests {
             Rules {
                 default: [UpdateInteger].into_iter().collect(),
                 users: [
-                    (UserId("a".into()), [UpdateReal].into_iter().collect(),),
-                    (UserId("b".into()), [ReplaceContent].into_iter().collect(),),
+                    (user_a, [UpdateReal].into_iter().collect(),),
+                    (user_b, [ReplaceContent].into_iter().collect(),),
                 ]
                 .into_iter()
                 .collect(),

@@ -1,2 +1,10 @@
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct UserId(pub String);
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UserId(pub Uuid);
+
+impl UserId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}

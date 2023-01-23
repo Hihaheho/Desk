@@ -2,16 +2,16 @@ pub(self) mod assertion;
 pub mod execute_assertion;
 pub(super) mod extract_assertion;
 
-use components::event::EventEntry;
+use components::event::Event;
 
 use crate::Workspace;
 
 use self::execute_assertion::AssertionError;
 
 impl Workspace {
-    pub fn audit(&self, entry: &EventEntry) -> Result<(), AssertionError> {
-        let assertion = extract_assertion::extract_assertion(&entry.event);
-        self.execute_assertion(&entry.user_id, assertion)
+    pub fn audit(&self, event: &Event) -> Result<(), AssertionError> {
+        let assertion = extract_assertion::extract_assertion(event);
+        self.execute_assertion(event.user_id, assertion)
     }
 }
 
@@ -20,7 +20,8 @@ mod tests {
 
     use components::{
         content::Content,
-        event::Event,
+        event::EventId,
+        event::EventPayload,
         patch::{OperandPatch, OperandPosition},
         rules::Rules,
         user::UserId,
@@ -31,17 +32,23 @@ mod tests {
 
     use super::*;
 
+    fn e(payload: EventPayload) -> Event {
+        Event {
+            id: EventId::new(),
+            user_id: UserId::new(),
+            payload,
+        }
+    }
+
     #[test]
     fn initial_add_owner_is_always_allowed() {
         let kernel = Workspace::new(TestRepository::default());
-
+        let user_a = UserId::new();
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::AddOwner {
-                    user_id: UserId("a".into()),
-                }
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::AddOwner { user_id: user_a }
             })
             .is_ok());
     }
@@ -49,23 +56,23 @@ mod tests {
     #[test]
     fn any_event_allowed_for_owners() {
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.handle_event(&Event::AddOwner {
-            user_id: UserId("a".into()),
-        });
+        let user_a = UserId::new();
+        let user_b = UserId::new();
+        kernel
+            .snapshot
+            .handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::AddOwner {
-                    user_id: UserId("b".into()),
-                },
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::AddOwner { user_id: user_b },
             })
             .is_ok());
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::UpdateSpaceRules {
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::UpdateSpaceRules {
                     rules: Rules::default()
                 }
             })
@@ -75,14 +82,16 @@ mod tests {
     #[test]
     fn update_space_rule_denied() {
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.handle_event(&Event::AddOwner {
-            user_id: UserId("a".into()),
-        });
+        let user_a = UserId::new();
+        let user_b = UserId::new();
+        kernel
+            .snapshot
+            .handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("b".into()),
-                event: Event::UpdateSpaceRules {
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_b,
+                payload: EventPayload::UpdateSpaceRules {
                     rules: Rules::default()
                 }
             })
@@ -94,33 +103,35 @@ mod tests {
         let node_a = NodeId::new();
         let node_b = NodeId::new();
         let node_c = NodeId::new();
+        let user_a = UserId::new();
+        let user_b = UserId::new();
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.owners.insert(UserId("a".into()));
+        kernel.snapshot.owners.insert(user_a);
 
-        kernel.handle_event(&Event::CreateNode {
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_b.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_c.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_b.clone(),
             },
-        });
+        }));
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         position: OperandPosition::First,
@@ -130,10 +141,10 @@ mod tests {
             })
             .is_ok());
         assert!(kernel
-            .audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            .audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_b,
                     patch: OperandPatch::Insert {
                         position: OperandPosition::First,
@@ -150,44 +161,46 @@ mod tests {
         let node_b = NodeId::new();
         let node_c = NodeId::new();
         let node_d = NodeId::new();
+        let user_a = UserId::new();
+        let user_b = UserId::new();
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.owners.insert(UserId("a".into()));
-        kernel.handle_event(&Event::CreateNode {
+        kernel.snapshot.owners.insert(user_a);
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_b.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_c,
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::CreateNode {
+        }));
+        kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_d.clone(),
             content: Content::Integer(0),
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::First,
                 node_id: node_b.clone(),
             },
-        });
-        kernel.handle_event(&Event::PatchOperand {
+        }));
+        kernel.handle_event(&e(EventPayload::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
                 position: OperandPosition::At(1),
                 node_id: node_c,
             },
-        });
+        }));
         // insert at 2
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         position: OperandPosition::At(2),
@@ -199,10 +212,10 @@ mod tests {
         );
         // insert at 3 (out of range)
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
                         position: OperandPosition::At(3),
@@ -218,10 +231,10 @@ mod tests {
         );
         // remove at 1
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a,
                     patch: OperandPatch::Remove { node_id: node_c },
                 },
@@ -230,10 +243,10 @@ mod tests {
         );
         // move from 1 to 0
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Move {
                         node_id: node_c,
@@ -245,10 +258,10 @@ mod tests {
         );
         // move from 0 to 1
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Move {
                         node_id: node_b,
@@ -260,10 +273,10 @@ mod tests {
         );
         // move from 1 to 2 (out of range)
         assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
+            kernel.audit(&Event {
+                id: EventId::new(),
+                user_id: user_a,
+                payload: EventPayload::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Move {
                         node_id: node_c,

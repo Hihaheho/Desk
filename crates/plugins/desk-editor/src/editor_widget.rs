@@ -9,10 +9,10 @@ use desk_window::ctx::Ctx;
 use desk_window::widget::Widget;
 use deskc_ids::{LinkName, NodeId};
 use dson::Dson;
-use dworkspace::prelude::FlatNode;
+use dworkspace::prelude::{EventPayload, FlatNode, UserId};
 use dworkspace_codebase::code::SyntaxKind;
 use dworkspace_codebase::content::Content;
-use dworkspace_codebase::event::Event;
+use dworkspace_codebase::event::{Event, EventId};
 use dworkspace_codebase::patch::{ContentPatch, OperandPatch};
 use egui::epaint::TextShape;
 use egui::{Color32, FontId, Layout, Rect, Rgba, RichText, Sense, Stroke, TextEdit, TextStyle};
@@ -290,12 +290,16 @@ impl<'context> NodeRenderer<'_, 'context> {
         let mut source = original.clone();
         self.ui.code_editor(&mut source);
         if *original != source {
-            self.ctx.workspace.commit(Event::PatchContent {
-                node_id: self.node_id.clone(),
-                patch: ContentPatch::Replace(Content::SourceCode {
-                    source,
-                    syntax: syntax.clone(),
-                }),
+            self.ctx.add_event(Event {
+                id: EventId::new(),
+                user_id: self.ctx.user_id,
+                payload: EventPayload::PatchContent {
+                    node_id: self.node_id.clone(),
+                    patch: ContentPatch::Replace(Content::SourceCode {
+                        source,
+                        syntax: syntax.clone(),
+                    }),
+                },
             });
         }
         self.handle_remaining_operands(node.operands.iter())
@@ -305,9 +309,13 @@ impl<'context> NodeRenderer<'_, 'context> {
         let mut string = original.clone();
         self.ui.text_edit_singleline(&mut string);
         if *original != string {
-            self.ctx.workspace.commit(Event::PatchContent {
-                node_id: self.node_id.clone(),
-                patch: ContentPatch::Replace(Content::String(string)),
+            self.ctx.add_event(Event {
+                id: EventId::new(),
+                user_id: self.ctx.user_id,
+                payload: EventPayload::PatchContent {
+                    node_id: self.node_id.clone(),
+                    patch: ContentPatch::Replace(Content::String(string)),
+                },
             });
         }
         self.handle_remaining_operands(node.operands.iter())

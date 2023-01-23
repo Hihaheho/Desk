@@ -1,6 +1,10 @@
 use std::sync::Arc;
 
-use components::{event::Event, patch::OperandPatch, projection::Projection};
+use components::{
+    event::{Event, EventPayload},
+    patch::OperandPatch,
+    projection::Projection,
+};
 use deskc_ids::NodeId;
 use parking_lot::Mutex;
 
@@ -17,9 +21,9 @@ impl LoopDetector {
         node_id == operand_id || self.operand.lock().does_make_loop(node_id, operand_id)
     }
 
-    pub fn handle_event(&mut self, snapshot: &Projection, event: &Event) {
-        match event {
-            Event::PatchOperand {
+    pub fn handle_event(&mut self, _projection: &Projection, event: &Event) {
+        match &event.payload {
+            EventPayload::PatchOperand {
                 node_id,
                 patch:
                     OperandPatch::Insert {
@@ -31,7 +35,7 @@ impl LoopDetector {
                 operands.insert(operand.clone());
                 lock.set_node(node_id.clone(), Arc::new(operands))
             }
-            Event::PatchOperand {
+            EventPayload::PatchOperand {
                 node_id,
                 patch: OperandPatch::Remove { node_id: operand },
             } => {
@@ -40,7 +44,7 @@ impl LoopDetector {
                 operands.remove(operand);
                 lock.set_node(node_id.clone(), Arc::new(operands))
             }
-            Event::CreateNode {
+            EventPayload::CreateNode {
                 node_id,
                 content: _,
             } => {
@@ -57,12 +61,22 @@ impl LoopDetector {
 mod tests {
     use std::sync::Arc;
 
-    use components::{content::Content, flat_node::FlatNode, patch::OperandPosition};
+    use components::{
+        content::Content, event::EventId, flat_node::FlatNode, patch::OperandPosition, user::UserId,
+    };
     use deskc_ids::NodeId;
 
     use crate::descendants::DescendantsQueries;
 
     use super::*;
+
+    fn e(payload: EventPayload) -> Event {
+        Event {
+            id: EventId::new(),
+            user_id: UserId::new(),
+            payload,
+        }
+    }
 
     #[test]
     fn detect_for_inserting_operand() {
@@ -94,10 +108,10 @@ mod tests {
         let mut detector = LoopDetector::default();
         detector.handle_event(
             &Projection::default(),
-            &Event::CreateNode {
+            &e(EventPayload::CreateNode {
                 node_id: node_id.clone(),
                 content: Content::Integer(0),
-            },
+            }),
         );
         assert_eq!(detector.operand.lock().node(node_id), Default::default());
     }
@@ -122,13 +136,13 @@ mod tests {
             .set_node(node_c.clone(), Arc::new([].into_iter().collect()));
         detector.handle_event(
             &Projection::default(),
-            &Event::PatchOperand {
+            &e(EventPayload::PatchOperand {
                 node_id: node_a.clone(),
                 patch: OperandPatch::Insert {
                     node_id: node_b.clone(),
                     position: OperandPosition::First,
                 },
-            },
+            }),
         );
         assert_eq!(
             detector.operand.lock().descendants(node_a),
@@ -161,10 +175,10 @@ mod tests {
         );
         detector.handle_event(
             &snapshot,
-            &Event::PatchOperand {
+            &e(EventPayload::PatchOperand {
                 node_id: node_a.clone(),
                 patch: OperandPatch::Remove { node_id: node_b },
-            },
+            }),
         );
         assert_eq!(
             detector.operand.lock().descendants(node_a),

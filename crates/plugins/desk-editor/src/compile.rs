@@ -13,8 +13,8 @@ const CARD_ID_TYPE: Lazy<Type> = Lazy::new(|| ty!("@`desk-editor card-id` 'strin
 
 impl State for Cards {
     fn handle_event(&mut self, _snapshot: &Projection, event: &Event) {
-        match event {
-            Event::PatchAttribute { node_id: _, patch } => match patch {
+        match &event.payload {
+            EventPayload::PatchAttribute { node_id: _, patch } => match patch {
                 dworkspace_codebase::patch::AttributePatch::Update { key, value: _ } => {
                     if *key == *CARD_ID_TYPE {
                         // let card_id = CardId();
@@ -23,11 +23,11 @@ impl State for Cards {
                 }
                 dworkspace_codebase::patch::AttributePatch::Remove { key: _ } => todo!(),
             },
-            Event::AddSnapshot {
+            EventPayload::AddSnapshot {
                 index: _,
                 snapshot: _,
             } => {}
-            Event::RemoveNode { node_id: _ } => {}
+            EventPayload::RemoveNode { node_id: _ } => {}
             _ => {}
         }
     }

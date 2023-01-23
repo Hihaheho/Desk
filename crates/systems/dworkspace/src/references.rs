@@ -1,7 +1,7 @@
-use std::{collections::HashSet, ops::DerefMut, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
 use components::{
-    event::Event,
+    event::{Event, EventPayload},
     patch::OperandPatch,
     projection::Projection,
     rules::{NodeOperation, Rules},
@@ -51,9 +51,9 @@ fn parent_rules(db: &dyn ReferencesQueries, node_id: NodeId) -> Option<Arc<Rules
 }
 
 impl References {
-    pub fn handle_event(&mut self, snapshot: &Projection, event: &Event) {
-        match event {
-            Event::CreateNode {
+    pub fn handle_event(&mut self, _projection: &Projection, event: &Event) {
+        match &event.payload {
+            EventPayload::CreateNode {
                 node_id,
                 content: _,
             } => {
@@ -61,7 +61,7 @@ impl References {
                 self.set_operand_rules(node_id.clone(), Arc::new(Rules::default()));
                 self.top_level_nodes.insert(node_id.clone());
             }
-            Event::PatchOperand {
+            EventPayload::PatchOperand {
                 node_id,
                 patch:
                     OperandPatch::Insert {
@@ -74,7 +74,7 @@ impl References {
                 self.set_node(operand_id.clone(), Arc::new(references));
                 self.top_level_nodes.remove(operand_id);
             }
-            Event::PatchOperand {
+            EventPayload::PatchOperand {
                 node_id,
                 patch: OperandPatch::Remove { node_id: removed },
             } => {
@@ -85,7 +85,7 @@ impl References {
                 }
                 self.set_node(*removed, Arc::new(references));
             }
-            Event::UpdateOperandRules { node_id, rules } => {
+            EventPayload::UpdateOperandRules { node_id, rules } => {
                 self.set_operand_rules(node_id.clone(), Arc::new(rules.clone()));
             }
             _ => {}
@@ -103,11 +103,21 @@ impl References {
 mod tests {
     use components::{
         content::Content,
+        event::EventId,
         flat_node::FlatNode,
         patch::{OperandPatch, OperandPosition},
+        user::UserId,
     };
 
     use super::*;
+
+    fn e(payload: EventPayload) -> Event {
+        Event {
+            id: EventId::new(),
+            user_id: UserId::new(),
+            payload,
+        }
+    }
 
     #[test]
     fn return_references() {
@@ -214,13 +224,13 @@ mod tests {
         db.set_node(operand_id.clone(), Arc::new([].into_iter().collect()));
         db.handle_event(
             &Projection::default(),
-            &Event::PatchOperand {
+            &e(EventPayload::PatchOperand {
                 node_id: node_id.clone(),
                 patch: OperandPatch::Insert {
                     position: OperandPosition::First,
                     node_id: operand_id.clone(),
                 },
-            },
+            }),
         );
         assert_eq!(
             db.node(operand_id),
@@ -234,10 +244,10 @@ mod tests {
         let node_id = NodeId::new();
         db.handle_event(
             &Projection::default(),
-            &Event::CreateNode {
+            &e(EventPayload::CreateNode {
                 node_id: node_id.clone(),
                 content: Content::Integer(1),
-            },
+            }),
         );
         assert_eq!(db.node(node_id.clone()), Arc::new([].into_iter().collect()));
         assert_eq!(db.operand_rules(node_id), Arc::new(Rules::default()));
@@ -259,12 +269,12 @@ mod tests {
         );
         db.handle_event(
             &snapshot,
-            &Event::PatchOperand {
+            &e(EventPayload::PatchOperand {
                 node_id,
                 patch: OperandPatch::Remove {
                     node_id: operand_id,
                 },
-            },
+            }),
         );
         assert_eq!(db.node(operand_id), Arc::new([].into_iter().collect()));
     }
@@ -275,13 +285,13 @@ mod tests {
         let node_id = NodeId::new();
         db.handle_event(
             &Projection::default(),
-            &Event::UpdateOperandRules {
+            &e(EventPayload::UpdateOperandRules {
                 node_id: node_id.clone(),
                 rules: Rules {
                     default: [NodeOperation::UpdateInteger].into_iter().collect(),
                     ..Default::default()
                 },
-            },
+            }),
         );
         assert_eq!(
             db.operand_rules(node_id),
