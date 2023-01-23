@@ -19,7 +19,11 @@ impl Workspace {
 mod tests {
 
     use components::{
-        content::Content, event::Event, patch::OperandPatch, rules::Rules, user::UserId,
+        content::Content,
+        event::Event,
+        patch::{OperandPatch, OperandPosition},
+        rules::Rules,
+        user::UserId,
     };
     use deskc_ids::NodeId;
 
@@ -108,7 +112,7 @@ mod tests {
         kernel.handle_event(&Event::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
-                index: 0,
+                position: OperandPosition::First,
                 node_id: node_b.clone(),
             },
         });
@@ -119,7 +123,7 @@ mod tests {
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
-                        index: 0,
+                        position: OperandPosition::First,
                         node_id: node_c,
                     },
                 },
@@ -132,7 +136,7 @@ mod tests {
                 event: Event::PatchOperand {
                     node_id: node_b,
                     patch: OperandPatch::Insert {
-                        index: 0,
+                        position: OperandPosition::First,
                         node_id: node_a,
                     },
                 },
@@ -167,15 +171,15 @@ mod tests {
         kernel.handle_event(&Event::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
-                index: 0,
+                position: OperandPosition::First,
                 node_id: node_b.clone(),
             },
         });
         kernel.handle_event(&Event::PatchOperand {
             node_id: node_a.clone(),
             patch: OperandPatch::Insert {
-                index: 1,
-                node_id: node_b,
+                position: OperandPosition::At(1),
+                node_id: node_c,
             },
         });
         // insert at 2
@@ -186,7 +190,7 @@ mod tests {
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
-                        index: 2,
+                        position: OperandPosition::At(2),
                         node_id: node_d.clone(),
                     },
                 },
@@ -201,7 +205,7 @@ mod tests {
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
-                        index: 3,
+                        position: OperandPosition::At(3),
                         node_id: node_d,
                     },
                 },
@@ -218,27 +222,11 @@ mod tests {
                 index: 0,
                 user_id: UserId("a".into()),
                 event: Event::PatchOperand {
-                    node_id: node_a.clone(),
-                    patch: OperandPatch::Remove { index: 1 },
+                    node_id: node_a,
+                    patch: OperandPatch::Remove { node_id: node_c },
                 },
             }),
             Ok(())
-        );
-        // remove at 2 (out of range)
-        assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
-                    node_id: node_a.clone(),
-                    patch: OperandPatch::Remove { index: 2 },
-                },
-            }),
-            Err(AssertionError::InsufficientOperands {
-                node_id: node_a.clone(),
-                target: 3,
-                actual: 2
-            })
         );
         // move from 1 to 0
         assert_eq!(
@@ -247,7 +235,10 @@ mod tests {
                 user_id: UserId("a".into()),
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
-                    patch: OperandPatch::Move { from: 1, to: 0 },
+                    patch: OperandPatch::Move {
+                        node_id: node_c,
+                        position: OperandPosition::At(0)
+                    },
                 },
             }),
             Ok(())
@@ -259,7 +250,10 @@ mod tests {
                 user_id: UserId("a".into()),
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
-                    patch: OperandPatch::Move { from: 0, to: 1 },
+                    patch: OperandPatch::Move {
+                        node_id: node_b,
+                        position: OperandPosition::At(1)
+                    },
                 },
             }),
             Ok(())
@@ -271,27 +265,14 @@ mod tests {
                 user_id: UserId("a".into()),
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
-                    patch: OperandPatch::Move { from: 1, to: 2 },
+                    patch: OperandPatch::Move {
+                        node_id: node_c,
+                        position: OperandPosition::At(2)
+                    },
                 },
             }),
             Err(AssertionError::InsufficientOperands {
                 node_id: node_a.clone(),
-                target: 3,
-                actual: 2
-            })
-        );
-        // move from 2 to 1 (out of range)
-        assert_eq!(
-            kernel.audit(&EventEntry {
-                index: 0,
-                user_id: UserId("a".into()),
-                event: Event::PatchOperand {
-                    node_id: node_a.clone(),
-                    patch: OperandPatch::Move { from: 2, to: 1 },
-                },
-            }),
-            Err(AssertionError::InsufficientOperands {
-                node_id: node_a,
                 target: 3,
                 actual: 2
             })

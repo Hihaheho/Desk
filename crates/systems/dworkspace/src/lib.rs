@@ -13,7 +13,7 @@ pub mod state;
 use std::{any::TypeId, collections::HashMap};
 
 use bevy_ecs::prelude::Component;
-use components::{event::Event, snapshot::Snapshot};
+use components::{event::Event, projection::Projection};
 use deskc_ids::NodeId;
 use history::History;
 use loop_detector::LoopDetector;
@@ -30,7 +30,7 @@ pub struct Workspace {
     // salsa database is not Sync
     references: Mutex<references::References>,
     loop_detector: LoopDetector,
-    pub snapshot: Snapshot,
+    pub snapshot: Projection,
     history: History,
     states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
 }
@@ -98,6 +98,7 @@ impl Workspace {
 mod tests {
     use components::code::Code;
     use components::event::{Event, EventEntry};
+    use components::patch::OperandPosition;
     use components::rules::{NodeOperation, Rules, SpaceOperation};
     use components::user::UserId;
     use components::{content::Content, patch::OperandPatch};
@@ -121,7 +122,7 @@ mod tests {
 
     #[mry::mry]
     impl State for TestState {
-        fn handle_event(&mut self, _snapshot: &Snapshot, _: &Event) {
+        fn handle_event(&mut self, _snapshot: &Projection, _: &Event) {
             panic!()
         }
     }
@@ -195,7 +196,7 @@ mod tests {
                 event: Event::PatchOperand {
                     node_id: node_a.clone(),
                     patch: OperandPatch::Insert {
-                        index: 0,
+                        position: OperandPosition::First,
                         node_id: node_b,
                     },
                 },
@@ -254,7 +255,7 @@ mod tests {
         kernel
             .get_state_mut::<TestState>()
             .unwrap()
-            .mock_handle_event(Snapshot::default(), Event::AddOwner { user_id: user_a })
+            .mock_handle_event(Projection::default(), Event::AddOwner { user_id: user_a })
             .assert_called(1);
     }
 }

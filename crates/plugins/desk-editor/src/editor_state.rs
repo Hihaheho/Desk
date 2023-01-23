@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use deskc_ids::NodeId;
 use dworkspace::{
-    prelude::{Event, Snapshot},
+    prelude::{Event, Projection},
     state::State,
 };
 
@@ -20,7 +20,7 @@ pub struct EditorState {
 }
 
 impl State for EditorState {
-    fn handle_event(&mut self, _snapshot: &Snapshot, event: &Event) {
+    fn handle_event(&mut self, _snapshot: &Projection, event: &Event) {
         match event {
             Event::RemoveNode { node_id } => {
                 self.selected_node = self.selected_node.filter(|id| id != node_id);

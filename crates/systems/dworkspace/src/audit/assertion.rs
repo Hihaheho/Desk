@@ -4,29 +4,42 @@ use components::{
 };
 use deskc_ids::NodeId;
 
+use super::execute_assertion::AssertionError;
+
 #[derive(Debug, PartialEq)]
-pub enum Assertion<'a> {
+pub enum Assertion {
     SpaceAllows(SpaceOperation),
     NodeAllows {
-        node_id: &'a NodeId,
+        node_id: NodeId,
         operation: NodeOperation,
     },
     Owner,
     NoOwner,
-    NodeExists(&'a NodeId),
-    NotReferenced(&'a NodeId),
+    NodeExists(NodeId),
+    NotReferenced(NodeId),
     NoOperandLoop {
-        node_id: &'a NodeId,
-        operand_id: &'a NodeId,
+        node_id: NodeId,
+        operand_id: NodeId,
     },
     OperandsHasSize {
-        node_id: &'a NodeId,
+        node_id: NodeId,
         size: usize,
     },
     ContentKind {
-        node_id: &'a NodeId,
+        node_id: NodeId,
         kind: ContentKind,
     },
-    All(Vec<Assertion<'a>>),
-    Any(Vec<Assertion<'a>>),
+    HasOperand {
+        node_id: NodeId,
+        operand_id: NodeId,
+    },
+    All(Vec<Assertion>),
+    Any(Vec<Assertion>),
+    Contradiction(AssertionError),
+}
+
+impl Assertion {
+    pub fn tautology() -> Self {
+        Self::All(Vec::new())
+    }
 }

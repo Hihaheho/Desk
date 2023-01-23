@@ -6,7 +6,7 @@ use crate::{
 };
 use deskc_ids::NodeId;
 
-use crate::snapshot::Snapshot;
+use crate::projection::Projection;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EventEntry {
@@ -57,6 +57,6 @@ pub enum Event {
         /// current index of events
         /// if the index of this event is not index+1, this event must be
         index: usize,
-        snapshot: Box<Snapshot>,
+        snapshot: Box<Projection>,
     },
 }

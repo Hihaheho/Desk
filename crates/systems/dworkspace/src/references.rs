@@ -3,8 +3,8 @@ use std::{collections::HashSet, ops::DerefMut, sync::Arc};
 use components::{
     event::Event,
     patch::OperandPatch,
+    projection::Projection,
     rules::{NodeOperation, Rules},
-    snapshot::Snapshot,
 };
 use deskc_ids::NodeId;
 
@@ -51,7 +51,7 @@ fn parent_rules(db: &dyn ReferencesQueries, node_id: NodeId) -> Option<Arc<Rules
 }
 
 impl References {
-    pub fn handle_event(&mut self, snapshot: &Snapshot, event: &Event) {
+    pub fn handle_event(&mut self, snapshot: &Projection, event: &Event) {
         match event {
             Event::CreateNode {
                 node_id,
@@ -65,7 +65,7 @@ impl References {
                 node_id,
                 patch:
                     OperandPatch::Insert {
-                        index: _,
+                        position: _,
                         node_id: operand_id,
                     },
             } => {
@@ -76,15 +76,14 @@ impl References {
             }
             Event::PatchOperand {
                 node_id,
-                patch: OperandPatch::Remove { index },
+                patch: OperandPatch::Remove { node_id: removed },
             } => {
-                let removed = snapshot.flat_nodes.get(node_id).unwrap().operands[*index].clone();
-                let mut references = self.node(removed.clone()).as_ref().clone();
+                let mut references = self.node(*removed).as_ref().clone();
                 references.remove(node_id);
                 if references.is_empty() {
-                    self.top_level_nodes.insert(removed.clone());
+                    self.top_level_nodes.insert(*removed);
                 }
-                self.set_node(removed, Arc::new(references));
+                self.set_node(*removed, Arc::new(references));
             }
             Event::UpdateOperandRules { node_id, rules } => {
                 self.set_operand_rules(node_id.clone(), Arc::new(rules.clone()));
@@ -102,7 +101,11 @@ impl References {
 
 #[cfg(test)]
 mod tests {
-    use components::{content::Content, flat_node::FlatNode, patch::OperandPatch};
+    use components::{
+        content::Content,
+        flat_node::FlatNode,
+        patch::{OperandPatch, OperandPosition},
+    };
 
     use super::*;
 
@@ -210,11 +213,11 @@ mod tests {
         let operand_id = NodeId::new();
         db.set_node(operand_id.clone(), Arc::new([].into_iter().collect()));
         db.handle_event(
-            &Snapshot::default(),
+            &Projection::default(),
             &Event::PatchOperand {
                 node_id: node_id.clone(),
                 patch: OperandPatch::Insert {
-                    index: 0,
+                    position: OperandPosition::First,
                     node_id: operand_id.clone(),
                 },
             },
@@ -230,7 +233,7 @@ mod tests {
         let mut db = References::default();
         let node_id = NodeId::new();
         db.handle_event(
-            &Snapshot::default(),
+            &Projection::default(),
             &Event::CreateNode {
                 node_id: node_id.clone(),
                 content: Content::Integer(1),
@@ -243,7 +246,7 @@ mod tests {
     #[test]
     fn handle_event_remove_operand() {
         let mut db = References::default();
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         snapshot.flat_nodes.insert(
@@ -258,7 +261,9 @@ mod tests {
             &snapshot,
             &Event::PatchOperand {
                 node_id,
-                patch: OperandPatch::Remove { index: 0 },
+                patch: OperandPatch::Remove {
+                    node_id: operand_id,
+                },
             },
         );
         assert_eq!(db.node(operand_id), Arc::new([].into_iter().collect()));
@@ -269,7 +274,7 @@ mod tests {
         let mut db = References::default();
         let node_id = NodeId::new();
         db.handle_event(
-            &Snapshot::default(),
+            &Projection::default(),
             &Event::UpdateOperandRules {
                 node_id: node_id.clone(),
                 rules: Rules {

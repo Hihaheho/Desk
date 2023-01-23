@@ -7,14 +7,14 @@ use crate::user::UserId;
 use deskc_ids::NodeId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Snapshot {
+pub struct Projection {
     pub owners: HashSet<UserId>,
     // flat nodes are owned by hirs db
     pub flat_nodes: HashMap<NodeId, FlatNode>,
     pub rules: Rules<SpaceOperation>,
 }
 
-impl Snapshot {
+impl Projection {
     pub fn handle_event(&mut self, event: &Event) {
         match event {
             Event::AddOwner { user_id } => {
@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn add_owner() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         snapshot.handle_event(&Event::AddOwner {
             user_id: UserId("a".into()),
         });
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn add_node() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         let node_id = handle_add_node(&mut snapshot);
         assert_eq!(
             snapshot.flat_nodes,
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn remove_node() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         let node_id = handle_add_node(&mut snapshot);
         snapshot.handle_event(&Event::RemoveNode { node_id });
 
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn update_space_rule() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         snapshot.handle_event(&Event::UpdateSpaceRules {
             rules: Rules {
                 default: [SpaceOperation::AddSnapshot].into_iter().collect(),
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn update_node_rule() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         let node_id = handle_add_node(&mut snapshot);
         snapshot.handle_event(&Event::UpdateNodeRules {
             node_id: node_id.clone(),
@@ -146,7 +146,7 @@ mod tests {
 
     #[test]
     fn update_operand_rules() {
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         let node_id = handle_add_node(&mut snapshot);
         snapshot.handle_event(&Event::UpdateOperandRules {
             node_id: node_id.clone(),
@@ -165,7 +165,7 @@ mod tests {
         );
     }
 
-    fn handle_add_node(snapshot: &mut Snapshot) -> NodeId {
+    fn handle_add_node(snapshot: &mut Projection) -> NodeId {
         let node_id = NodeId::new();
         let event = Event::CreateNode {
             node_id: node_id.clone(),

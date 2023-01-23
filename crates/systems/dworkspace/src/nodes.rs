@@ -58,7 +58,7 @@ impl Nodes {
 mod tests {
     use components::{
         content::Content,
-        patch::{AttributePatch, ContentPatch, OperandPatch},
+        patch::{AttributePatch, ContentPatch, OperandPatch, OperandPosition},
     };
     use deskc_ty::Type;
 
@@ -102,7 +102,7 @@ mod tests {
         db.handle_event(&Event::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
-                index: 0,
+                position: OperandPosition::First,
                 node_id: node_a.clone(),
             },
         });

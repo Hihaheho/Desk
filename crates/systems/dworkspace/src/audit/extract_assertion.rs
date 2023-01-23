@@ -1,16 +1,18 @@
 use components::{
     content::ContentKind,
     event::Event,
-    patch::{AttributePatch, ContentPatch, OperandPatch},
+    patch::{AttributePatch, ContentPatch, OperandPatch, OperandPosition},
     rules::{NodeOperation, SpaceOperation},
 };
+
+use crate::audit::execute_assertion::AssertionError;
 
 use super::assertion::Assertion;
 
 pub fn extract_assertion(event: &Event) -> Assertion {
     use NodeOperation::*;
     use SpaceOperation::*;
-    match event {
+    match *event {
         Event::AddOwner { .. } => Assertion::Any(vec![
             Assertion::NoOwner,
             Assertion::Owner,
@@ -32,7 +34,7 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 },
             ]),
         ]),
-        Event::PatchContent { node_id, patch } => {
+        Event::PatchContent { node_id, ref patch } => {
             use ContentKind::*;
             let (kind, operation) = match patch {
                 ContentPatch::Replace(_) => {
@@ -66,32 +68,47 @@ pub fn extract_assertion(event: &Event) -> Assertion {
         }
         Event::PatchOperand { node_id, patch } => match patch {
             OperandPatch::Insert {
-                index,
+                position,
                 node_id: operand_id,
-            } => Assertion::All(vec![
-                Assertion::NodeExists(node_id),
-                Assertion::NotReferenced(operand_id),
-                Assertion::NoOperandLoop {
-                    node_id,
-                    operand_id,
-                },
-                Assertion::OperandsHasSize {
-                    node_id,
-                    size: *index,
-                },
-                Assertion::Any(vec![
+            } => Assertion::All(
+                [
+                    Assertion::NodeExists(node_id),
+                    Assertion::NotReferenced(operand_id),
+                    Assertion::NoOperandLoop {
+                        node_id,
+                        operand_id,
+                    },
+                ]
+                .into_iter()
+                .chain(match position {
+                    OperandPosition::First | OperandPosition::Last => vec![],
+                    OperandPosition::Before(pos) | OperandPosition::After(pos) => {
+                        vec![Assertion::HasOperand {
+                            node_id,
+                            operand_id: pos,
+                        }]
+                    }
+                    OperandPosition::At(index) => vec![Assertion::OperandsHasSize {
+                        node_id,
+                        size: index,
+                    }],
+                })
+                .chain([Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
                         operation: InsertOperand,
                         node_id,
                     },
-                ]),
-            ]),
-            OperandPatch::Remove { index } => Assertion::All(vec![
+                ])])
+                .collect(),
+            ),
+            OperandPatch::Remove {
+                node_id: operand_id,
+            } => Assertion::All(vec![
                 Assertion::NodeExists(node_id),
-                Assertion::OperandsHasSize {
+                Assertion::HasOperand {
                     node_id,
-                    size: index + 1,
+                    operand_id,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
@@ -102,24 +119,47 @@ pub fn extract_assertion(event: &Event) -> Assertion {
                 ]),
             ]),
             OperandPatch::Move {
-                from: index,
-                to: next,
-            } => Assertion::All(vec![
-                Assertion::NodeExists(node_id),
-                Assertion::OperandsHasSize {
-                    node_id,
-                    size: index.max(next) + 1,
-                },
-                Assertion::Any(vec![
+                node_id: operand_id,
+                position,
+            } => Assertion::All(
+                [
+                    Assertion::NodeExists(node_id),
+                    Assertion::HasOperand {
+                        node_id,
+                        operand_id,
+                    },
+                ]
+                .into_iter()
+                .chain(match position {
+                    OperandPosition::First | OperandPosition::Last => vec![],
+                    OperandPosition::Before(pos) | OperandPosition::After(pos) => {
+                        if operand_id == pos {
+                            return Assertion::Contradiction(AssertionError::MovingItself {
+                                node_id: operand_id,
+                            });
+                        } else {
+                            vec![Assertion::HasOperand {
+                                node_id,
+                                operand_id: pos,
+                            }]
+                        }
+                    }
+                    OperandPosition::At(index) => vec![Assertion::OperandsHasSize {
+                        node_id,
+                        size: index + 1,
+                    }],
+                })
+                .chain([Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
                         operation: MoveOperand,
                         node_id,
                     },
-                ]),
-            ]),
+                ])])
+                .collect(),
+            ),
         },
-        Event::PatchAttribute { node_id, patch } => {
+        Event::PatchAttribute { node_id, ref patch } => {
             let operation = match patch {
                 AttributePatch::Update { key, value: _ } => UpdateAttribute(key.clone()),
                 AttributePatch::Remove { key } => RemoveAttribute(key.clone()),
@@ -164,7 +204,7 @@ mod tests {
     use components::{
         code::SyntaxKind,
         content::{Content, ContentKind},
-        patch::StringPatch,
+        patch::{OperandPosition, StringPatch},
         rules::Rules,
         user::UserId,
     };
@@ -223,12 +263,12 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
-                Assertion::NotReferenced(&node_id),
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::RemoveNode,
                     },
                 ]),
@@ -246,11 +286,11 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::ReplaceContent,
                     },
                 ]),
@@ -268,15 +308,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::SourceCode,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::PatchSourceCode,
                     },
                 ]),
@@ -297,15 +337,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::SourceCode,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::ChangeSourceCodeSyntax,
                     },
                 ]),
@@ -323,15 +363,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::String,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::PatchString,
                     },
                 ]),
@@ -349,15 +389,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::Integer,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateInteger,
                     },
                 ]),
@@ -375,15 +415,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::Real,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateReal,
                     },
                 ]),
@@ -401,15 +441,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::Rational,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateRational,
                     },
                 ]),
@@ -430,15 +470,15 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::ContentKind {
-                    node_id: &node_id,
+                    node_id: node_id,
                     kind: ContentKind::Apply,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateApply,
                     },
                 ]),
@@ -447,33 +487,167 @@ mod tests {
     }
 
     #[test]
-    fn extract_assertion_for_insert_operand() {
+    fn extract_assertion_for_insert_operand_at() {
         let node_id = NodeId::new();
         let operand_id = NodeId::new();
         let event = Event::PatchOperand {
             node_id: node_id.clone(),
             patch: OperandPatch::Insert {
-                index: 2,
+                position: OperandPosition::At(2),
                 node_id: operand_id.clone(),
             },
         };
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
-                Assertion::NotReferenced(&operand_id),
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
                 Assertion::NoOperandLoop {
-                    node_id: &node_id,
-                    operand_id: &operand_id,
+                    node_id: node_id,
+                    operand_id: operand_id,
                 },
                 Assertion::OperandsHasSize {
-                    node_id: &node_id,
+                    node_id: node_id,
                     size: 2,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
+                        operation: NodeOperation::InsertOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_insert_operand_first() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Insert {
+                position: OperandPosition::First,
+                node_id: operand_id.clone(),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
+                Assertion::NoOperandLoop {
+                    node_id: node_id,
+                    operand_id: operand_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
+                        operation: NodeOperation::InsertOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_insert_operand_last() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Insert {
+                position: OperandPosition::Last,
+                node_id: operand_id.clone(),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
+                Assertion::NoOperandLoop {
+                    node_id: node_id,
+                    operand_id: operand_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
+                        operation: NodeOperation::InsertOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_insert_operand_before() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let before_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Insert {
+                position: OperandPosition::Before(before_id.clone()),
+                node_id: operand_id.clone(),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
+                Assertion::NoOperandLoop {
+                    node_id: node_id,
+                    operand_id: operand_id,
+                },
+                Assertion::HasOperand {
+                    node_id: node_id,
+                    operand_id: before_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
+                        operation: NodeOperation::InsertOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_insert_operand_after() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let after_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Insert {
+                position: OperandPosition::After(after_id.clone()),
+                node_id: operand_id.clone(),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::NotReferenced(operand_id),
+                Assertion::NoOperandLoop {
+                    node_id: node_id,
+                    operand_id: operand_id,
+                },
+                Assertion::HasOperand {
+                    node_id: node_id,
+                    operand_id: after_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
                         operation: NodeOperation::InsertOperand,
                     },
                 ]),
@@ -484,22 +658,25 @@ mod tests {
     #[test]
     fn extract_assertion_for_remove_operand() {
         let node_id = NodeId::new();
+        let operand_id = NodeId::new();
         let event = Event::PatchOperand {
             node_id: node_id.clone(),
-            patch: OperandPatch::Remove { index: 2 },
+            patch: OperandPatch::Remove {
+                node_id: operand_id,
+            },
         };
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
-                Assertion::OperandsHasSize {
-                    node_id: &node_id,
-                    size: 3,
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id: node_id,
+                    operand_id: operand_id,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::RemoveOperand,
                     },
                 ]),
@@ -508,24 +685,32 @@ mod tests {
     }
 
     #[test]
-    fn extract_assertion_for_move_operand_backward() {
+    fn extract_assertion_for_move_operand_at() {
         let node_id = NodeId::new();
+        let operand_id = NodeId::new();
         let event = Event::PatchOperand {
             node_id: node_id.clone(),
-            patch: OperandPatch::Move { from: 4, to: 3 },
+            patch: OperandPatch::Move {
+                node_id: operand_id,
+                position: OperandPosition::At(4),
+            },
         };
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id,
+                },
                 Assertion::OperandsHasSize {
-                    node_id: &node_id,
+                    node_id: node_id,
                     size: 5,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::MoveOperand,
                     },
                 ]),
@@ -534,24 +719,128 @@ mod tests {
     }
 
     #[test]
-    fn extract_assertion_for_move_operand_forward() {
+    fn extract_assertion_for_move_operand_first() {
         let node_id = NodeId::new();
+        let operand_id = NodeId::new();
         let event = Event::PatchOperand {
             node_id: node_id.clone(),
-            patch: OperandPatch::Move { from: 2, to: 3 },
+            patch: OperandPatch::Move {
+                node_id: operand_id,
+                position: OperandPosition::First,
+            },
         };
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
-                Assertion::OperandsHasSize {
-                    node_id: &node_id,
-                    size: 4,
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id,
                 },
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
+                        operation: NodeOperation::MoveOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_move_operand_last() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Move {
+                node_id: operand_id,
+                position: OperandPosition::Last,
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
+                        operation: NodeOperation::MoveOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_move_operand_before() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let before_operand_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Move {
+                node_id: operand_id,
+                position: OperandPosition::Before(before_operand_id),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id,
+                },
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id: before_operand_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
+                        operation: NodeOperation::MoveOperand,
+                    },
+                ]),
+            ])
+        );
+    }
+
+    #[test]
+    fn extract_assertion_for_move_operand_after() {
+        let node_id = NodeId::new();
+        let operand_id = NodeId::new();
+        let after_operand_id = NodeId::new();
+        let event = Event::PatchOperand {
+            node_id: node_id.clone(),
+            patch: OperandPatch::Move {
+                node_id: operand_id,
+                position: OperandPosition::After(after_operand_id),
+            },
+        };
+        assert_eq!(
+            extract_assertion(&event),
+            Assertion::All(vec![
+                Assertion::NodeExists(node_id),
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id,
+                },
+                Assertion::HasOperand {
+                    node_id,
+                    operand_id: after_operand_id,
+                },
+                Assertion::Any(vec![
+                    Assertion::Owner,
+                    Assertion::NodeAllows {
+                        node_id: node_id,
                         operation: NodeOperation::MoveOperand,
                     },
                 ]),
@@ -572,11 +861,11 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateAttribute(Type::Real),
                     },
                 ]),
@@ -594,11 +883,11 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::RemoveAttribute(Type::Real),
                     },
                 ]),
@@ -639,11 +928,11 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateRules,
                     },
                 ]),
@@ -661,11 +950,11 @@ mod tests {
         assert_eq!(
             extract_assertion(&event),
             Assertion::All(vec![
-                Assertion::NodeExists(&node_id),
+                Assertion::NodeExists(node_id),
                 Assertion::Any(vec![
                     Assertion::Owner,
                     Assertion::NodeAllows {
-                        node_id: &node_id,
+                        node_id: node_id,
                         operation: NodeOperation::UpdateOperandRules,
                     },
                 ]),

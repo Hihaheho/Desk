@@ -28,11 +28,28 @@ pub enum StringPatch {
 // ContentPatch::AddReal should not be NaN
 impl Eq for ContentPatch {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandPatch {
-    Insert { index: usize, node_id: NodeId },
-    Remove { index: usize },
-    Move { from: usize, to: usize },
+    Insert {
+        position: OperandPosition,
+        node_id: NodeId,
+    },
+    Remove {
+        node_id: NodeId,
+    },
+    Move {
+        node_id: NodeId,
+        position: OperandPosition,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum OperandPosition {
+    First,
+    Last,
+    Before(NodeId),
+    After(NodeId),
+    At(usize),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

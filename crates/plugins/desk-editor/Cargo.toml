@@ -15,8 +15,9 @@ desk-window = { workspace = true }
 desk-theme = { workspace = true }
 dworkspace = { workspace = true }
 dworkspace-codebase = { path = "../../components/dworkspace-codebase", version = "0.0.0", package = "dworkspace-codebase" }
-deskc-ids = { path = "../../components/deskc-ids", version = "0.0.0", package = "deskc-ids" }
-deskc-ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc-type" }
+deskc-ids = { workspace = true }
+deskc-type = { workspace = true }
+deskc-macros = { workspace = true }
 
 bevy = { workspace = true }
 egui = { workspace = true }

@@ -1519,6 +1519,7 @@ dependencies = [
  "desk-theme",
  "desk-window",
  "deskc-ids",
+ "deskc-macros",
  "deskc-type",
  "dson",
  "dworkspace",

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use components::{event::Event, patch::OperandPatch, snapshot::Snapshot};
+use components::{event::Event, patch::OperandPatch, projection::Projection};
 use deskc_ids::NodeId;
 use parking_lot::Mutex;
 
@@ -13,15 +13,11 @@ pub struct LoopDetector {
 }
 
 impl LoopDetector {
-    pub fn does_make_loop_insert_operand(&self, node_id: &NodeId, operand_id: &NodeId) -> bool {
-        node_id == operand_id
-            || self
-                .operand
-                .lock()
-                .does_make_loop(node_id.clone(), operand_id.clone())
+    pub fn does_make_loop_insert_operand(&self, node_id: NodeId, operand_id: NodeId) -> bool {
+        node_id == operand_id || self.operand.lock().does_make_loop(node_id, operand_id)
     }
 
-    pub fn handle_event(&mut self, snapshot: &Snapshot, event: &Event) {
+    pub fn handle_event(&mut self, snapshot: &Projection, event: &Event) {
         match event {
             Event::PatchOperand {
                 node_id,
@@ -37,19 +33,12 @@ impl LoopDetector {
             }
             Event::PatchOperand {
                 node_id,
-                patch: OperandPatch::Remove { index },
+                patch: OperandPatch::Remove { node_id: operand },
             } => {
                 let mut lock = self.operand.lock();
                 let mut operands = lock.node(node_id.clone()).as_ref().clone();
-                // asserted existence
-                if let Some(operand) = snapshot
-                    .flat_nodes
-                    .get(node_id)
-                    .and_then(|node| node.operands.get(*index))
-                {
-                    operands.remove(operand);
-                    lock.set_node(node_id.clone(), Arc::new(operands))
-                }
+                operands.remove(operand);
+                lock.set_node(node_id.clone(), Arc::new(operands))
             }
             Event::CreateNode {
                 node_id,
@@ -68,7 +57,7 @@ impl LoopDetector {
 mod tests {
     use std::sync::Arc;
 
-    use components::{content::Content, flat_node::FlatNode};
+    use components::{content::Content, flat_node::FlatNode, patch::OperandPosition};
     use deskc_ids::NodeId;
 
     use crate::descendants::DescendantsQueries;
@@ -88,15 +77,15 @@ mod tests {
             .operand
             .lock()
             .set_node(node_b.clone(), Arc::new([].into_iter().collect()));
-        assert!(!detector.does_make_loop_insert_operand(&node_a, &node_b),);
-        assert!(detector.does_make_loop_insert_operand(&node_b, &node_a),);
+        assert!(!detector.does_make_loop_insert_operand(node_a, node_b),);
+        assert!(detector.does_make_loop_insert_operand(node_b, node_a),);
     }
 
     #[test]
     fn detect_self_loop_by_operand() {
         let node_id = NodeId::new();
         let detector = LoopDetector::default();
-        assert!(detector.does_make_loop_insert_operand(&node_id, &node_id));
+        assert!(detector.does_make_loop_insert_operand(node_id, node_id));
     }
 
     #[test]
@@ -104,7 +93,7 @@ mod tests {
         let node_id = NodeId::new();
         let mut detector = LoopDetector::default();
         detector.handle_event(
-            &Snapshot::default(),
+            &Projection::default(),
             &Event::CreateNode {
                 node_id: node_id.clone(),
                 content: Content::Integer(0),
@@ -132,12 +121,12 @@ mod tests {
             .lock()
             .set_node(node_c.clone(), Arc::new([].into_iter().collect()));
         detector.handle_event(
-            &Snapshot::default(),
+            &Projection::default(),
             &Event::PatchOperand {
                 node_id: node_a.clone(),
                 patch: OperandPatch::Insert {
                     node_id: node_b.clone(),
-                    index: 0,
+                    position: OperandPosition::First,
                 },
             },
         );
@@ -165,7 +154,7 @@ mod tests {
             .operand
             .lock()
             .set_node(node_c.clone(), Arc::new([].into_iter().collect()));
-        let mut snapshot = Snapshot::default();
+        let mut snapshot = Projection::default();
         snapshot.flat_nodes.insert(
             node_a.clone(),
             FlatNode::new(Content::Integer(1)).operands(vec![node_b]),
@@ -174,7 +163,7 @@ mod tests {
             &snapshot,
             &Event::PatchOperand {
                 node_id: node_a.clone(),
-                patch: OperandPatch::Remove { index: 0 },
+                patch: OperandPatch::Remove { node_id: node_b },
             },
         );
         assert_eq!(
