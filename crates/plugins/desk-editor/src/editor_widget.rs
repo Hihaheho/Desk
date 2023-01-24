@@ -61,6 +61,7 @@ impl Widget<egui::Context> for EditorWidget {
                         needs_space: &mut false,
                         colorscheme: &colorscheme,
                         node_type: NodeType::Expr,
+                        parent_hovered: false,
                     };
                     renderer.begin_line();
                     renderer.render();
@@ -93,6 +94,7 @@ struct NodeRenderer<'a, 'b> {
     needs_space: &'a mut bool,
     colorscheme: &'a CodeColorScheme,
     node_type: NodeType,
+    parent_hovered: bool,
 }
 
 impl<'context> NodeRenderer<'_, 'context> {
@@ -108,6 +110,7 @@ impl<'context> NodeRenderer<'_, 'context> {
             needs_space: self.needs_space,
             colorscheme: self.colorscheme,
             node_type: self.node_type,
+            parent_hovered: self.parent_hovered,
         }
     }
     fn add_event(&mut self, payload: EventPayload) {
@@ -169,16 +172,24 @@ impl<'context> NodeRenderer<'_, 'context> {
     ) -> egui::Response {
         let mut text: RichText = text.into();
         *self.chars += text.text().len() as u32;
-        let color = self.colorscheme.get(tag).as_linear_rgba_f32();
-        text = text.color(Rgba::from_rgba_unmultiplied(
-            color[0], color[1], color[2], color[3],
-        ));
+        let color = self.colorscheme.get(tag);
+        text = text.color(egui_color(color)).monospace();
+        if self.state().hovered_node == Some(self.node_id) {
+            text = text.background_color(egui_color(self.editor_style.hovered_background));
+        } else if self.parent_hovered {
+            text = text.background_color(egui_color(self.editor_style.hovered_child_background));
+        }
 
         if *self.needs_space && needs_space_before {
             self.ui.monospace(" ");
             *self.chars += 1;
         }
-        let res = self.ui.monospace(text);
+        let res = self
+            .ui
+            .add(egui::Label::new(text).sense(egui::Sense::click_and_drag()));
+        if res.hovered() {
+            self.state_mut().hovered_node = Some(self.node_id);
+        }
         *self.needs_space = needs_space_after;
         res
     }
@@ -195,6 +206,7 @@ impl<'context> NodeRenderer<'_, 'context> {
     fn render_operand(&mut self, node_id: NodeId) {
         let mut renderer = NodeRenderer {
             node_id,
+            parent_hovered: self.parent_hovered || self.state().hovered_node == Some(self.node_id),
             ..self.clone()
         };
         renderer.render()
@@ -646,4 +658,9 @@ impl<'context> NodeRenderer<'_, 'context> {
     fn render_dson(&mut self, dson: &Dson) {
         self.monotext(&dson.to_string(), Tag::DsonTyInteger, true, true);
     }
+}
+
+fn egui_color(color: Color) -> Rgba {
+    let color = color.as_linear_rgba_f32();
+    Rgba::from_rgba_unmultiplied(color[0], color[1], color[2], color[3])
 }

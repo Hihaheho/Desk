@@ -57,6 +57,8 @@ pub struct EditorStyle {
     pub indent_guide: IndentGuide,
     pub line_spacing: f32,
     pub line_number: bool,
+    pub hovered_background: Color,
+    pub hovered_child_background: Color,
 }
 
 impl Default for EditorStyle {
@@ -66,6 +68,8 @@ impl Default for EditorStyle {
             indent_guide: Default::default(),
             line_spacing: 0.2,
             line_number: true,
+            hovered_background: Color::rgb_u8(0xE0, 0xA0, 0xD8),
+            hovered_child_background: Color::rgb_u8(0xF0, 0xD0, 0xE8),
         }
     }
 }

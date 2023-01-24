@@ -16,6 +16,7 @@ pub struct NodeState {
 pub struct EditorState {
     pub selected_node: Option<NodeId>,
     pub selected_operand: Option<usize>,
+    pub hovered_node: Option<NodeId>,
     pub node_states: BTreeMap<NodeId, NodeState>,
 }
 
