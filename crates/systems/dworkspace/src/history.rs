@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use components::{
     event::{Event, EventPayload},
     projection::Projection,
@@ -5,24 +7,47 @@ use components::{
 
 use crate::state::State;
 
-#[derive(Default)]
-pub struct History {}
+pub struct History {
+    size: usize,
+    undo_stack: VecDeque<EventPayload>,
+}
+
+impl History {
+    pub fn new(size: usize) -> Self {
+        Self {
+            size,
+            undo_stack: VecDeque::new(),
+        }
+    }
+    fn push(&mut self, payload: EventPayload) {
+        self.undo_stack.push_back(payload);
+        if self.undo_stack.len() > self.size {
+            self.undo_stack.pop_front();
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.undo_stack.is_empty()
+    }
+    pub fn undo_all(&mut self) -> Vec<EventPayload> {
+        self.undo_stack.drain(..).collect()
+    }
+}
 
 impl State for History {
     fn handle_event(&mut self, projection: &Projection, event: &Event) {
-        // match &event.payload {
-        //     EventPayload::AddOwner { user_id } => todo!(),
-        //     EventPayload::RemoveOwner { user_id } => todo!(),
-        //     EventPayload::UpdateSpaceRules { rules } => todo!(),
-        //     EventPayload::CreateNode { node_id, content } => todo!(),
-        //     EventPayload::RemoveNode { node_id } => todo!(),
-        //     EventPayload::PatchContent { node_id, patch } => todo!(),
-        //     EventPayload::PatchOperand { node_id, patch } => todo!(),
-        //     EventPayload::PatchAttribute { node_id, patch } => todo!(),
-        //     EventPayload::UpdateNodeRules { node_id, rules } => todo!(),
-        //     EventPayload::UpdateOperandRules { node_id, rules } => todo!(),
-        //     EventPayload::AddSnapshot { index, snapshot } => todo!(),
-        // }
+        match &event.payload {
+            EventPayload::AddOwner { user_id } => {}
+            EventPayload::RemoveOwner { user_id } => {}
+            EventPayload::UpdateSpaceRules { rules } => {}
+            EventPayload::CreateNode { node_id, content } => {}
+            EventPayload::RemoveNode { node_id } => {}
+            EventPayload::PatchContent { node_id, patch } => {}
+            EventPayload::PatchOperand { node_id, patch } => {}
+            EventPayload::PatchAttribute { node_id, patch } => {}
+            EventPayload::UpdateNodeRules { node_id, rules } => {}
+            EventPayload::UpdateOperandRules { node_id, rules } => {}
+            EventPayload::AddSnapshot { index, snapshot } => {}
+        }
     }
 }
 
@@ -42,11 +67,11 @@ mod tests {
 
     #[test]
     fn test_history() {
-        let mut history = History::default();
+        let mut history = History::new(10);
         let mut projection = Projection::default();
         let user_id = UserId::new();
         let event = e(EventPayload::AddOwner { user_id });
         history.handle_event(&projection, &event);
-        // TODO
+        // assert_eq!(history.undo_stack, [
     }
 }

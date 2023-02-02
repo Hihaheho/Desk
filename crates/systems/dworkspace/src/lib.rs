@@ -10,14 +10,15 @@ mod references;
 pub mod repository;
 pub mod state;
 
-use std::{any::TypeId, collections::HashMap};
+use std::{any::TypeId, collections::BTreeMap, sync::Arc};
 
+use audit::execute_assertion::AssertionError;
 use bevy_ecs::prelude::Component;
-use components::{event::Event, projection::Projection, user::UserId};
+use components::{event::Event, node::Node, projection::Projection, user::UserId};
 use deskc_ids::NodeId;
 use history::History;
 use loop_detector::LoopDetector;
-use nodes::Nodes;
+use nodes::{NodeQueries, Nodes};
 use parking_lot::Mutex;
 use repository::Repository;
 use state::State;
@@ -30,9 +31,10 @@ pub struct Workspace {
     // salsa database is not Sync
     references: Mutex<references::References>,
     loop_detector: LoopDetector,
-    pub snapshot: Projection,
+    pub projection: Projection,
     history: History,
-    states: HashMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
+    ephemeral_history: History,
+    states: BTreeMap<TypeId, Box<dyn State + Send + Sync + 'static>>,
 }
 
 impl Workspace {
@@ -42,8 +44,9 @@ impl Workspace {
             nodes: Default::default(),
             references: Default::default(),
             loop_detector: Default::default(),
-            snapshot: Default::default(),
-            history: Default::default(),
+            projection: Default::default(),
+            history: History::new(100),
+            ephemeral_history: History::new(1000),
             states: Default::default(),
         }
     }
@@ -53,24 +56,35 @@ impl Workspace {
     }
 
     pub fn process(&mut self) {
+        assert!(
+            self.ephemeral_history.is_empty(),
+            "all ephemeral events must be reverted"
+        );
         let events = self.repository.poll();
         for event in events {
-            if self.audit(&event).is_ok() {
-                self.handle_event(&event);
+            // TODO: handle assertion error.
+            if let Err(_err) = self.audit_and_handle(&event) {
+            } else {
+                self.history.handle_event(&self.projection, &event);
             }
         }
     }
 
+    pub fn audit_and_handle(&mut self, event: &Event) -> Result<(), AssertionError> {
+        self.audit(event)?;
+        self.handle_event(event);
+        Ok(())
+    }
+
     fn handle_event(&mut self, event: &Event) {
         self.nodes.lock().handle_event(event);
-        self.references.lock().handle_event(&self.snapshot, event);
-        self.history.handle_event(&self.snapshot, event);
+        self.references.lock().handle_event(&self.projection, event);
         for state in self.states.values_mut() {
-            state.handle_event(&self.snapshot, event);
+            state.handle_event(&self.projection, event);
         }
-        self.loop_detector.handle_event(&self.snapshot, event);
-        // This must be last for using the previous snapshot above
-        self.snapshot.handle_event(event);
+        self.loop_detector.handle_event(&self.projection, event);
+        // This must be last for using the previous projection above
+        self.projection.handle_event(event);
     }
 
     pub fn add_state<T: State + Send + Sync + 'static>(&mut self, state: T) {
@@ -95,6 +109,10 @@ impl Workspace {
 
     pub fn user_id(&self) -> UserId {
         self.repository.user_id()
+    }
+
+    pub fn node(&self, node_id: NodeId) -> Arc<Node> {
+        self.nodes.lock().node(node_id)
     }
 }
 
@@ -216,8 +234,8 @@ mod tests {
         kernel.add_state(test_state);
         kernel.process();
 
-        assert_eq!(kernel.snapshot.flat_nodes.len(), 2);
-        assert_eq!(kernel.snapshot.owners.len(), 1);
+        assert_eq!(kernel.projection.flat_nodes.len(), 2);
+        assert_eq!(kernel.projection.owners.len(), 1);
         let mut ast = if let Code::Ast(ast) = kernel.nodes.lock().ast(node_a).unwrap() {
             ast.as_ref().clone()
         } else {

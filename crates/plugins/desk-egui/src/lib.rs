@@ -33,7 +33,7 @@ fn render(
     for (mut kernel, mut window) in windows.iter_mut() {
         let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut().clone());
         window.render(&mut ctx);
-        for event in ctx.events() {
+        for event in ctx.events {
             kernel.commit(event);
         }
     }

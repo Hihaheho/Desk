@@ -4,11 +4,12 @@ use ty::{Effect, Type};
 
 use crate::{dprocess::DProcessId, value::Value};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 /// A status of process.
 ///
 /// It's cheap to clone.
 pub enum DProcessStatus {
+    #[default]
     Running,
     Deferred {
         effect: Arc<Effect>,
@@ -22,12 +23,6 @@ pub enum DProcessStatus {
     },
     Crashed(CrashError),
     HaltedByLink(LinkExit),
-}
-
-impl Default for DProcessStatus {
-    fn default() -> Self {
-        Self::Running
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

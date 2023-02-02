@@ -56,7 +56,11 @@ impl Workspace {
     ) -> Result<(), AssertionError> {
         match assertion {
             Assertion::SpaceAllows(operation) => {
-                if self.snapshot.rules.user_has_operation(user_id, &operation) {
+                if self
+                    .projection
+                    .rules
+                    .user_has_operation(user_id, &operation)
+                {
                     Ok(())
                 } else {
                     Err(AssertionError::SpaceDenied(operation))
@@ -64,7 +68,7 @@ impl Workspace {
             }
             Assertion::NodeAllows { node_id, operation } => {
                 if !self
-                    .snapshot
+                    .projection
                     .flat_nodes
                     .get(&node_id)
                     .unwrap()
@@ -87,21 +91,21 @@ impl Workspace {
                 Ok(())
             }
             Assertion::Owner => {
-                if self.snapshot.owners.contains(&user_id) {
+                if self.projection.owners.contains(&user_id) {
                     Ok(())
                 } else {
                     Err(AssertionError::NotOwner)
                 }
             }
             Assertion::NoOwner => {
-                if self.snapshot.owners.is_empty() {
+                if self.projection.owners.is_empty() {
                     Ok(())
                 } else {
                     Err(AssertionError::NotOwner)
                 }
             }
             Assertion::NodeExists(node_id) => {
-                if self.snapshot.flat_nodes.contains_key(&node_id) {
+                if self.projection.flat_nodes.contains_key(&node_id) {
                     Ok(())
                 } else {
                     Err(AssertionError::NodeNotFound(node_id.clone()))
@@ -112,7 +116,7 @@ impl Workspace {
                 operand_id,
             } => {
                 if self
-                    .snapshot
+                    .projection
                     .flat_nodes
                     .get(&node_id)
                     .unwrap()
@@ -157,7 +161,7 @@ impl Workspace {
             }
             Assertion::OperandsHasSize { node_id, size } => {
                 let actual = self
-                    .snapshot
+                    .projection
                     .flat_nodes
                     .get(&node_id)
                     .unwrap()
@@ -178,7 +182,7 @@ impl Workspace {
                 kind: expected,
             } => {
                 let actual = self
-                    .snapshot
+                    .projection
                     .flat_nodes
                     .get(&node_id)
                     .unwrap()
@@ -264,7 +268,7 @@ mod tests {
         let mut kernel = Workspace::new(TestRepository::default());
         let user_a = UserId::new();
         kernel
-            .snapshot
+            .projection
             .rules
             .default
             .insert(SpaceOperation::CreateNode);
@@ -278,7 +282,7 @@ mod tests {
         let user_a = UserId::new();
         let node_id = NodeId::new();
         kernel
-            .snapshot
+            .projection
             .flat_nodes
             .insert(node_id.clone(), FlatNode::new(Content::Integer(0)));
         let assertion = Assertion::NodeAllows {
@@ -394,7 +398,7 @@ mod tests {
             },
         }));
         kernel
-            .snapshot
+            .projection
             .flat_nodes
             .get_mut(&parent_id)
             .unwrap()

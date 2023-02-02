@@ -59,7 +59,7 @@ mod tests {
         let user_a = UserId::new();
         let user_b = UserId::new();
         kernel
-            .snapshot
+            .projection
             .handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         assert!(kernel
             .audit(&Event {
@@ -85,7 +85,7 @@ mod tests {
         let user_a = UserId::new();
         let user_b = UserId::new();
         kernel
-            .snapshot
+            .projection
             .handle_event(&e(EventPayload::AddOwner { user_id: user_a }));
         assert!(kernel
             .audit(&Event {
@@ -106,7 +106,7 @@ mod tests {
         let user_a = UserId::new();
         let user_b = UserId::new();
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.owners.insert(user_a);
+        kernel.projection.owners.insert(user_a);
 
         kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
@@ -164,7 +164,7 @@ mod tests {
         let user_a = UserId::new();
         let user_b = UserId::new();
         let mut kernel = Workspace::new(TestRepository::default());
-        kernel.snapshot.owners.insert(user_a);
+        kernel.projection.owners.insert(user_a);
         kernel.handle_event(&e(EventPayload::CreateNode {
             node_id: node_a.clone(),
             content: Content::Integer(0),
