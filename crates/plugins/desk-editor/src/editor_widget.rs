@@ -59,7 +59,6 @@ impl Widget<egui::Context> for EditorWidget {
                     let user_id = ctx.workspace.user_id();
                     let mut editor_state =
                         &mut ctx.workspace.get_state_mut::<EditorState>().unwrap();
-                    let mut word_cursor_distance = None;
                     let has_next_pos = editor_state.next_pos.is_some();
                     let mut renderer = NodeRenderer {
                         events: &mut ctx.events,
@@ -76,14 +75,16 @@ impl Widget<egui::Context> for EditorWidget {
                         node_type: NodeType::Expr,
                         parent_hovered: false,
                         node_render_state: NodeRenderState::default().into(),
-                        word_cursor_distance: &mut word_cursor_distance,
+                        word_cursor_distance: &mut None,
                         forward_word_found: &mut false,
+                        next_hovered_node: &mut None,
                     };
                     renderer.begin_line();
                     renderer.render();
                     if has_next_pos {
-                        editor_state.next_pos = None;
+                        renderer.state.next_pos = None;
                     }
+                    editor_state.hovered_node = renderer.next_hovered_node.take();
                 });
             });
     }
@@ -126,6 +127,7 @@ struct NodeRenderer<'a> {
     // Vec2 is the distance between the next cursor and the word.
     word_cursor_distance: &'a mut Option<f32>,
     forward_word_found: &'a mut bool,
+    next_hovered_node: &'a mut Option<NodeId>,
 }
 
 impl<'context> NodeRenderer<'_> {
@@ -147,6 +149,7 @@ impl<'context> NodeRenderer<'_> {
             node_render_state: MaybeOwnedMut::Borrowed(self.node_render_state.borrow_mut()),
             word_cursor_distance: self.word_cursor_distance,
             forward_word_found: self.forward_word_found,
+            next_hovered_node: self.next_hovered_node,
         }
     }
     fn add_event(&mut self, payload: EventPayload) {
@@ -223,7 +226,7 @@ impl<'context> NodeRenderer<'_> {
             .ui
             .add(egui::Label::new(text).sense(egui::Sense::click_and_drag()));
         if res.hovered() {
-            self.state.hovered_node = Some(self.node.id);
+            *self.next_hovered_node = Some(self.node.id);
         }
         if res.clicked() {
             self.state.word_cursor = Some(WordCursor {
