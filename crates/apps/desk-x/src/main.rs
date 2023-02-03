@@ -1,12 +1,21 @@
 mod about;
+mod panels;
 mod windows;
+
+use std::time::Duration;
+
 use about::AboutPlugin;
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::FrameTimeDiagnosticsPlugin,
+    prelude::*,
+    winit::{UpdateMode, WinitSettings},
+};
 
 #[cfg(feature = "inspector")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 use editor_plugin::EditorPlugin;
 use egui_plugin::EguiPlugin;
+use panels::PanelsPlugin;
 use playground_plugin::PlaygroundPlugin;
 // use rapier2d_plugin::PhysicsPlugin;
 use terminal_plugin::TerminalPlugin;
@@ -27,9 +36,19 @@ fn main() {
         .add_plugin(TerminalPlugin)
         .add_plugin(WindowsPlugin)
         .add_plugin(AboutPlugin)
+        .add_plugin(PanelsPlugin)
         .add_plugin(PlaygroundPlugin)
+        .add_plugin(FrameTimeDiagnosticsPlugin)
+        .insert_resource(WinitSettings {
+            focused_mode: UpdateMode::ReactiveLowPower {
+                max_wait: Duration::from_millis(1000),
+            },
+            unfocused_mode: UpdateMode::ReactiveLowPower {
+                max_wait: Duration::from_millis(2000),
+            },
+            ..Default::default()
+        })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(ClearColor(Color::rgb(0.0, 120.0 / 255.0, 120.0 / 255.0)))
         .add_startup_system(setup_cameras);
 
     #[cfg(target_arch = "wasm32")]

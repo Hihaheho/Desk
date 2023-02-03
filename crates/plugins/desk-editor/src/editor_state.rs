@@ -35,13 +35,13 @@ pub enum WordSearch {
 #[derive(Default)]
 pub struct EditorState {
     pub selected_nodes: BTreeSet<NodeId>,
-    pub hovered_node: Option<NodeId>,
     pub node_states: BTreeMap<NodeId, NodeState>,
     /// Key is a top-level node.
     pub ephemeral_events: BTreeMap<NodeId, Vec<Event>>,
     /// Relative to the top-left corner of the source code.
     pub word_cursor: Option<WordCursor>,
     pub next_pos: Option<NextPos>,
+    pub hovered_word: Option<WordCursor>,
 }
 
 impl State for EditorState {

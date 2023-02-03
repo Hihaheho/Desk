@@ -20,6 +20,7 @@ pub struct Theme {
     pub window_corner_radius: f32,
     pub window_shadow: Shadow,
     pub extreme_background: Color,
+    pub background: Color,
 }
 
 #[derive(Reflect, Serialize, Deserialize, Clone, Copy)]
@@ -57,9 +58,10 @@ pub struct EditorStyle {
     pub indent_guide: IndentGuide,
     pub line_spacing: f32,
     pub line_number: bool,
-    pub hovered_background: Color,
-    pub hovered_child_background: Color,
+    pub cursor_background: Color,
+    pub cursor_child_background: Color,
     pub selected_background: Color,
+    pub hovered_background: Color,
     pub cursor_word_outline: Stroke,
 }
 
@@ -70,9 +72,10 @@ impl Default for EditorStyle {
             indent_guide: Default::default(),
             line_spacing: 0.2,
             line_number: true,
-            hovered_background: Color::rgb_u8(0xE0, 0xA0, 0xD8),
-            hovered_child_background: Color::rgb_u8(0xF0, 0xD0, 0xE8),
+            cursor_background: Color::rgb_u8(0xE0, 0xA0, 0xD8),
+            cursor_child_background: Color::rgb_u8(0xF0, 0xD0, 0xE8),
             selected_background: Color::rgb_u8(0xD8, 0xA0, 0xE0),
+            hovered_background: Color::rgb_u8(0xD0, 0xD0, 0xD0),
             cursor_word_outline: Stroke {
                 size: 1.0,
                 color: Color::rgb_u8(0x10, 0x10, 0x50),

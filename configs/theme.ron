@@ -151,4 +151,10 @@
         blue: 0.9372549,
         alpha: 1.0,
     ),
+    background: Rgba(
+        red: 0.0,
+        green: 0.5,
+        blue: 0.5,
+        alpha: 1.0,
+    ),
 )

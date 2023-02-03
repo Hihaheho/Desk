@@ -7,6 +7,7 @@ use desk_window::{
     widget::{Widget, WidgetId},
     window::{DefaultWindow, Window},
 };
+use egui::special_emojis::GITHUB;
 
 #[derive(Component)]
 pub struct About;
@@ -30,7 +31,10 @@ struct AboutWidget;
 impl Widget<egui::Context> for AboutWidget {
     fn render(&mut self, ctx: &mut Ctx<egui::Context>) {
         egui::Window::new("About").show(&ctx.backend(), |ui| {
-            ui.label("Hello World");
+            ui.hyperlink_to(
+                format!("{} Hihaheho/Desk", GITHUB),
+                "https://github.com/Hihaheho/Desk",
+            );
         });
     }
 }

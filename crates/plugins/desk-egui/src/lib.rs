@@ -31,8 +31,15 @@ fn render(
     mut windows: Query<(&mut Workspace, &mut Window<egui::Context>)>,
 ) {
     for (mut kernel, mut window) in windows.iter_mut() {
-        let mut ctx = Ctx::new(&mut kernel, egui_context.ctx_mut().clone());
-        window.render(&mut ctx);
+        let widgets = window.drain_widgets();
+        let mut ctx = Ctx::new(
+            &mut kernel,
+            egui_context.ctx_mut().clone(),
+            &mut window.offset,
+        );
+        for mut widget in widgets {
+            widget.render(&mut ctx);
+        }
         for event in ctx.events {
             kernel.commit(event);
         }
@@ -130,6 +137,8 @@ fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Change
         style.visuals.widgets.open.fg_stroke.width = theme.open.stroke.size;
 
         style.visuals.extreme_bg_color = color(&theme.extreme_background);
+
+        style.visuals.panel_fill = color(&theme.background);
 
         egui_context.ctx_mut().set_style(style);
     }

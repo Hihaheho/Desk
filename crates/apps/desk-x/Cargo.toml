@@ -32,3 +32,4 @@ bevy-inspector-egui = { version = "0.17", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3"
 egui = { workspace = true }
+once_cell = { workspace = true }

@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::Component;
+use bevy_math::Vec2;
 use uuid::Uuid;
 
-use crate::{
-    ctx::Ctx,
-    widget::{Widget, WidgetId},
-};
+use crate::widget::{Widget, WidgetId};
 
 #[derive(Component)]
 pub struct DefaultWindow;
 
 #[derive(Component, Default)]
 pub struct Window<T> {
+    pub offset: Vec2,
     widgets: HashMap<WidgetId, Box<dyn Widget<T> + Send + Sync + 'static>>,
 }
 
@@ -20,10 +19,8 @@ pub struct Window<T> {
 pub struct WindowId(pub Uuid);
 
 impl<T> Window<T> {
-    pub fn render(&mut self, ctx: &mut Ctx<T>) {
-        for (_id, mut widget) in self.widgets.drain() {
-            widget.render(ctx);
-        }
+    pub fn drain_widgets(&mut self) -> Vec<Box<dyn Widget<T> + Send + Sync + 'static>> {
+        self.widgets.drain().map(|(_, widget)| widget).collect()
     }
 
     pub fn add_widget<W: Widget<T> + Send + Sync + 'static>(

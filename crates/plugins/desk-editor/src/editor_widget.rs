@@ -73,18 +73,38 @@ impl Widget<egui::Context> for EditorWidget {
                         needs_space: &mut false,
                         colorscheme: &colorscheme,
                         node_type: NodeType::Expr,
-                        parent_hovered: false,
+                        parent_has_cursor: false,
                         node_render_state: NodeRenderState::default().into(),
                         word_cursor_distance: &mut None,
                         forward_word_found: &mut false,
-                        next_hovered_node: &mut None,
+                        next_hovered_word: &mut None,
+                        next_word_cursor: &mut None,
                     };
                     renderer.begin_line();
                     renderer.render();
+                    let NodeRenderer {
+                        state,
+                        ui,
+                        next_hovered_word,
+                        next_word_cursor,
+                        ..
+                    } = renderer;
                     if has_next_pos {
-                        renderer.state.next_pos = None;
+                        // Search of the next word was finished.
+                        state.next_pos = None;
                     }
-                    editor_state.hovered_node = renderer.next_hovered_node.take();
+                    if let Some(word_cursor) = next_word_cursor.take() {
+                        state.word_cursor = Some(word_cursor);
+                        ui.ctx().request_repaint();
+                    }
+                    if state.hovered_word != *next_hovered_word {
+                        state.hovered_word = *next_hovered_word;
+                        ui.ctx().request_repaint();
+                    }
+                    // Redraw is required to search the next cursor word.
+                    if state.next_pos.is_some() {
+                        ui.ctx().request_repaint();
+                    }
                 });
             });
     }
@@ -122,12 +142,13 @@ struct NodeRenderer<'a> {
     needs_space: &'a mut bool,
     colorscheme: &'a CodeColorScheme,
     node_type: NodeType,
-    parent_hovered: bool,
+    parent_has_cursor: bool,
     node_render_state: MaybeOwnedMut<'a, NodeRenderState>,
     // Vec2 is the distance between the next cursor and the word.
     word_cursor_distance: &'a mut Option<f32>,
     forward_word_found: &'a mut bool,
-    next_hovered_node: &'a mut Option<NodeId>,
+    next_hovered_word: &'a mut Option<WordCursor>,
+    next_word_cursor: &'a mut Option<WordCursor>,
 }
 
 impl<'context> NodeRenderer<'_> {
@@ -145,11 +166,12 @@ impl<'context> NodeRenderer<'_> {
             needs_space: self.needs_space,
             colorscheme: self.colorscheme,
             node_type: self.node_type,
-            parent_hovered: self.parent_hovered,
+            parent_has_cursor: self.parent_has_cursor,
             node_render_state: MaybeOwnedMut::Borrowed(self.node_render_state.borrow_mut()),
             word_cursor_distance: self.word_cursor_distance,
             forward_word_found: self.forward_word_found,
-            next_hovered_node: self.next_hovered_node,
+            next_hovered_word: self.next_hovered_word,
+            next_word_cursor: self.next_word_cursor,
         }
     }
     fn add_event(&mut self, payload: EventPayload) {
@@ -161,9 +183,6 @@ impl<'context> NodeRenderer<'_> {
     }
     fn selected(&self) -> bool {
         self.state.selected_nodes.contains(&self.node.id)
-    }
-    fn hovered(&self) -> bool {
-        self.state.hovered_node == Some(self.node.id)
     }
     fn node_state(&mut self) -> &mut NodeState {
         let node_id = self.node.id;
@@ -206,16 +225,22 @@ impl<'context> NodeRenderer<'_> {
         needs_space_before: bool,
         needs_space_after: bool,
     ) -> egui::Response {
+        let word_cursor = WordCursor {
+            node_id: self.node.id,
+            offset: self.node_render_state.node_word_offset,
+        };
         let mut text: RichText = text.into();
         *self.chars += text.text().len() as u32;
         let color = self.colorscheme.get(tag);
         text = text.color(egui_color(color)).monospace();
         if self.selected() {
+            text = text.background_color(egui_color(self.editor_style.selected_background));
+        } else if self.state.hovered_word == Some(word_cursor) {
             text = text.background_color(egui_color(self.editor_style.hovered_background));
-        } else if self.hovered() {
-            text = text.background_color(egui_color(self.editor_style.hovered_background));
-        } else if self.parent_hovered {
-            text = text.background_color(egui_color(self.editor_style.hovered_child_background));
+        } else if self.parent_has_cursor {
+            text = text.background_color(egui_color(self.editor_style.cursor_background));
+        } else if self.state.word_cursor == Some(word_cursor) {
+            text = text.background_color(egui_color(self.editor_style.cursor_child_background));
         }
 
         if *self.needs_space && needs_space_before {
@@ -226,45 +251,43 @@ impl<'context> NodeRenderer<'_> {
             .ui
             .add(egui::Label::new(text).sense(egui::Sense::click_and_drag()));
         if res.hovered() {
-            *self.next_hovered_node = Some(self.node.id);
+            *self.next_hovered_word = Some(word_cursor);
         }
         if res.clicked() {
-            self.state.word_cursor = Some(WordCursor {
+            *self.next_word_cursor = Some(WordCursor {
                 offset: self.node_render_state.node_word_offset,
                 node_id: self.node.id,
             });
         }
-        if let Some(WordCursor { node_id, offset }) = self.state.word_cursor {
-            if self.node.id == node_id && offset == self.node_render_state.node_word_offset {
-                let stroke = self.editor_style.cursor_word_outline;
-                self.ui.painter().add(RectShape::stroke(
-                    res.rect,
-                    0.1,
-                    Stroke::new(stroke.size, egui_color(stroke.color)),
-                ));
-                let mut input = self.ui.input_mut();
-                let height = res.rect.height();
-                if input.consume_key(Modifiers::NONE, Key::ArrowLeft) {
-                    self.state.next_pos = Some(NextPos {
-                        pos: res.rect.left_center() + (-1.0, 0.0).into(),
-                        search: WordSearch::Backward,
-                    });
-                } else if input.consume_key(Modifiers::NONE, Key::ArrowRight) {
-                    self.state.next_pos = Some(NextPos {
-                        pos: res.rect.center(),
-                        search: WordSearch::Forward,
-                    });
-                } else if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
-                    self.state.next_pos = Some(NextPos {
-                        pos: res.rect.center() + (0.0, -height).into(),
-                        search: WordSearch::Nearest,
-                    });
-                } else if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
-                    self.state.next_pos = Some(NextPos {
-                        pos: res.rect.center() + (0.0, height).into(),
-                        search: WordSearch::Nearest,
-                    });
-                }
+        if self.state.word_cursor == Some(word_cursor) {
+            let stroke = self.editor_style.cursor_word_outline;
+            self.ui.painter().add(RectShape::stroke(
+                res.rect,
+                0.1,
+                Stroke::new(stroke.size, egui_color(stroke.color)),
+            ));
+            let mut input = self.ui.input_mut();
+            let height = res.rect.height();
+            if input.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                self.state.next_pos = Some(NextPos {
+                    pos: res.rect.left_center() + (-1.0, 0.0).into(),
+                    search: WordSearch::Backward,
+                });
+            } else if input.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                self.state.next_pos = Some(NextPos {
+                    pos: res.rect.center(),
+                    search: WordSearch::Forward,
+                });
+            } else if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                self.state.next_pos = Some(NextPos {
+                    pos: res.rect.center() + (0.0, -height).into(),
+                    search: WordSearch::Nearest,
+                });
+            } else if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                self.state.next_pos = Some(NextPos {
+                    pos: res.rect.center() + (0.0, height).into(),
+                    search: WordSearch::Nearest,
+                });
             }
         }
 
@@ -281,7 +304,7 @@ impl<'context> NodeRenderer<'_> {
                     } else {
                         left_top.y < pos.y
                     } {
-                        self.state.word_cursor = Some(WordCursor {
+                        *self.next_word_cursor = Some(WordCursor {
                             offset: self.node_render_state.node_word_offset,
                             node_id: self.node.id,
                         });
@@ -298,7 +321,7 @@ impl<'context> NodeRenderer<'_> {
                         } else {
                             center.y > pos.y
                         } {
-                            self.state.word_cursor = Some(WordCursor {
+                            *self.next_word_cursor = Some(WordCursor {
                                 offset: self.node_render_state.node_word_offset,
                                 node_id: self.node.id,
                             });
@@ -316,7 +339,7 @@ impl<'context> NodeRenderer<'_> {
                         match self.word_cursor_distance {
                             Some(d) if *d < distance => {}
                             _ => {
-                                self.state.word_cursor = Some(WordCursor {
+                                *self.next_word_cursor = Some(WordCursor {
                                     offset: self.node_render_state.node_word_offset,
                                     node_id: self.node.id,
                                 });
@@ -344,7 +367,8 @@ impl<'context> NodeRenderer<'_> {
     fn render_operand(&mut self, node: &Node) {
         let mut renderer = NodeRenderer {
             node,
-            parent_hovered: self.parent_hovered || self.state.hovered_node == Some(self.node.id),
+            parent_has_cursor: self.parent_has_cursor
+                || self.state.word_cursor.map(|h| h.node_id) == Some(self.node.id),
             node_render_state: NodeRenderState::default().into(),
             ..self.clone()
         };

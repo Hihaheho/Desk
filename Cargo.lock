@@ -1622,6 +1622,7 @@ name = "desk-window"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
+ "bevy_math",
  "deskc-ids",
  "dworkspace",
  "dworkspace-codebase",
@@ -1647,6 +1648,7 @@ dependencies = [
  "dworkspace-codebase",
  "dworkspace-in-memory",
  "egui",
+ "once_cell",
  "web-sys",
 ]
 
