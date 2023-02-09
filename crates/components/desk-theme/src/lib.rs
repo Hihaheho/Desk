@@ -72,12 +72,12 @@ impl Default for EditorStyle {
             indent_guide: Default::default(),
             line_spacing: 0.2,
             line_number: true,
-            cursor_background: Color::rgb_u8(0xE0, 0xA0, 0xD8),
-            cursor_child_background: Color::rgb_u8(0xF0, 0xD0, 0xE8),
+            cursor_background: Color::rgb_u8(0xEF, 0xAF, 0xE8),
+            cursor_child_background: Color::rgb_u8(0xFF, 0xDF, 0xF8),
             selected_background: Color::rgb_u8(0xD8, 0xA0, 0xE0),
             hovered_background: Color::rgb_u8(0xD0, 0xD0, 0xD0),
             cursor_word_outline: Stroke {
-                size: 1.0,
+                size: 2.0,
                 color: Color::rgb_u8(0x10, 0x10, 0x50),
             },
         }

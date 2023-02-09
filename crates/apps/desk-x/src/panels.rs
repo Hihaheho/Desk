@@ -8,7 +8,11 @@ use desk_window::{
     widget::{Widget, WidgetId},
     window::{DefaultWindow, Window},
 };
-use egui::{Id, Layout, Sense};
+use egui::{
+    epaint::{PathShape, Shadow},
+    style::Margin,
+    Color32, Frame, Id, LayerId, Rect, Rounding, Sense, Stroke,
+};
 use once_cell::sync::Lazy;
 
 pub struct PanelsPlugin;
@@ -54,7 +58,11 @@ impl Widget<egui::Context> for SystemWidget {
             .get_persisted(*SIDE_PANEL_WIDTH)
             .unwrap_or_default();
         let expanded = width != 0.0;
-        egui::SidePanel::left("side_panel")
+        let frame = Frame::side_top_panel(&backend.style()).stroke(Stroke::NONE);
+
+        // Render the side panels
+        let animated_width = egui::SidePanel::left("side_panel")
+            .frame(frame)
             .exact_width(width)
             .resizable(false)
             .show_animated(&backend, expanded, |ui| {
@@ -64,8 +72,23 @@ impl Widget<egui::Context> for SystemWidget {
                 if let Some(fps) = self.fps {
                     ui.label(format!("FPS: {:.1}", fps));
                 }
-            });
+            })
+            .map(|res| res.response.rect.width())
+            .unwrap_or_default();
 
+        // Render the shadow
+        let shadow = Shadow {
+            extrusion: 10.0,
+            color: Color32::from_black_alpha(255),
+        };
+        let rect = Rect::from_two_pos(
+            (animated_width, 0.0).into(),
+            (animated_width, backend.input().screen_rect().height()).into(),
+        );
+        let mesh = shadow.tessellate(rect, Rounding::none());
+        backend.layer_painter(LayerId::background()).add(mesh);
+
+        // Render the center panel
         let res = egui::CentralPanel::default()
             .show(&backend, |ui| {
                 if ui.button("☰").clicked() {
@@ -75,9 +98,9 @@ impl Widget<egui::Context> for SystemWidget {
                         width = DEFAULT_WIDTH;
                     }
                 }
-                ui.interact(ui.max_rect(), Id::new("central panel drag"), Sense::drag())
             })
-            .inner;
+            .response
+            .interact(Sense::drag());
         width = (width + res.drag_delta().x).max(0.0);
         if res.drag_released() {
             if width < MIN_WIDTH {

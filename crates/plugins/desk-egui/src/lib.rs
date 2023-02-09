@@ -1,21 +1,19 @@
 use bevy::prelude::*;
 use bevy_egui::{
-    egui::{self, Color32, FontData, FontDefinitions, FontTweak},
+    egui::{self, Color32, FontData, FontDefinitions},
     EguiContext,
 };
 use desk_plugin::DeskSystem;
+use desk_theme::Theme;
 use desk_window::ctx::Ctx;
 use desk_window::window::Window;
 use dworkspace::Workspace;
-use theme::Theme;
 
 pub struct EguiPlugin;
 
 impl Plugin for EguiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(bevy_egui::EguiPlugin)
-            .register_type::<Theme>()
-            .add_startup_system(add_theme)
             .add_startup_system(load_font)
             .add_system(egui_theme)
             .add_system(
@@ -44,10 +42,6 @@ fn render(
             kernel.commit(event);
         }
     }
-}
-
-fn add_theme(mut commands: Commands) {
-    commands.spawn(ron::from_str::<Theme>(include_str!("../../../../configs/theme.ron")).unwrap());
 }
 
 fn load_font(mut egui_context: ResMut<EguiContext>) {
@@ -86,12 +80,6 @@ fn color(color: &Color) -> Color32 {
 
 fn egui_theme(mut egui_context: ResMut<EguiContext>, theme: Query<&Theme, Changed<Theme>>) {
     if let Ok(theme) = theme.get_single() {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let theme_ron = ron::ser::to_string_pretty(theme, Default::default()).unwrap();
-            std::fs::write("configs/theme.ron", theme_ron).unwrap();
-        }
-
         let mut style = bevy_egui::egui::Style::default();
 
         style.visuals.dark_mode = false;

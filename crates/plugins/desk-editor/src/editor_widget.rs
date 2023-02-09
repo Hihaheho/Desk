@@ -14,7 +14,7 @@ use dworkspace_codebase::event::{Event, EventId};
 use dworkspace_codebase::node::Node;
 use dworkspace_codebase::patch::ContentPatch;
 use egui::epaint::RectShape;
-use egui::{Key, Modifiers, Rgba, RichText, Stroke, TextEdit, TextStyle};
+use egui::{Key, Modifiers, Rgba, RichText, Sense, Shape, Stroke, TextEdit, TextStyle};
 use maybe_owned::MaybeOwnedMut;
 
 use crate::editor_state::{EditorState, NextPos, NodeState, WordCursor, WordSearch};
@@ -79,6 +79,7 @@ impl Widget<egui::Context> for EditorWidget {
                         forward_word_found: &mut false,
                         next_hovered_word: &mut None,
                         next_word_cursor: &mut None,
+                        deferred_paints: &mut vec![],
                     };
                     renderer.begin_line();
                     renderer.render();
@@ -87,8 +88,12 @@ impl Widget<egui::Context> for EditorWidget {
                         ui,
                         next_hovered_word,
                         next_word_cursor,
+                        deferred_paints,
                         ..
                     } = renderer;
+                    for paint in deferred_paints.drain(..) {
+                        ui.painter().add(paint);
+                    }
                     if has_next_pos {
                         // Search of the next word was finished.
                         state.next_pos = None;
@@ -144,11 +149,16 @@ struct NodeRenderer<'a> {
     node_type: NodeType,
     parent_has_cursor: bool,
     node_render_state: MaybeOwnedMut<'a, NodeRenderState>,
-    // Vec2 is the distance between the next cursor and the word.
+    /// Used to search the nearest word cursor.
     word_cursor_distance: &'a mut Option<f32>,
+    /// Used to search the next word cursor in the forward direction.
     forward_word_found: &'a mut bool,
+    /// The next hovered word.
     next_hovered_word: &'a mut Option<WordCursor>,
+    /// The next word cursor.
     next_word_cursor: &'a mut Option<WordCursor>,
+    /// Paints that are deferred to overwrite.
+    deferred_paints: &'a mut Vec<Shape>,
 }
 
 impl<'context> NodeRenderer<'_> {
@@ -172,6 +182,7 @@ impl<'context> NodeRenderer<'_> {
             forward_word_found: self.forward_word_found,
             next_hovered_word: self.next_hovered_word,
             next_word_cursor: self.next_word_cursor,
+            deferred_paints: self.deferred_paints,
         }
     }
     fn add_event(&mut self, payload: EventPayload) {
@@ -237,9 +248,9 @@ impl<'context> NodeRenderer<'_> {
             text = text.background_color(egui_color(self.editor_style.selected_background));
         } else if self.state.hovered_word == Some(word_cursor) {
             text = text.background_color(egui_color(self.editor_style.hovered_background));
-        } else if self.parent_has_cursor {
+        } else if self.state.word_cursor.map(|c| c.node_id) == Some(self.node.id) {
             text = text.background_color(egui_color(self.editor_style.cursor_background));
-        } else if self.state.word_cursor == Some(word_cursor) {
+        } else if self.parent_has_cursor {
             text = text.background_color(egui_color(self.editor_style.cursor_child_background));
         }
 
@@ -247,9 +258,7 @@ impl<'context> NodeRenderer<'_> {
             self.ui.monospace(" ");
             *self.chars += 1;
         }
-        let res = self
-            .ui
-            .add(egui::Label::new(text).sense(egui::Sense::click_and_drag()));
+        let res = self.ui.label(text).interact(Sense::click_and_drag());
         if res.hovered() {
             *self.next_hovered_word = Some(word_cursor);
         }
@@ -261,11 +270,14 @@ impl<'context> NodeRenderer<'_> {
         }
         if self.state.word_cursor == Some(word_cursor) {
             let stroke = self.editor_style.cursor_word_outline;
-            self.ui.painter().add(RectShape::stroke(
-                res.rect,
-                0.1,
-                Stroke::new(stroke.size, egui_color(stroke.color)),
-            ));
+            self.deferred_paints.push(
+                RectShape::stroke(
+                    res.rect,
+                    0.1,
+                    Stroke::new(stroke.size, egui_color(stroke.color)),
+                )
+                .into(),
+            );
             let mut input = self.ui.input_mut();
             let height = res.rect.height();
             if input.consume_key(Modifiers::NONE, Key::ArrowLeft) {

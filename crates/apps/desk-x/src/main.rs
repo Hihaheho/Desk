@@ -1,5 +1,6 @@
 mod about;
 mod panels;
+mod theme;
 mod windows;
 
 use std::time::Duration;
@@ -39,6 +40,7 @@ fn main() {
         .add_plugin(PanelsPlugin)
         .add_plugin(PlaygroundPlugin)
         .add_plugin(FrameTimeDiagnosticsPlugin)
+        .insert_resource(ClearColor::default())
         .insert_resource(WinitSettings {
             focused_mode: UpdateMode::ReactiveLowPower {
                 max_wait: Duration::from_millis(1000),

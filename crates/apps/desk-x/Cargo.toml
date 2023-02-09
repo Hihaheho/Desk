@@ -20,6 +20,7 @@ editor-plugin = { path = "../../plugins/desk-editor", version = "0.0.0", package
 terminal-plugin = { path = "../../plugins/desk-terminal", version = "0.0.0", package = "desk-terminal" }
 playground-plugin = { path = "../../plugins/desk-playground", version = "0.0.0", package = "desk-playground" }
 
+desk-theme = { workspace = true }
 desk-window = { workspace = true }
 desk-plugin = { workspace = true }
 dworkspace = { workspace = true }
@@ -33,3 +34,4 @@ console_error_panic_hook = "0.1"
 web-sys = "0.3"
 egui = { workspace = true }
 once_cell = { workspace = true }
+ron = { workspace = true }

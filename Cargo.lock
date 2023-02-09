@@ -1540,7 +1540,6 @@ dependencies = [
  "desk-theme",
  "desk-window",
  "dworkspace",
- "ron",
 ]
 
 [[package]]
@@ -1641,6 +1640,7 @@ dependencies = [
  "desk-playground",
  "desk-plugin",
  "desk-terminal",
+ "desk-theme",
  "desk-touchpanel",
  "desk-window",
  "deskc-ids",
@@ -1649,6 +1649,7 @@ dependencies = [
  "dworkspace-in-memory",
  "egui",
  "once_cell",
+ "ron",
  "web-sys",
 ]
 
