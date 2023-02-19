@@ -22,7 +22,7 @@ thiserror = { workspace = true }
 uuid = { version = "1.2", features = ["v4"] }
 
 [build-dependencies]
-parol = { version = "0.16.0" }
+parol = { version = "0.17.0" }
 
 [dev-dependencies]
 env_logger = "0.10.0"
