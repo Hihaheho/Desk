@@ -11,9 +11,10 @@
 
 Status: All plans are behind the schedule for several reasons.
 - I'm building [query-flow](https://github.com/ryo33/query-flow) for `deskc` and `dworkspace`.
-- I want to discard the current `mirgen` and design a new MIR intervening between Desk-lang and low-level IR to generate a GC-less binary, which is fast as Rust in theory (in my mind).
+- I plan to discard the current `mirgen` and design a new MIR intervening between Desk-lang and low-level IR to generate a GC-less binary, which is fast as Rust in theory (in my mind).
 - I've switched to Ubuntu Desktop from M1 Macbook Pro mainly for financial reasons. As a subsequence of it, I can utilize the mold linker.
 - I've returned to Neovim after several years of a temporary stay in the VSCode.
+- I have three my own projects now to improve IDE experience with the Neovim ecosystem.
 - I'm trying to replace my trackball mouse with self-built input device for using alongside of my build of the [Helix keyboard](https://shop.yushakobo.jp/en/products/2143) to operate the cursor while on the home position.
 
 ### Pre-release (planned for this month)
