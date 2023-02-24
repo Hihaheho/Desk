@@ -9,7 +9,7 @@
 
 ## Release soon!
 
-Status: All plan is behind the schedule for several reasons.
+Status: All plans are behind the schedule for several reasons.
 - I'm building a [query-flow](https://github.com/ryo33/query-flow) for `deskc` and `dworkspace`.
 - I want to discard the current `mirgen` and design a new MIR intervening between Desk-lang and low-level IR to generate a GC-less binary, which is fast as Rust in theory (in my mind).
 - I've switched to Ubuntu Desktop from M1 Macbook Pro mainly for financial reasons. As a subsequence of it, I can utilize the mold linker.
