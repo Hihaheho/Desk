@@ -41,7 +41,7 @@ Please read [this paper](https://www.eff-lang.org/handlers-tutorial.pdf). (Excus
 
 To put it bluntly, effects are like, you know, React Hooks![^criticized]
 
-With just a single, simple language feature called `effect`, you can express things like exceptions, monads, async/await, coroutines, non-deterministic calculations, and many other things. So the language will be simple.
+With just one, simple language feature called `effect`, you can express things like exceptions, monads, async/await, coroutines, non-deterministic calculations, and many other things. So the language will be simple.
 
 There is another simple explanatory article[^overreacted], but our post is more aimed at a simple tutorial with **real codes** and technical details.
 
