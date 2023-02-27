@@ -14,21 +14,26 @@ In general:
 
 - Effects can represent exceptions, monads, async/await, coroutines.
 - An effect has an input and an output.
-- A handler handles an effect.
+- A handler handles an effect (effect set subtraction).
 - An effect is like an interface, so it's handler-agnostic.
 - An effect has a continuation, so a handler can resume it.
 
 In Desk-lang:
 
 - It's something like a true pure functional language because every side effect is always tracked by the type system.
-- Its strong type-inference system covers effects.
+- The strong type-inference system treats effects as a set of effects.
 - Effects are distinguished by input/output type.
 - `perform` and `continue` are symmetric ("resuming a continuation" is also "performing an effect").
 - A continuation is so-called multi-shot continuation (useful for non-deterministic computations, etc.).
 - Effects can be treated like a system call and used to communicate with external world.
 - Higher-order functions can be typed with care for effects.
-- (Not explained) Limitation: Cannot capture a continuation into a closure.
-- (Not explained) Handler can triger other same-level handlers by performing (I'm not sure this is theorically good, so please let me tell your opinions!)
+
+Other things in Desk, but not explained in this article and possibly false in a future
+
+- Limitation: Cannot capture a continuation into a closure.
+- Handler can triger other same-level handlers by performing.
+
+I think that these two behavior is simple to understand and easy to implement, but I have no idea ideally what it should be. Please let me know your academic point of view. We always should correct the direction of our language unless it prevents us from achieving the goals of this project.
 
 ## What are algebraic effects and handlers?
 
