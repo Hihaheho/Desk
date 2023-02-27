@@ -27,6 +27,8 @@ In Desk-lang:
 - A continuation is so-called multi-shot continuation (useful for non-deterministic computations, etc.).
 - Effects can be treated like a system call and used to communicate with external world.
 - Higher-order functions can be typed with care for effects.
+- (Not explained) Limitation: Cannot capture a continuation into a closure.
+- (Not explained) Handler can triger other same-level handlers by performing (I'm not sure this is theorically good, so please let me tell your opinions!)
 
 ## What are algebraic effects and handlers?
 
