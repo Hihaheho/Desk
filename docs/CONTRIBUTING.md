@@ -21,45 +21,50 @@
 2. Copy [this](https://github.com/bevyengine/bevy/blob/main/.cargo/config_fast_builds) to `~/.cargo/config.toml` or `desk_dir/.cargo/config.toml`.
 3. Install the fast linker for your environment.
     - `zld` for Mac
-    - `lld` for Linux
+    - `mold` for Linux
 
 ## Terminology
 
 - **Desk App** -
   Any application using Desk.
 - **Desk X** -
-  An official hosting of a Desk app
+  An official hosting of a collection of Desk apps
 - **Desk** -
   The entire system consisting of desk-lang, dworkspace, and a set of dplugins.
 - **Desk-lang** -
-  Desk-lang (Desk language) is a minimal functional language with statical typing.
-- **Dkernel** -
-  Dkernel (Desk Kernel) is the central dogma of dplugins.
+  Desk-lang (Desk programming language) is a minimal functional language with statical typing and effects.
+- **Dworkspace** -
+  Dworkspace (Desk Workspace) is the central dogma of dplugins.
 - **Dplugin** -
-  A dplugin (Desk plug-in) is a plug-in of Desk X that implements UI and integration with outer world of Desk.
+  A dplugin (Desk plug-in) is a bevy plug-in of Desk X that implements UI and integration with the outer world of Desk.
 - **ECS** -
   A framework to build an application with:
   - **Entities** - unique objects that has zero or more components
   - **Components** - describes the entity
   - **Systems** - implements behavior of application by using components
 - **Bevy** -
-  A game engine with the most powerful ECS. It's used for:
+  A game engine with stateof-the-art ECS. It's used for:
   - Application lifecycle
   - ECS with events
   - Mesh rendering
   - Input management
 - **egui** -
   Immediate-mode GUI library for any backend.
+- **Rust** - The most loved programming language in the world.
+- **crate** - An unit of application/library containing source codes in Rust-lang.
+- **component crates** - Defines components, data structures and its behaviors, that depends nothing except pure data structure things.
+- **system crates** - Defines systems, the core logics of Desk, with a pure function way with no any platform-specific things.
+- **adapter crates** - Handles platform-specific things and encode their data into components to use it from systems.
 
 ## Directory structure
 
-- `crates/`
+- `crates/` Includes all crates.
   - `apps/` Executable crates for Desk
-    - `desk-x/` is the entrypoint for Desk X.
-  - `plugins/` provides a feature to application by using systems
-  - `systems/` defines functionality with components
-  - `components/` defines data and its behavior for the application
-  - `adapters/` handles external resources for systems
+    - `desk-x/` the entrypoint for Desk X.
+  - `plugins/` provides a feature to application with using systems
+  - `systems/` defines functionality with pure function way. Depends only on platform-agnostic libraries.
+  - `components/` defines data and its behavior for the application. Depends only on data-layer libralies.
+  - `adapters/` handles external resources and encode their data to components for systems.
   - `tests/` Integration tests
 - `docs/` Documents
 - `envs/` Deployment things
