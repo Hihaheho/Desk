@@ -5,7 +5,7 @@
 ```ebnf
 ## Syntax
 
-```bnf
+```
 tn :== (number type)
 | Nat | Int | Rat | Real
 | uN | iN (n-bit integer)
