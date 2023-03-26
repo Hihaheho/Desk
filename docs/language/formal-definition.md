@@ -5,19 +5,16 @@
 ## Syntax
 $$
 \begin{aligned}
-n &\in \text{natural numbers}\\
-i &\in \text{integers}\\
-r &\in \text{rational numbers}\\
-f &\in \text{real numbers (floating point numbers without NaN and Infs)}\\
-c &\in \text{an any character or symbol}\\
-dson &\in \text{a DSON}\\
-ident &\in \text{a non-empty any text}
+n &\in \mathbb{N}\\
+i &\in \mathbb{Z}\\
+r &\in \mathbb{R}\\
+c &\in \text{Alphabets}
 \end{aligned}
 $$
 
 $$
 \begin{aligned}
-t & ::=\ n \mid i \mid r \mid f \mid c \\
+t & ::=\ n \mid i \mid i / n \mid r \mid c \\
 & \mid \Pi\ t_{fam}\ \text{where}\ t_{pred} \\
 & \mid \Sigma\ t_{fam}\ \text{where}\ t_{pred} \\
 & \mid \lambda\ t_{par} \rightarrow t_{ret} \\
@@ -25,7 +22,7 @@ t & ::=\ n \mid i \mid r \mid f \mid c \\
 & \mid [t;n] \\
 & \mid \langle t_{k1} \Rightarrow t_{v1},\ldots\rangle \\
 & \mid \text{let}\ t_{def}\ \text{in}\ t_e \\
-& \mid \text{letrec}\ ident =\ t_{def}\ \text{in}\ t_e \\
+& \mid \text{letrec}\ IDENT =\ t_{def}\ \text{in}\ t_e \\
 & \mid \And\ t_{ty}\ t_{arg1},\ldots \\
 & \mid \text{branch}\ t\ \text{begin}\ t_{ty1} \Rightarrow t_{case1},\ldots\ \text{end} \\
 & \mid \text{!} \ t_i \sim> t_o \\
@@ -33,7 +30,7 @@ t & ::=\ n \mid i \mid r \mid f \mid c \\
 & \mid \text{@}\ t\ \\
 & \mid t_{term}\ \text{is}\ t_{ty} \\
 & \mid \text{?} \\
-& \mid \sharp\ \text{dson}\ t \\
+& \mid \sharp\ \text{DSON}\ t \\
 \\
 program & ::=\ \cdot \mid program\ t_{alias} = t_{of} \mid program\ t \\
 \\
