@@ -15,8 +15,6 @@ ident &\in \text{a non-empty any text}
 \end{aligned}
 $$
 
-
-$ident \in$ a non-empty string of any characters
 $$
 \begin{aligned}
 t & ::=\ n \mid i \mid r \mid f \mid c \\
