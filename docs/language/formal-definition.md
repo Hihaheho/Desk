@@ -3,7 +3,20 @@
 !Note: not an easy-understanding guidance
 
 ## Syntax
+$$
+\begin{aligned}
+n &\in \text{natural numbers}\\
+i &\in \text{integers}\\
+r &\in \text{rational numbers}\\
+f &\in \text{real numbers (floating point numbers without NaN and Infs)}\\
+c &\in \text{an any character or symbol}\\
+dson &\in \text{a DSON}\\
+ident &\in \text{a non-empty any text}
+\end{aligned}
+$$
 
+
+$ident \in$ a non-empty string of any characters
 $$
 \begin{aligned}
 t & ::=\ n \mid i \mid r \mid f \mid c \\
@@ -14,6 +27,7 @@ t & ::=\ n \mid i \mid r \mid f \mid c \\
 & \mid [t;n] \\
 & \mid \langle t_{k1} \Rightarrow t_{v1},\ldots\rangle \\
 & \mid \text{let}\ t_{def}\ \text{in}\ t_e \\
+& \mid \text{letrec}\ ident =\ t_{def}\ \text{in}\ t_e \\
 & \mid \And\ t_{ty}\ t_{arg1},\ldots \\
 & \mid \text{branch}\ t\ \text{begin}\ t_{ty1} \Rightarrow t_{case1},\ldots\ \text{end} \\
 & \mid \text{!} \ t_i \sim> t_o \\
