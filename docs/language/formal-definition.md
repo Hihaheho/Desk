@@ -4,34 +4,26 @@
 
 ## Syntax
 
-```bnf
-tn :== (number type)
-| Nat | Int | Rat | Real
-| uN | iN (n-bit integer)
-tt :==
-| U (universe)
-| { t1, ... } (unordered set of types)
-f : `tt` or super set of t with any t in it is replaced to `t | tn` (type family)
-t :==
-| tn
-| tn < t
-| tn < t
-| ' Char '
-| Π f
-| Σ f
-| λ t → t
-| Ident (variable)
-| [ t1, ... ] (fixed-length vector)
-| [ t; t_len ] (free-length vector)
-| < t_key1 => t_value1, ... > (map)
-| let t_def in t
-| & t t1, ... (application)
-| branch t { t_case1 => t1, ... }
-| ! t ~> t_out (perform)
-| handle t { t_in1 ~> t_out1 => t1, ... }
-| @ Ident t (label)
-| @@ Ident t (brand)
-| t_from is t_to (exploit type coercion)
-| ? (hole)
-| # Dson t (attribute)
-```
+$$
+\begin{aligned}
+t & ::=\ n \mid i \mid r \mid f \mid c \\
+& \mid \Pi\ t_{fam}\ \text{where}\ t_{pred} \\
+& \mid \Sigma\ t_{fam}\ \text{where}\ t_{pred} \\
+& \mid \lambda\ t_{par} \rightarrow t_{ret} \\
+& \mid [t_1,\ldots] \\
+& \mid [t;n] \\
+& \mid \langle t_{k1} \Rightarrow t_{v1},\ldots\rangle \\
+& \mid \text{let}\ t_{def}\ \text{in}\ t_e \\
+& \mid \And\ t_{ty}\ t_{arg1},\ldots \\
+& \mid \text{branch}\ t\ \text{begin}\ t_{ty1} \Rightarrow t_{case1},\ldots\ \text{end} \\
+& \mid \text{!} \ t_i \sim> t_o \\
+& \mid \text{handle}\ t\ \text{begin}\ t_{i1} \sim> t_{o1} \Rightarrow t_{h1},\ldots\ \text{end} \\
+& \mid \text{@}\ t\ \\
+& \mid t_{term}\ \text{is}\ t_{ty} \\
+& \mid \text{?} \\
+& \mid \sharp\ \text{dson}\ t \\
+\\
+program & ::=\ \cdot \mid program\ t_{alias} = t_{of} \mid program\ t \\
+\\
+\Gamma & ::=\ \cdot \mid \Gamma\ t \\
+\end{aligned}$$
