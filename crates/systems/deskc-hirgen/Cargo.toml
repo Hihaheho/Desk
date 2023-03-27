@@ -21,4 +21,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
-chumsky = "0.8.0"
+chumsky = "0.9.2"
