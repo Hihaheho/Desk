@@ -272,7 +272,7 @@ dependencies = [
  "bevy_egui",
  "bevy_hierarchy",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_pbr",
  "bevy_reflect",
  "bevy_render",
@@ -306,7 +306,7 @@ dependencies = [
  "bevy_core",
  "bevy_ecs",
  "bevy_hierarchy",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_time",
  "bevy_transform",
@@ -380,7 +380,7 @@ checksum = "96299aceb3c8362cb4aa39ff81c7ef758a5f4e768d16b5046a91628eff114ac0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_tasks",
  "bevy_utils",
@@ -397,7 +397,7 @@ dependencies = [
  "bevy_asset",
  "bevy_derive",
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_render",
  "bevy_transform",
@@ -516,7 +516,7 @@ dependencies = [
  "bevy_ecs",
  "bevy_hierarchy",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_pbr",
  "bevy_reflect",
  "bevy_render",
@@ -552,7 +552,7 @@ checksum = "3378b5171284f4c4c0e8307081718a9fe458f846444616bd82d69110dcabca51"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_utils",
  "thiserror",
@@ -578,7 +578,7 @@ dependencies = [
  "bevy_hierarchy",
  "bevy_input",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_pbr",
  "bevy_ptr",
  "bevy_reflect",
@@ -629,8 +629,17 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d434c77ab766c806ed9062ef8a7285b3b02b47df51f188d4496199c3ac062eaf"
 dependencies = [
- "glam",
+ "glam 0.22.0",
  "serde",
+]
+
+[[package]]
+name = "bevy_math"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e45e46c2ac0a92db3ae622f2ed690928fe2612e7c9470a46d0ed4c2c77e2e95"
+dependencies = [
+ "glam 0.23.0",
 ]
 
 [[package]]
@@ -639,7 +648,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbfb5908d33fd613069be516180b8f138aaaf6e41c36b1fd98c6c29c00c24a13"
 dependencies = [
- "glam",
+ "glam 0.22.0",
 ]
 
 [[package]]
@@ -653,7 +662,7 @@ dependencies = [
  "bevy_core_pipeline",
  "bevy_derive",
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_render",
  "bevy_transform",
@@ -676,13 +685,13 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6deae303a7f69dc243b2fa35b5e193cc920229f448942080c8eb2dbd9de6d37a"
 dependencies = [
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_ptr",
  "bevy_reflect_derive",
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
- "glam",
+ "glam 0.22.0",
  "once_cell",
  "parking_lot 0.12.1",
  "serde",
@@ -719,7 +728,7 @@ dependencies = [
  "bevy_encase_derive",
  "bevy_hierarchy",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_mikktspace",
  "bevy_reflect",
  "bevy_render_macros",
@@ -792,7 +801,7 @@ dependencies = [
  "bevy_derive",
  "bevy_ecs",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_render",
  "bevy_transform",
@@ -831,7 +840,7 @@ dependencies = [
  "bevy_app",
  "bevy_asset",
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_render",
  "bevy_sprite",
@@ -865,7 +874,7 @@ dependencies = [
  "bevy_app",
  "bevy_ecs",
  "bevy_hierarchy",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
 ]
 
@@ -883,7 +892,7 @@ dependencies = [
  "bevy_hierarchy",
  "bevy_input",
  "bevy_log",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_render",
  "bevy_sprite",
@@ -921,7 +930,7 @@ dependencies = [
  "bevy_app",
  "bevy_ecs",
  "bevy_input",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_reflect",
  "bevy_utils",
  "raw-window-handle 0.5.0",
@@ -937,7 +946,7 @@ dependencies = [
  "bevy_app",
  "bevy_ecs",
  "bevy_input",
- "bevy_math",
+ "bevy_math 0.9.1",
  "bevy_utils",
  "bevy_window",
  "crossbeam-channel",
@@ -1531,7 +1540,7 @@ name = "desk-command"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.10.0",
 ]
 
 [[package]]
@@ -1579,7 +1588,7 @@ name = "desk-physics"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.10.0",
 ]
 
 [[package]]
@@ -1645,7 +1654,7 @@ name = "desk-window"
 version = "0.0.0"
 dependencies = [
  "bevy_ecs",
- "bevy_math",
+ "bevy_math 0.10.0",
  "deskc-ids",
  "dworkspace",
  "dworkspace-codebase",
@@ -2044,7 +2053,7 @@ checksum = "48ec50086547d597b5c871a78399ec04a14828a6a5c445a61ed4687c540edec6"
 dependencies = [
  "const_panic",
  "encase_derive",
- "glam",
+ "glam 0.22.0",
  "thiserror",
 ]
 
@@ -2356,6 +2365,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e4afd9ad95555081e109fe1d21f2a30c691b5f0919c67dfa690a2e1eb6bd51c"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2534,7 +2552,7 @@ version = "8.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "619ce654558681d7d0a7809e1b20249c7032ff13ee6baa7bb7ff64f7f28a906a"
 dependencies = [
- "glam",
+ "glam 0.22.0",
  "once_cell",
 ]
 
