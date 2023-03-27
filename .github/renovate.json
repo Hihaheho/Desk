@@ -15,7 +15,7 @@
       "rangeStrategy": "update-lockfile"
     },
     {
-      "matchDepTypes": ["dependencies"],
+      "matchDepTypes": ["dependencies", "workspace.dependencies"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "non-major dependencies"
     }
