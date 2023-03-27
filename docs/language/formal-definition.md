@@ -35,5 +35,6 @@ t & ::=\ n \mid i \mid i / n \mid r \mid c \\
 program & ::=\ \cdot \mid program\ t_{alias} = t_{of} \mid program\ t \\
 \\
 \Gamma & ::=\ \cdot \mid \Gamma\ t \\
+\\
 {\huge \varepsilon} & ::=\ \cdot \mid {\huge \varepsilon}\ t \\
 \end{aligned}$$
