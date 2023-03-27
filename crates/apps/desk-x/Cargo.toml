@@ -29,7 +29,7 @@ dworkspace-codebase = { package = "dworkspace-codebase", path = "../../component
 deskc-ids = { package = "deskc-ids", path = "../../components/deskc-ids", version = "0.0.0" }
 
 bevy = { workspace = true }
-bevy-inspector-egui = { version = "0.17", optional = true }
+bevy-inspector-egui = { version = "0.18", optional = true }
 console_error_panic_hook = "0.1"
 web-sys = "0.3"
 egui = { workspace = true }
