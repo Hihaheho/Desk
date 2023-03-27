@@ -18,8 +18,8 @@ t & ::=\ n \mid i \mid i / n \mid r \mid c \\
 & \mid \Pi\ t_{fam}\ \text{where}\ t_{pred} \\
 & \mid \Sigma\ t_{fam}\ \text{where}\ t_{pred} \\
 & \mid \lambda\ t_{par} \rightarrow t_{ret} \\
-& \mid [t_1,\ldots] \\
-& \mid [t;n] \\
+& \mid \\{ t_1,\ldots \\} \\
+& \mid [ t_1,\ldots ] \\
 & \mid \langle t_{k1} \Rightarrow t_{v1},\ldots\rangle \\
 & \mid \text{let}\ t_{def}\ \text{in}\ t_e \\
 & \mid \text{letrec}\ IDENT =\ t_{def}\ \text{in}\ t_e \\
