@@ -60,8 +60,8 @@ In Desk-lang, "type" of that definition is used anywhere.
 
 It's hard to describe or understand this syntax without examples.
 
-### `Πid &id nat`
-`id` is the label and `&id nat` is the family.
+### `Πid { nat => &id nat }`
+`id` is the context and `{ nat => &id nat }` is the family.
 It's the same as `fn (x: Nat) -> x` in functional languages, `λ x: nat. x` in lambda calculus, and `Union of all x where x in N`.
 `id` in `&id nat` must be matched with one in `Πid`, and `&id nat` means "reference nat in the `id` context, and extract an element of nat.
 
@@ -75,7 +75,9 @@ It creates an alias for character type.
 
 It creates an alias for string type as arbitrarily length list of characters.
 
-### `Π{ t1, * } = Π& { t1, * }`
+### `Π{ t → t1, * } = Π& { t → t1, * }`
+
+Record syntax
 
 直積リテラル構文の定義
 
