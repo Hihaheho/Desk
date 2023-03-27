@@ -20,7 +20,7 @@ Desk-lang has the following literals:
 1/3 // rat
 π // real
 [1, 2, 3] // a list of nat
-<a => 10, f => 15> // a character to nat map
+{a -> 10, f -> 15} // a character to nat map
 { 1, 2, 3 } // a set of nat
 ```
 
@@ -28,7 +28,7 @@ Desk-lang has the following literals:
 
 Here is the incomplete function definition that receives an natural number and just returns it (you don't need to understand it for now).
 ```
-Πid &id nat
+Π my & nat
 ```
 
 It's incomplete because Desk-lang doesn't have `nat` syntax because things have no name. To complete the definition, we need a substitution rule to make `nat` as an alias of the full definition of natural numbers.
@@ -60,7 +60,7 @@ In Desk-lang, "type" of that definition is used anywhere.
 
 It's hard to describe or understand this syntax without examples.
 
-### `Πid { nat => &id nat }`
+### `Πid &id`
 `id` is the context and `{ nat => &id nat }` is the family.
 It's the same as `fn (x: Nat) -> x` in functional languages, `λ x: nat. x` in lambda calculus, and `Union of all x where x in N`.
 `id` in `&id nat` must be matched with one in `Πid`, and `&id nat` means "reference nat in the `id` context, and extract an element of nat.
@@ -75,10 +75,6 @@ It creates an alias for character type.
 
 It creates an alias for string type as arbitrarily length list of characters.
 
-### `Π{ t → t1, * } = Π& { t → t1, * }`
-
-Record syntax
+### `Π{ t1, * } = Π& { t1, * }` 
 
 直積リテラル構文の定義
-
-### `λ x → y =
