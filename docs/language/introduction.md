@@ -1,4 +1,4 @@
-k1# Introduction of Desk-lang
+# Introduction of Desk-lang
 
 Note: Desk-lang specifies only its syntax and semantics, so the example codes includes pseudo built-in functions/effects with recommended signatures.
 
