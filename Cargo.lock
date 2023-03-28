@@ -1896,7 +1896,7 @@ dependencies = [
  "dson",
  "env_logger",
  "parol",
- "parol_runtime 0.15.1",
+ "parol_runtime",
  "pretty_assertions",
  "thiserror",
  "uuid",
@@ -2633,30 +2633,6 @@ name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
-
-[[package]]
-name = "id_tree"
-version = "1.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcd9db8dd5be8bde5a2624ed4b2dfb74368fe7999eb9c4940fd3ca344b61071a"
-dependencies = [
- "serde",
- "serde_derive",
- "snowflake",
-]
-
-[[package]]
-name = "id_tree_layout"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "142f4c1bc1d715957b02be1022312a491519cb69bbada92572e6e47af737dde3"
-dependencies = [
- "id_tree",
- "serde",
- "serde_derive",
- "serde_json",
- "xml_writer",
-]
 
 [[package]]
 name = "ident_case"
@@ -3509,9 +3485,9 @@ dependencies = [
 
 [[package]]
 name = "parol"
-version = "0.17.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e672d03152a838921ce0d1853a454a416c73ab9f0ba7cb395e6882a74114ee6"
+checksum = "d6d598326ebcb398761c558526a80eb17b370dffb654cad35b21d1d10511efc5"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -3519,17 +3495,20 @@ dependencies = [
  "derive_builder",
  "env_logger",
  "function_name",
- "id_tree",
- "id_tree_layout",
+ "num_cpus",
  "owo-colors",
  "parol-macros",
- "parol_runtime 0.13.0",
+ "parol_runtime",
  "rand",
  "rand_regex",
  "rayon",
  "regex",
  "regex-syntax",
+ "serde",
+ "serde_json",
  "syn",
+ "syntree",
+ "syntree_layout",
  "thiserror",
  "ume",
 ]
@@ -3539,25 +3518,6 @@ name = "parol-macros"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bdd646301a99589f85ed580e3807ee2f7aa6529b900fd703f5a14716b7426b28"
-
-[[package]]
-name = "parol_runtime"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d86bc25759ccf7be8e0612cccbc9a3da42e78fb89e9b9e588ed62b9e7027480"
-dependencies = [
- "anyhow",
- "codespan-reporting",
- "derive_builder",
- "function_name",
- "id_tree",
- "id_tree_layout",
- "log",
- "once_cell",
- "parol-macros",
- "regex-automata 0.2.0",
- "thiserror",
-]
 
 [[package]]
 name = "parol_runtime"
@@ -4096,16 +4056,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "snowflake"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27207bb65232eda1f588cf46db2fee75c0808d557f6b3cf19a75f5d6d7c94df1"
-dependencies = [
- "serde",
- "serde_derive",
 ]
 
 [[package]]
