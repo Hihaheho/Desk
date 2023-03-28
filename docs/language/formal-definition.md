@@ -1,7 +1,5 @@
 # Desk Programming Language Formal Definition
 
-!Note: not an easy-understanding guidance
-
 ## Syntax
 $$
 \begin{aligned}
