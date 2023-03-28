@@ -9,17 +9,16 @@ r\ \in\ & \mathbb{R} \\
 c\ \in\ & \text{Alphabets} \\
 \\
 t ::=\ & \\& t_{ctx} \ t_{ty}\ t_{arg1},\ldots \\
-\mid\ & \Pi t_{ctx} \ t_{fam}\\
-\mid\ & \Sigma t_{ctx} \ t_{fam}\\
+\mid\ & \Pi t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
+\mid\ & \Sigma t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
 \mid\ & \\{ t_1,\ldots \\} \\
-\mid\ & \\{ t_{k1} \Rightarrow t_{v1},\ldots \\} \\
 \mid\ & [ t_1,\ldots ] \\
 \mid\ & t_{term}:\ t_{ty} \\
 \mid\ & \text{let}\ t_{def}\ \text{in}\ t_e \\
 \mid\ & \text{letrec}\ t_{ident}\ =\ t_{def}\ \text{in}\ t_e \\
-\mid\ & \text{branch}\ t\ \text{begin}\ t_{ty1} \Rightarrow t_{case1},\ldots\ \text{end} \\
+\mid\ & \text{branch}\ t\ \text{begin}\ t_{ty1} \rightarrow t_{case1},\ldots\ \text{end} \\
 \mid\ & \text{!} \ t_i \sim> t_o \\
-\mid\ & \text{handle}\ t\ \text{begin}\ t_{i1} \sim> t_{o1} \Rightarrow t_{h1},\ldots\ \text{end} \\
+\mid\ & \text{handle}\ t\ \text{begin}\ t_{i1} \sim> t_{o1} \rightarrow t_{h1},\ldots\ \text{end} \\
 \mid\ & \text{@}\ t\ \mid\ \text{@@}\ t \\
 \mid\ & n \mid\ i \mid\ i / n \mid\ r \mid\ c \\
 \mid\ & \\# t_{attr}\ t
