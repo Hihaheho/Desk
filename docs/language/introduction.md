@@ -91,3 +91,7 @@ It creates an alias for string type as arbitrarily length list of characters.
   *
 end
 ```
+
+## Top type and bottom type
+
+TBA
