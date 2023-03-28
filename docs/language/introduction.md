@@ -8,7 +8,7 @@ Desk-lang has the following characteristics:
 - structural over nominal: things has no name, so you need to describe it completely to distinguish it with others
 - simple over easy: impossible to do the same thing in another way
 - the most minimalist general programming language: learning just one word in a day for a month, Desk-lang would be your first language you know the every page of a dictionary.
-- no surprising: the code itself and type conclusions describes everything about your program
+- no surprises: the code itself and type conclusions describes everything about your program
 - unphysical programming: you can forget about the physical world including any computers while enjoying Desk-lang.
 
 ## Literals
@@ -28,7 +28,7 @@ Desk-lang has the following literals:
 
 Here is the incomplete function definition that receives an natural number and just returns it (you don't need to understand it for now).
 ```
-Π my & nat
+Πi &i nat
 ```
 
 It's incomplete because Desk-lang doesn't have `nat` syntax because things have no name. To complete the definition, we need a substitution rule to make `nat` as an alias of the full definition of natural numbers.
@@ -58,7 +58,11 @@ In Desk-lang, "type" of that definition is used anywhere.
 
 ## Π and Σ
 
-It's hard to describe or understand this syntax without examples.
+$\Pi t_{ctx}\ F(t_1,\ +)$ where $F(t_1,\ +)$ is an expression contains at least one $\\&t_{ctc}\ t_n$ means "gather all evaluated values of $F(...)$ for all set patterns containing an instance for each $t_n$ as a type.
+
+$\Sigma t_{ctx}\ F(t_1,\ +)$ where $F(t_1,\ +)$ is an expression contains at least one $\\& t_{ctx}\ t_n$ means "pick an evaluated value of $F(...)$ for all set patterns containing an instance for each $t_n$ as a type.
+
+It's hard to understand this syntax without examples.
 
 ### `Πid &id`
 `id` is the context and `{ nat => &id nat }` is the family.
