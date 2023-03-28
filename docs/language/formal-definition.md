@@ -3,11 +3,6 @@
 ## Syntax
 $$
 \begin{aligned}
-n\ \in\ & \mathbb{N} \\
-i\ \in\ & \mathbb{Z} \\
-r\ \in\ & \mathbb{R} \\
-c\ \in\ & \text{Alphabets} \\
-\\
 t ::=\ & \\& t_{ctx} \ t_{ty}\ t_{arg1},\ldots \\
 \mid\ & \Pi t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
 \mid\ & \Sigma t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
