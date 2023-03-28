@@ -24,8 +24,6 @@ t ::=\ & \\& t_{ctx} \ t_{ty}\ t_{arg1},\ldots \\
 \mid\ & \text{handle}\ t\ \text{begin}\ t_{i1} \sim> t_{o1} \Rightarrow t_{h1},\ldots\ \text{end} \\
 \mid\ & \text{@}\ t\ \\
 \mid\ & n \mid\ i \mid\ i / n \mid\ r \mid\ c \\
-\mid\ & \text{?} \\
-\mid\ & \sharp\ \text{DSON}\ t \\
 \\
 program ::=\ & \cdot \mid\ program\ t_{alias} = t_{of} \mid\ program\ t \\
 \\
