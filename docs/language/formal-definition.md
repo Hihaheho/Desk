@@ -7,7 +7,6 @@ t ::=\ & \\& t_{ctx} \ t_{ty}\ t_{arg1},\ldots \\
 \mid\ & \Pi t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
 \mid\ & \Sigma t_{ctx} \ t_{fam}\ (t_{fam}\ \text{has at least one}\ \\&\ t_{ctx}\ \text{t)} \\
 \mid\ & \\{ t_1,\ldots \\} \\
-\mid\ & [ t_1,\ldots ] \\
 \mid\ & t_{term}:\ t_{ty} \\
 \mid\ & \text{let}\ t_{def}\ \text{in}\ t_e \\
 \mid\ & \text{letrec}\ t_{ident}\ =\ t_{def}\ \text{in}\ t_e \\
