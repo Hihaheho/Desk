@@ -1,4 +1,4 @@
-# Introduction of Desk-lang
+k1# Introduction of Desk-lang
 
 Note: Desk-lang specifies only its syntax and semantics, so the example codes includes pseudo built-in functions/effects with recommended signatures.
 
@@ -75,6 +75,15 @@ It creates an alias for character type.
 
 It creates an alias for string type as arbitrarily length list of characters.
 
-### `Π{ t1, * } = Π& { t1, * }` 
+### `Π{ t1, * } = Π& Σ& { t1, * }`
 
 直積リテラル構文の定義
+
+### map構文の定義
+
+```
+Π{ k1 → v1, * } = Πmap branch &map Σ& {k1, k2, *} begin
+  k1 → v1
+  *
+end
+```
