@@ -13,7 +13,7 @@ t ::=\ & \\& t_{ctx} \ t_{ty}\ t_{arg1},\ldots \\
 \mid\ & \text{!} \ t_i \sim> t_o \\
 \mid\ & \text{handle}\ t\ \text{begin}\ t_{i1} \sim> t_{o1} \rightarrow t_{h1},\ldots\ \text{end} \\
 \mid\ & \text{@}\ t\ \mid\ \text{@@}\ t \\
-\mid\ & \\# t_{attr}\ t
+\mid\ & \\# t_{attr}\ t \\
 \\
 program ::=\ & \cdot \mid\ program\ t_{alias} = t_{of} \mid\ program\ t \\
 \\
