@@ -7,7 +7,7 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)
 
-## Release soon!
+## No Releases!
 
 Status: All releases are behind the previous schedule for several reasons, so I updated it below.
 
@@ -18,8 +18,9 @@ Status: All releases are behind the previous schedule for several reasons, so I 
 - [x] I've returned to Neovim after several years of a temporary stay in the VSCode.
 - [ ] With the lowest priority, I have about three my own projects now to improve IDE experience with the Neovim ecosystem.
 - [x] I've built a [Keyball39](https://shirogane-lab.com/products/keyball39), a split keyboard placing a *injection-molded* trackball slot in the really ergonomic position.
+- [ ] I'm re-designing the whole Desk-lang syntax and semantics.
 
-### Pre-release (several months later)
+### Pre-release: By the end of 2025
 
 Pre-release includes:
 
@@ -29,7 +30,7 @@ Pre-release includes:
 - [ ] Desk-lang visual editor
 - [ ] A web demo like Rust Playground for Desk-lang
 
-### The first release (within the year)
+### The first release: By the end of 2030
 
 The first release includes:
 
