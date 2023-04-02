@@ -19,7 +19,7 @@ Status: All releases are behind the previous schedule for several reasons, so I 
 - [ ] With the lowest priority, I have about three my own projects now to improve IDE experience with the Neovim ecosystem.
 - [x] I've built a [Keyball39](https://shirogane-lab.com/products/keyball39), a split keyboard placing a *injection-molded* trackball slot in the really ergonomic position.
 
-### Pre-release (several months later)
+### Pre-release (by the end of 2025)
 
 Pre-release includes:
 
@@ -29,7 +29,7 @@ Pre-release includes:
 - [ ] Desk-lang visual editor
 - [ ] A web demo like Rust Playground for Desk-lang
 
-### The first release (within the year)
+### The first release (by the end of 2030)
 
 The first release includes:
 
