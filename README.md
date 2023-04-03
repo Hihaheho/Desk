@@ -18,8 +18,9 @@ Status: All releases are behind the previous schedule for several reasons, so I 
 - [x] I've returned to Neovim after several years of a temporary stay in the VSCode.
 - [ ] With the lowest priority, I have about three my own projects now to improve IDE experience with the Neovim ecosystem.
 - [x] I've built a [Keyball39](https://shirogane-lab.com/products/keyball39), a split keyboard placing a *injection-molded* trackball slot in the really ergonomic position.
+-[ ] I'm going to completely re-design the Desk-lang.
 
-### Pre-release (several years later)
+### Pre-release (by the end of 2025)
 
 Pre-release includes:
 
