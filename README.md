@@ -7,7 +7,7 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)
 
-## Release soon!
+## No Release!
 
 Status: All releases are behind the previous schedule for several reasons, so I updated it below.
 
