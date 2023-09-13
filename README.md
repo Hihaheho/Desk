@@ -7,9 +7,16 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ryo33?color=ffc5cd&labelColor=2a4638)](https://github.com/sponsors/ryo33)
 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social&color=yellow)](https://github.com/Hihaheho/Desk)
 
-## No Release!
+## 🧊 Project Status: FROZEN 🧊
+**This project is currently on hold**. We may consider resuming development in the near future if there's continued interest or demand. For updates on our ongoing projects, please check our Discord or X.
 
-Status: All releases are behind the previous schedule for several reasons, so I updated it below.
+[![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
+
+[![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
+
+## ~~No Release!~~
+
+~~Status: All releases are behind the previous schedule for several reasons, so I updated it below.~~
 
 **Reasons:**
 - [ ] I'm building [query-flow](https://github.com/ryo33/query-flow) for `deskc` and `dworkspace`.
@@ -20,7 +27,7 @@ Status: All releases are behind the previous schedule for several reasons, so I 
 - [x] I've built a [Keyball39](https://shirogane-lab.com/products/keyball39), a split keyboard placing a *injection-molded* trackball slot in the really ergonomic position.
 - [ ] I'm going to completely re-design the Desk-lang.
 
-### Pre-release (by the end of 2025)
+### ~~Pre-release (by the end of 2025)~~
 
 Pre-release includes:
 
@@ -30,7 +37,7 @@ Pre-release includes:
 - [ ] Desk-lang visual editor
 - [ ] A web demo like Rust Playground for Desk-lang
 
-### The first release (by the end of 2030)
+### ~~The first release (by the end of 2030)~~
 
 The first release includes:
 
@@ -153,12 +160,12 @@ Yes.
 
 ## Join our community
 
+👉 [![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
+
+👉 [![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
+
 👉 [![Q&A Have a question?](https://img.shields.io/badge/Q%26A-Have%20a%20question%3F-yellowgreen?style=social&logo=github)](https://github.com/Hihaheho/Desk/discussions/new?category=q-a)
 
 👉 [![GitHub Discussions](https://img.shields.io/github/discussions/Hihaheho/Desk?logo=GitHub&style=social)](https://github.com/Hihaheho/Desk/discussions)
 
 👉 [![GitHub Repo stars](https://img.shields.io/github/stars/Hihaheho/Desk?style=social)](https://github.com/Hihaheho/Desk)
-
-👉 [![Twitter Follow](https://img.shields.io/twitter/follow/HihahehoStudio?style=social)](https://twitter.com/HihahehoStudio)
-
-👉 [![Discord](https://img.shields.io/discord/808315755460165683?color=6A7EC2&label=&logo=discord&logoColor=ffffff&labelColor=4e5af0&style=for-the-badge)](https://discord.gg/egTTeg7DRp)
