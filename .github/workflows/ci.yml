@@ -18,7 +18,7 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install --no-install-recommends libasound2-dev libudev-dev -y
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           lfs: true
 
