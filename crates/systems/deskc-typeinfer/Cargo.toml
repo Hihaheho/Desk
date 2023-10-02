@@ -17,7 +17,7 @@ ty = { path = "../../components/deskc-type", version = "0.0.0", package = "deskc
 errors = { path = "../../components/deskc-errors", version = "0.0.0", package = "deskc-errors" }
 
 thiserror = { workspace = true }
-itertools = "0.10"
+itertools = "0.11"
 
 [dev-dependencies]
 deskc = { path = "../deskc", version = "0.0.0", package = "deskc" }
